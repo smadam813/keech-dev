@@ -1,11 +1,12 @@
 export default function Home() {
   return (
-    <main className="min-h-screen bg-background p-8">
-      <h1 className="font-display text-6xl font-bold mb-4">keech.dev</h1>
-      <p className="font-body text-xl text-muted mb-8">Design system test</p>
-      <div className="inline-block bg-accent text-white px-6 py-3 border-[3px] border-foreground shadow-brutal">
-        Neobrutalist Button
+    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-6">
+      <div className="text-center">
+        <h1 className="font-display text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-bold tracking-tight">
+          keech
+          <span className="text-accent">.dev</span>
+        </h1>
       </div>
-    </main>
-  );
+    </div>
+  )
 }
