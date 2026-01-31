@@ -1,5 +1,5 @@
 ---
-status: complete
+status: diagnosed
 phase: 01-foundation-design
 source: [01-01-SUMMARY.md, 01-02-SUMMARY.md, 01-03-SUMMARY.md]
 started: 2026-01-31T12:00:00Z
@@ -81,11 +81,14 @@ skipped: 0
 ## Gaps
 
 - truth: "LinkedIn icon opens user's actual LinkedIn profile"
-  status: failed
+  status: fixed
   reason: "User reported: The LinkedIn icon is not pointing to mine. The url for my LinkedIn is https://www.linkedin.com/in/adam-keech"
   severity: major
   test: 10
-  root_cause: ""
-  artifacts: []
-  missing: []
-  debug_session: ""
+  root_cause: "Hardcoded placeholder URL in footer.tsx - currently 'https://linkedin.com/in/smadam813'"
+  artifacts:
+    - path: "src/components/layout/footer.tsx"
+      line: 6
+      issue: "Wrong LinkedIn URL"
+  fix_commit: "63b260e"
+  deployed: true
