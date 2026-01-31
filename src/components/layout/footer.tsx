@@ -3,7 +3,7 @@ import { Github, Linkedin } from 'lucide-react'
 
 const socialLinks = [
   { href: 'https://github.com/smadam813', icon: Github, label: 'GitHub' },
-  { href: 'https://linkedin.com/in/smadam813', icon: Linkedin, label: 'LinkedIn' },
+  { href: 'https://www.linkedin.com/in/adam-keech', icon: Linkedin, label: 'LinkedIn' },
 ]
 
 export function Footer() {
