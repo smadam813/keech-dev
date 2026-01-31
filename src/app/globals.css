@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+@theme {
+  /* Cosmic neobrutalist palette */
+  --color-background: #E8B4B8;
+  --color-foreground: #000000;
+  --color-accent: #2D8B8B;
+  --color-accent-hover: #3AA3A3;
+  --color-surface: #F5E6E8;
+  --color-muted: #666666;
+
+  /* Hard offset shadows - neobrutalist signature */
+  --shadow-brutal: 4px 4px 0 0 #000000;
+  --shadow-brutal-lg: 6px 6px 0 0 #000000;
+  --shadow-brutal-hover: 2px 2px 0 0 #000000;
+
+  /* Border widths */
+  --border-brutal: 3px;
+  --border-brutal-lg: 4px;
+}
+
+@theme inline {
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+}
+
+@layer base {
+  html {
+    @apply font-body bg-background text-foreground antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+  }
+}
