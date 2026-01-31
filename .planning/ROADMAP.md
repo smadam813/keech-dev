@@ -20,19 +20,19 @@ keech.dev transforms from empty project to distinctive personal portfolio throug
 ### Phase 1: Foundation & Design
 **Goal**: Visitors see a bold, memorable home page with working navigation and the complete neobrutalist design system in place
 **Depends on**: Nothing (first phase)
-**Requirements**: DSGN-01, DSGN-02, DSGN-03, DSGN-04, DSGN-05, NAV-01, NAV-02, NAV-03, HOME-01, HOME-02, HOME-03, TECH-01, TECH-04
+**Requirements**: DSGN-01, DSGN-02, DSGN-03, DSGN-04, DSGN-05, NAV-01, NAV-02, NAV-03, HOME-01, HOME-02, HOME-03, TECH-01
 **Success Criteria** (what must be TRUE):
   1. Home page displays with bold typography, custom cosmic color palette, and neobrutalist styling (chunky shadows, bold borders)
   2. Navigation allows access to all main sections (Home, Blog, Projects, About) and works on mobile
   3. Site deploys successfully to Vercel at keech.dev
   4. All text is readable against backgrounds (WCAG AA contrast)
   5. Layout responds correctly on mobile, tablet, and desktop
-**Plans**: TBD (1-3 plans)
+**Plans**: 3 plans
 
 Plans:
-- [ ] 01-01: TBD
-- [ ] 01-02: TBD
-- [ ] 01-03: TBD
+- [ ] 01-01-PLAN.md — Initialize Next.js 15 + Tailwind v4 design system
+- [ ] 01-02-PLAN.md — Create navigation shell (header, mobile nav, footer)
+- [ ] 01-03-PLAN.md — Build home page hero, placeholders, deploy to Vercel
 
 ### Phase 2: Content & Blog
 **Goal**: Visitors can browse blog posts and read individual articles with syntax-highlighted code
@@ -91,7 +91,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Design | 0/? | Not started | - |
+| 1. Foundation & Design | 0/3 | Planned | - |
 | 2. Content & Blog | 0/? | Not started | - |
 | 3. Projects & About | 0/? | Not started | - |
 | 4. Polish & Performance | 0/? | Not started | - |
