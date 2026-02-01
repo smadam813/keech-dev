@@ -11,7 +11,7 @@ interface ProjectCardProps {
     stack: string[]
     github?: string
     demo?: string
-    image?: string
+    image?: { src: string }
   }
 }
 
@@ -30,7 +30,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
         {project.image && (
           <div className="aspect-video relative border-b-[3px] border-black">
             <Image
-              src={project.image}
+              src={project.image.src}
               alt={`${project.title} screenshot`}
               fill
               className="object-cover"
