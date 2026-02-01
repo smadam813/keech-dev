@@ -1,5 +1,5 @@
 ---
-status: complete
+status: diagnosed
 phase: 02-content-blog
 source: [02-01-SUMMARY.md, 02-02-SUMMARY.md]
 started: 2026-02-01T13:00:00Z
@@ -57,7 +57,13 @@ skipped: 0
   reason: "User reported: text is readable however the post could utilize more of the available real estate. Contents sidebar should be pushed further right to align with About nav edge, allowing wider blog content area"
   severity: cosmetic
   test: 6
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "Prose max-width 65ch (~585px) + container max-w-5xl creates unused horizontal space. Grid [1fr_250px] leaves content column ~678px but prose only uses ~585px."
+  artifacts:
+    - path: "src/app/globals.css"
+      issue: ".prose max-width: 65ch too narrow for desktop layout"
+    - path: "src/app/blog/[slug]/page.tsx"
+      issue: "Container max-w-5xl could be wider"
+  missing:
+    - "Increase container width to max-w-6xl for blog posts"
+    - "Remove 65ch constraint or increase to ~75ch for blog prose"
   debug_session: ""
