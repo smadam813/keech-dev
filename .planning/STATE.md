@@ -10,29 +10,29 @@ See: .planning/PROJECT.md (updated 2026-01-31)
 ## Current Position
 
 Phase: 2 of 4 (Content & Blog)
-Plan: 1 of ? in current phase
+Plan: 2 of ? in current phase
 Status: In progress
-Last activity: 2026-02-01 — Completed 02-01 (Velite content engine)
+Last activity: 2026-02-01 — Completed 02-02 (Blog UI components)
 
-Progress: [███░░░░░░░] 30%
+Progress: [████░░░░░░] 40%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5
-- Average duration: 4.4 min
-- Total execution time: ~22 min
+- Total plans completed: 6
+- Average duration: 5.7 min
+- Total execution time: ~34 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1 | 4 | 18 min | 4.5 min |
-| 2 | 1 | 4 min | 4 min |
+| 2 | 2 | 16 min | 8 min |
 
 **Recent Trend:**
-- Last 3 plans: 01-03 (8 min), 01-04 (1 min), 02-01 (4 min)
-- Trend: Stable
+- Last 3 plans: 01-04 (1 min), 02-01 (4 min), 02-02 (12 min)
+- Trend: Stable (02-02 longer due to checkpoint + fixes)
 
 *Updated after each plan completion*
 
@@ -60,6 +60,10 @@ Recent decisions affecting current work:
 - [02-01]: github-dark-dimmed theme for syntax highlighting
 - [02-01]: CSS counter approach for line numbers using data attributes
 - [02-01]: Slug required in frontmatter (not auto-derived from filename)
+- [02-02]: React copy button over shiki transformer (simpler, avoids SSR issues)
+- [02-02]: Click-time text retrieval for copy button (avoids hydration mismatch)
+- [02-02]: 65ch max-width for prose (optimal reading width)
+- [02-02]: TOC sidebar desktop-only (no value on mobile narrow screens)
 
 ### Phase 1 Summary
 
@@ -78,7 +82,7 @@ Delivered:
 
 ### Phase 2 Progress
 
-**Content & Blog** — In progress (1/? plans)
+**Content & Blog** — In progress (2/? plans)
 
 Delivered so far:
 - Velite MDX content engine with type-safe Post schema
@@ -86,6 +90,11 @@ Delivered so far:
 - Line numbers, copy button, language badge on code blocks
 - Neobrutalist code block styling (3px borders, hard shadows)
 - Sample hello-world.mdx post for testing
+- Blog listing page at /blog with PostCard grid
+- Individual post pages at /blog/[slug] with MDX rendering
+- Table of contents sidebar (desktop)
+- Prose typography system (65ch, 18px, 1.7 line-height)
+- Neobrutalist TagChip components
 
 ### Pending Todos
 
@@ -98,5 +107,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-01
-Stopped at: Completed 02-01-PLAN.md (Velite content engine)
+Stopped at: Completed 02-02-PLAN.md (Blog UI components)
 Resume file: None
