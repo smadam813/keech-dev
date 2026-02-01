@@ -1,5 +1,5 @@
 ---
-status: complete
+status: diagnosed
 phase: 03-projects-about
 source: 03-01-SUMMARY.md, 03-02-SUMMARY.md, 03-03-SUMMARY.md
 started: 2026-02-01T10:00:00Z
@@ -63,7 +63,13 @@ skipped: 1
   reason: "User reported: Inline code renders as full-width block element instead of inline - breaks paragraph flow"
   severity: minor
   test: 3
-  root_cause: ""
-  artifacts: []
-  missing: []
-  debug_session: ""
+  root_cause: "CSS selector [data-rehype-pretty-code-figure] applies block-level styling to both code blocks and inline code because rehype-pretty-code uses the same data attribute for both"
+  artifacts:
+    - path: "src/app/globals.css"
+      issue: "Lines 45-71: Block styles apply to inline code spans"
+    - path: "velite.config.ts"
+      issue: "Lines 67-75: defaultLang.inline enables inline code processing"
+  missing:
+    - "Use figure[data-rehype-pretty-code-figure] for block styles"
+    - "Add span[data-rehype-pretty-code-figure] rules for inline styling"
+  debug_session: ".planning/debug/inline-code-block-styling.md"
