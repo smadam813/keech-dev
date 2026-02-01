@@ -19,7 +19,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${spaceGrotesk.variable} ${inter.variable} min-h-dvh flex flex-col`}>
         <Header />
-        <main className="flex-1 pt-0 md:pt-16 pb-20 md:pb-0">
+        <main className="flex-1 flex flex-col pt-0 md:pt-16 pb-20 md:pb-0">
           {children}
         </main>
         <Footer />
