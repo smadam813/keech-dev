@@ -12,27 +12,27 @@ See: .planning/PROJECT.md (updated 2026-01-31)
 Phase: 3 of 4 (Projects & About)
 Plan: 0 of ? in current phase
 Status: Ready to plan
-Last activity: 2026-02-01 — Phase 2 complete (Content & Blog)
+Last activity: 2026-02-01 — Completed 02-03-PLAN.md (UAT gap closure)
 
 Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 6
-- Average duration: 5.7 min
-- Total execution time: ~34 min
+- Total plans completed: 7
+- Average duration: 5.1 min
+- Total execution time: ~36 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1 | 4 | 18 min | 4.5 min |
-| 2 | 2 | 16 min | 8 min |
+| 2 | 3 | 18 min | 6 min |
 
 **Recent Trend:**
-- Last 3 plans: 01-04 (1 min), 02-01 (4 min), 02-02 (12 min)
-- Trend: Stable (02-02 longer due to checkpoint + fixes)
+- Last 3 plans: 02-01 (4 min), 02-02 (12 min), 02-03 (2 min)
+- Trend: Fast (02-03 simple CSS-only fix)
 
 *Updated after each plan completion*
 
@@ -64,6 +64,7 @@ Recent decisions affecting current work:
 - [02-02]: Click-time text retrieval for copy button (avoids hydration mismatch)
 - [02-02]: 65ch max-width for prose (optimal reading width)
 - [02-02]: TOC sidebar desktop-only (no value on mobile narrow screens)
+- [02-03]: Removed 65ch prose max-width in favor of grid-controlled layout
 
 ### Phase 1 Summary
 
@@ -82,7 +83,7 @@ Delivered:
 
 ### Phase 2 Summary
 
-**Content & Blog** — Complete (2/2 plans)
+**Content & Blog** — Complete (3/3 plans, including UAT gap closure)
 
 Delivered:
 - Velite MDX content engine with type-safe Post schema
@@ -93,8 +94,9 @@ Delivered:
 - Blog listing page at /blog with PostCard grid
 - Individual post pages at /blog/[slug] with MDX rendering
 - Table of contents sidebar (desktop)
-- Prose typography system (65ch, 18px, 1.7 line-height)
+- Prose typography system (18px, 1.7 line-height, grid-controlled width)
 - Neobrutalist TagChip components
+- Expanded layout (max-w-6xl) for better space utilization
 
 ### Pending Todos
 
@@ -107,5 +109,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-01
-Stopped at: Phase 2 complete, ready to plan Phase 3
+Stopped at: Completed 02-03-PLAN.md (UAT gap closure)
 Resume file: None
