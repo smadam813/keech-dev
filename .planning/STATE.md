@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-01-31)
 Phase: 3 of 4 (Projects & About)
 Plan: 3 of 3 in current phase
 Status: Phase complete
-Last activity: 2026-02-01 — Completed 03-03-PLAN.md (About page)
+Last activity: 2026-02-01 — Completed 03-02-PLAN.md (Projects UI)
 
 Progress: [████████░░] 80%
 
@@ -32,7 +32,7 @@ Progress: [████████░░] 80%
 | 3 | 3 | 6 min | 2 min |
 
 **Recent Trend:**
-- Last 3 plans: 03-01 (2 min), 03-02 (2 min), 03-03 (2 min)
+- Last 3 plans: 03-01 (2 min), 03-02 (3 min), 03-03 (2 min)
 - Trend: Fast (phase 3 plans are focused single-task implementations)
 
 *Updated after each plan completion*
@@ -69,6 +69,9 @@ Recent decisions affecting current work:
 - [03-01]: Projects schema mirrors posts pattern for consistency
 - [03-01]: Category as optional enum allows flexibility without requiring categorization
 - [03-01]: Featured boolean enables sorting priority for showcase
+- [03-02]: TechBadge uses 2px border (thinner than cards) for subtlety
+- [03-02]: ProjectCard shows first 4 tech badges with +N overflow indicator
+- [03-02]: Velite Image type uses .src property for image URL
 - [03-03]: Photo placeholder uses bg-muted/30 until real headshot provided
 - [03-03]: Disabled resume button uses <button> element for accessibility
 - [03-03]: Social links as square neobrutalist buttons with icon only
@@ -132,5 +135,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-01
-Stopped at: Completed 03-03-PLAN.md (About page)
+Stopped at: Completed 03-02-PLAN.md (Projects UI)
 Resume file: None
