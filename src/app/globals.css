@@ -27,6 +27,7 @@
 @layer base {
   html {
     @apply font-body bg-background text-foreground antialiased;
+    overflow-y: scroll;
     overscroll-behavior: none;
   }
 
