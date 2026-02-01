@@ -81,11 +81,11 @@ Plans:
   3. Elements animate in as user scrolls
   4. Core Web Vitals pass (LCP < 2.5s, CLS < 0.1)
   5. All pages have proper SEO meta tags (title, description, OG)
-**Plans**: TBD (1-2 plans)
+**Plans**: 2 plans
 
 Plans:
-- [ ] 04-01: TBD
-- [ ] 04-02: TBD
+- [ ] 04-01-PLAN.md — Add CSS animations and hover effects
+- [ ] 04-02-PLAN.md — Add SEO metadata and sitemap/robots.txt
 
 ## Progress
 
@@ -97,7 +97,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 | 1. Foundation & Design | 4/4 | Complete | 2026-01-31 |
 | 2. Content & Blog | 3/3 | Complete | 2026-02-01 |
 | 3. Projects & About | 4/4 | Complete | 2026-02-01 |
-| 4. Polish & Performance | 0/? | Ready | - |
+| 4. Polish & Performance | 0/2 | Ready | - |
 
 ---
 *Roadmap created: 2026-01-31*
