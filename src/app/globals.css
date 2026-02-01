@@ -97,21 +97,6 @@
     border-left-color: var(--color-accent);
   }
 
-  /* Copy button styling (from transformerCopyButton) */
-  [data-rehype-pretty-code-figure] button.rehype-pretty-copy {
-    @apply p-2 rounded;
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
-    opacity: 0;
-    transition: opacity 0.2s ease-in-out;
-    background-color: rgba(0, 0, 0, 0.3);
-  }
-
-  [data-rehype-pretty-code-figure]:hover button.rehype-pretty-copy {
-    opacity: 1;
-  }
-
   /* Inline code (not in code blocks) */
   :not(pre) > code {
     @apply px-1.5 py-0.5 rounded font-mono text-sm;

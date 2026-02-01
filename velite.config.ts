@@ -1,7 +1,6 @@
 import { defineCollection, defineConfig, s } from 'velite'
 import rehypePrettyCode from 'rehype-pretty-code'
 import rehypeSlug from 'rehype-slug'
-import { transformerCopyButton } from '@rehype-pretty/transformers'
 
 const posts = defineCollection({
   name: 'Post',
@@ -48,13 +47,7 @@ export default defineConfig({
           defaultLang: {
             block: 'typescript',
             inline: 'typescript'
-          },
-          transformers: [
-            transformerCopyButton({
-              visibility: 'hover',
-              feedbackDuration: 2500
-            })
-          ]
+          }
         }
       ]
     ]

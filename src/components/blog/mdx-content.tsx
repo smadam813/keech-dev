@@ -2,6 +2,7 @@
 
 import * as runtime from 'react/jsx-runtime'
 import type { MDXComponents } from 'mdx/types'
+import { CodeBlock } from './code-block'
 
 interface MDXContentProps {
   code: string
@@ -13,7 +14,11 @@ const useMDXComponent = (code: string) => {
   return fn({ ...runtime }).default
 }
 
+const defaultComponents: MDXComponents = {
+  pre: CodeBlock
+}
+
 export function MDXContent({ code, components = {} }: MDXContentProps) {
   const Component = useMDXComponent(code)
-  return <Component components={components} />
+  return <Component components={{ ...defaultComponents, ...components }} />
 }
