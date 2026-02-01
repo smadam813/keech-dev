@@ -17,9 +17,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Interactions
 
-- [ ] **INTR-01**: Playful hover effects on interactive elements (shadow shifts, color swaps)
-- [ ] **INTR-02**: Smooth page transitions between routes
-- [ ] **INTR-03**: Scroll-triggered animations for elements entering viewport
+- [x] **INTR-01**: Playful hover effects on interactive elements (shadow shifts, color swaps)
+- [ ] **INTR-02**: Smooth page transitions between routes (deferred - View Transitions API experimental)
+- [x] **INTR-03**: Scroll-triggered animations for elements entering viewport
 
 ### Navigation
 
@@ -57,9 +57,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Technical
 
-- [ ] **TECH-01**: Site deploys successfully to Vercel
-- [ ] **TECH-02**: Site loads fast (Core Web Vitals pass)
-- [ ] **TECH-03**: Pages have proper SEO meta tags
+- [x] **TECH-01**: Site deploys successfully to Vercel
+- [x] **TECH-02**: Site loads fast (Core Web Vitals pass)
+- [x] **TECH-03**: Pages have proper SEO meta tags
 - [x] **TECH-04**: MDX content system works with Velite
 
 ## v2 Requirements
@@ -104,9 +104,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DSGN-03 | Phase 1 | Complete |
 | DSGN-04 | Phase 1 | Complete |
 | DSGN-05 | Phase 1 | Complete |
-| INTR-01 | Phase 4 | Pending |
-| INTR-02 | Phase 4 | Pending |
-| INTR-03 | Phase 4 | Pending |
+| INTR-01 | Phase 4 | Complete |
+| INTR-02 | Phase 4 | Deferred |
+| INTR-03 | Phase 4 | Complete |
 | NAV-01 | Phase 1 | Complete |
 | NAV-02 | Phase 1 | Complete |
 | NAV-03 | Phase 1 | Complete |
@@ -127,8 +127,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ABUT-02 | Phase 3 | Complete |
 | ABUT-03 | Phase 3 | Complete |
 | TECH-01 | Phase 1 | Complete |
-| TECH-02 | Phase 4 | Pending |
-| TECH-03 | Phase 4 | Pending |
+| TECH-02 | Phase 4 | Complete |
+| TECH-03 | Phase 4 | Complete |
 | TECH-04 | Phase 2 | Complete |
 
 **Coverage:**
@@ -138,4 +138,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2025-01-31*
-*Last updated: 2026-02-01 after Phase 3 completion*
+*Last updated: 2026-02-01 after Phase 4 completion (milestone complete)*
