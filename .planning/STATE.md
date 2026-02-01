@@ -12,16 +12,16 @@ See: .planning/PROJECT.md (updated 2026-01-31)
 Phase: 4 of 4 (Polish & Performance)
 Plan: 0 of ? in current phase
 Status: Ready to plan
-Last activity: 2026-02-01 — Completed Phase 3 (Projects & About)
+Last activity: 2026-02-01 — Completed 03-04-PLAN.md (Inline Code Fix - gap closure)
 
 Progress: [████████░░] 80%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 10
-- Average duration: 4.2 min
-- Total execution time: ~42 min
+- Total plans completed: 11
+- Average duration: 4.0 min
+- Total execution time: ~44 min
 
 **By Phase:**
 
@@ -29,10 +29,10 @@ Progress: [████████░░] 80%
 |-------|-------|-------|----------|
 | 1 | 4 | 18 min | 4.5 min |
 | 2 | 3 | 18 min | 6 min |
-| 3 | 3 | 6 min | 2 min |
+| 3 | 4 | 8 min | 2 min |
 
 **Recent Trend:**
-- Last 3 plans: 03-01 (2 min), 03-02 (3 min), 03-03 (2 min)
+- Last 3 plans: 03-02 (3 min), 03-03 (2 min), 03-04 (2 min)
 - Trend: Fast (phase 3 plans are focused single-task implementations)
 
 *Updated after each plan completion*
@@ -75,6 +75,7 @@ Recent decisions affecting current work:
 - [03-03]: Photo placeholder uses bg-muted/30 until real headshot provided
 - [03-03]: Disabled resume button uses <button> element for accessibility
 - [03-03]: Social links as square neobrutalist buttons with icon only
+- [03-04]: Element-qualified selectors (figure[attr] vs span[attr]) to differentiate inline vs block code
 
 ### Phase 1 Summary
 
@@ -110,7 +111,7 @@ Delivered:
 
 ### Phase 3 Summary
 
-**Projects & About** — Complete (3/3 plans)
+**Projects & About** — Complete (4/4 plans, including gap closure)
 
 Delivered:
 - Projects collection in Velite with optional image support
@@ -123,6 +124,7 @@ Delivered:
 - Photo placeholder with neobrutalist frame
 - Social links as neobrutalist buttons (GitHub, LinkedIn)
 - Disabled resume button placeholder for future PDF
+- Inline code CSS fix: element-qualified selectors differentiate span vs figure
 
 ### Pending Todos
 
@@ -135,5 +137,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-01
-Stopped at: Completed 03-02-PLAN.md (Projects UI)
+Stopped at: Completed 03-04-PLAN.md (Inline Code Fix - gap closure)
 Resume file: None
