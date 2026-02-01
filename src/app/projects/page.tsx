@@ -1,9 +1,11 @@
 import { projects } from '@/.velite'
 import { ProjectCard } from '@/components/projects/project-card'
 
-export const metadata = {
-  title: 'Projects | keech.dev',
-  description: 'A showcase of side projects, open source work, and things I\'ve built.'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Projects',
+  description: 'A showcase of software projects, open source contributions, and side projects built by Adam Keech.',
 }
 
 export default function ProjectsPage() {
@@ -24,7 +26,7 @@ export default function ProjectsPage() {
       </header>
 
       {sortedProjects.length > 0 ? (
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-2 scroll-reveal">
           {sortedProjects.map(project => (
             <ProjectCard key={project.slug} project={project} />
           ))}

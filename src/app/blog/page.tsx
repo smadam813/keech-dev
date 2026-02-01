@@ -1,9 +1,11 @@
 import { posts } from '@/.velite'
 import { PostCard } from '@/components/blog/post-card'
 
-export const metadata = {
-  title: 'Blog | keech.dev',
-  description: 'Thoughts on code, creativity, and the cosmic journey of building things.'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Blog',
+  description: 'Technical articles, tutorials, and thoughts on software development, web technologies, and the craft of building things.',
 }
 
 export default function BlogPage() {
@@ -22,7 +24,7 @@ export default function BlogPage() {
       </header>
 
       {publishedPosts.length > 0 ? (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 scroll-reveal">
           {publishedPosts.map(post => (
             <PostCard key={post.slug} post={post} />
           ))}

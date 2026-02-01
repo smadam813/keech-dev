@@ -32,7 +32,8 @@ export function MobileNav() {
               href={item.href}
               className={cn(
                 'flex flex-col items-center justify-center w-16 h-full',
-                'transition-colors',
+                'motion-safe:transition-colors',
+                'hover:text-accent',
                 isActive ? 'text-accent' : 'text-foreground'
               )}
             >
