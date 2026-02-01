@@ -52,7 +52,7 @@ export default async function PostPage({ params }: PostPageProps) {
     : null
 
   return (
-    <article className="container mx-auto max-w-5xl px-6 py-8">
+    <article className="container mx-auto max-w-6xl px-6 py-8">
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_250px] gap-12">
         {/* Main content */}
         <div>

@@ -112,8 +112,6 @@
 
 @layer components {
   .prose {
-    /* Optimal reading width: 50-75 characters */
-    max-width: 65ch;
     /* Body text sizing */
     font-size: 1.125rem;
     line-height: 1.7;
