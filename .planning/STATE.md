@@ -10,27 +10,28 @@ See: .planning/PROJECT.md (updated 2026-01-31)
 ## Current Position
 
 Phase: 2 of 4 (Content & Blog)
-Plan: 0 of ? in current phase
-Status: Ready to plan
-Last activity: 2026-02-01 — Completed 01-04 gap closure (iOS viewport fixes)
+Plan: 1 of ? in current phase
+Status: In progress
+Last activity: 2026-02-01 — Completed 02-01 (Velite content engine)
 
-Progress: [██░░░░░░░░] 25%
+Progress: [███░░░░░░░] 30%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4
-- Average duration: 4.5 min
-- Total execution time: ~18 min
+- Total plans completed: 5
+- Average duration: 4.4 min
+- Total execution time: ~22 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1 | 4 | 18 min | 4.5 min |
+| 2 | 1 | 4 min | 4 min |
 
 **Recent Trend:**
-- Last 3 plans: 01-02 (4 min), 01-03 (8 min), 01-04 (1 min)
+- Last 3 plans: 01-03 (8 min), 01-04 (1 min), 02-01 (4 min)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -55,6 +56,10 @@ Recent decisions affecting current work:
 - [01-04]: Use dvh units instead of vh for iOS dynamic address bar
 - [01-04]: Apply transform-gpu to fixed elements on mobile
 - [01-04]: Use env(safe-area-inset-bottom) for iOS safe area awareness
+- [02-01]: Velite CLI prebuild pattern (not VeliteWebpackPlugin) for Turbopack compatibility
+- [02-01]: github-dark-dimmed theme for syntax highlighting
+- [02-01]: CSS counter approach for line numbers using data attributes
+- [02-01]: Slug required in frontmatter (not auto-derived from filename)
 
 ### Phase 1 Summary
 
@@ -71,6 +76,17 @@ Delivered:
 - Deployed to https://keech-dev.vercel.app
 - iOS viewport fixes: dvh units, transform-gpu, safe-area-inset padding
 
+### Phase 2 Progress
+
+**Content & Blog** — In progress (1/? plans)
+
+Delivered so far:
+- Velite MDX content engine with type-safe Post schema
+- rehype-pretty-code syntax highlighting with github-dark-dimmed theme
+- Line numbers, copy button, language badge on code blocks
+- Neobrutalist code block styling (3px borders, hard shadows)
+- Sample hello-world.mdx post for testing
+
 ### Pending Todos
 
 None yet.
@@ -82,5 +98,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-01
-Stopped at: Completed 01-04 gap closure, ready to plan Phase 2
+Stopped at: Completed 02-01-PLAN.md (Velite content engine)
 Resume file: None
