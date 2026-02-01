@@ -12,7 +12,7 @@ keech.dev transforms from empty project to distinctive personal portfolio throug
 
 - [x] **Phase 1: Foundation & Design** - Neobrutalist design system, home page, navigation
 - [x] **Phase 2: Content & Blog** - Velite MDX engine, blog listing and posts
-- [ ] **Phase 3: Projects & About** - Project showcase, about page, contact section
+- [x] **Phase 3: Projects & About** - Project showcase, about page, contact section
 - [ ] **Phase 4: Polish & Performance** - Animations, interactions, SEO, performance
 
 ## Phase Details
@@ -66,9 +66,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — Add projects collection to Velite content engine
-- [ ] 03-02-PLAN.md — Build projects UI components and pages
-- [ ] 03-03-PLAN.md — Build about page with bio, social links, and resume
+- [x] 03-01-PLAN.md — Add projects collection to Velite content engine
+- [x] 03-02-PLAN.md — Build projects UI components and pages
+- [x] 03-03-PLAN.md — Build about page with bio, social links, and resume
 
 ### Phase 4: Polish & Performance
 **Goal**: Site feels alive with subtle animations and ranks well in search engines
@@ -95,8 +95,8 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 |-------|----------------|--------|-----------|
 | 1. Foundation & Design | 4/4 | Complete | 2026-01-31 |
 | 2. Content & Blog | 3/3 | Complete | 2026-02-01 |
-| 3. Projects & About | 0/3 | Ready | - |
-| 4. Polish & Performance | 0/? | Not started | - |
+| 3. Projects & About | 3/3 | Complete | 2026-02-01 |
+| 4. Polish & Performance | 0/? | Ready | - |
 
 ---
 *Roadmap created: 2026-01-31*

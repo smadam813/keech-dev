@@ -43,17 +43,17 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Projects
 
-- [ ] **PROJ-01**: Projects listing page showing all projects
-- [ ] **PROJ-02**: Individual project detail pages
-- [ ] **PROJ-03**: Project pages show tech stack used
-- [ ] **PROJ-04**: Project pages link to GitHub repos where applicable
-- [ ] **PROJ-05**: Project pages link to live demos where applicable
+- [x] **PROJ-01**: Projects listing page showing all projects
+- [x] **PROJ-02**: Individual project detail pages
+- [x] **PROJ-03**: Project pages show tech stack used
+- [x] **PROJ-04**: Project pages link to GitHub repos where applicable
+- [x] **PROJ-05**: Project pages link to live demos where applicable
 
 ### About & Contact
 
-- [ ] **ABUT-01**: About page with bio/personal information
-- [ ] **ABUT-02**: Social links (GitHub, LinkedIn, etc.)
-- [ ] **ABUT-03**: Downloadable PDF resume
+- [x] **ABUT-01**: About page with bio/personal information
+- [x] **ABUT-02**: Social links (GitHub, LinkedIn, etc.)
+- [x] **ABUT-03**: Downloadable PDF resume
 
 ### Technical
 
@@ -118,14 +118,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BLOG-03 | Phase 2 | Complete |
 | BLOG-04 | Phase 2 | Complete |
 | BLOG-05 | Phase 2 | Complete |
-| PROJ-01 | Phase 3 | Pending |
-| PROJ-02 | Phase 3 | Pending |
-| PROJ-03 | Phase 3 | Pending |
-| PROJ-04 | Phase 3 | Pending |
-| PROJ-05 | Phase 3 | Pending |
-| ABUT-01 | Phase 3 | Pending |
-| ABUT-02 | Phase 3 | Pending |
-| ABUT-03 | Phase 3 | Pending |
+| PROJ-01 | Phase 3 | Complete |
+| PROJ-02 | Phase 3 | Complete |
+| PROJ-03 | Phase 3 | Complete |
+| PROJ-04 | Phase 3 | Complete |
+| PROJ-05 | Phase 3 | Complete |
+| ABUT-01 | Phase 3 | Complete |
+| ABUT-02 | Phase 3 | Complete |
+| ABUT-03 | Phase 3 | Complete |
 | TECH-01 | Phase 1 | Complete |
 | TECH-02 | Phase 4 | Pending |
 | TECH-03 | Phase 4 | Pending |
@@ -138,4 +138,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2025-01-31*
-*Last updated: 2026-02-01 after Phase 2 completion*
+*Last updated: 2026-02-01 after Phase 3 completion*
