@@ -63,12 +63,12 @@ Plans:
   4. About page presents bio and personal information
   5. Social links (GitHub, LinkedIn) are accessible and work
   6. PDF resume can be downloaded
-**Plans**: TBD (1-3 plans)
+**Plans**: 3 plans
 
 Plans:
-- [ ] 03-01: TBD
-- [ ] 03-02: TBD
-- [ ] 03-03: TBD
+- [ ] 03-01-PLAN.md — Add projects collection to Velite content engine
+- [ ] 03-02-PLAN.md — Build projects UI components and pages
+- [ ] 03-03-PLAN.md — Build about page with bio, social links, and resume
 
 ### Phase 4: Polish & Performance
 **Goal**: Site feels alive with subtle animations and ranks well in search engines
@@ -95,7 +95,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 |-------|----------------|--------|-----------|
 | 1. Foundation & Design | 4/4 | Complete | 2026-01-31 |
 | 2. Content & Blog | 3/3 | Complete | 2026-02-01 |
-| 3. Projects & About | 0/? | Ready | - |
+| 3. Projects & About | 0/3 | Ready | - |
 | 4. Polish & Performance | 0/? | Not started | - |
 
 ---
