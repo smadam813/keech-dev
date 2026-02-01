@@ -119,3 +119,119 @@
     border: 1px solid var(--color-foreground);
   }
 }
+
+/* ==========================================================================
+   Prose Styles (Blog Typography)
+   ========================================================================== */
+
+@layer components {
+  .prose {
+    /* Optimal reading width: 50-75 characters */
+    max-width: 65ch;
+    /* Body text sizing */
+    font-size: 1.125rem;
+    line-height: 1.7;
+  }
+
+  /* Headings */
+  .prose h2 {
+    @apply font-display text-2xl font-bold mt-12 mb-4;
+  }
+
+  .prose h3 {
+    @apply font-display text-xl font-bold mt-8 mb-3;
+  }
+
+  .prose h4 {
+    @apply font-display text-lg font-bold mt-6 mb-2;
+  }
+
+  /* Paragraphs */
+  .prose p {
+    @apply mb-6;
+  }
+
+  /* Links */
+  .prose a {
+    @apply text-accent underline underline-offset-2 hover:text-accent-hover transition-colors;
+  }
+
+  /* Lists */
+  .prose ul,
+  .prose ol {
+    @apply mb-6 pl-6;
+  }
+
+  .prose ul {
+    list-style-type: disc;
+  }
+
+  .prose ol {
+    list-style-type: decimal;
+  }
+
+  .prose li {
+    @apply mb-2;
+  }
+
+  /* Nested lists */
+  .prose li > ul,
+  .prose li > ol {
+    @apply mt-2 mb-0;
+  }
+
+  /* Blockquotes */
+  .prose blockquote {
+    @apply border-l-4 border-accent pl-4 italic my-6;
+    color: var(--color-muted);
+  }
+
+  .prose blockquote p:last-child {
+    @apply mb-0;
+  }
+
+  /* Horizontal rule */
+  .prose hr {
+    @apply my-8 border-t-2 border-foreground;
+  }
+
+  /* Images */
+  .prose img {
+    @apply my-6 rounded-lg;
+    border: 3px solid var(--color-foreground);
+    box-shadow: var(--shadow-brutal);
+  }
+
+  /* Tables */
+  .prose table {
+    @apply w-full my-6;
+    border-collapse: collapse;
+  }
+
+  .prose th,
+  .prose td {
+    @apply px-4 py-2 text-left;
+    border: 2px solid var(--color-foreground);
+  }
+
+  .prose th {
+    @apply font-bold;
+    background-color: var(--color-surface);
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 640px) {
+    .prose {
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    .prose h2 {
+      @apply text-xl mt-8 mb-3;
+    }
+
+    .prose h3 {
+      @apply text-lg mt-6 mb-2;
+    }
+  }
+}
