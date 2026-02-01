@@ -13,7 +13,7 @@ export default function BlogPage() {
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
   return (
-    <main className="container mx-auto px-6 py-8">
+    <main className="container mx-auto max-w-6xl px-6 py-8">
       <header className="mb-12">
         <h1 className="font-display text-4xl md:text-5xl font-bold mb-4">Blog</h1>
         <p className="text-muted text-lg max-w-2xl">
