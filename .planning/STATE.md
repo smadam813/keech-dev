@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-31)
 ## Current Position
 
 Phase: 3 of 4 (Projects & About)
-Plan: 0 of ? in current phase
-Status: Ready to plan
-Last activity: 2026-02-01 — Completed 02-03-PLAN.md (UAT gap closure)
+Plan: 1 of 3 in current phase
+Status: In progress
+Last activity: 2026-02-01 — Completed 03-01-PLAN.md (Projects collection)
 
-Progress: [█████░░░░░] 50%
+Progress: [██████░░░░] 60%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 7
-- Average duration: 5.1 min
-- Total execution time: ~36 min
+- Total plans completed: 8
+- Average duration: 4.8 min
+- Total execution time: ~38 min
 
 **By Phase:**
 
@@ -29,10 +29,11 @@ Progress: [█████░░░░░] 50%
 |-------|-------|-------|----------|
 | 1 | 4 | 18 min | 4.5 min |
 | 2 | 3 | 18 min | 6 min |
+| 3 | 1 | 2 min | 2 min |
 
 **Recent Trend:**
-- Last 3 plans: 02-01 (4 min), 02-02 (12 min), 02-03 (2 min)
-- Trend: Fast (02-03 simple CSS-only fix)
+- Last 3 plans: 02-02 (12 min), 02-03 (2 min), 03-01 (2 min)
+- Trend: Fast (straightforward schema/content work)
 
 *Updated after each plan completion*
 
@@ -65,6 +66,9 @@ Recent decisions affecting current work:
 - [02-02]: 65ch max-width for prose (optimal reading width)
 - [02-02]: TOC sidebar desktop-only (no value on mobile narrow screens)
 - [02-03]: Removed 65ch prose max-width in favor of grid-controlled layout
+- [03-01]: Projects schema mirrors posts pattern for consistency
+- [03-01]: Category as optional enum allows flexibility without requiring categorization
+- [03-01]: Featured boolean enables sorting priority for showcase
 
 ### Phase 1 Summary
 
@@ -109,5 +113,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-01
-Stopped at: Completed 02-03-PLAN.md (UAT gap closure)
+Stopped at: Completed 03-01-PLAN.md (Projects collection)
 Resume file: None
