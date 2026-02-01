@@ -19,13 +19,22 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
 
   if (!post) {
     return {
-      title: 'Post Not Found | keech.dev'
+      title: 'Post Not Found'
     }
   }
 
+  const description = post.description || (post.excerpt?.slice(0, 160) ?? '')
+
   return {
-    title: `${post.title} | keech.dev`,
-    description: post.description || post.excerpt
+    title: post.title,
+    description,
+    openGraph: {
+      type: 'article',
+      title: post.title,
+      description,
+      publishedTime: post.date,
+      tags: post.tags,
+    },
   }
 }
 

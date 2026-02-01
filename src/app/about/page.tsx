@@ -2,8 +2,8 @@ import { Metadata } from 'next'
 import { Github, Linkedin, Download } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'About | keech.dev',
-  description: 'Learn about Adam Keech, a software developer passionate about building tools and exploring technology.',
+  title: 'About',
+  description: 'Learn about Adam Keech, a software developer passionate about building tools and exploring technology. Discover his background, interests, and the story behind keech.dev.',
 }
 
 const socialLinks = [

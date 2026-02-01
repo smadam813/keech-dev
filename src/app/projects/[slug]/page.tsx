@@ -21,16 +21,21 @@ export async function generateMetadata({ params }: ProjectPageProps): Promise<Me
 
   if (!project) {
     return {
-      title: 'Project Not Found | keech.dev'
+      title: 'Project Not Found'
     }
   }
 
+  const description = project.description.slice(0, 160)
+
   return {
-    title: `${project.title} | keech.dev`,
-    description: project.description,
-    openGraph: project.image ? {
-      images: [{ url: project.image.src }]
-    } : undefined
+    title: project.title,
+    description,
+    openGraph: {
+      type: 'article',
+      title: project.title,
+      description,
+      ...(project.image && { images: [{ url: project.image.src }] }),
+    },
   }
 }
 
