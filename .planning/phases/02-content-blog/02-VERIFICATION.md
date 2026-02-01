@@ -1,19 +1,31 @@
 ---
 phase: 02-content-blog
-verified: 2026-02-01T05:06:28Z
+verified: 2026-02-01T05:50:18Z
 status: passed
 score: 5/5 must-haves verified
+re_verification:
+  previous_status: passed
+  previous_score: 5/5
+  previous_verified: 2026-02-01T05:06:28Z
+  trigger: plan 02-03 (Blog Layout Width Fix)
+  changes_tested:
+    - "Container expanded from max-w-5xl to max-w-6xl"
+    - "Removed prose max-width: 65ch constraint"
+    - "Header width matched to content width"
+  gaps_closed: []
+  gaps_remaining: []
+  regressions: []
 ---
 
 # Phase 2: Content & Blog Verification Report
 
 **Phase Goal:** Visitors can browse blog posts and read individual articles with syntax-highlighted code
 
-**Verified:** 2026-02-01T05:06:28Z
+**Verified:** 2026-02-01T05:50:18Z
 
 **Status:** PASSED
 
-**Re-verification:** No — initial verification
+**Re-verification:** Yes — after plan 02-03 (Blog Layout Width Fix)
 
 ## Goal Achievement
 
@@ -21,99 +33,115 @@ score: 5/5 must-haves verified
 
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
-| 1 | Blog listing page shows all posts with titles and dates | ✓ VERIFIED | `/blog/page.tsx` filters drafts, sorts by date, displays PostCard components with title, date, excerpt, and reading time |
-| 2 | Individual blog posts render MDX content with proper formatting | ✓ VERIFIED | `/blog/[slug]/page.tsx` imports posts from Velite, uses MDXContent component with CodeBlock wrapper, prose typography applied |
-| 3 | Code blocks display with syntax highlighting | ✓ VERIFIED | velite.config.ts configures rehype-pretty-code with github-dark-dimmed theme, .velite/posts.json contains pre-highlighted code with inline styles |
-| 4 | Posts show reading time and publication date | ✓ VERIFIED | PostCard shows date + reading time, individual post page displays formatted date, reading time, and optional updated date |
-| 5 | Blog typography is comfortable for long-form reading | ✓ VERIFIED | `.prose` class in globals.css: 65ch max-width, 1.125rem font-size, 1.7 line-height, proper heading hierarchy |
+| 1 | Blog listing page shows all posts with titles and dates | ✓ VERIFIED | `/blog/page.tsx` filters drafts, sorts by date, displays PostCard components with title, date, excerpt, and reading time. Container now max-w-6xl for consistency. |
+| 2 | Individual blog posts render MDX content with proper formatting | ✓ VERIFIED | `/blog/[slug]/page.tsx` imports posts from Velite, uses MDXContent component with CodeBlock wrapper, prose typography applied. Container expanded to max-w-6xl. |
+| 3 | Code blocks display with syntax highlighting | ✓ VERIFIED | velite.config.ts configures rehype-pretty-code with github-dark-dimmed theme, .velite/posts.json contains pre-highlighted code with inline styles (verified in actual JSON). |
+| 4 | Posts show reading time and publication date | ✓ VERIFIED | PostCard shows date + reading time, individual post page displays formatted date, reading time, and optional updated date. No changes from plan 02-03. |
+| 5 | Blog typography is comfortable for long-form reading | ✓ VERIFIED | `.prose` class: 1.125rem font-size, 1.7 line-height, proper heading hierarchy. Note: 65ch max-width removed per UAT feedback to utilize more horizontal space. Line length now controlled by grid layout (~806px on desktop = wider than traditional 65ch, but intentional per user preference for "better space utilization"). |
 
 **Score:** 5/5 truths verified
 
+### Re-verification Analysis
+
+**Previous verification:** 2026-02-01T05:06:28Z (status: passed, score: 5/5)
+
+**Changes from plan 02-03:**
+1. Blog post page container: `max-w-5xl` → `max-w-6xl` (1024px → 1152px)
+2. Header container: `max-w-5xl` → `max-w-6xl` (alignment with content)
+3. Prose: Removed `max-width: 65ch` constraint
+4. Blog listing page: Also uses `max-w-6xl` for consistency
+
+**Impact assessment:**
+
+✓ **No regressions detected**
+- All 5 truths remain verified
+- All artifacts remain substantive and wired
+- All key links remain functional
+
+**Intentional changes (by design):**
+- Truth #5 (Typography): Line length constraint changed from 65ch (~585px) to grid-controlled (~806px on desktop). This was the **goal** of plan 02-03 per UAT feedback: "utilize more of the available real estate" and align TOC with nav edge. Trade-off: wider lines vs. maximized horizontal space. User preference documented in 02-UAT.md.
+
+**Regression check results:**
+- Blog listing: ✓ Still shows all posts with cards
+- Individual posts: ✓ Still render MDX with formatting
+- Code blocks: ✓ Still have syntax highlighting (verified in .velite/posts.json)
+- Metadata: ✓ Date and reading time still display
+- Wiring: ✓ All imports and component usage intact
+
 ### Required Artifacts
 
-#### Plan 01 Artifacts (Velite Content Engine)
+All artifacts from initial verification remain verified. Plan 02-03 only modified existing files (no new artifacts created).
+
+#### Modified Artifacts (Plan 02-03)
+
+| Artifact | Change | Status | Details |
+|----------|--------|--------|---------|
+| `src/app/blog/[slug]/page.tsx` | Line 55: max-w-5xl → max-w-6xl | ✓ VERIFIED | 95 lines, container expanded, all other functionality intact |
+| `src/components/layout/header.tsx` | Line 13: max-w-5xl → max-w-6xl | ✓ VERIFIED | 32 lines, header alignment maintained |
+| `src/app/globals.css` | Removed max-width: 65ch from .prose | ✓ VERIFIED | 222 lines, prose styles remain (font-size, line-height, heading hierarchy) |
+
+#### Unchanged Artifacts (Regression Check)
 
 | Artifact | Expected | Status | Details |
 |----------|----------|--------|---------|
-| `velite.config.ts` | Post collection schema with toc, metadata, excerpt, mdx | ✓ VERIFIED | 55 lines, defines Post collection with all required fields, rehypePrettyCode + rehypeSlug configured |
-| `content/posts/hello-world.mdx` | Sample blog post with code block | ✓ VERIFIED | 32 lines, has frontmatter (title, slug, date, description, tags), contains TypeScript code block with showLineNumbers |
-| `.velite/index.js` | Generated content exports | ✓ VERIFIED | 3 lines, exports posts from posts.json as JSON import |
-| `.velite/index.d.ts` | TypeScript type definitions | ✓ VERIFIED | 9 lines, exports Post type and posts array declaration |
-| `.velite/posts.json` | Compiled post data | ✓ VERIFIED | 32 lines (4014 bytes), contains 1 post with toc, metadata (readingTime: 1), excerpt, compiled MDX body with syntax-highlighted code |
-
-#### Plan 02 Artifacts (Blog UI Components)
-
-| Artifact | Expected | Status | Details |
-|----------|----------|--------|---------|
-| `src/app/blog/page.tsx` | Blog listing page | ✓ VERIFIED | 36 lines, imports posts from @/.velite, filters drafts, sorts by date, maps to PostCard components |
-| `src/app/blog/[slug]/page.tsx` | Individual post page with TOC | ✓ VERIFIED | 96 lines, generateStaticParams implemented, MDXContent rendering with post.body, TableOfContents with post.toc, generateMetadata for SEO |
-| `src/components/blog/mdx-content.tsx` | Client-side MDX renderer | ✓ VERIFIED | 25 lines, 'use client', useMDXComponent hook, passes CodeBlock as pre component |
-| `src/components/blog/post-card.tsx` | Post card for listing | ✓ VERIFIED | 59 lines, Link wrapper, neobrutalist styling (border-[3px], shadow-brutal), displays title, date, reading time, excerpt, tags |
-| `src/components/blog/toc.tsx` | Table of contents component | ✓ VERIFIED | 43 lines, sticky positioning, recursive TocList for nested headings, returns null when entries empty (valid guard) |
-| `src/components/blog/tag-chip.tsx` | Neobrutalist tag chip | ✓ VERIFIED | 29 lines, border-brutal styling, hover effects, uses cn() utility |
-| `src/components/blog/code-block.tsx` | Code block wrapper with copy button | ✓ VERIFIED | 28 lines, 'use client', wraps pre elements, provides getText callback to CopyButton |
-| `src/components/blog/copy-button.tsx` | Copy-to-clipboard button | ✓ VERIFIED | 39 lines, 'use client', uses navigator.clipboard API, visual feedback with Check/Copy icons, opacity transition on hover |
+| `velite.config.ts` | Post schema with rehype plugins | ✓ VERIFIED | 56 lines, no changes, syntax highlighting config intact |
+| `content/posts/hello-world.mdx` | Sample post with code block | ✓ VERIFIED | 32 lines, frontmatter and TypeScript code block intact |
+| `.velite/posts.json` | Compiled post data | ✓ VERIFIED | 4014 bytes, syntax-highlighted code with inline styles confirmed |
+| `src/app/blog/page.tsx` | Blog listing page | ✓ VERIFIED | 36 lines, uses max-w-6xl for consistency (good!) |
+| `src/components/blog/mdx-content.tsx` | MDX renderer | ✓ VERIFIED | 24 lines, no changes |
+| `src/components/blog/post-card.tsx` | Post card component | ✓ VERIFIED | 58 lines, no changes |
+| `src/components/blog/toc.tsx` | Table of contents | ✓ VERIFIED | 42 lines, no changes |
+| `src/components/blog/tag-chip.tsx` | Tag chip component | ✓ VERIFIED | 28 lines, no changes |
+| `src/components/blog/code-block.tsx` | Code block wrapper | ✓ VERIFIED | 27 lines, no changes |
+| `src/components/blog/copy-button.tsx` | Copy button | ✓ VERIFIED | 38 lines, no changes |
 
 ### Key Link Verification
 
+All key links from initial verification remain wired. Regression check on critical paths:
+
 | From | To | Via | Status | Details |
 |------|-----|-----|--------|---------|
-| velite.config.ts | rehype-pretty-code | mdx.rehypePlugins | ✓ WIRED | rehypePrettyCode imported and configured with github-dark-dimmed theme in plugins array |
-| src/app/blog/page.tsx | @/.velite | import posts | ✓ WIRED | Direct import on line 1, used in filter/sort/map chain |
-| src/app/blog/[slug]/page.tsx | @/.velite | import posts | ✓ WIRED | Direct import on line 1, used in generateStaticParams and page component |
-| src/app/blog/[slug]/page.tsx | MDXContent | component usage | ✓ WIRED | Imported line 3, rendered with post.body on line 84 |
-| src/app/blog/[slug]/page.tsx | TableOfContents | component usage | ✓ WIRED | Imported line 4, rendered with post.toc on line 90 |
-| src/components/blog/mdx-content.tsx | CodeBlock | components prop | ✓ WIRED | Imported line 5, passed as pre: CodeBlock in defaultComponents object |
-| src/components/blog/code-block.tsx | CopyButton | component usage | ✓ WIRED | Imported line 4, rendered with getText callback on line 24 |
-| src/components/blog/post-card.tsx | TagChip | component usage | ✓ WIRED | Imported line 2, mapped over post.tags on line 51 |
-| Next.js build | Velite CLI | package.json scripts | ✓ WIRED | dev script runs "velite --watch &", build script runs "velite &&", avoiding VeliteWebpackPlugin for Turbopack compatibility |
+| velite.config.ts | rehype-pretty-code | mdx.rehypePlugins | ✓ WIRED | Lines 42-52, github-dark-dimmed theme configured |
+| src/app/blog/page.tsx | @/.velite | import posts | ✓ WIRED | Line 1, used in filter/sort/map chain |
+| src/app/blog/[slug]/page.tsx | @/.velite | import posts | ✓ WIRED | Line 1, used in generateStaticParams and page component |
+| src/app/blog/[slug]/page.tsx | MDXContent | component usage | ✓ WIRED | Line 3 import, line 84 usage with post.body |
+| src/app/blog/[slug]/page.tsx | TableOfContents | component usage | ✓ WIRED | Line 4 import, line 90 usage with post.toc |
+| src/components/blog/mdx-content.tsx | CodeBlock | components prop | ✓ WIRED | CodeBlock passed as pre component |
+| src/components/blog/code-block.tsx | CopyButton | component usage | ✓ WIRED | CopyButton rendered with getText callback |
+| src/components/blog/post-card.tsx | TagChip | component usage | ✓ WIRED | TagChip mapped over post.tags |
+| Next.js build | Velite CLI | package.json scripts | ✓ WIRED | dev script runs velite --watch, build runs velite && |
 
 ### Requirements Coverage
 
 | Requirement | Status | Supporting Truths |
 |-------------|--------|-------------------|
-| BLOG-01: Blog listing page showing all posts | ✓ SATISFIED | Truth #1 - Blog listing page verified |
-| BLOG-02: Individual blog post pages rendered from MDX | ✓ SATISFIED | Truth #2 - Individual posts render MDX |
-| BLOG-03: Code blocks have syntax highlighting | ✓ SATISFIED | Truth #3 - Syntax highlighting verified |
-| BLOG-04: Posts have readable typography and layout | ✓ SATISFIED | Truth #5 - Typography verified (65ch, 1.7 line-height) |
-| BLOG-05: Posts display date and reading time | ✓ SATISFIED | Truth #4 - Date and reading time verified |
+| BLOG-01: Blog listing page showing all posts | ✓ SATISFIED | Truth #1 - Blog listing verified, now with max-w-6xl |
+| BLOG-02: Individual blog post pages rendered from MDX | ✓ SATISFIED | Truth #2 - Individual posts render MDX with expanded layout |
+| BLOG-03: Code blocks have syntax highlighting | ✓ SATISFIED | Truth #3 - Syntax highlighting verified in compiled JSON |
+| BLOG-04: Posts have readable typography and layout | ✓ SATISFIED | Truth #5 - Typography maintained (wider by design per UAT) |
+| BLOG-05: Posts display date and reading time | ✓ SATISFIED | Truth #4 - Date and reading time unchanged |
 
 ### Anti-Patterns Found
 
-**None blocking.** All files are substantive implementations.
+**None.** Re-verification scan of modified files:
 
-**Notable patterns (non-blocking):**
+```bash
+# Checked modified files for stubs/TODOs
+grep -n "TODO\|FIXME\|placeholder" src/app/blog/[slug]/page.tsx src/app/globals.css
+# Result: No anti-patterns found
 
-- `src/components/blog/toc.tsx:13` - `return null` when entries are empty. This is a **valid guard clause**, not a stub.
-- No TODO/FIXME comments found
-- No placeholder content found
-- No empty handler stubs found
-- All components have proper exports and implementations
+# Checked for empty returns
+grep -n "return null\|return {}" src/app/blog/[slug]/page.tsx
+# Result: No empty stubs
+```
 
-### Code Quality Observations
-
-**Strengths:**
-
-1. **Type safety:** All Velite data is typed via generated `.velite/index.d.ts`
-2. **Separation of concerns:** Content engine (Plan 01) cleanly separated from UI (Plan 02)
-3. **Component composition:** CodeBlock wraps CopyButton, MDXContent configures components, good React patterns
-4. **Accessibility:** ARIA labels on copy button, semantic HTML (article, time, nav)
-5. **Responsive design:** Mobile-first with lg:grid-cols-[1fr_250px] for TOC sidebar
-6. **Performance:** Static generation via generateStaticParams, no client-side data fetching
-7. **Design consistency:** All components use neobrutalist design tokens (border-[3px], shadow-brutal)
-
-**Architecture decisions validated:**
-
-- Velite CLI prebuild pattern works correctly with Turbopack (no webpack plugin needed)
-- Data attribute styling for code blocks (`[data-rehype-pretty-code-*]`) avoids class conflicts
-- CSS counter approach for line numbers is reliable
-- React component for copy button (instead of shiki transformer) avoids SSR hydration issues
+All modified files remain substantive implementations with no degradation.
 
 ## Summary
 
 ### Phase Goal Achievement: VERIFIED ✓
 
-All 5 success criteria are met:
+All 5 success criteria remain met after plan 02-03 layout changes:
 
 1. ✓ Blog listing page shows all posts with titles and dates
 2. ✓ Individual blog posts render MDX content with proper formatting
@@ -121,57 +149,63 @@ All 5 success criteria are met:
 4. ✓ Posts show reading time and publication date
 5. ✓ Blog typography is comfortable for long-form reading
 
-### Artifact Verification
+### Re-verification Summary
 
-- **Plan 01 (Content Engine):** 5/5 artifacts verified (velite.config.ts, sample post, generated .velite files)
-- **Plan 02 (Blog UI):** 8/8 artifacts verified (pages, components, styles)
+**Trigger:** Plan 02-03 (Blog Layout Width Fix) — gap closure from UAT test #6
+
+**Changes made:**
+- Container width expanded from 1024px to 1152px
+- Prose max-width constraint removed for better horizontal space utilization
+- Header width synchronized with content width for visual alignment
+
+**Verification results:**
+- **0 gaps closed** (no previous gaps)
+- **0 gaps remaining**
+- **0 regressions detected**
+- **All 13 artifacts verified** (3 modified, 10 unchanged)
+- **All 9 key links wired**
+- **All 5 requirements satisfied**
+
+**Design decisions:**
+- Truth #5 (Typography) intentionally changed: removed 65ch constraint per user feedback
+- Line length now grid-controlled (~806px on desktop vs. 585px previously)
+- Trade-off accepted: wider lines vs. maximized horizontal space and TOC alignment
+- User preference documented in 02-UAT.md test #6
+
+**Quality assessment:**
+- ✓ No blocking issues
+- ✓ No stub patterns detected
+- ✓ No anti-patterns introduced
+- ✓ All wiring intact
+- ✓ Type safety maintained
+- ✓ Static generation working (generateStaticParams verified)
+- ✓ Syntax highlighting functioning (.velite/posts.json confirmed)
+
+### Artifact Status
+
+- **Plan 01 (Content Engine):** 5/5 artifacts verified (no changes)
+- **Plan 02 (Blog UI):** 8/8 artifacts verified (3 modified intentionally)
+- **Plan 03 (Layout Fix):** 3 files modified, all verified
 - **Total:** 13/13 artifacts VERIFIED
 
-### Wiring Verification
+### Conclusion
 
-- **Critical paths:** 9/9 key links WIRED
-- **Data flow:** Velite → .velite/posts.json → @/.velite import → Blog pages ✓
-- **Component tree:** MDXContent → CodeBlock → CopyButton ✓
-- **Build pipeline:** Velite CLI prebuild → Next.js build ✓
+**Phase 2 goal remains ACHIEVED** after layout width expansion.
 
-### Requirements Coverage
+The blog listing and individual post pages now use a wider container (max-w-6xl = 1152px) with the header synchronized to match. The prose typography constraint was removed to allow content to expand and utilize available horizontal space, addressing UAT feedback about unused real estate. All core functionality remains intact:
 
-- **5/5 Phase 2 requirements SATISFIED** (BLOG-01 through BLOG-05)
+- Blog listing displays posts with neobrutalist cards
+- Individual posts render MDX content with proper formatting
+- Code blocks show syntax highlighting with copy buttons
+- Reading time and dates display correctly
+- Table of contents sidebar works on desktop
 
-### Quality Assessment
+The layout changes were cosmetic improvements that maintain all functional requirements while providing a more spacious reading experience aligned with user preferences.
 
-- **No blocking issues** found
-- **No stub patterns** detected
-- **All components substantive** with proper TypeScript types
-- **Design system consistency** maintained (neobrutalist aesthetic)
-- **Accessibility** considered (ARIA labels, semantic HTML)
-- **Performance** optimized (static generation, no unnecessary client components)
-
-### Deviations from Plan (Auto-Fixed)
-
-Both plans had minor blocking issues that were auto-fixed during execution:
-
-**Plan 01:**
-1. Velite top-level await incompatible → Fixed with CLI prebuild pattern
-2. Velite slug field required in frontmatter → Fixed by adding explicit slug
-
-**Plan 02:**
-1. Copy button SSR hydration mismatch → Fixed with React component
-2. Copy button text extraction failed → Fixed with click-time DOM access
-
-All deviations were necessary for correct functionality and documented in SUMMARYs.
-
-## Conclusion
-
-**Phase 2 goal is ACHIEVED.**
-
-Visitors can browse blog posts on `/blog` with a responsive grid of neobrutalist cards showing titles, dates, excerpts, and tags. Clicking a post navigates to `/blog/[slug]` where the full MDX content renders with comfortable typography (65ch width, 1.7 line-height). Code blocks display with syntax highlighting (github-dark-dimmed theme), line numbers, and a hover-activated copy button. A sticky table of contents aids navigation on desktop. All components follow the neobrutalist design system with bold borders, hard shadows, and responsive layouts.
-
-The content engine (Velite) and UI layer are properly wired, type-safe, and production-ready. The implementation matches the architectural vision from RESEARCH.md and adheres to the design system established in Phase 1.
-
-**Ready to proceed to Phase 3 (Projects & About) or continue with additional Phase 2 work (RSS feed, additional posts).**
+**Phase 2 is complete and production-ready. Ready to proceed to Phase 3 (Projects & About).**
 
 ---
 
-*Verified: 2026-02-01T05:06:28Z*
-*Verifier: Claude (gsd-verifier)*
+*Verified: 2026-02-01T05:50:18Z*  
+*Verifier: Claude (gsd-verifier)*  
+*Re-verification after: plan 02-03 (Blog Layout Width Fix)*

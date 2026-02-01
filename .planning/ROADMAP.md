@@ -45,11 +45,12 @@ Plans:
   3. Code blocks display with syntax highlighting
   4. Posts show reading time and publication date
   5. Blog typography is comfortable for long-form reading
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 Plans:
 - [x] 02-01-PLAN.md — Set up Velite MDX content engine with syntax highlighting
 - [x] 02-02-PLAN.md — Build blog UI components and pages
+- [x] 02-03-PLAN.md — Blog layout width fix (gap closure)
 
 ### Phase 3: Projects & About
 **Goal**: Visitors can explore project portfolio and learn about the site owner
@@ -93,7 +94,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Design | 4/4 | Complete | 2026-01-31 |
-| 2. Content & Blog | 2/2 | Complete | 2026-02-01 |
+| 2. Content & Blog | 3/3 | Complete | 2026-02-01 |
 | 3. Projects & About | 0/? | Ready | - |
 | 4. Polish & Performance | 0/? | Not started | - |
 
