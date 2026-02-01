@@ -12,25 +12,25 @@ See: .planning/PROJECT.md (updated 2026-01-31)
 Phase: 2 of 4 (Content & Blog)
 Plan: 0 of ? in current phase
 Status: Ready to plan
-Last activity: 2026-01-31 — Phase 1 complete
+Last activity: 2026-02-01 — Completed 01-04 gap closure (iOS viewport fixes)
 
 Progress: [██░░░░░░░░] 25%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
-- Average duration: 5.7 min
-- Total execution time: ~17 min
+- Total plans completed: 4
+- Average duration: 4.5 min
+- Total execution time: ~18 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 1 | 3 | 17 min | 5.7 min |
+| 1 | 4 | 18 min | 4.5 min |
 
 **Recent Trend:**
-- Last 3 plans: 01-01 (5 min), 01-02 (4 min), 01-03 (8 min)
+- Last 3 plans: 01-02 (4 min), 01-03 (8 min), 01-04 (1 min)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -52,10 +52,13 @@ Recent decisions affecting current work:
 - [01-02]: Content padding offset: pt-0 md:pt-16 pb-20 md:pb-0 to avoid fixed nav overlap
 - [01-03]: Minimal hero design — just the name, no tagline or buttons
 - [01-03]: Footer needs pb-24 on mobile to clear fixed nav bar
+- [01-04]: Use dvh units instead of vh for iOS dynamic address bar
+- [01-04]: Apply transform-gpu to fixed elements on mobile
+- [01-04]: Use env(safe-area-inset-bottom) for iOS safe area awareness
 
 ### Phase 1 Summary
 
-**Foundation & Design** — Complete (3/3 plans)
+**Foundation & Design** — Complete (4/4 plans, including gap closure)
 
 Delivered:
 - Next.js 16.1.6 with Tailwind v4 CSS-first theming
@@ -66,6 +69,7 @@ Delivered:
 - Bold "keech.dev" home page hero with responsive scaling
 - Placeholder pages for Blog, Projects, About
 - Deployed to https://keech-dev.vercel.app
+- iOS viewport fixes: dvh units, transform-gpu, safe-area-inset padding
 
 ### Pending Todos
 
@@ -77,6 +81,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-31
-Stopped at: Phase 1 complete, ready to plan Phase 2
+Last session: 2026-02-01
+Stopped at: Completed 01-04 gap closure, ready to plan Phase 2
 Resume file: None

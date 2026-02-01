@@ -27,12 +27,13 @@ keech.dev transforms from empty project to distinctive personal portfolio throug
   3. Site deploys successfully to Vercel at keech.dev
   4. All text is readable against backgrounds (WCAG AA contrast)
   5. Layout responds correctly on mobile, tablet, and desktop
-**Plans**: 3 plans
+**Plans**: 4 plans
 
 Plans:
 - [x] 01-01-PLAN.md — Initialize Next.js 15 + Tailwind v4 design system
 - [x] 01-02-PLAN.md — Create navigation shell (header, mobile nav, footer)
 - [x] 01-03-PLAN.md — Build home page hero, placeholders, deploy to Vercel
+- [x] 01-04-PLAN.md — Fix iOS viewport and fixed positioning issues (gap closure)
 
 ### Phase 2: Content & Blog
 **Goal**: Visitors can browse blog posts and read individual articles with syntax-highlighted code
@@ -87,11 +88,11 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Design | 3/3 | Complete | 2026-01-31 |
+| 1. Foundation & Design | 4/4 | Complete | 2026-01-31 |
 | 2. Content & Blog | 0/? | Not started | - |
 | 3. Projects & About | 0/? | Not started | - |
 | 4. Polish & Performance | 0/? | Not started | - |
