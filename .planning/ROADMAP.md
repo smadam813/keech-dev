@@ -11,7 +11,7 @@ keech.dev transforms from empty project to distinctive personal portfolio throug
 - Decimal phases (e.g., 2.1): Urgent insertions if needed
 
 - [x] **Phase 1: Foundation & Design** - Neobrutalist design system, home page, navigation
-- [ ] **Phase 2: Content & Blog** - Velite MDX engine, blog listing and posts
+- [x] **Phase 2: Content & Blog** - Velite MDX engine, blog listing and posts
 - [ ] **Phase 3: Projects & About** - Project showcase, about page, contact section
 - [ ] **Phase 4: Polish & Performance** - Animations, interactions, SEO, performance
 
@@ -48,8 +48,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Set up Velite MDX content engine with syntax highlighting
-- [ ] 02-02-PLAN.md — Build blog UI components and pages
+- [x] 02-01-PLAN.md — Set up Velite MDX content engine with syntax highlighting
+- [x] 02-02-PLAN.md — Build blog UI components and pages
 
 ### Phase 3: Projects & About
 **Goal**: Visitors can explore project portfolio and learn about the site owner
@@ -93,8 +93,8 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Design | 4/4 | Complete | 2026-01-31 |
-| 2. Content & Blog | 0/2 | Ready | - |
-| 3. Projects & About | 0/? | Not started | - |
+| 2. Content & Blog | 2/2 | Complete | 2026-02-01 |
+| 3. Projects & About | 0/? | Ready | - |
 | 4. Polish & Performance | 0/? | Not started | - |
 
 ---

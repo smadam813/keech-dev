@@ -35,11 +35,11 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Blog
 
-- [ ] **BLOG-01**: Blog listing page showing all posts
-- [ ] **BLOG-02**: Individual blog post pages rendered from MDX
-- [ ] **BLOG-03**: Code blocks have syntax highlighting
-- [ ] **BLOG-04**: Posts have readable typography and layout
-- [ ] **BLOG-05**: Posts display date and reading time
+- [x] **BLOG-01**: Blog listing page showing all posts
+- [x] **BLOG-02**: Individual blog post pages rendered from MDX
+- [x] **BLOG-03**: Code blocks have syntax highlighting
+- [x] **BLOG-04**: Posts have readable typography and layout
+- [x] **BLOG-05**: Posts display date and reading time
 
 ### Projects
 
@@ -60,7 +60,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **TECH-01**: Site deploys successfully to Vercel
 - [ ] **TECH-02**: Site loads fast (Core Web Vitals pass)
 - [ ] **TECH-03**: Pages have proper SEO meta tags
-- [ ] **TECH-04**: MDX content system works with Velite
+- [x] **TECH-04**: MDX content system works with Velite
 
 ## v2 Requirements
 
@@ -113,11 +113,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | HOME-01 | Phase 1 | Complete |
 | HOME-02 | Phase 1 | Complete |
 | HOME-03 | Phase 1 | Complete |
-| BLOG-01 | Phase 2 | Pending |
-| BLOG-02 | Phase 2 | Pending |
-| BLOG-03 | Phase 2 | Pending |
-| BLOG-04 | Phase 2 | Pending |
-| BLOG-05 | Phase 2 | Pending |
+| BLOG-01 | Phase 2 | Complete |
+| BLOG-02 | Phase 2 | Complete |
+| BLOG-03 | Phase 2 | Complete |
+| BLOG-04 | Phase 2 | Complete |
+| BLOG-05 | Phase 2 | Complete |
 | PROJ-01 | Phase 3 | Pending |
 | PROJ-02 | Phase 3 | Pending |
 | PROJ-03 | Phase 3 | Pending |
@@ -129,7 +129,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TECH-01 | Phase 1 | Complete |
 | TECH-02 | Phase 4 | Pending |
 | TECH-03 | Phase 4 | Pending |
-| TECH-04 | Phase 2 | Pending |
+| TECH-04 | Phase 2 | Complete |
 
 **Coverage:**
 - v1 requirements: 31 total
@@ -138,4 +138,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2025-01-31*
-*Last updated: 2026-01-31 after Phase 1 completion*
+*Last updated: 2026-02-01 after Phase 2 completion*

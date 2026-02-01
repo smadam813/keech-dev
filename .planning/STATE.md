@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-01-31)
 
 **Core value:** A distinctive online presence that feels like stepping into a cosmic, Norse-touched world — memorable enough that visitors remember the site itself, not just the content.
-**Current focus:** Phase 2 - Content & Blog
+**Current focus:** Phase 3 - Projects & About
 
 ## Current Position
 
-Phase: 2 of 4 (Content & Blog)
-Plan: 2 of ? in current phase
-Status: In progress
-Last activity: 2026-02-01 — Completed 02-02 (Blog UI components)
+Phase: 3 of 4 (Projects & About)
+Plan: 0 of ? in current phase
+Status: Ready to plan
+Last activity: 2026-02-01 — Phase 2 complete (Content & Blog)
 
-Progress: [████░░░░░░] 40%
+Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
@@ -80,11 +80,11 @@ Delivered:
 - Deployed to https://keech-dev.vercel.app
 - iOS viewport fixes: dvh units, transform-gpu, safe-area-inset padding
 
-### Phase 2 Progress
+### Phase 2 Summary
 
-**Content & Blog** — In progress (2/? plans)
+**Content & Blog** — Complete (2/2 plans)
 
-Delivered so far:
+Delivered:
 - Velite MDX content engine with type-safe Post schema
 - rehype-pretty-code syntax highlighting with github-dark-dimmed theme
 - Line numbers, copy button, language badge on code blocks
@@ -107,5 +107,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-01
-Stopped at: Completed 02-02-PLAN.md (Blog UI components)
+Stopped at: Phase 2 complete, ready to plan Phase 3
 Resume file: None
