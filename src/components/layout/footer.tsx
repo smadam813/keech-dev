@@ -8,7 +8,9 @@ const socialLinks = [
 
 export function Footer() {
   return (
-    <footer className="bg-foreground text-background pt-8 pb-24 md:py-8 mt-auto">
+    <footer
+      className="bg-foreground text-background pt-8 pb-[calc(6rem+env(safe-area-inset-bottom))] md:py-8 mt-auto"
+    >
       <div className="max-w-5xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
         <p className="font-display text-sm">
           {new Date().getFullYear()} keech.dev

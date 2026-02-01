@@ -17,7 +17,7 @@ export function MobileNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background border-t-[3px] border-foreground"
+      className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background border-t-[3px] border-foreground transform-gpu"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <div className="flex justify-around items-center h-16">
