@@ -17,6 +17,9 @@
   /* Border widths */
   --border-brutal: 3px;
   --border-brutal-lg: 4px;
+
+  /* Animations */
+  --animate-fade-in-up: fadeInUp 0.5s ease-out forwards;
 }
 
 @theme inline {
@@ -24,13 +27,250 @@
   --font-body: var(--font-body);
 }
 
+/* ==========================================================================
+   Keyframes
+   ========================================================================== */
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @layer base {
   html {
     @apply font-body bg-background text-foreground antialiased;
+    overflow-y: scroll;
     overscroll-behavior: none;
   }
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-display;
+  }
+}
+
+/* ==========================================================================
+   Animation Utilities
+   ========================================================================== */
+
+@layer components {
+  /* Intersection Observer triggered animation */
+  .animate-fade-in-up {
+    animation: fadeInUp 0.5s ease-out forwards;
+  }
+
+  /* Immediate on-load animation for above-fold content */
+  .animate-on-load {
+    animation: fadeInUp 0.6s ease-out forwards;
+  }
+
+  /* Respect user motion preferences */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-fade-in-up,
+    .animate-on-load {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
+
+    .motion-reduce-safe {
+      transition: none !important;
+    }
+  }
+}
+
+/* ==========================================================================
+   Code Block Styles (rehype-pretty-code)
+   ========================================================================== */
+
+@layer components {
+  /* Code block container - neobrutalist styling */
+  figure[data-rehype-pretty-code-figure] {
+    @apply my-6 overflow-hidden rounded-lg;
+    border: 3px solid var(--color-foreground);
+    box-shadow: var(--shadow-brutal);
+    position: relative;
+  }
+
+  /* Language badge / title bar */
+  [data-rehype-pretty-code-title] {
+    @apply px-4 py-2 font-mono text-sm font-bold;
+    background-color: var(--color-foreground);
+    color: var(--color-background);
+  }
+
+  /* Pre element inside figure */
+  figure[data-rehype-pretty-code-figure] pre {
+    @apply overflow-x-auto py-4;
+    margin: 0;
+  }
+
+  /* Code element - grid display for line alignment */
+  figure[data-rehype-pretty-code-figure] code {
+    display: grid;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: 0.875rem;
+    line-height: 1.7;
+  }
+
+  /* Line numbers - CSS counter approach */
+  code[data-line-numbers] {
+    counter-reset: line;
+  }
+
+  code[data-line-numbers] > [data-line]::before {
+    counter-increment: line;
+    content: counter(line);
+    display: inline-block;
+    width: 2rem;
+    margin-right: 1rem;
+    text-align: right;
+    color: var(--color-muted);
+    opacity: 0.5;
+  }
+
+  /* Individual lines */
+  [data-line] {
+    @apply px-4;
+    border-left: 2px solid transparent;
+  }
+
+  /* Highlighted lines */
+  [data-highlighted-line] {
+    background-color: rgba(45, 139, 139, 0.15);
+    border-left-color: var(--color-accent);
+  }
+
+  /* Inline code (not in code blocks) */
+  :not(pre) > code {
+    @apply px-1.5 py-0.5 rounded font-mono text-sm;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-foreground);
+  }
+
+  /* Inline code processed by rehype-pretty-code */
+  span[data-rehype-pretty-code-figure] code {
+    @apply px-1.5 py-0.5 rounded font-mono text-sm;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-foreground);
+  }
+}
+
+/* ==========================================================================
+   Prose Styles (Blog Typography)
+   ========================================================================== */
+
+@layer components {
+  .prose {
+    /* Body text sizing */
+    font-size: 1.125rem;
+    line-height: 1.7;
+  }
+
+  /* Headings */
+  .prose h2 {
+    @apply font-display text-2xl font-bold mt-12 mb-4;
+  }
+
+  .prose h3 {
+    @apply font-display text-xl font-bold mt-8 mb-3;
+  }
+
+  .prose h4 {
+    @apply font-display text-lg font-bold mt-6 mb-2;
+  }
+
+  /* Paragraphs */
+  .prose p {
+    @apply mb-6;
+  }
+
+  /* Links */
+  .prose a {
+    @apply text-accent underline underline-offset-2 hover:text-accent-hover transition-colors;
+  }
+
+  /* Lists */
+  .prose ul,
+  .prose ol {
+    @apply mb-6 pl-6;
+  }
+
+  .prose ul {
+    list-style-type: disc;
+  }
+
+  .prose ol {
+    list-style-type: decimal;
+  }
+
+  .prose li {
+    @apply mb-2;
+  }
+
+  /* Nested lists */
+  .prose li > ul,
+  .prose li > ol {
+    @apply mt-2 mb-0;
+  }
+
+  /* Blockquotes */
+  .prose blockquote {
+    @apply border-l-4 border-accent pl-4 italic my-6;
+    color: var(--color-muted);
+  }
+
+  .prose blockquote p:last-child {
+    @apply mb-0;
+  }
+
+  /* Horizontal rule */
+  .prose hr {
+    @apply my-8 border-t-2 border-foreground;
+  }
+
+  /* Images */
+  .prose img {
+    @apply my-6 rounded-lg;
+    border: 3px solid var(--color-foreground);
+    box-shadow: var(--shadow-brutal);
+  }
+
+  /* Tables */
+  .prose table {
+    @apply w-full my-6;
+    border-collapse: collapse;
+  }
+
+  .prose th,
+  .prose td {
+    @apply px-4 py-2 text-left;
+    border: 2px solid var(--color-foreground);
+  }
+
+  .prose th {
+    @apply font-bold;
+    background-color: var(--color-surface);
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 640px) {
+    .prose {
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    .prose h2 {
+      @apply text-xl mt-8 mb-3;
+    }
+
+    .prose h3 {
+      @apply text-lg mt-6 mb-2;
+    }
   }
 }

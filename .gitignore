@@ -37,3 +37,6 @@ next-env.d.ts
 
 # example images
 example-images/
+
+# velite generated files
+.velite

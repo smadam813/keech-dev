@@ -1,14 +1,14 @@
 ---
-status: diagnosed
+status: complete
 phase: 01-foundation-design
 source: [01-01-SUMMARY.md, 01-02-SUMMARY.md, 01-03-SUMMARY.md]
 started: 2026-01-31T12:00:00Z
-updated: 2026-01-31T12:15:00Z
+updated: 2026-01-31T14:30:00Z
 ---
 
 ## Current Test
 
-[testing complete - 2 new iOS issues added from device testing]
+[testing complete]
 
 ## Tests
 
@@ -72,21 +72,17 @@ result: pass
 
 ### 15. Footer Position on iOS
 expected: On iPhone, the footer stays above the bottom navigation bar and doesn't overlap or float below it.
-result: issue
-reported: "Footer sometimes floats below the navigation bar on iPhone Chrome"
-severity: major
+result: pass (re-verified after 01-04 fix)
 
 ### 16. Mobile Nav Stability on iOS
 expected: On iPhone, the bottom navigation bar stays fixed at the bottom while scrolling — no jumping or moving up/down.
-result: issue
-reported: "Navigation bar moves up and down as you scroll on iPhone Chrome"
-severity: major
+result: pass (re-verified after 01-04 fix)
 
 ## Summary
 
 total: 16
-passed: 13
-issues: 3
+passed: 16
+issues: 0 (3 found, all fixed and re-verified)
 pending: 0
 skipped: 0
 
@@ -106,36 +102,31 @@ skipped: 0
   deployed: true
 
 - truth: "Footer stays above bottom navigation bar on iOS"
-  status: failed
+  status: fixed
   reason: "User reported: Footer sometimes floats below the navigation bar on iPhone Chrome"
   severity: major
   test: 15
   root_cause: "100vh doesn't account for iOS dynamic address bar; footer pb-24 is static and doesn't coordinate with MobileNav height + safe-area-inset"
   artifacts:
     - path: "src/app/layout.tsx"
-      line: 20
       issue: "min-h-screen uses 100vh which fails on iOS"
     - path: "src/components/layout/footer.tsx"
-      line: 11
       issue: "pb-24 is static, doesn't account for safe-area-inset-bottom"
-  missing:
-    - "Use min-h-dvh instead of min-h-screen"
-    - "Footer padding needs to use calc() with env(safe-area-inset-bottom)"
+  fix_plan: "01-04"
+  fix_commit: "cfdd53b"
+  re-verified: true
 
 - truth: "Bottom navigation bar stays fixed while scrolling on iOS"
-  status: failed
+  status: fixed
   reason: "User reported: Navigation bar moves up and down as you scroll on iPhone Chrome"
   severity: major
   test: 16
   root_cause: "iOS address bar animation causes viewport resize; fixed elements without GPU compositing shift during scroll momentum"
   artifacts:
     - path: "src/components/layout/mobile-nav.tsx"
-      line: 20
       issue: "Missing transform-gpu to stabilize fixed positioning during iOS scroll"
     - path: "src/app/page.tsx"
-      line: 3
       issue: "Uses 100vh which is problematic on iOS"
-  missing:
-    - "Add transform-gpu class to MobileNav"
-    - "Replace 100vh with 100dvh in all page components"
-    - "Consider overscroll-behavior: none on html"
+  fix_plan: "01-04"
+  fix_commit: "cfdd53b"
+  re-verified: true

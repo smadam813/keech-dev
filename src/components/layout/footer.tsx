@@ -24,7 +24,7 @@ export function Footer() {
                 href={link.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-accent transition-colors"
+                className="hover:text-accent hover:-translate-y-0.5 motion-safe:transition-all motion-safe:duration-150"
                 aria-label={link.label}
               >
                 <Icon className="w-6 h-6" />
