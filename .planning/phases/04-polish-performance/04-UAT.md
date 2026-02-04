@@ -1,5 +1,5 @@
 ---
-status: complete
+status: diagnosed
 phase: 04-polish-performance
 source: [04-01-SUMMARY.md, 04-02-SUMMARY.md]
 started: 2026-02-03T00:00:00Z
@@ -78,39 +78,58 @@ skipped: 1
   reason: "User reported: I am unable to scroll on the home page, not really sure what animation you are referring to."
   severity: major
   test: 1
-  root_cause: ""
-  artifacts: []
-  missing: []
-  debug_session: ""
+  root_cause: "Home page has no scrollable content - it's a flex-centered hero container. scroll-reveal requires scrolling to trigger animation-timeline: view(). Also, animation-timeline: view() has limited browser support (Chrome only, not Firefox/Safari)."
+  artifacts:
+    - path: "src/app/page.tsx"
+      issue: "scroll-reveal on non-scrollable hero"
+    - path: "src/app/globals.css"
+      issue: "animation-timeline: view() not supported in most browsers"
+  missing:
+    - "Use simple on-load fadeInUp animation for home hero instead of scroll-triggered"
+    - "Replace animation-timeline with Intersection Observer for cross-browser support"
+  debug_session: ".planning/debug/scroll-reveal-not-working.md"
 
 - truth: "Blog post cards animate in (fade up) when scrolling"
   status: failed
   reason: "User reported: I do not see any animations. The cards immediately appear."
   severity: major
   test: 2
-  root_cause: ""
-  artifacts: []
-  missing: []
-  debug_session: ""
+  root_cause: "animation-timeline: view() only works in Chrome. @supports fallback just sets opacity: 1 with no animation. Also scroll-reveal applied to grid container instead of individual cards."
+  artifacts:
+    - path: "src/app/blog/page.tsx"
+      issue: "scroll-reveal on grid container, not individual cards"
+    - path: "src/app/globals.css"
+      issue: "Fallback provides no animation in unsupported browsers"
+  missing:
+    - "Use Intersection Observer API for cross-browser scroll animations"
+    - "Apply animation to individual PostCard components"
+  debug_session: ".planning/debug/scroll-reveal-not-working.md"
 
 - truth: "Project cards animate in (fade up) when scrolling"
   status: failed
   reason: "User reported: same, no animations"
   severity: major
   test: 3
-  root_cause: ""
-  artifacts: []
-  missing: []
-  debug_session: ""
+  root_cause: "Same as blog grid - animation-timeline: view() not supported, scroll-reveal on container instead of individual cards."
+  artifacts:
+    - path: "src/app/projects/page.tsx"
+      issue: "scroll-reveal on grid container, not individual cards"
+  missing:
+    - "Use Intersection Observer API for cross-browser scroll animations"
+    - "Apply animation to individual ProjectCard components"
+  debug_session: ".planning/debug/scroll-reveal-not-working.md"
 
 - truth: "Footer social buttons shift upward on hover"
   status: failed
   reason: "User reported: I think they shift downward unless I am misunderstanding. They appear like a key-press."
   severity: minor
   test: 6
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "Footer uses hover:translate-x-[2px] hover:translate-y-[2px] which moves buttons DOWN and RIGHT (positive values). Should be negative translate-y for upward lift effect."
+  artifacts:
+    - path: "src/components/layout/footer.tsx"
+      issue: "Line 27: hover:translate-y-[2px] moves DOWN instead of UP"
+  missing:
+    - "Change to hover:-translate-y-0.5 for upward lift effect"
   debug_session: ""
 
 - truth: "All pages show consistent title format with '| keech.dev' suffix"
@@ -118,7 +137,10 @@ skipped: 1
   reason: "User reported: Home only says 'Home' and the other 3 pages say their name + '| keech.dev'."
   severity: minor
   test: 7
-  root_cause: ""
-  artifacts: []
-  missing: []
-  debug_session: ""
+  root_cause: "Home page exports title: 'Home' but Next.js title template '%s | keech.dev' should be applying. The better fix is to remove title from home page so it uses the default 'keech.dev' instead of redundant 'Home | keech.dev'."
+  artifacts:
+    - path: "src/app/page.tsx"
+      issue: "Exports title: 'Home' instead of using default"
+  missing:
+    - "Remove title from home page metadata to use root default 'keech.dev'"
+  debug_session: ".planning/debug/home-page-title-inconsistent.md"
