@@ -4,60 +4,80 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Personal portfolio and blog website at keech.dev. Neobrutalist design aesthetic with a cosmic, Norse-touched theme. Currently in Phase 2 (Content & Blog) of a 4-phase roadmap.
+Personal portfolio and blog website at keech.dev. Neobrutalist design aesthetic with a cosmic, Norse-touched theme.
 
 ## Commands
 
 ```bash
-npm run dev     # Start dev server with Turbopack
-npm run build   # Production build
+npm run dev     # Start dev server (Velite + Next.js with Turbopack)
+npm run build   # Production build (Velite then Next.js)
 npm run lint    # ESLint validation
-npm start       # Start production server
+npm run velite  # Rebuild content only
 ```
 
 ## Tech Stack
 
 - **Framework:** Next.js 16 with App Router
-- **Styling:** Tailwind CSS v4 (CSS-first @theme approach in globals.css, no tailwind.config.js)
-- **Fonts:** Space Grotesk (display/headings), Inter (body)
-- **Icons:** lucide-react
-- **Utilities:** clsx + tailwind-merge via `cn()` helper in `src/lib/utils.ts`
+- **Content:** Velite (MDX → type-safe data in `.velite/`)
+- **Styling:** Tailwind CSS v4 (CSS-first @theme in globals.css)
+- **Fonts:** Space Grotesk (headings), Inter (body)
+- **Code Highlighting:** rehype-pretty-code with Shiki
 
 ## Architecture
 
 ```
 src/
-├── app/                    # Next.js App Router pages
-│   ├── globals.css         # Design tokens via @theme
-│   ├── layout.tsx          # Root layout with header/footer
-│   └── [route]/page.tsx    # Route pages
-├── components/layout/      # Header, Footer, MobileNav
-└── lib/                    # Utilities and font config
+├── app/                    # Next.js App Router
+│   ├── globals.css         # Design tokens via @theme, prose styles
+│   ├── blog/[slug]/        # Dynamic blog post pages
+│   └── projects/[slug]/    # Dynamic project pages
+├── components/
+│   ├── layout/             # Header, Footer, MobileNav
+│   ├── blog/               # PostCard, MDXContent, TOC, CodeBlock
+│   ├── projects/           # ProjectCard, TechBadge
+│   └── ui/                 # ScrollReveal animation wrapper
+└── lib/                    # cn() utility, font config
+
+content/                    # MDX source files (processed by Velite)
+├── posts/*.mdx
+└── projects/*.mdx
+
+.velite/                    # Generated (gitignored) - import content from here
 ```
+
+## Content System (Velite)
+
+Content is defined in `velite.config.ts`. MDX files in `content/` are processed into type-safe data:
+
+```typescript
+import { posts, projects } from '@/.velite'
+```
+
+Post schema: `title, slug, date, description?, tags[], draft?, toc, body`
+Project schema: `title, slug, description, date, featured?, stack[], github?, demo?, category?, image?, body`
 
 ## Design System
 
-Design tokens are defined in `src/app/globals.css` using Tailwind v4's CSS-first `@theme` block:
+Defined in `globals.css` using Tailwind v4's `@theme`:
 
-- **Colors:** dusty pink background (#E8B4B8), deep teal accent (#2D8B8B), black text
-- **Shadows:** Hard offset neobrutalist style (4px 4px 0 0 #000)
+- **Colors:** dusty pink background (#E8B4B8), teal accent (#2D8B8B)
+- **Shadows:** Hard offset neobrutalist (4px 4px 0 0 #000)
 - **Borders:** 3px solid black
+- **Prose:** Custom `.prose` class for blog typography
 
 ## Key Patterns
 
-- **Mobile-first responsive:** Mobile nav shows by default, desktop header on `md:` breakpoint
-- **'use client' directive:** Only on components needing client-side hooks (e.g., MobileNav uses usePathname)
-- **Path alias:** `@/*` maps to `./src/*`
+- **Path alias:** `@/*` → `./src/*`, `@/.velite` → `./.velite`
+- **'use client':** Only on components with hooks (MobileNav, ScrollReveal, CopyButton)
+- **ScrollReveal:** Intersection Observer wrapper for fade-in animations
 
 ## Commit Convention
 
 Format: `type(phase): description`
 - Types: feat, fix, docs, test, chore
-- Phase references: 01, 02, etc. (or 01-01 for sub-phases)
 
 ## Planning Documents
 
-Project planning lives in `.planning/`:
-- `PROJECT.md` - Vision, requirements, decisions
-- `ROADMAP.md` - Phase delivery plan
-- `STATE.md` - Current phase status
+Project planning in `.planning/`:
+- `PROJECT.md` - Vision and requirements
+- `STATE.md` - Current status
