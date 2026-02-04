@@ -1,5 +1,6 @@
 import { projects } from '@/.velite'
 import { ProjectCard } from '@/components/projects/project-card'
+import { ScrollReveal } from '@/components/ui/scroll-reveal'
 
 import type { Metadata } from 'next'
 
@@ -26,9 +27,11 @@ export default function ProjectsPage() {
       </header>
 
       {sortedProjects.length > 0 ? (
-        <div className="grid gap-6 md:grid-cols-2 scroll-reveal">
+        <div className="grid gap-6 md:grid-cols-2">
           {sortedProjects.map(project => (
-            <ProjectCard key={project.slug} project={project} />
+            <ScrollReveal key={project.slug}>
+              <ProjectCard project={project} />
+            </ScrollReveal>
           ))}
         </div>
       ) : (

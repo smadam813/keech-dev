@@ -1,5 +1,6 @@
 import { posts } from '@/.velite'
 import { PostCard } from '@/components/blog/post-card'
+import { ScrollReveal } from '@/components/ui/scroll-reveal'
 
 import type { Metadata } from 'next'
 
@@ -24,9 +25,11 @@ export default function BlogPage() {
       </header>
 
       {publishedPosts.length > 0 ? (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 scroll-reveal">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {publishedPosts.map(post => (
-            <PostCard key={post.slug} post={post} />
+            <ScrollReveal key={post.slug}>
+              <PostCard post={post} />
+            </ScrollReveal>
           ))}
         </div>
       ) : (
