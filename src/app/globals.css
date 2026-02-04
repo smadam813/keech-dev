@@ -59,24 +59,23 @@
    ========================================================================== */
 
 @layer components {
-  /* Scroll-triggered reveal animation */
-  .scroll-reveal {
-    opacity: 1; /* Fallback for browsers without animation-timeline support */
+  /* Intersection Observer triggered animation */
+  .animate-fade-in-up {
+    animation: fadeInUp 0.5s ease-out forwards;
   }
 
-  @supports (animation-timeline: view()) {
-    .scroll-reveal {
-      animation: fadeInUp linear both;
-      animation-timeline: view();
-      animation-range: entry 10% entry 90%;
-    }
+  /* Immediate on-load animation for above-fold content */
+  .animate-on-load {
+    animation: fadeInUp 0.6s ease-out forwards;
   }
 
   /* Respect user motion preferences */
   @media (prefers-reduced-motion: reduce) {
-    .scroll-reveal {
+    .animate-fade-in-up,
+    .animate-on-load {
       animation: none !important;
-      opacity: 1;
+      opacity: 1 !important;
+      transform: none !important;
     }
 
     .motion-reduce-safe {
