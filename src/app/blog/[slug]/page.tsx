@@ -54,15 +54,15 @@ export default async function PostPage({ params }: PostPageProps) {
 
   const formattedUpdated = post.updated
     ? new Intl.DateTimeFormat('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      }).format(new Date(post.updated))
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    }).format(new Date(post.updated))
     : null
 
   return (
-    <article className="container mx-auto max-w-6xl px-6 py-8">
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_250px] gap-12">
+    <article className="mx-auto max-w-6xl px-6 py-8">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-12">
         {/* Main content */}
         <div>
           <header className="mb-10">

@@ -77,8 +77,8 @@ export default function AboutPage() {
             <button
               disabled
               className="inline-flex items-center gap-2 px-4 py-2
-                         bg-muted/20 text-muted cursor-not-allowed opacity-60
-                         font-medium"
+                         border-[3px] border-black bg-muted/20 text-muted
+                         cursor-not-allowed opacity-60 font-medium"
             >
               <Download className="w-5 h-5" />
               Resume Coming Soon
