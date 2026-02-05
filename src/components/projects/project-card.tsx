@@ -24,11 +24,11 @@ export function ProjectCard({ project }: ProjectCardProps) {
       <article
         className="h-full flex flex-col bg-surface border-[3px] border-black shadow-brutal
                    hover:shadow-brutal-hover hover:translate-x-[2px] hover:translate-y-[2px]
-                   transition-all duration-150 overflow-hidden"
+                   transition-all duration-150"
       >
         {/* Optional image */}
         {project.image && (
-          <div className="aspect-video relative border-b-[3px] border-black">
+          <div className="aspect-video relative border-b-[3px] border-black overflow-hidden">
             <Image
               src={project.image.src}
               alt={`${project.title} screenshot`}

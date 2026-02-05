@@ -9,10 +9,9 @@ interface TagChipProps {
 
 export function TagChip({ tag, href, className }: TagChipProps) {
   const chipClasses = cn(
-    'inline-block px-3 py-1 text-sm font-bold',
-    'border-[3px] border-black bg-surface',
-    'hover:shadow-brutal-hover hover:translate-x-[1px] hover:translate-y-[1px]',
-    'transition-all duration-150',
+    'inline-block px-2 py-0.5 text-xs font-mono font-bold',
+    'border-2 border-black bg-accent/10',
+    href && 'hover:shadow-brutal-hover hover:translate-x-[1px] hover:translate-y-[1px] transition-all duration-150',
     className
   )
 
