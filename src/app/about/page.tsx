@@ -13,7 +13,7 @@ const socialLinks = [
 
 export default function AboutPage() {
   return (
-    <main className="max-w-3xl mx-auto px-6 py-12">
+    <main className="flex-1 max-w-3xl mx-auto px-6 py-12">
       <div className="flex flex-col md:flex-row gap-8 items-start">
         {/* Photo section */}
         <div className="shrink-0">

@@ -48,7 +48,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   }
 
   return (
-    <article className="container mx-auto max-w-3xl px-6 py-8">
+    <article className="flex-1 container mx-auto max-w-3xl px-6 py-8">
       {/* Back link */}
       <Link
         href="/projects"
