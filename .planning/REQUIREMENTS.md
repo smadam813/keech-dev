@@ -9,19 +9,19 @@ Requirements for v1.1 Polish & Consistency. Each maps to roadmap phases.
 
 ### Navigation
 
-- [ ] **NAV-04**: Mobile nav uses hamburger icon in header (replaces bottom-pinned bar)
-- [ ] **NAV-05**: Hamburger opens full-screen overlay with nav links
-- [ ] **NAV-06**: Menu auto-closes on route change
-- [ ] **NAV-07**: Active page is highlighted in mobile menu
-- [ ] **NAV-08**: Hamburger icon animates to X when menu is open
-- [ ] **NAV-09**: Menu traps focus while open (accessibility)
-- [ ] **NAV-10**: Menu locks background scroll while open
+- [x] **NAV-04**: Mobile nav uses hamburger icon in header (replaces bottom-pinned bar)
+- [x] **NAV-05**: Hamburger opens full-screen overlay with nav links
+- [x] **NAV-06**: Menu auto-closes on route change
+- [x] **NAV-07**: Active page is highlighted in mobile menu
+- [x] **NAV-08**: Hamburger icon animates to X when menu is open
+- [x] **NAV-09**: Menu traps focus while open (accessibility)
+- [x] **NAV-10**: Menu locks background scroll while open
 
 ### iOS Viewport
 
-- [ ] **VIEW-01**: Layout exports `viewport-fit: cover` for proper safe-area support
-- [ ] **VIEW-02**: Bottom-nav padding hacks removed from layout and footer
-- [ ] **VIEW-03**: Footer uses correct safe-area insets with viewport-fit enabled
+- [x] **VIEW-01**: Layout exports `viewport-fit: cover` for proper safe-area support
+- [x] **VIEW-02**: Bottom-nav padding hacks removed from layout and footer
+- [x] **VIEW-03**: Footer uses correct safe-area insets with viewport-fit enabled
 
 ### Layout Consistency
 
@@ -32,7 +32,7 @@ Requirements for v1.1 Polish & Consistency. Each maps to roadmap phases.
 
 ### About Page Cleanup
 
-- [ ] **ABUT-04**: Social link buttons removed from About page (footer handles this)
+- [x] **ABUT-04**: Social link buttons removed from About page (footer handles this)
 
 ## Future Requirements
 
@@ -65,21 +65,21 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| NAV-04 | Phase 5 | Pending |
-| NAV-05 | Phase 5 | Pending |
-| NAV-06 | Phase 5 | Pending |
-| NAV-07 | Phase 5 | Pending |
-| NAV-08 | Phase 5 | Pending |
-| NAV-09 | Phase 5 | Pending |
-| NAV-10 | Phase 5 | Pending |
-| VIEW-01 | Phase 5 | Pending |
-| VIEW-02 | Phase 5 | Pending |
-| VIEW-03 | Phase 5 | Pending |
+| NAV-04 | Phase 5 | Complete |
+| NAV-05 | Phase 5 | Complete |
+| NAV-06 | Phase 5 | Complete |
+| NAV-07 | Phase 5 | Complete |
+| NAV-08 | Phase 5 | Complete |
+| NAV-09 | Phase 5 | Complete |
+| NAV-10 | Phase 5 | Complete |
+| VIEW-01 | Phase 5 | Complete |
+| VIEW-02 | Phase 5 | Complete |
+| VIEW-03 | Phase 5 | Complete |
 | LYOT-01 | Phase 6 | Pending |
 | LYOT-02 | Phase 6 | Pending |
 | LYOT-03 | Phase 6 | Pending |
 | LYOT-04 | Phase 6 | Pending |
-| ABUT-04 | Phase 5 | Pending |
+| ABUT-04 | Phase 5 | Complete |
 
 **Coverage:**
 - v1.1 requirements: 15 total
