@@ -16,13 +16,8 @@ export default function BlogPage() {
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
   return (
-    <main className="container mx-auto max-w-6xl px-6 py-8">
-      <header className="mb-12">
-        <h1 className="font-display text-4xl md:text-5xl font-bold mb-4">Blog</h1>
-        <p className="text-muted text-lg max-w-2xl">
-          Thoughts on code, creativity, and whatever else catches my interest.
-        </p>
-      </header>
+    <section className="mx-auto max-w-7xl px-6 pt-12 pb-16">
+      <h1 className="font-display text-4xl md:text-5xl font-bold mb-10">Blog</h1>
 
       {publishedPosts.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -35,6 +30,6 @@ export default function BlogPage() {
       ) : (
         <p className="text-muted">No posts yet. Check back soon!</p>
       )}
-    </main>
+    </section>
   )
 }
