@@ -1,635 +1,398 @@
 # Architecture Patterns
 
-**Domain:** Personal Blog + Portfolio Website (Next.js + MDX)
-**Researched:** 2026-01-31
-**Confidence:** HIGH (verified with official Next.js documentation)
+**Domain:** Mobile Navigation Overhaul + Layout Consistency (v1.1 Polish)
+**Researched:** 2026-02-07
+**Confidence:** HIGH (verified against existing codebase, official Next.js docs, and CSS specifications)
+
+## Current Architecture Assessment
+
+### What Exists Today
+
+```
+Root Layout (src/app/layout.tsx) - Server Component
+├── <Header />          - Server Component, hidden md:block, fixed top
+├── <main>              - flex-1 flex flex-col, pt-0 md:pt-16 pb-20 md:pb-0
+│   └── {children}      - Page content
+├── <Footer />          - Server Component, mt-auto, pb-[calc(6rem+env(safe-area-inset-bottom))]
+└── <MobileNav />       - Client Component, fixed bottom-0, md:hidden
+```
+
+### Problems Identified
+
+1. **MobileNav is a bottom tab bar** that overlaps with iOS Safari's collapsing bottom chrome. The Footer compensates with `pb-[calc(6rem+env(safe-area-inset-bottom))]`, but `env(safe-area-inset-bottom)` does not update dynamically when Safari's tab bar height changes.
+
+2. **Redundant social links** exist in both Footer and About page (`socialLinks` array defined in both files).
+
+3. **Inconsistent container patterns** across pages:
+   - Home: `flex-1 flex items-center justify-center px-6 md:pb-16` (no container, no max-width)
+   - Blog listing: `container mx-auto max-w-6xl px-6 py-8`
+   - Projects listing: `container mx-auto max-w-5xl px-6 py-8`
+   - About: `flex-1 max-w-3xl mx-auto px-6 py-12`
+   - Blog post: `mx-auto max-w-6xl px-6 py-8` (no container class)
+   - Project detail: `flex-1 container mx-auto max-w-3xl px-6 py-8`
+   - 404: `min-h-[calc(100dvh-4rem)] flex items-center justify-center px-6`
+
+4. **No viewport-fit=cover** configured, so `env(safe-area-inset-bottom)` may return 0 on some iOS devices.
+
+5. **Duplicate `<main>` tags**: The root layout wraps children in `<main>`, but Blog listing and Projects listing pages also wrap their content in `<main>`, creating nested `<main>` elements (invalid HTML semantics).
 
 ## Recommended Architecture
 
-### High-Level Overview
+### New Navigation Model
+
+Replace the bottom tab bar with a hamburger menu in the Header. This eliminates the iOS Safari bottom chrome overlap entirely because the navigation moves to the top of the viewport where there is no browser chrome interference.
 
 ```
-keech.dev Architecture
-=======================
-
-                     [Vercel Edge]
-                          |
-                          v
-               +------------------+
-               |  Next.js 15+     |
-               |  App Router      |
-               +------------------+
-                          |
-          +---------------+---------------+
-          |               |               |
-          v               v               v
-    [Static Pages]  [Dynamic Routes]  [API Routes]
-    - Home           - /blog/[slug]    - Contact form
-    - About          - /projects/[id]  - (optional)
-    - Blog index
-    - Projects index
-
-          |               |
-          +-------+-------+
-                  |
-                  v
-        +------------------+
-        |  Content Layer   |
-        |  (Velite/MDX)    |
-        +------------------+
-                  |
-          +-------+-------+
-          |               |
-          v               v
-    [/content/blog]  [/content/projects]
-    *.mdx files      *.mdx files
+Root Layout (src/app/layout.tsx) - Server Component
+├── <Header />          - Server Component shell with Client island
+│   ├── Logo link       - Server rendered
+│   ├── Desktop nav     - Server rendered, hidden md:block (unchanged)
+│   └── <MobileMenuButton /> - Client Component, md:hidden
+│       └── <MobileMenu />   - Client Component, overlay/slide-in
+├── <main>              - flex-1, consistent padding
+│   └── {children}
+└── <Footer />          - Server Component, simplified (no bottom tab bar compensation)
 ```
 
 ### Component Boundaries
 
-| Component | Responsibility | Communicates With |
-|-----------|---------------|-------------------|
-| **App Shell** | Root layout, fonts, metadata, theme | All pages |
-| **Design System** | Neobrutalist tokens, primitives | All UI components |
-| **Navigation** | Header, mobile menu, footer | App Shell |
-| **Content Engine** | Parse MDX, frontmatter, generate routes | Blog/Project pages |
-| **Blog Components** | Post list, post card, post layout | Content Engine, Design System |
-| **Project Components** | Project grid, project card, project detail | Content Engine, Design System |
-| **MDX Components** | Custom components for rich content | Individual MDX files |
-| **Static Pages** | Home, About, Contact | Design System, Navigation |
+| Component | File | Type | Responsibility | Communicates With |
+|-----------|------|------|----------------|-------------------|
+| **Header** | `layout/header.tsx` | Server | Logo, desktop nav links, renders MobileMenuButton slot | Layout |
+| **MobileMenuButton** | `layout/mobile-menu-button.tsx` | Client | Hamburger toggle, open/close state, renders MobileMenu | Header |
+| **MobileMenu** | `layout/mobile-menu.tsx` | Client | Full-screen overlay with nav links, closes on route change | MobileMenuButton |
+| **Footer** | `layout/footer.tsx` | Server | Copyright, social links (simplified) | Layout |
 
 ### Data Flow
 
 ```
-Build Time:
-===========
+State Management (hamburger menu):
+===================================
 
-1. Velite/next-mdx-remote scans /content directory
-2. Parses frontmatter → generates type-safe content objects
-3. generateStaticParams() returns all slugs
-4. Next.js pre-renders each page with content
+1. MobileMenuButton owns `isOpen` state via useState
+2. MobileMenu renders conditionally based on isOpen
+3. usePathname() + useEffect() auto-closes menu on navigation
+4. Click-outside and Escape key close the menu
+5. Body scroll lock when menu is open
 
-     /content/blog/*.mdx
+     User taps hamburger
             |
             v
     +------------------+
-    | Content Parser   | ← Velite/next-mdx-remote + gray-matter
-    | (build time)     |
+    | MobileMenuButton | ← useState(isOpen)
+    | 'use client'     |
     +------------------+
             |
-            v
+            v (isOpen === true)
     +------------------+
-    | Type-Safe Data   | ← Auto-generated TypeScript types
-    | getAllPosts()    |
-    | getPostBySlug()  |
-    +------------------+
-            |
-            v
-    +------------------+
-    | Page Components  | ← Server Components (default)
-    | /app/blog/[slug] |
+    | MobileMenu       | ← Full-screen overlay
+    | 'use client'     |
     +------------------+
             |
-            v
+            v (user taps nav link)
     +------------------+
-    | Static HTML      | ← Pre-rendered at build
+    | usePathname()    | ← Detects route change
+    | useEffect()      | ← Sets isOpen = false
     +------------------+
 
-
-Request Time:
-=============
-
-1. User requests /blog/my-post
-2. Vercel serves pre-rendered HTML (instant)
-3. React hydrates interactive components only
-4. Client components handle theme toggle, mobile menu
-
-     Browser Request
-            |
-            v
-    +------------------+
-    | Vercel CDN       | ← Cached static HTML
-    +------------------+
-            |
-            v
-    +------------------+
-    | React Hydration  | ← Selective hydration
-    +------------------+
-            |
-            v
-    +------------------+
-    | Client Components| ← Theme, menu, interactions
-    +------------------+
+No global state needed. useState in a single client component is sufficient.
 ```
 
-## Directory Structure
+## Integration Plan
 
-**Recommended: Feature-based organization with src folder**
+### Files to CREATE (3 new files)
 
+#### 1. `src/components/layout/mobile-menu-button.tsx` (Client Component)
+
+**Purpose:** Hamburger icon toggle that controls the mobile menu overlay.
+
+**Why a separate component:** Isolates the `'use client'` boundary. The Header can remain a Server Component (no JavaScript shipped for desktop users). Only mobile users pay the client component cost.
+
+```typescript
+// Responsibilities:
+// - Render hamburger/X icon based on isOpen state
+// - Toggle isOpen state on click
+// - Pass isOpen + onClose to MobileMenu
+// - ARIA attributes: aria-label, aria-expanded, aria-controls
 ```
-keech-dev/
-├── src/
-│   ├── app/                          # App Router
-│   │   ├── layout.tsx                # Root layout (fonts, providers)
-│   │   ├── page.tsx                  # Home page
-│   │   ├── globals.css               # Tailwind + neobrutalist tokens
-│   │   │
-│   │   ├── blog/
-│   │   │   ├── page.tsx              # Blog listing
-│   │   │   └── [slug]/
-│   │   │       └── page.tsx          # Individual post
-│   │   │
-│   │   ├── projects/
-│   │   │   ├── page.tsx              # Projects grid
-│   │   │   └── [id]/
-│   │   │       └── page.tsx          # Project detail
-│   │   │
-│   │   ├── about/
-│   │   │   └── page.tsx              # About page
-│   │   │
-│   │   └── api/                      # Optional API routes
-│   │       └── contact/
-│   │           └── route.ts          # Contact form handler
-│   │
-│   ├── components/
-│   │   ├── ui/                       # Design system primitives
-│   │   │   ├── button.tsx
-│   │   │   ├── card.tsx
-│   │   │   └── ...
-│   │   │
-│   │   ├── layout/                   # Shell components
-│   │   │   ├── header.tsx
-│   │   │   ├── footer.tsx
-│   │   │   ├── nav.tsx
-│   │   │   └── mobile-menu.tsx       # Client component
-│   │   │
-│   │   ├── blog/                     # Blog-specific
-│   │   │   ├── post-card.tsx
-│   │   │   ├── post-list.tsx
-│   │   │   └── post-layout.tsx
-│   │   │
-│   │   ├── projects/                 # Project-specific
-│   │   │   ├── project-card.tsx
-│   │   │   └── project-grid.tsx
-│   │   │
-│   │   └── mdx/                      # MDX custom components
-│   │       ├── code-block.tsx
-│   │       ├── callout.tsx
-│   │       ├── image.tsx
-│   │       └── index.tsx             # Export all MDX components
-│   │
-│   ├── lib/                          # Utilities
-│   │   ├── content.ts                # Content fetching helpers
-│   │   ├── utils.ts                  # General utilities (cn, etc.)
-│   │   └── fonts.ts                  # Font configuration
-│   │
-│   └── types/                        # TypeScript types
-│       └── content.ts                # Post, Project interfaces
-│
-├── content/                          # MDX content (outside src)
-│   ├── blog/
-│   │   ├── first-post.mdx
-│   │   └── second-post.mdx
-│   │
-│   └── projects/
-│       ├── project-one.mdx
-│       └── project-two.mdx
-│
-├── public/
-│   ├── images/
-│   ├── resume.pdf                    # Downloadable resume
-│   └── favicon.ico
-│
-├── mdx-components.tsx                # Required for App Router MDX
-├── velite.config.ts                  # Content schema (if using Velite)
-├── next.config.mjs                   # Next.js + MDX config
-├── tailwind.config.ts                # Tailwind + neobrutalist theme
-└── package.json
+
+#### 2. `src/components/layout/mobile-menu.tsx` (Client Component)
+
+**Purpose:** Full-screen navigation overlay that appears when hamburger is toggled.
+
+```typescript
+// Responsibilities:
+// - Full-viewport overlay with nav links
+// - Close on route change (usePathname + useEffect)
+// - Close on Escape key (useEffect + keydown listener)
+// - Close on backdrop click
+// - Trap focus within overlay when open (accessibility)
+// - Prevent body scroll when open
+// - Active link highlighting (usePathname)
+// - Entry/exit animation (CSS transition or animate-fade-in-up)
 ```
+
+#### 3. No third file needed. The viewport configuration goes into the existing layout.tsx.
+
+### Files to MODIFY (4 existing files)
+
+#### 1. `src/app/layout.tsx`
+
+**Changes:**
+- Add `viewport` export with `viewportFit: 'cover'` for proper safe-area-inset support
+- Remove `<MobileNav />` from the body
+- Remove `pb-20 md:pb-0` from `<main>` (no longer needed without bottom tab bar)
+- Fix the duplicate `<main>` issue: change the wrapper to `<div>` or use semantic sectioning
+
+```typescript
+import type { Viewport } from 'next'
+
+export const viewport: Viewport = {
+  viewportFit: 'cover',
+}
+```
+
+#### 2. `src/components/layout/header.tsx`
+
+**Changes:**
+- Import and render `<MobileMenuButton />` inside the header (visible on mobile, hidden on md+)
+- Remove `hidden md:block` from the header element (header should always be visible now)
+- Add `md:hidden` to the MobileMenuButton, keep `hidden md:flex` on the desktop nav
+- The header remains a Server Component; only the MobileMenuButton child is a Client Component
+
+#### 3. `src/components/layout/footer.tsx`
+
+**Changes:**
+- Remove the `pb-[calc(6rem+env(safe-area-inset-bottom))]` padding hack (no bottom tab bar to compensate for)
+- Simplify to standard footer padding
+- Keep social links (these are appropriate in the footer)
+
+#### 4. Individual page files (layout normalization)
+
+**Changes across 6 page files:**
+
+| Page | Current Container | Normalized Container | Other Changes |
+|------|-------------------|----------------------|---------------|
+| `app/page.tsx` (Home) | No container | Keep as-is (hero is intentionally full-width centered) | None |
+| `app/blog/page.tsx` | `<main>` wrapper | Change `<main>` to `<div>` or `<section>` (root layout already provides `<main>`) | None |
+| `app/projects/page.tsx` | `<main>` wrapper | Change `<main>` to `<div>` or `<section>` | None |
+| `app/about/page.tsx` | `<main>` wrapper | Change `<main>` to `<div>` or `<section>` | None |
+| `app/blog/[slug]/page.tsx` | `<article>` | Keep `<article>` (semantically correct) | None |
+| `app/projects/[slug]/page.tsx` | `<article>` | Keep `<article>` (semantically correct) | None |
+| `app/not-found.tsx` | `<div>` | Keep as-is, remove dvh calc (layout handles full height) | None |
+
+### Files to DELETE (1 file)
+
+#### 1. `src/components/layout/mobile-nav.tsx`
+
+**Why:** The bottom tab bar is being replaced entirely by the hamburger menu. No code from this file is reusable -- the navigation items array (`navItems`) should be extracted to a shared location or redefined in the new components.
+
+### Shared Data Extraction
+
+The `navItems` array is currently duplicated between `header.tsx` and `mobile-nav.tsx`. After the refactor, it will need to exist in `header.tsx` and the new `mobile-menu.tsx`. To avoid continued duplication:
+
+**Option A (recommended):** Define `navItems` in `header.tsx` and pass it as a prop to `MobileMenuButton`, which passes it to `MobileMenu`. This keeps the data co-located with the primary navigation component and avoids a separate config file for 4 items.
+
+**Option B:** Create `src/lib/navigation.ts` with the shared array. This is over-engineering for 4 static items but would be appropriate if navigation items grew or became dynamic.
 
 ## Patterns to Follow
 
-### Pattern 1: Server Components by Default
+### Pattern 1: Client Component Islands in Server Components
 
-**What:** All components are Server Components unless explicitly marked with `'use client'`
+**What:** Keep the Header as a Server Component and embed the MobileMenuButton as a Client Component child.
 
-**When:** Always start here. Only add `'use client'` when needed.
+**When:** Whenever a component needs interactivity but its parent is purely presentational.
 
-**Rationale:** Reduces JavaScript bundle, improves initial load, enables async data fetching.
+**Why:** Desktop users ship zero JavaScript for the header. Mobile users only ship the hamburger toggle + overlay code.
 
 ```typescript
-// src/app/blog/[slug]/page.tsx - Server Component (default)
-import { getPostBySlug, getAllPosts } from '@/lib/content'
+// header.tsx - Server Component (no 'use client')
+import { MobileMenuButton } from './mobile-menu-button'
 
-export async function generateStaticParams() {
-  const posts = await getAllPosts()
-  return posts.map((post) => ({ slug: post.slug }))
-}
-
-export default async function PostPage({
-  params
-}: {
-  params: Promise<{ slug: string }>
-}) {
-  const { slug } = await params
-  const post = await getPostBySlug(slug)
-
+export function Header() {
   return (
-    <article>
-      <h1>{post.title}</h1>
-      <PostContent content={post.content} />
-    </article>
+    <header className="fixed top-0 left-0 right-0 z-50 ...">
+      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+        <Link href="/">keech.dev</Link>
+
+        {/* Desktop nav - server rendered, hidden on mobile */}
+        <nav className="hidden md:flex gap-8">
+          {navItems.map(item => (
+            <Link key={item.href} href={item.href}>{item.label}</Link>
+          ))}
+        </nav>
+
+        {/* Mobile hamburger - client component, hidden on desktop */}
+        <MobileMenuButton navItems={navItems} />
+      </div>
+    </header>
   )
 }
 ```
 
-### Pattern 2: Content as Data with Type Safety
+### Pattern 2: Auto-Close on Navigation
 
-**What:** Treat MDX files as a type-safe data source, not just pages
+**What:** Use `usePathname()` in a `useEffect` to detect route changes and close the mobile menu.
 
-**When:** Always for blog posts and projects
+**When:** Any overlay/modal that should dismiss on navigation.
 
-**Rationale:** Enables filtering, sorting, querying content programmatically
+**Why:** In the App Router, `router.events` does not exist. Watching `pathname` is the idiomatic replacement.
 
 ```typescript
-// velite.config.ts - Define content schema
-import { defineConfig, s } from 'velite'
+// mobile-menu.tsx
+'use client'
+import { usePathname } from 'next/navigation'
+import { useEffect } from 'react'
 
-export default defineConfig({
-  collections: {
-    posts: {
-      name: 'Post',
-      pattern: 'blog/**/*.mdx',
-      schema: s.object({
-        title: s.string(),
-        slug: s.slug('posts'),
-        date: s.isodate(),
-        description: s.string(),
-        published: s.boolean().default(true),
-        tags: s.array(s.string()).optional(),
-        content: s.mdx(),
-      }),
-    },
-    projects: {
-      name: 'Project',
-      pattern: 'projects/**/*.mdx',
-      schema: s.object({
-        title: s.string(),
-        slug: s.slug('projects'),
-        description: s.string(),
-        url: s.string().url().optional(),
-        github: s.string().url().optional(),
-        featured: s.boolean().default(false),
-        tech: s.array(s.string()),
-        content: s.mdx(),
-      }),
-    },
-  },
-})
+export function MobileMenu({ isOpen, onClose, navItems }) {
+  const pathname = usePathname()
+
+  // Close menu when route changes
+  useEffect(() => {
+    onClose()
+  }, [pathname, onClose])
+
+  // ...
+}
 ```
 
-### Pattern 3: Composition over Configuration
+### Pattern 3: Scroll Lock with Cleanup
 
-**What:** Build MDX component system through composition, not complex configs
+**What:** Prevent background scrolling when the mobile menu overlay is open.
 
-**When:** For all MDX rendering
+**When:** Any full-screen overlay.
+
+**Why:** Without scroll lock, users can scroll the page behind the overlay, which is disorienting.
 
 ```typescript
-// mdx-components.tsx
-import type { MDXComponents } from 'mdx/types'
-import { CodeBlock } from '@/components/mdx/code-block'
-import { Callout } from '@/components/mdx/callout'
-import Image from 'next/image'
-
-export function useMDXComponents(components: MDXComponents): MDXComponents {
-  return {
-    // Override HTML elements with styled versions
-    h1: ({ children }) => (
-      <h1 className="text-4xl font-bold border-b-4 border-black mb-6">
-        {children}
-      </h1>
-    ),
-    img: (props) => (
-      <Image
-        {...props}
-        className="border-4 border-black shadow-brutal"
-        sizes="100vw"
-        style={{ width: '100%', height: 'auto' }}
-      />
-    ),
-    pre: CodeBlock,
-
-    // Custom components available in MDX
-    Callout,
-
-    ...components,
+useEffect(() => {
+  if (isOpen) {
+    document.body.style.overflow = 'hidden'
+  } else {
+    document.body.style.overflow = ''
   }
-}
-```
-
-### Pattern 4: Neobrutalist Design Tokens
-
-**What:** Define design system through Tailwind CSS custom properties
-
-**When:** During initial setup, before building components
-
-```css
-/* src/app/globals.css */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-@layer base {
-  :root {
-    /* Neobrutalist color palette */
-    --background: 60 9% 98%;      /* Off-white */
-    --foreground: 0 0% 0%;         /* Pure black */
-    --primary: 45 93% 58%;         /* Bold yellow */
-    --secondary: 339 90% 51%;      /* Hot pink */
-    --accent: 173 80% 40%;         /* Teal */
-    --destructive: 0 84% 60%;      /* Red */
-
-    /* Neobrutalist borders and shadows */
-    --border-width: 3px;
-    --shadow-offset: 4px;
-    --radius: 0;                   /* Sharp corners */
+  return () => {
+    document.body.style.overflow = ''
   }
-}
+}, [isOpen])
 ```
+
+### Pattern 4: CSS Transitions Over JavaScript Animation
+
+**What:** Use CSS transitions for the menu open/close animation rather than Framer Motion or JS-driven animation.
+
+**When:** Simple slide/fade animations.
+
+**Why:** Zero additional dependencies. The project already uses CSS animations (`animate-fade-in-up`). Consistency with existing patterns.
 
 ```typescript
-// tailwind.config.ts
-export default {
-  theme: {
-    extend: {
-      boxShadow: {
-        brutal: 'var(--shadow-offset) var(--shadow-offset) 0 0 hsl(var(--foreground))',
-        'brutal-sm': '2px 2px 0 0 hsl(var(--foreground))',
-        'brutal-lg': '6px 6px 0 0 hsl(var(--foreground))',
-      },
-      borderWidth: {
-        brutal: 'var(--border-width)',
-      },
-    },
-  },
-}
-```
-
-### Pattern 5: Colocation with Private Folders
-
-**What:** Keep route-specific utilities next to routes using underscore prefix
-
-**When:** When logic is specific to one route/feature
-
-```
-src/app/blog/
-├── _lib/
-│   └── filters.ts      # Blog-specific filtering logic
-├── _components/
-│   └── tag-filter.tsx  # Only used on blog listing
-├── page.tsx
-└── [slug]/
-    └── page.tsx
+// The overlay can use opacity + transform transitions
+<div
+  className={cn(
+    'fixed inset-0 z-40 bg-background transition-opacity duration-200',
+    isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+  )}
+>
 ```
 
 ## Anti-Patterns to Avoid
 
-### Anti-Pattern 1: Client Components for Static Content
+### Anti-Pattern 1: Global State for Menu Toggle
 
-**What:** Using `'use client'` on components that only display data
+**What:** Using React Context, Zustand, or any global store for the hamburger menu open/close state.
 
-**Why bad:** Increases bundle size, prevents server-side rendering benefits
+**Why bad:** The menu state is local to the header area. Global state adds complexity and makes the component harder to reason about. A simple `useState` in the parent client component is all that is needed.
 
-**Instead:** Keep data-display components as Server Components. Only use client for interactivity.
+**Instead:** `useState` in `MobileMenuButton`, passed as props to `MobileMenu`.
 
-```typescript
-// BAD - unnecessary client component
-'use client'
-export function PostCard({ post }) {
-  return <div>{post.title}</div>
-}
+### Anti-Pattern 2: Rendering the Menu Conditionally with `{isOpen && <MobileMenu />}`
 
-// GOOD - Server Component (no directive needed)
-export function PostCard({ post }) {
-  return <div>{post.title}</div>
-}
-```
+**What:** Conditionally mounting/unmounting the menu component.
 
-### Anti-Pattern 2: Fetching in Client Components
+**Why bad:** Prevents CSS transitions from running on close (component unmounts before the exit animation plays). Also causes layout shifts.
 
-**What:** Loading content data in useEffect or client-side
+**Instead:** Always render `MobileMenu` but control visibility with CSS (`opacity`, `pointer-events-none`, `translate`). The component stays mounted but invisible/non-interactive when closed.
 
-**Why bad:** Causes loading spinners, SEO issues, unnecessary waterfalls
+### Anti-Pattern 3: Using a Portal for the Mobile Menu
 
-**Instead:** Fetch in Server Components or at build time
+**What:** Rendering the mobile menu in a React portal to escape the header's stacking context.
 
-```typescript
-// BAD - client-side fetching
-'use client'
-export function PostList() {
-  const [posts, setPosts] = useState([])
-  useEffect(() => {
-    fetch('/api/posts').then(r => r.json()).then(setPosts)
-  }, [])
-  return posts.map(p => <PostCard key={p.slug} post={p} />)
-}
+**Why bad:** The header already has `z-50`. The menu overlay at `z-40` (behind header) or the menu contents at `z-50` (same level) works fine without portals. Portals add complexity and can break SSR.
 
-// GOOD - Server Component with async
-export async function PostList() {
-  const posts = await getAllPosts()
-  return posts.map(p => <PostCard key={p.slug} post={p} />)
-}
-```
+**Instead:** Render the overlay as a sibling or child within the header's z-index context.
 
-### Anti-Pattern 3: Monolithic MDX Configuration
+### Anti-Pattern 4: Separate Viewport Hack Libraries
 
-**What:** Putting all MDX logic in next.config.mjs with many plugins
+**What:** Installing packages like `viewportify` or using JS-based viewport height calculations.
 
-**Why bad:** Hard to debug, slow builds, tight coupling
+**Why bad:** The root problem (bottom tab bar overlapping iOS Safari chrome) is eliminated by moving navigation to the top. The `dvh` units already in use in `layout.tsx` (`min-h-dvh` on body) are sufficient. Adding a library for viewport units is unnecessary.
 
-**Instead:** Use minimal config, handle transforms in components
+**Instead:** Use `min-h-dvh` (already in use), `viewport-fit: cover` via Next.js viewport export, and `env(safe-area-inset-bottom)` in Footer for notch devices.
 
-```javascript
-// BAD - plugin soup
-const withMDX = createMDX({
-  options: {
-    remarkPlugins: [remarkGfm, remarkMath, remarkEmoji, ...10more],
-    rehypePlugins: [rehypeSlug, rehypeHighlight, ...10more],
-  },
-})
+## Build Order
 
-// GOOD - minimal config, handle in components
-const withMDX = createMDX({
-  options: {
-    remarkPlugins: [remarkGfm],
-    rehypePlugins: [],
-  },
-})
-// Then handle syntax highlighting etc. in component layer
-```
-
-### Anti-Pattern 4: Deep Nesting in Route Segments
-
-**What:** Creating deeply nested route structures for organizational purposes
-
-**Why bad:** Confusing URLs, harder to maintain, route group abuse
-
-**Instead:** Flat routes, use private folders for organization
+The dependency graph for this milestone is straightforward because all changes revolve around the layout shell.
 
 ```
-# BAD
-app/(marketing)/(pages)/(static)/about/page.tsx → /about
-
-# GOOD
-app/about/page.tsx → /about
+Step 1: Add viewport-fit=cover to layout.tsx
+    |
+    v
+Step 2: Create mobile-menu-button.tsx + mobile-menu.tsx
+    |
+    v
+Step 3: Modify header.tsx to integrate hamburger button
+    |    (test: hamburger appears on mobile, desktop nav unchanged)
+    |
+    v
+Step 4: Remove <MobileNav /> from layout.tsx, delete mobile-nav.tsx
+    |    Remove pb-20 from main padding
+    |    (test: no bottom tab bar, hamburger menu works)
+    |
+    v
+Step 5: Simplify footer.tsx (remove bottom-bar compensation padding)
+    |    (test: footer renders correctly without extra padding)
+    |
+    v
+Step 6: Fix duplicate <main> tags across page files
+    |    (test: HTML validation passes, no nested <main>)
+    |
+    v
+Step 7: Normalize container patterns if desired
+         (optional: cosmetic consistency)
 ```
 
-### Anti-Pattern 5: Contentlayer for New Projects
+**Why this order:**
 
-**What:** Using Contentlayer which is abandoned/unmaintained
+- Step 1 is independent and has zero risk (just a meta tag).
+- Steps 2-3 must happen before Step 4. The hamburger menu must exist and work before the bottom tab bar is removed, so there is never a state where mobile users have no navigation.
+- Step 5 depends on Step 4 (footer padding only makes sense to change after the bottom bar is gone).
+- Steps 6-7 are independent of the navigation changes and can happen any time, but logically follow the navigation work.
 
-**Why bad:** No updates since March 2024, incompatible with latest Next.js, security risks
+## Accessibility Requirements
 
-**Instead:** Use Velite or next-mdx-remote with gray-matter
-
-## Build Order and Dependencies
-
-### Phase 1: Foundation (Must come first)
-
-Dependencies: None
-
-1. **Project scaffold** - Next.js 15+, TypeScript, Tailwind CSS
-2. **Design tokens** - Neobrutalist color palette, shadows, borders
-3. **Root layout** - Fonts, providers, metadata template
-4. **Basic navigation** - Header, footer (can be simple)
-
-**Rationale:** Everything else depends on these foundations being in place.
-
-### Phase 2: Design System
-
-Dependencies: Phase 1
-
-1. **Primitive components** - Button, Card, Input (neobrutalist styled)
-2. **Layout components** - Container, Section, Grid
-3. **Typography** - Heading, Text, Link components
-
-**Rationale:** UI components are needed before building pages.
-
-### Phase 3: Content Engine
-
-Dependencies: Phase 1
-
-1. **Velite/MDX setup** - Schema definition, build integration
-2. **Content utilities** - getAllPosts, getPostBySlug, etc.
-3. **MDX components** - Code blocks, callouts, images
-4. **mdx-components.tsx** - Global MDX overrides
-
-**Rationale:** Content engine can be built parallel to design system.
-
-### Phase 4: Static Pages
-
-Dependencies: Phase 1, Phase 2
-
-1. **Home page** - Hero, recent posts, featured projects
-2. **About page** - Bio, resume download link
-3. **Contact section** - Social links
-
-**Rationale:** Static pages test the design system.
-
-### Phase 5: Content Pages
-
-Dependencies: Phase 2, Phase 3
-
-1. **Blog listing** - Post cards with filtering
-2. **Blog post** - Full post layout with MDX rendering
-3. **Projects listing** - Project grid
-4. **Project detail** - Project page with MDX
-
-**Rationale:** Content pages depend on both design system and content engine.
-
-### Phase 6: Polish
-
-Dependencies: Phase 4, Phase 5
-
-1. **SEO** - Metadata, Open Graph images, sitemap
-2. **Performance** - Image optimization, font loading
-3. **Accessibility** - Focus states, screen reader testing
-4. **Dark mode** - Theme toggle (if desired)
-
-**Dependency Graph:**
-
-```
-Phase 1: Foundation
-       |
-       +------------------+
-       |                  |
-       v                  v
-Phase 2: Design     Phase 3: Content
-   System               Engine
-       |                  |
-       +--------+---------+
-                |
-                v
-         Phase 4: Static
-            Pages
-                |
-                v
-         Phase 5: Content
-            Pages
-                |
-                v
-         Phase 6: Polish
-```
-
-## Content Management Recommendation
-
-**Recommended: Velite**
-
-| Criterion | Velite | next-mdx-remote | Contentlayer |
-|-----------|--------|-----------------|--------------|
-| Actively maintained | Yes | Yes | No (abandoned) |
-| Type safety | Full Zod schemas | Manual | Full |
-| Next.js 15+ support | Yes | Yes | No |
-| Build performance | Fast (<8s/1000 docs) | Depends | Good |
-| Learning curve | Low | Low | Medium |
-| Content as data | Native | Manual | Native |
-
-**Why Velite:**
-- Inspired by Contentlayer but actively maintained
-- Zod schemas provide runtime validation + TypeScript types
-- Handles images and static assets automatically
-- Fast build times
-- Works seamlessly with Next.js 15+
-
-**Alternative: next-mdx-remote + gray-matter**
-- If you prefer lighter-weight setup
-- More manual work for type safety
-- Good for simpler sites
-
-## Scalability Considerations
-
-| Concern | 10 Posts | 100 Posts | 500+ Posts |
-|---------|----------|-----------|------------|
-| Build time | <10s | <30s | 1-2min (consider ISR) |
-| Bundle size | Minimal | Minimal | Minimal (SSG) |
-| Navigation | Flat list | Pagination | Pagination + Search |
-| Organization | Single folder | Date-based folders | Category folders |
-
-For keech.dev (personal blog), 100 posts is a reasonable upper bound. The architecture handles this easily with static generation.
+| Requirement | Implementation |
+|-------------|---------------|
+| Hamburger button has accessible name | `aria-label="Open menu"` / `"Close menu"` based on state |
+| Menu state is announced | `aria-expanded={isOpen}` on the button |
+| Menu is keyboard navigable | `aria-controls="mobile-menu"` + `id="mobile-menu"` on the overlay |
+| Escape key closes menu | `useEffect` with `keydown` listener |
+| Focus management | Focus moves to first link when menu opens, returns to hamburger button when closed |
+| Reduced motion | Respect `prefers-reduced-motion` for menu transitions (consistent with existing `motion-safe:` pattern) |
 
 ## Sources
 
-### HIGH Confidence (Official Documentation)
-- [Next.js MDX Guide](https://nextjs.org/docs/app/guides/mdx) - Official MDX integration
-- [Next.js Project Structure](https://nextjs.org/docs/app/getting-started/project-structure) - Directory conventions
-- [generateStaticParams](https://nextjs.org/docs/app/api-reference/functions/generate-static-params) - Static generation API
+### HIGH Confidence (Official Documentation + Codebase Verification)
+- [Next.js generateViewport](https://nextjs.org/docs/app/api-reference/functions/generate-viewport) - viewportFit property for viewport-fit=cover
+- [Next.js usePathname](https://nextjs.org/docs/app/api-reference/functions/use-pathname) - Route change detection in App Router
+- [MDN env()](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/env) - Safe area inset CSS environment variables
+- Codebase analysis of all 7 page files, 3 layout components, and root layout
 
-### MEDIUM Confidence (Authoritative Sources)
-- [Velite Introduction](https://velite.js.org/guide/introduction) - Velite documentation
-- [Josh Comeau's Blog Architecture](https://www.joshwcomeau.com/blog/how-i-built-my-blog/) - Real-world implementation
-- [Neobrutalism.dev](https://www.neobrutalism.dev/) - Neobrutalist component patterns
+### MEDIUM Confidence (Verified Patterns)
+- [Next.js Discussion #46542](https://github.com/vercel/next.js/discussions/46542) - viewport-fit=cover support confirmed with viewportFit property
+- [Samuel Kraft: Safari 15 Bottom Tab Bars](https://samuelkraft.com/blog/safari-15-bottom-tab-bars-web) - iOS Safari safe area patterns
+- [Tailwind CSS Viewport Height Classes](https://tailwindcss.com/docs/height) - dvh/svh/lvh utility classes
+- [Smashing Magazine: Bottom Navigation Pattern](https://www.smashingmagazine.com/2019/08/bottom-navigation-pattern-mobile-web-pages/) - UX research on navigation patterns
 
-### Context (Ecosystem Research)
-- [Contentlayer Status](https://github.com/contentlayerdev/contentlayer/issues/429) - Why not Contentlayer
-- [Contentlayer Alternatives](https://www.wisp.blog/blog/contentlayer-has-been-abandoned-what-are-the-alternatives) - Ecosystem context
-- [Next.js Best Practices 2026](https://www.serviots.com/blog/nextjs-development-best-practices) - Current patterns
+### LOW Confidence (Ecosystem Context)
+- [Opus.ing: iOS Viewport Units](https://opus.ing/posts/fixing-ios-safaris-menu-bar-overlap-css-viewport-units) - Guidance to prefer svh over dvh for most layouts
+- [Conflux: Tab Bar vs Hamburger](https://www.weareconflux.com/en/blog/tab-bar-vs-hamburger-menu/) - UX tradeoffs between navigation patterns
