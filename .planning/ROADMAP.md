@@ -41,11 +41,11 @@ v1.1 replaces the bottom-pinned mobile navigation with a hamburger menu in the h
   3. The currently active page is visually distinguished in the mobile menu, and the hamburger icon animates to an X when the menu is open
   4. When the menu is open, keyboard focus is trapped within it (Tab does not escape to background content) and Escape closes the menu
   5. On iPhone with notch/Dynamic Island, the footer sits at the natural page bottom with correct safe-area spacing and no excess padding gap from the removed bottom nav
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 05-01: TBD
-- [ ] 05-02: TBD
+- [ ] 05-01-PLAN.md -- Build unified responsive header with hamburger menu, scroll lock, focus management; update layout with viewport export; delete MobileNav
+- [ ] 05-02-PLAN.md -- Fix footer safe-area padding, remove About page social buttons, visual verification checkpoint
 
 ### Phase 6: Layout Consistency
 **Goal**: Every page on the site uses consistent container widths, vertical spacing, and correct semantic HTML
@@ -68,5 +68,5 @@ Phases execute in numeric order: 5 -> 6
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 1-4 | v1.0 | 14/14 | Complete | 2026-02-03 |
-| 5. Navigation Overhaul | v1.1 | 0/? | Not started | - |
+| 5. Navigation Overhaul | v1.1 | 0/2 | Planned | - |
 | 6. Layout Consistency | v1.1 | 0/? | Not started | - |
