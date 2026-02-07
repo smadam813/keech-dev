@@ -5,21 +5,21 @@
 See: .planning/PROJECT.md (updated 2026-02-07)
 
 **Core value:** A distinctive online presence that feels like stepping into a cosmic, Norse-touched world — memorable enough that visitors remember the site itself, not just the content.
-**Current focus:** Phase 5 complete — ready for Phase 6 or verification
+**Current focus:** Phase 6 in progress — layout consistency normalization
 
 ## Current Position
 
-Phase: 5 of 6 (Navigation Overhaul)
-Plan: 2 of 2 (Footer & About Page Cleanup)
-Status: Complete
-Last activity: 2026-02-07 — Completed 05-02-PLAN.md (Phase 5 complete)
+Phase: 6 of 6 (Layout Consistency)
+Plan: 1 of 2 (Container Alignment)
+Status: In progress
+Last activity: 2026-02-07 — Completed 06-01-PLAN.md
 
-Progress: [██████████] 100% (Phase 5: 2/2 plans)
+Progress: [█████░░░░░] 50% (Phase 6: 1/2 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 16 (14 v1.0 + 2 v1.1)
+- Total plans completed: 17 (14 v1.0 + 3 v1.1)
 - Average duration: —
 - Total execution time: ~4 days (v1.0)
 
@@ -29,10 +29,12 @@ Progress: [██████████] 100% (Phase 5: 2/2 plans)
 |-------|-------|-------|----------|
 | v1.0 (1-4) | 14 | ~4 days | — |
 | 05-navigation-overhaul | 2/2 | 3 min | 1.5 min |
+| 06-layout-consistency | 1/2 | 1 min | 1 min |
 
 **Recent Trend:**
 - 05-01: 2 min (2 tasks)
 - 05-02: 1 min (2 tasks + checkpoint)
+- 06-01: 1 min (2 tasks)
 - Trend: fast execution, clean plans
 
 *Updated after each plan completion*
@@ -57,6 +59,8 @@ Recent decisions affecting current work:
 - [05-01]: Focus management uses inert attribute on main/footer (not manual focus trap)
 - [05-02]: Footer padding: py-8 base + env(safe-area-inset-bottom) additive (no breakpoint override)
 - [05-02]: About page social buttons removed per ABUT-04 (footer already has them)
+- [06-01]: max-w-7xl (1280px) as universal container width for global chrome and listing pages
+- [06-01]: Listing pages use section (not main) to avoid nested main elements
 
 ### Pending Todos
 
@@ -69,5 +73,5 @@ None — iOS Safari bottom chrome overlap resolved (bottom nav removed, safe-are
 ## Session Continuity
 
 Last session: 2026-02-07
-Stopped at: Completed Phase 5 (navigation overhaul), ready for verification or Phase 6
-Resume file: None
+Stopped at: Completed 06-01 (container alignment), ready for 06-02
+Resume file: .planning/phases/06-layout-consistency/06-02-PLAN.md
