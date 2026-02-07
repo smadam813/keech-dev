@@ -10,16 +10,16 @@ See: .planning/PROJECT.md (updated 2026-02-07)
 ## Current Position
 
 Phase: 5 of 6 (Navigation Overhaul)
-Plan: — (phase not yet planned)
-Status: Ready to plan
-Last activity: 2026-02-07 — Roadmap created for v1.1
+Plan: 1 of 2 (Unified Header with Hamburger Menu)
+Status: In progress
+Last activity: 2026-02-07 — Completed 05-01-PLAN.md
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█████░░░░░] 50% (Phase 5: 1/2 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 14 (v1.0)
+- Total plans completed: 15 (14 v1.0 + 1 v1.1)
 - Average duration: —
 - Total execution time: ~4 days (v1.0)
 
@@ -28,10 +28,11 @@ Progress: [░░░░░░░░░░] 0%
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | v1.0 (1-4) | 14 | ~4 days | — |
+| 05-navigation-overhaul | 1/2 | 2 min | 2 min |
 
 **Recent Trend:**
-- v1.1 not yet started
-- Trend: —
+- 05-01: 2 min (2 tasks)
+- Trend: fast execution, clean plans
 
 *Updated after each plan completion*
 
@@ -51,17 +52,19 @@ Recent decisions affecting current work:
 - [v1.1 Research]: Replace bottom nav with hamburger menu (eliminates iOS Safari bottom chrome overlap)
 - [v1.1 Research]: No new dependencies needed (lucide-react, Tailwind v4, React hooks sufficient)
 - [v1.1 Research]: viewport-fit=cover required for safe-area insets to work (currently missing)
+- [05-01]: iOS scroll lock uses position:fixed + scroll save/restore (not just overflow:hidden)
+- [05-01]: Focus management uses inert attribute on main/footer (not manual focus trap)
 
 ### Pending Todos
 
-None yet.
+None.
 
 ### Blockers/Concerns
 
-- iOS Safari bottom chrome collapse causes nav/footer overlap (Phase 5 addresses this)
+- iOS Safari bottom chrome collapse causes nav/footer overlap (Phase 5 addresses this -- bottom nav now removed in 05-01)
 
 ## Session Continuity
 
 Last session: 2026-02-07
-Stopped at: Roadmap created for v1.1, ready to plan Phase 5
-Resume file: None
+Stopped at: Completed 05-01 (unified header with hamburger menu), ready for 05-02 (polish/animations)
+Resume file: .planning/phases/05-navigation-overhaul/05-02-PLAN.md
