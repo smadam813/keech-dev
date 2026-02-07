@@ -45,7 +45,14 @@ A distinctive online presence that feels like stepping into a cosmic, Norse-touc
 
 ### Active
 
-(None — next milestone will define new requirements)
+#### Current Milestone: v1.1 Polish & Consistency
+
+**Goal:** Refine the mobile experience and normalize visual consistency across all pages.
+
+**Target features:**
+- Hamburger-style mobile navigation (replace bottom-pinned nav)
+- Remove redundant social buttons from About page
+- Normalize margins, sizing, and alignment across all pages
 
 ### Out of Scope
 
@@ -99,4 +106,4 @@ A distinctive online presence that feels like stepping into a cosmic, Norse-touc
 | View Transitions deferred | API experimental in Next.js 16 | — Pending |
 
 ---
-*Last updated: 2026-02-03 after v1.0 milestone*
+*Last updated: 2026-02-07 after v1.1 milestone started*

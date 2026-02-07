@@ -2,19 +2,17 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-03)
+See: .planning/PROJECT.md (updated 2026-02-07)
 
 **Core value:** A distinctive online presence that feels like stepping into a cosmic, Norse-touched world — memorable enough that visitors remember the site itself, not just the content.
-**Current focus:** Planning next milestone
+**Current focus:** v1.1 Polish & Consistency
 
 ## Current Position
 
-Phase: v1.0 COMPLETE
-Plan: N/A
-Status: Ready for next milestone
-Last activity: 2026-02-03 — v1.0 milestone shipped
-
-Progress: [██████████] 100% (v1.0)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-07 — Milestone v1.1 started
 
 ## Milestone History
 
@@ -45,19 +43,10 @@ None yet.
 
 ### Blockers/Concerns
 
-None yet.
+- iOS Safari bottom chrome collapse causes nav/footer overlap
 
 ## Session Continuity
 
-Last session: 2026-02-03
-Stopped at: v1.0 milestone archived
+Last session: 2026-02-07
+Stopped at: Defining v1.1 requirements
 Resume file: None
-
-## Next Steps
-
-Run `/gsd:new-milestone` to start the next milestone cycle:
-- Update PROJECT.md with new goals
-- Define requirements
-- Create roadmap phases
-
-`/clear` first for fresh context window.
