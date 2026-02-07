@@ -55,10 +55,11 @@ Plans:
   1. All listing pages (Blog, Projects) use the same max-width, and all detail/reading pages (post, project, about) use the same max-width, with no visible content-width jumps when navigating between pages of the same type
   2. Vertical padding above and below content is uniform across all pages (no page has noticeably more or less whitespace than others)
   3. Viewing page source shows exactly one `<main>` element in the DOM on every page (no nested main tags)
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 06-01: TBD
+- [ ] 06-01-PLAN.md -- Normalize header, footer, and listing pages to max-w-7xl; fix nested main tags; remove subtitles; standardize spacing
+- [ ] 06-02-PLAN.md -- Normalize detail pages (blog post, project, about) to max-w-4xl; fix about page nested main; visual verification checkpoint
 
 ## Progress
 
