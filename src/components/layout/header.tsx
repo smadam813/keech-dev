@@ -51,22 +51,18 @@ export function Header() {
     }
   }, [isOpen])
 
-  // Focus management via inert attribute
+  // Focus management via inert attribute on main content
   useEffect(() => {
     const main = document.querySelector('main')
-    const footer = document.querySelector('footer')
 
     if (isOpen) {
       main?.setAttribute('inert', '')
-      footer?.setAttribute('inert', '')
     } else {
       main?.removeAttribute('inert')
-      footer?.removeAttribute('inert')
     }
 
     return () => {
       main?.removeAttribute('inert')
-      footer?.removeAttribute('inert')
     }
   }, [isOpen])
 
@@ -94,7 +90,7 @@ export function Header() {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background border-b-[3px] border-foreground">
-      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <Link
           href="/"
           className="font-display font-bold text-2xl hover:text-accent motion-safe:transition-colors"
@@ -150,16 +146,16 @@ export function Header() {
         aria-modal="true"
         aria-label="Navigation menu"
         className={cn(
-          'fixed top-16 left-0 right-0 bottom-0 bg-background',
-          'border-t-[3px] border-foreground',
-          'transition-transform duration-300 ease-in-out',
+          'fixed top-16 left-0 right-0 bg-foreground text-background',
+          'border-t-[3px] border-b-[3px] border-foreground',
+          'transition-all duration-300 ease-in-out',
           'md:hidden',
           isOpen
-            ? 'translate-y-0 visible'
-            : '-translate-y-full invisible'
+            ? 'opacity-100 visible'
+            : 'opacity-0 invisible'
         )}
       >
-        <nav className="flex flex-col items-center justify-center h-full gap-8">
+        <nav className="flex flex-col items-center gap-8 py-12">
           {navItems.map((item) => (
             <Link
               key={item.href}
@@ -169,7 +165,7 @@ export function Header() {
                 'font-display text-3xl font-bold motion-safe:transition-colors',
                 isActive(item.href)
                   ? 'text-accent'
-                  : 'text-foreground hover:text-accent'
+                  : 'text-background hover:text-accent'
               )}
             >
               {item.label}

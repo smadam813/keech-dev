@@ -11,7 +11,7 @@ export function Footer() {
     <footer
       className="bg-foreground text-background py-8 pb-[calc(2rem+env(safe-area-inset-bottom))] mt-auto"
     >
-      <div className="max-w-5xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
         <p className="font-display text-sm">
           {new Date().getFullYear()} keech.dev
         </p>
