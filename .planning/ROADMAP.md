@@ -26,7 +26,7 @@ v1.1 replaces the bottom-pinned mobile navigation with a hamburger menu in the h
 - Integer phases (5, 6): Planned milestone work
 - Decimal phases (5.1, 5.2): Urgent insertions if needed (marked with INSERTED)
 
-- [ ] **Phase 5: Navigation Overhaul** - Replace bottom nav with hamburger menu and fix iOS viewport
+- [x] **Phase 5: Navigation Overhaul** - Replace bottom nav with hamburger menu and fix iOS viewport
 - [ ] **Phase 6: Layout Consistency** - Normalize containers, spacing, and semantic HTML across all pages
 
 ## Phase Details
@@ -44,8 +44,8 @@ v1.1 replaces the bottom-pinned mobile navigation with a hamburger menu in the h
 **Plans:** 2 plans
 
 Plans:
-- [ ] 05-01-PLAN.md -- Build unified responsive header with hamburger menu, scroll lock, focus management; update layout with viewport export; delete MobileNav
-- [ ] 05-02-PLAN.md -- Fix footer safe-area padding, remove About page social buttons, visual verification checkpoint
+- [x] 05-01-PLAN.md -- Build unified responsive header with hamburger menu, scroll lock, focus management; update layout with viewport export; delete MobileNav
+- [x] 05-02-PLAN.md -- Fix footer safe-area padding, remove About page social buttons, visual verification checkpoint
 
 ### Phase 6: Layout Consistency
 **Goal**: Every page on the site uses consistent container widths, vertical spacing, and correct semantic HTML
@@ -68,5 +68,5 @@ Phases execute in numeric order: 5 -> 6
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 1-4 | v1.0 | 14/14 | Complete | 2026-02-03 |
-| 5. Navigation Overhaul | v1.1 | 0/2 | Planned | - |
+| 5. Navigation Overhaul | v1.1 | 2/2 | Complete | 2026-02-07 |
 | 6. Layout Consistency | v1.1 | 0/? | Not started | - |
