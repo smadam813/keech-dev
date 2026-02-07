@@ -65,27 +65,27 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| NAV-04 | — | Pending |
-| NAV-05 | — | Pending |
-| NAV-06 | — | Pending |
-| NAV-07 | — | Pending |
-| NAV-08 | — | Pending |
-| NAV-09 | — | Pending |
-| NAV-10 | — | Pending |
-| VIEW-01 | — | Pending |
-| VIEW-02 | — | Pending |
-| VIEW-03 | — | Pending |
-| LYOT-01 | — | Pending |
-| LYOT-02 | — | Pending |
-| LYOT-03 | — | Pending |
-| LYOT-04 | — | Pending |
-| ABUT-04 | — | Pending |
+| NAV-04 | Phase 5 | Pending |
+| NAV-05 | Phase 5 | Pending |
+| NAV-06 | Phase 5 | Pending |
+| NAV-07 | Phase 5 | Pending |
+| NAV-08 | Phase 5 | Pending |
+| NAV-09 | Phase 5 | Pending |
+| NAV-10 | Phase 5 | Pending |
+| VIEW-01 | Phase 5 | Pending |
+| VIEW-02 | Phase 5 | Pending |
+| VIEW-03 | Phase 5 | Pending |
+| LYOT-01 | Phase 6 | Pending |
+| LYOT-02 | Phase 6 | Pending |
+| LYOT-03 | Phase 6 | Pending |
+| LYOT-04 | Phase 6 | Pending |
+| ABUT-04 | Phase 5 | Pending |
 
 **Coverage:**
 - v1.1 requirements: 15 total
-- Mapped to phases: 0
-- Unmapped: 15
+- Mapped to phases: 15
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-07*
-*Last updated: 2026-02-07 after initial definition*
+*Last updated: 2026-02-07 after roadmap creation*
