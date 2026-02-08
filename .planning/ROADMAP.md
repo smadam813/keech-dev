@@ -42,11 +42,10 @@ Plans:
   3. Glow colors vary by rune group -- warm amber, cool teal, and pale gold are visually distinguishable
   4. After the initial pulse-in, glows settle into a slow continuous breathing cycle that runs indefinitely
   5. Hero section remains smooth (no jank) on a throttled CPU, confirming only GPU-composited properties are animated
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 02-01: TBD
-- [ ] 02-02: TBD
+- [ ] 02-01-PLAN.md -- Rune glow overlays with staggered entrance, breathing cycle, and responsive object-cover positioning
 
 ## Progress
 
@@ -56,4 +55,4 @@ Phases execute in numeric order: 1 -> 2
 | Phase | Plans Complete | Status | Completed |
 |-------|---------------|--------|-----------|
 | 1. Animation Sync & Reveal | 1/1 | ✓ Complete | 2026-02-08 |
-| 2. Rune Glow Effects | 0/TBD | Not started | - |
+| 2. Rune Glow Effects | 0/1 | Not started | - |
