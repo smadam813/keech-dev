@@ -1,313 +1,264 @@
 # Project Research Summary
 
-**Project:** keech.dev
-**Domain:** Personal Developer Blog + Portfolio Website
-**Researched:** 2026-01-31
+**Project:** keech.dev v1.1 Polish & Consistency
+**Domain:** Mobile Navigation Overhaul and Layout Normalization
+**Researched:** 2026-02-07
 **Confidence:** HIGH
 
 ## Executive Summary
 
-keech.dev is a personal blog and portfolio site targeting the modern Next.js ecosystem with a distinctive neobrutalist aesthetic. The 2026 standard stack for this domain is well-established: Next.js 15.5 with App Router, Velite for type-safe MDX content management, Tailwind CSS v4 for styling, and rehype-pretty-code for syntax highlighting. This combination provides excellent developer experience, build-time performance, and zero-config deployment to Vercel.
+This milestone addresses mobile navigation UX issues and visual consistency across the portfolio site. The current bottom-pinned tab bar navigation creates iOS Safari viewport conflicts that are architecturally unsolvable without moving navigation to the top. Research confirms that replacing the bottom nav with a hamburger menu in the header is the standard, proven approach that eliminates iOS bottom chrome overlap issues entirely.
 
-The recommended approach prioritizes foundation over features: establish the neobrutalist design system and content pipeline first, then layer on blog and project showcases. The architecture leverages Server Components by default, treating MDX content as a type-safe data layer rather than just pages. This enables powerful content querying while maintaining static generation performance. The key differentiator for keech.dev is the unique visual identity (neobrutalist + cosmic palette + Norse accents) combined with hardware/maker project showcases, which sets it apart from typical developer portfolios.
+The recommended implementation requires zero new dependencies. Everything needed exists in the current stack: lucide-react for icons, Tailwind CSS v4 for viewport utilities and animations, Next.js App Router for auto-close on navigation, and React hooks for state management. The work is low-complexity but high-impact — fixing iOS Safari bugs that currently make footer links untappable and normalizing inconsistent page layouts that make the site feel unpolished.
 
-Critical risks center on accessibility, particularly ensuring neobrutalist color schemes meet WCAG contrast requirements, and MDX configuration pitfalls that can cause cryptic errors. Mitigation requires upfront contrast validation for all color pairs and following Next.js MDX setup patterns exactly. The research shows high confidence for technical decisions but flags design system validation and hardware project presentation as areas needing attention during implementation.
+Key risks center on integration atomicity (nav removal, footer padding, and main content padding must all change together) and iOS-specific scroll lock patterns. Both risks are well-documented with proven solutions. The milestone is achievable in 3-4 hours of focused work with clear testing protocols for iOS Safari validation.
 
 ## Key Findings
 
 ### Recommended Stack
 
-Next.js 15.5 represents the current stable release with mature App Router support, while Next.js 16 remains in canary and should be avoided for production. Velite has emerged as the recommended content layer following Contentlayer's abandonment in 2023, providing Zod schema validation and automatic TypeScript type generation for MDX frontmatter. Tailwind CSS v4 simplifies configuration with a CSS-first approach, eliminating the need for tailwind.config.js files for basic setups.
+No new dependencies required. The existing stack already provides all necessary capabilities:
 
-**Core technologies:**
-- **Next.js 15.5.x**: React framework with App Router — stable production release with excellent Vercel integration
-- **Velite 0.3.x**: MDX content processing — type-safe content layer with Zod validation, better than deprecated Contentlayer
-- **Tailwind CSS 4.x**: Utility CSS framework — new CSS-first configuration, built-in support for design tokens
-- **rehype-pretty-code**: Code syntax highlighting — Shiki-powered with VS Code themes, build-time rendering
-- **next-themes**: Dark mode management — proven solution with no flash, system preference support
+**Core technologies (no changes):**
+- Next.js 16 with App Router — provides `usePathname` for auto-close on navigation and `viewport` export API for iOS safe area configuration
+- Tailwind CSS v4 — ships `min-h-dvh`, `h-svh` viewport utilities and transition animations natively
+- lucide-react — already installed, provides `Menu` and `X` icons for hamburger toggle
+- React 19 — `useState` and `useEffect` handle all menu state needs
 
-**Critical version requirements:**
-- Avoid Next.js 16 canary — use stable 15.5.11
-- Avoid Contentlayer — deprecated since 2023
-- Use Tailwind v4 CSS-first config — no tailwind.config.js needed for basic setup
+**What we're NOT adding:**
+- No Framer Motion (Tailwind transitions sufficient for simple slide/fade)
+- No @headlessui/react (overkill for 4-link nav)
+- No hamburger-react (lucide icons + boolean state accomplishes same result)
+- No body-scroll-lock library (position:fixed pattern works for simple overlay)
+
+**Critical configuration addition:**
+The project uses `env(safe-area-inset-bottom)` but lacks the required `viewport-fit=cover` configuration. This means safe-area padding currently evaluates to zero on all devices. Fix requires adding viewport export to root layout (one 6-line code block).
 
 ### Expected Features
 
-The feature landscape divides cleanly into table stakes (expected baseline) and differentiators (memorable impressions). Missing table stakes features signal an incomplete or unprofessional portfolio, while differentiators create the distinctive keech.dev identity.
-
 **Must have (table stakes):**
-- About page with bio and professional photo — humanizes the site, users need to know who you are
-- Project showcase with live/source links — core portfolio purpose, recruiters expect working demonstrations
-- Responsive design — 72% of creative professionals are evaluated on personal websites, mobile is critical
-- Fast loading (<3s) — slow portfolios destroy credibility, reflects technical competence
-- Professional domain (keech.dev) — fundamental credibility signal, already secured
-- Contact information — minimum social links, enables opportunities
+- Hamburger icon with animated X transition — universal mobile menu signifier
+- Full-screen or slide-out overlay panel — clear visual hierarchy above page content
+- Body scroll lock when menu open — iOS Safari requires position:fixed pattern, not overflow:hidden
+- Escape key closes menu — accessibility baseline
+- Menu closes on navigation — App Router requires usePathname + useEffect pattern
+- Active page indicator in menu — preserve existing usePathname logic from current MobileNav
+- Consistent max-width across all pages — currently varies from max-w-3xl to max-w-6xl
+- Desktop nav unchanged — hamburger only appears below md breakpoint
 
-**Should have (competitive differentiators):**
-- Dark/light mode toggle — expected by technical audiences, accessibility consideration
-- Neobrutalist design system — bold visual identity that stands out from minimalist crowd
-- Hardware/maker project showcase — rare differentiator showing breadth beyond software
-- Narrative project case studies — "stroll through digital gallery" approach over bullet lists
-- Syntax-highlighted code blocks — essential for tech blog credibility
-- RSS feed — IndieWeb support, technical audience expects it
+**Should have (differentiators):**
+- Staggered link animation on menu open — fits existing animate-fade-in-up pattern
+- Backdrop dim/blur on menu open — signals modal context (or solid opaque for neobrutalist aesthetic)
+- Semantic nav region with ARIA — aria-expanded, aria-label, aria-controls
+- Focus trap inside open menu — Tab cycling stays within menu when open
+- Shared page container component — prevents future max-width drift
 
-**Defer (v2+):**
-- Custom animations/micro-interactions — polish after core functionality works
-- SEO structured data — valuable but not blocking launch
-- Webmentions/comments — complexity not worth it initially, social links handle discussion
-- Advanced filtering/search — can launch with basic blog index, add as content grows
+**Defer (out of scope):**
+- Animated page transitions (View Transitions API still experimental in Next.js 16)
+- Off-canvas sidebar drawer (over-engineered for 4 links)
+- Bottom sheet navigation (requires gesture handling, adds complexity)
+- Moving social links to hamburger menu (footer is conventional location)
 
 ### Architecture Approach
 
-The architecture follows modern Next.js patterns: Server Components by default, static generation for content pages, and treating MDX as a type-safe data source. Velite generates TypeScript types from Zod schemas at build time, enabling functions like `getAllPosts()` and `getPostBySlug()` that behave like a traditional CMS but compile to static JSON. The App Router structure separates concerns into `/app` (routes), `/components` (UI), `/content` (MDX files), and `/lib` (utilities).
+Replace bottom tab bar with hamburger menu integrated into the Header component. This eliminates iOS Safari bottom chrome overlap by moving navigation to the top where browser chrome doesn't interfere.
 
-**Major components:**
-1. **Content Engine** — Velite parses MDX files, validates frontmatter with Zod, generates type-safe data layer at build time
-2. **Design System** — Neobrutalist tokens defined in CSS custom properties, primitive components (Button, Card) composed into features
-3. **App Shell** — Root layout provides fonts, theme provider, metadata template; navigation/footer shared across routes
-4. **Blog Components** — Post list, post card, post layout consume type-safe content from Velite
-5. **Project Components** — Similar pattern to blog but with project-specific schema (tech stack, live URLs, GitHub links)
-6. **MDX Components** — Custom overrides for code blocks, images, callouts available in all MDX files via mdx-components.tsx
+**Component boundaries:**
+1. Header (server component) — Logo, desktop nav links, renders MobileMenuButton slot
+2. MobileMenuButton (client component) — Hamburger toggle, owns `isOpen` state, renders MobileMenu
+3. MobileMenu (client component) — Full-screen overlay with nav links, auto-closes on route change
+4. Footer (server component) — Simplified padding (no bottom nav compensation)
 
 **Key patterns:**
-- Server Components by default — only add `'use client'` when interactivity needed (theme toggle, mobile menu)
-- Content as data — treat MDX like CMS, query/filter programmatically, leverage TypeScript types
-- Composition over configuration — build MDX component system through React composition, not complex plugin chains
-- Neobrutalist design tokens — define via CSS custom properties, consume via Tailwind utilities
+- Client component islands in server components — Header stays server-rendered, only MobileMenuButton ships client JS
+- Auto-close on navigation — usePathname in useEffect detects route changes (replaces Pages Router router.events)
+- Scroll lock with cleanup — position:fixed on body with saved scroll position (overflow:hidden insufficient on iOS)
+- CSS transitions over JS animation — Tailwind utilities, no Framer Motion dependency
+
+**Files affected:**
+- CREATE: `mobile-menu-button.tsx`, `mobile-menu.tsx`
+- MODIFY: `layout.tsx` (add viewport export, remove MobileNav, update main padding), `header.tsx` (add hamburger), `footer.tsx` (remove bottom-nav padding)
+- DELETE: `mobile-nav.tsx`
+
+**Layout normalization:**
+Fix duplicate `<main>` tags across Blog, Projects, and About pages (root layout already provides main wrapper). Standardize container widths to max-w-5xl for listing pages, max-w-3xl for detail/reading pages.
 
 ### Critical Pitfalls
 
-Research uncovered several pitfalls specific to Next.js 15 App Router with MDX that can cause major delays or rewrites if not addressed upfront.
+1. **iOS Safari bottom chrome overlap** — Current bottom-pinned nav overlaps footer when Safari's address bar collapses on scroll. Footer becomes untappable. Prevention: Replace bottom nav with hamburger (planned approach). Detection: Test on real iPhone, not Chrome DevTools.
 
-1. **Missing mdx-components.tsx file** — Cryptic "createContext only works in Client Components" error when this required file is missing; must be created at project root immediately during MDX setup, following official Next.js guide exactly
+2. **env(safe-area-inset-bottom) requires viewport-fit=cover** — Project uses env() but lacks the required viewport meta configuration. Safe-area padding currently evaluates to zero on all devices. Prevention: Export viewport config with viewportFit='cover' in root layout. This is a Next.js App Router API, not a manual meta tag.
 
-2. **Neobrutalist design without WCAG contrast testing** — Bold color schemes fail accessibility; test ALL color pairs with contrast checker (minimum 4.5:1 for body text) before building components; limit palette to 2-3 bold colors, use black/white for text
+3. **Menu not closing on Next.js route change** — App Router uses client-side navigation. Without usePathname watching, menu stays open after link clicks. Prevention: useEffect with pathname dependency that sets isOpen to false. This must ship from day one, not added as follow-up.
 
-3. **Route Handlers inside Server Components** — Unnecessary API routes and fetch() calls where direct async function calls work; wastes network hops, creates localhost URL problems; call content/database logic directly in Server Components
+4. **Body scroll not locked on iOS Safari** — overflow:hidden on body is ignored by iOS Safari touch events. Background page scrolls behind open menu. Prevention: position:fixed on body + save/restore scroll position pattern (see PITFALLS.md for full code).
 
-4. **Blank lines in JSX within MDX** — MDX parser interprets blank lines as paragraph breaks, causing cryptic parsing errors; never leave blank lines inside JSX tags, document authoring rules upfront
+5. **Footer padding still references old bottom nav** — Footer has `pb-[calc(6rem+env(safe-area-inset-bottom))]` to clear bottom tab bar. When nav is removed, this creates massive empty gap. Prevention: Update footer padding in same PR as nav removal. These changes must be atomic.
 
-5. **next-mdx-remote import limitations** — Cannot use import/export in MDX files, all components must pass through props; evaluate if @next/mdx fits needs better, plan component architecture before committing to approach
+6. **Main content padding not updated** — Root layout has `pb-20 md:pb-0` to clear bottom nav and `pt-0` because header is hidden on mobile. When header becomes visible with hamburger and bottom nav is removed, both values become wrong. Prevention: Change to `pt-16` (header height), remove `pb-20`. Must happen in same PR.
 
 ## Implications for Roadmap
 
-Based on combined research, the recommended phase structure follows dependency chains discovered in architecture research and feature prioritization.
+Based on research, this milestone should be implemented in 2 sequential phases with clear atomic boundaries.
 
-### Phase 1: Foundation & Design System
-**Rationale:** Everything else depends on these foundations. Design tokens must be validated for accessibility before any components are built. The neobrutalist aesthetic requires upfront color contrast testing to avoid accessibility rewrites.
+### Phase 1: Navigation Overhaul (Hamburger Menu Migration)
 
-**Delivers:**
-- Next.js 15.5 project scaffold with TypeScript
-- Tailwind v4 with neobrutalist design tokens (validated for WCAG contrast)
-- Root layout with fonts, metadata template, theme provider
-- Core primitive components (Button, Card, Input) with neobrutalist styling
-- Basic navigation header/footer
-
-**Addresses:**
-- Professional domain (keech.dev)
-- Responsive design baseline
-- Neobrutalist design system (table stakes differentiator)
-
-**Avoids:**
-- Pitfall #2: Contrast testing happens in this phase, not after components exist
-- Pitfall #4: Design tokens defined correctly from start
-
-**Research flag:** LOW — Tailwind v4 and neobrutalist patterns well-documented
-
-### Phase 2: Content Engine
-**Rationale:** Content system can be built in parallel with design polish. Velite setup is independent of UI components. Getting MDX configuration right early prevents rewrites.
+**Rationale:** The hamburger menu and bottom nav removal must happen atomically. All mobile navigation functionality must exist before the old nav is deleted, ensuring users are never without navigation. This phase eliminates the iOS Safari bottom chrome conflict entirely.
 
 **Delivers:**
-- Velite configuration with Zod schemas for posts and projects
-- Type-safe content utilities (getAllPosts, getPostBySlug)
-- mdx-components.tsx with custom overrides
-- Syntax highlighting via rehype-pretty-code
-- Content authoring guidelines (MDX rules documented)
+- Hamburger menu in header (mobile only)
+- Full-screen overlay with nav links
+- Auto-close on navigation (usePathname)
+- Body scroll lock (iOS-compatible pattern)
+- Escape key closes menu
+- ARIA attributes and focus management
+- Removal of bottom-pinned MobileNav component
+- Updated footer padding (no bottom nav compensation)
+- Updated main content padding (header clearance, no bottom padding)
+- viewport-fit=cover configuration for safe-area insets
 
-**Addresses:**
-- Blog system foundation
-- Project showcase data structure
-- Syntax-highlighted code blocks (differentiator)
+**Addresses features:**
+- Hamburger icon with X transition (table stakes)
+- Overlay panel (table stakes)
+- Menu closes on navigation (table stakes)
+- Desktop nav unchanged (table stakes)
+- Staggered link animation (differentiator)
+- Backdrop dim (differentiator)
+- ARIA semantics (differentiator)
 
-**Avoids:**
-- Pitfall #1: mdx-components.tsx created immediately
-- Pitfall #4: MDX blank line rules documented for authors
-- Pitfall #5: Using Velite avoids next-mdx-remote import limitations
+**Avoids pitfalls:**
+- iOS bottom chrome overlap (Pitfall 1) — eliminated by moving nav to top
+- Menu not closing on route change (Pitfall 3) — usePathname pattern from start
+- Body scroll not locked (Pitfall 4) — position:fixed scroll lock pattern
+- Footer padding coupling (Pitfall 7) — updated in same commit
+- Main content padding (Pitfall 11) — updated in same commit
 
-**Uses:** Velite (STACK.md), rehype-pretty-code (STACK.md)
+**Critical integration points:**
+Files that must change together (atomic commit):
+1. Create `mobile-menu-button.tsx` and `mobile-menu.tsx`
+2. Modify `header.tsx` to integrate hamburger
+3. Modify `layout.tsx` to remove MobileNav, add viewport export, update main padding
+4. Modify `footer.tsx` to remove bottom-nav padding hack
+5. Delete `mobile-nav.tsx`
 
-**Research flag:** LOW — Velite setup well-documented, official Next.js MDX guide comprehensive
+**Testing protocol:**
+- Mobile: Header visible with hamburger, menu works, background doesn't scroll when menu open
+- Mobile: Footer sits at natural page bottom, no excess padding
+- Mobile: No content hidden behind header
+- Desktop: No change (header + nav unchanged)
+- iPad 768px: Clean transition between hamburger and desktop nav
+- iPhone with notch: Safe area padding works (verify viewport-fit=cover effective)
 
-### Phase 3: Static Pages & Navigation
-**Rationale:** Static pages test the design system and provide MVP portfolio presence. Can launch with just About + Projects before blog is complete.
+### Phase 2: Layout Consistency (Normalization)
 
-**Delivers:**
-- Home page with hero, recent posts preview, featured projects
-- About page with bio, photo, resume download link
-- Contact section with social links (GitHub, LinkedIn, email)
-- Polished navigation with mobile menu (client component)
-
-**Addresses:**
-- About page with bio (must have)
-- Contact information (must have)
-- Fast loading (must have)
-- Professional domain presence
-
-**Avoids:**
-- Pitfall #3: Server Components for static content, client only for mobile menu
-
-**Research flag:** LOW — Standard patterns, well-established
-
-### Phase 4: Blog Features
-**Rationale:** Blog leverages content engine from Phase 2 and design system from Phase 1. Includes dark mode as it's expected by technical audiences.
-
-**Delivers:**
-- Blog listing page with post cards
-- Individual blog post pages with MDX rendering
-- Reading time estimates
-- Dark/light mode toggle with next-themes
-- RSS feed generation
-
-**Addresses:**
-- Blog with mixed content (differentiator)
-- Dark/light mode (differentiator)
-- RSS feed (differentiator)
-
-**Avoids:**
-- Pitfall #10: Theme toggle properly marked 'use client'
-- Pitfall #16: RSS feed tested with validator, not browser
-
-**Uses:** next-themes (STACK.md), RSS package (STACK.md)
-
-**Research flag:** LOW — Blog patterns well-established, dark mode well-documented
-
-### Phase 5: Project Showcase
-**Rationale:** Projects follow similar pattern to blog but with project-specific schema. Hardware projects need special consideration for image galleries.
+**Rationale:** After navigation is stable, normalize container widths and clean up duplicate semantic elements. This work is independent of navigation and can be tested separately. Layout inconsistencies are currently most visible on tablet widths where max-w differences cause content to jump.
 
 **Delivers:**
-- Projects grid/listing page
-- Project detail pages with MDX rendering
-- Differentiated templates for software vs hardware projects
-- Image galleries for hardware builds (lazy-loaded, optimized)
-- Live demo links and GitHub links
+- Consistent max-width across all pages (max-w-5xl for listings, max-w-3xl for detail)
+- Fix duplicate `<main>` tags (Blog, Projects, About pages all have nested main)
+- Consistent vertical padding (standardize on py-8)
+- Optional: Extract shared PageContainer component to prevent future drift
 
-**Addresses:**
-- Project showcase (must have)
-- Hardware/maker projects (differentiator)
-- Narrative case studies (differentiator)
-- Live project links (must have)
-- Source code links (must have)
+**Addresses features:**
+- Consistent max-width across pages (table stakes)
+- Shared page container component (differentiator)
 
-**Avoids:**
-- Pitfall #6: LCP images marked with priority prop
-- Pitfall #11: Case-sensitive imports established as convention
+**Avoids pitfalls:**
+- Inconsistent max-width (Pitfall 6) — normalize to one width per page type
+- Duplicate main tags (Pitfall 15) — change page-level main to div/section
 
-**Research flag:** MEDIUM — Hardware project presentation less documented; may need research-phase for image gallery patterns and video embedding
-
-### Phase 6: Polish & SEO
-**Rationale:** Final optimizations after core functionality works. SEO structured data, performance tuning, accessibility audit.
-
-**Delivers:**
-- SEO metadata using Next.js Metadata API
-- Open Graph images for social sharing (metadataBase set)
-- Sitemap generation via next-sitemap
-- Image optimization audit (blur placeholders, lazy loading)
-- Accessibility audit (focus states, screen reader testing)
-- Performance testing (Core Web Vitals)
-
-**Addresses:**
-- Error-free functionality (must have)
-- Fast loading optimization (must have)
-- HTTPS (must have via Vercel)
-
-**Avoids:**
-- Pitfall #7: metadataBase set in root layout for OG images
-- Pitfall #6: LCP images audited and optimized
-- Pitfall #2: Final accessibility validation
-
-**Research flag:** LOW — SEO patterns well-documented in Next.js docs
+**Work breakdown:**
+- Audit current container patterns (already documented in ARCHITECTURE.md)
+- Choose standard widths: max-w-5xl for listing pages, max-w-3xl for prose
+- Update 6 page files (Blog listing/detail, Projects listing/detail, About, not-found)
+- Fix semantic HTML (main → div on pages where layout provides main)
+- Optional: Create PageContainer wrapper component
 
 ### Phase Ordering Rationale
 
-- **Phase 1 before all others**: Design tokens must be contrast-validated before components exist to avoid rewrites
-- **Phase 2 parallel to Phase 1 polish**: Content engine is independent of UI, can be built simultaneously
-- **Phase 3 tests Phase 1**: Static pages validate design system works before complex content rendering
-- **Phase 4 and 5 parallel**: Blog and Projects follow same patterns, could be built in either order or parallel
-- **Phase 6 last**: Polish requires complete feature set to optimize
-
-**Dependency chains identified:**
-- Design System → Static Pages → Content Pages
-- Content Engine → Blog Features
-- Content Engine → Project Showcase
-- All phases → Polish & SEO
-
-**Grouping rationale:**
-- Foundation/Design/Content Engine are infrastructure layers
-- Static Pages/Blog/Projects are feature layers that consume infrastructure
-- Polish/SEO applies across all features
+- Phase 1 must come first because it addresses the critical iOS Safari bug and removes the root cause of footer/viewport conflicts. Layout normalization depends on knowing the final navigation architecture.
+- The two phases are technically independent (layout width changes don't affect navigation), but sequencing them reduces risk. Testing nav changes in isolation makes debugging easier.
+- Both phases are low-complexity with clear success criteria. Total effort: 3-4 hours.
 
 ### Research Flags
 
-**Phases likely needing deeper research during planning:**
-- **Phase 5 (Project Showcase)**: Hardware project presentation patterns less documented; may need `/gsd:research-phase` for image gallery best practices, video embedding, schematic display strategies
+**No additional research needed:**
+- Hamburger menu pattern is well-documented with established implementations
+- iOS Safari viewport behavior is thoroughly researched in official WebKit docs
+- Next.js App Router patterns are from official documentation
+- Layout normalization is mechanical CSS class changes
 
-**Phases with standard patterns (skip research-phase):**
-- **Phase 1 (Foundation)**: Next.js setup, Tailwind v4, neobrutalist components well-documented
-- **Phase 2 (Content Engine)**: Velite configuration, MDX setup covered in official docs
-- **Phase 3 (Static Pages)**: Standard React/Next.js patterns
-- **Phase 4 (Blog)**: Mature patterns, many examples in ecosystem
-- **Phase 6 (Polish)**: SEO and performance optimization well-established
+**Standard patterns apply:**
+- Client component islands (App Router best practice)
+- usePathname for route change detection (replaces Pages Router router.events)
+- position:fixed scroll lock (iOS Safari workaround, multiple verified sources)
+- Accessibility attributes (WCAG 2.1 AA compliance)
+
+**Skip `/gsd:research-phase` for both phases** — implementation is straightforward with no niche domain knowledge required.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | Next.js 15.5, Velite, Tailwind v4 verified via official docs and GitHub releases; clear version recommendations |
-| Features | HIGH | Table stakes vs differentiators identified from multiple portfolio best practice sources; clear MVP path |
-| Architecture | HIGH | Server Components, Velite content layer, design system patterns verified in official Next.js docs and real-world implementations |
-| Pitfalls | MEDIUM-HIGH | Critical pitfalls verified from Vercel blog and official docs; neobrutalist accessibility concerns from NN/g; some pitfalls from single community sources |
+| Stack | HIGH | All features achievable with existing dependencies. Verified lucide-react icons exist, Tailwind v4 viewport utilities confirmed via official docs, Next.js viewport export API verified. |
+| Features | HIGH | UX research from NN/g and Interaction Design Foundation confirms hamburger menu appropriate for simple 4-link nav. Accessibility patterns from a11ymatters and WCAG docs. |
+| Architecture | HIGH | Component boundaries verified against existing codebase. Client island pattern is Next.js best practice. File changes audited, duplicate main tags confirmed in current code. |
+| Pitfalls | HIGH | iOS Safari viewport behavior verified via WebKit blog and MDN. Scroll lock pattern verified via multiple iOS-specific sources with confirmed reproduction. Navigation close behavior verified in Next.js discussions. |
 
 **Overall confidence:** HIGH
 
-Research surfaced clear technical decisions with minimal ambiguity. The Next.js 15 + Velite + Tailwind v4 stack is well-trodden territory with official documentation and recent community adoption. Feature landscape has consensus around table stakes for developer portfolios. Architecture patterns are standardized for App Router.
-
 ### Gaps to Address
 
-Areas where research was inconclusive or needs validation during implementation:
+No critical gaps. Minor items to validate during implementation:
 
-- **Neobrutalist + Norse design integration**: While neobrutalist patterns are documented, combining with Norse design accents and cosmic palette is unique to keech.dev; requires design exploration and contrast testing during Phase 1; no off-the-shelf examples found
+- **Focus trap implementation details** — Research covers the requirement (focus must stay in menu when open) but not specific implementation. Manual tabIndex management vs lightweight utility. Decide during Phase 1 based on complexity vs benefit.
 
-- **Hardware project presentation**: Most portfolio research focuses on software projects; optimal image gallery patterns, video embedding, schematic display for hardware builds needs validation during Phase 5; consider `/gsd:research-phase` when reaching that phase
+- **Staggered animation timing** — Research recommends 50-100ms delay per link but doesn't specify optimal value for 4 items. Quick A/B test during implementation to find what feels best with neobrutalist aesthetic.
 
-- **Cosmic palette contrast**: The specific cosmic/psychedelic color palette (cosmic purple, pink, blue, gold) needs WCAG testing; research identified the requirement but didn't validate specific color values; must happen in Phase 1 before components
+- **Exact max-width values** — Research suggests max-w-5xl for listings and max-w-3xl for detail pages, but final decision should consider existing content density. Preview at different widths during Phase 2 before committing.
 
-- **Custom animations scope**: Research flagged over-animation as anti-pattern but didn't specify optimal level for neobrutalist sites; defer decisions until Phase 6, start conservative with CSS transitions
+- **PageContainer component extraction** — Optional enhancement. Research doesn't address whether this adds value vs simple utility class. Decide during Phase 2 based on whether layout variations are likely in future work.
 
-- **Resume PDF strategy**: Research identified resume download as table stakes but didn't address update workflow; during Phase 3, decide between manual PDF replacement vs generated from data
+All gaps are implementation details, not architectural unknowns. None block starting work.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- [Next.js MDX Guide](https://nextjs.org/docs/app/guides/mdx) — Official MDX integration patterns
-- [Next.js Releases](https://github.com/vercel/next.js/releases) — v15.5.11 verified as latest stable
-- [Tailwind CSS Next.js Installation](https://tailwindcss.com/docs/guides/nextjs) — Tailwind v4 CSS-first configuration
-- [Velite GitHub](https://github.com/zce/velite) — v0.3.1 active development verified
-- [Next.js Metadata API](https://nextjs.org/docs/app/api-reference/functions/generate-metadata) — SEO patterns
-- [Vercel Blog: Common Mistakes](https://vercel.com/blog/common-mistakes-with-the-next-js-app-router-and-how-to-fix-them) — App Router pitfalls
+
+**Official Documentation:**
+- [Next.js generateViewport](https://nextjs.org/docs/app/api-reference/functions/generate-viewport) — viewportFit property for viewport-fit=cover
+- [Next.js usePathname](https://nextjs.org/docs/app/api-reference/functions/use-pathname) — Route change detection in App Router
+- [Tailwind CSS v4 Height Utilities](https://tailwindcss.com/docs/height) — dvh/svh/lvh viewport units built-in
+- [MDN env() CSS function](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/env) — Safe area inset CSS environment variables
+- [WebKit: Designing Websites for iPhone X](https://webkit.org/blog/7929/designing-websites-for-iphone-x/) — viewport-fit=cover and safe-area insets
+- [Lucide Icons](https://lucide.dev/icons/) — Menu and X icons verified
+
+**Standards/Specifications:**
+- [WCAG 2.1 AA](https://www.w3.org/WAI/WCAG21/quickref/) — Accessibility requirements for navigation
+- [a11ymatters: Mobile Navigation](https://a11ymatters.com/pattern/mobile-nav/) — Accessible mobile nav pattern reference
 
 ### Secondary (MEDIUM confidence)
-- [NN/g: Neobrutalism](https://www.nngroup.com/articles/neobrutalism/) — Design best practices and accessibility concerns
-- [Rehype Pretty Code](https://rehype-pretty.pages.dev/) — Syntax highlighting configuration
-- [Josh Comeau: How I Built My Blog](https://www.joshwcomeau.com/blog/how-i-built-my-blog/) — Real-world MDX pitfalls and patterns
-- [Contentlayer Alternatives](https://www.wisp.blog/blog/contentlayer-has-been-abandoned-what-are-the-alternatives) — Velite vs Contentlayer comparison
-- [BrainStation Web Developer Portfolio Guide](https://brainstation.io/career-guides/how-to-build-a-web-developer-portfolio) — Portfolio feature expectations
-- [WebAIM Contrast](https://webaim.org/articles/contrast/) — WCAG contrast requirements
 
-### Tertiary (LOW confidence)
-- [DevPortfolioTemplates 5 Mistakes](https://www.devportfoliotemplates.com/blog/5-mistakes-developers-make-in-their-portfolio-websites) — Portfolio anti-patterns, single source
-- [MDXBlog: next-mdx-remote Limitations](https://www.mdxblog.io/blog/next-mdx-remote-limitations) — Content layer trade-offs, community source
-- [Built In Hardware Engineering Portfolio](https://builtin.com/hardware/hardware-engineering-portfolio) — Hardware portfolio guidance, needs validation for web context
+**UX Research:**
+- [NN/g: Hamburger Menus and Hidden Navigation Hurt UX Metrics](https://www.nngroup.com/articles/hamburger-menus/) — Research showing hidden nav acceptable when items are few and well-known
+- [NN/g: Menu-Design Checklist: 17 UX Guidelines](https://www.nngroup.com/articles/menu-design/) — Comprehensive menu design guidelines
+- [Interaction Design Foundation: Hamburger Menu UX](https://www.interaction-design.org/literature/article/hamburger-menu-ux) — When to use hamburger menus effectively
+
+**Implementation Patterns:**
+- [Erwin Hofman: 7 Steps for Accessible Hamburger Menus](https://www.erwinhofman.com/blog/build-web-accessible-hamburger-dropdown-menus/) — Accessibility implementation
+- [Samuel Kraft: Safari 15 Bottom Tab Bars](https://samuelkraft.com/blog/safari-15-bottom-tab-bars-web) — iOS Safari safe area patterns
+- [Jay Freestone: Locking body scroll on iOS](https://www.jayfreestone.com/writing/locking-body-scroll-ios/) — iOS-specific scroll lock pattern
+- [PQINA: Prevent scrolling on iOS Safari 15](https://pqina.nl/blog/how-to-prevent-scrolling-the-page-on-ios-safari) — position:fixed scroll lock approach
+
+### Tertiary (Context)
+
+**Community Examples:**
+- [Smashing Magazine: Bottom Navigation Pattern](https://www.smashingmagazine.com/2019/08/bottom-navigation-pattern-mobile-web-pages/) — UX tradeoffs between navigation patterns
+- [Conflux: Tab Bar vs Hamburger Menu](https://www.weareconflux.com/en/blog/tab-bar-vs-hamburger-menu/) — Comparison research
+- [Opus.ing: iOS Viewport Units](https://opus.ing/posts/fixing-ios-safaris-menu-bar-overlap-css-viewport-units) — svh vs dvh guidance
+- [Next.js Discussion #46542](https://github.com/vercel/next.js/discussions/46542) — viewport-fit=cover support confirmed
 
 ---
-*Research completed: 2026-01-31*
+
+*Research completed: 2026-02-07*
 *Ready for roadmap: yes*

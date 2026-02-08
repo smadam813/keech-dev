@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A personal portfolio and blog at keech.dev featuring a distinctive neobrutalist design with cosmic, Norse-touched aesthetics. Showcases software projects and writing through MDX-powered content with syntax-highlighted code blocks, scroll animations, and comprehensive SEO.
+A personal portfolio and blog at keech.dev featuring a distinctive neobrutalist design with cosmic, Norse-touched aesthetics. Showcases software projects and writing through MDX-powered content with syntax-highlighted code blocks, scroll animations, and comprehensive SEO. Fully polished mobile experience with hamburger menu navigation and consistent layouts.
 
 ## Core Value
 
@@ -20,6 +20,13 @@ A distinctive online presence that feels like stepping into a cosmic, Norse-touc
 - ✓ NAV-01: Clear navigation to all sections — v1.0
 - ✓ NAV-02: Navigation reinforces brand identity — v1.0
 - ✓ NAV-03: Mobile navigation works intuitively — v1.0
+- ✓ NAV-04: Mobile nav uses hamburger icon in header — v1.1
+- ✓ NAV-05: Hamburger opens full-screen overlay with nav links — v1.1
+- ✓ NAV-06: Menu auto-closes on route change — v1.1
+- ✓ NAV-07: Active page is highlighted in mobile menu — v1.1
+- ✓ NAV-08: Hamburger icon animates to X when menu is open — v1.1
+- ✓ NAV-09: Menu traps focus while open (accessibility) — v1.1
+- ✓ NAV-10: Menu locks background scroll while open — v1.1
 - ✓ HOME-01: Bold landing page with name — v1.0
 - ✓ HOME-02: Design makes the statement — v1.0
 - ✓ HOME-03: Clear path to content via navigation — v1.0
@@ -36,16 +43,24 @@ A distinctive online presence that feels like stepping into a cosmic, Norse-touc
 - ✓ ABUT-01: About page with bio — v1.0
 - ✓ ABUT-02: Social links (GitHub, LinkedIn) — v1.0
 - ✓ ABUT-03: Downloadable PDF resume (placeholder) — v1.0
+- ✓ ABUT-04: Social link buttons removed from About page (footer handles this) — v1.1
 - ✓ INTR-01: Playful hover effects — v1.0
 - ✓ INTR-03: Scroll-triggered animations — v1.0
 - ✓ TECH-01: Vercel deployment — v1.0
 - ✓ TECH-02: Core Web Vitals pass — v1.0
 - ✓ TECH-03: SEO meta tags — v1.0
 - ✓ TECH-04: MDX content with Velite — v1.0
+- ✓ VIEW-01: Layout exports viewport-fit: cover — v1.1
+- ✓ VIEW-02: Bottom-nav padding hacks removed — v1.1
+- ✓ VIEW-03: Footer uses correct safe-area insets — v1.1
+- ✓ LYOT-01: All pages use consistent max-width containers — v1.1
+- ✓ LYOT-02: Vertical padding standardized across all pages — v1.1
+- ✓ LYOT-03: Blog/Projects listing use aligned card layouts — v1.1
+- ✓ LYOT-04: No nested main tags (single main in root layout) — v1.1
 
 ### Active
 
-(None — next milestone will define new requirements)
+(None — define requirements for next milestone with `/gsd:new-milestone`)
 
 ### Out of Scope
 
@@ -60,11 +75,11 @@ A distinctive online presence that feels like stepping into a cosmic, Norse-touc
 
 ## Context
 
-**Current State (v1.0 shipped 2026-02-03):**
-- 1,336 LOC TypeScript/TSX/CSS
-- Tech stack: Next.js 16, Tailwind v4, Velite, rehype-pretty-code
+**Current State (v1.1 shipped 2026-02-07):**
+- ~1,400 LOC TypeScript/TSX/CSS
+- Tech stack: Next.js 16, Tailwind v4, Velite, rehype-pretty-code, Lucide React
 - Deployed: https://keech.dev (keech-dev.vercel.app)
-- 4 phases, 14 plans executed over 4 days
+- 6 phases, 18 plans executed across 2 milestones
 
 **Content:**
 - 1 sample blog post (hello-world.mdx)
@@ -97,6 +112,11 @@ A distinctive online presence that feels like stepping into a cosmic, Norse-touc
 | Single theme (no dark/light toggle) | Cohesive aesthetic is core to vision | ✓ Good |
 | Social links only for contact | Simpler than contact form | ✓ Good |
 | View Transitions deferred | API experimental in Next.js 16 | — Pending |
+| Hamburger menu replaces bottom nav | Eliminates iOS Safari bottom chrome overlap | ✓ Good |
+| iOS scroll lock via position:fixed | Only reliable approach on iOS Safari | ✓ Good |
+| Inert attribute for focus management | Simpler than manual focus trap, better browser support | ✓ Good |
+| max-w-7xl for listing pages, max-w-4xl for detail | Clear visual hierarchy between page types | ✓ Good |
+| Section tags for page containers | Avoids nested main elements, root layout owns main | ✓ Good |
 
 ---
-*Last updated: 2026-02-03 after v1.0 milestone*
+*Last updated: 2026-02-07 after v1.1 milestone*

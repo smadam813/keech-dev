@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Personal portfolio and blog website at keech.dev. Neobrutalist design aesthetic with a cosmic, Norse-touched theme.
+Personal portfolio and blog website at keech.dev. Neobrutalist design aesthetic with a cosmic, Norse-touched theme. Deployed on Vercel.
 
 ## Commands
 
@@ -17,11 +17,12 @@ npm run velite  # Rebuild content only
 
 ## Tech Stack
 
-- **Framework:** Next.js 16 with App Router
+- **Framework:** Next.js 16 with App Router (React 19)
 - **Content:** Velite (MDX → type-safe data in `.velite/`)
-- **Styling:** Tailwind CSS v4 (CSS-first @theme in globals.css)
+- **Styling:** Tailwind CSS v4 (CSS-first @theme in globals.css, no tailwind.config)
 - **Fonts:** Space Grotesk (headings), Inter (body)
-- **Code Highlighting:** rehype-pretty-code with Shiki
+- **Code Highlighting:** rehype-pretty-code with Shiki (`github-dark-dimmed` theme)
+- **Icons:** Lucide React
 
 ## Architecture
 
@@ -60,16 +61,18 @@ Project schema: `title, slug, description, date, featured?, stack[], github?, de
 
 Defined in `globals.css` using Tailwind v4's `@theme`:
 
-- **Colors:** dusty pink background (#E8B4B8), teal accent (#2D8B8B)
+- **Colors:** dusty pink background (#E8B4B8), teal accent (#2D8B8B), light pink surface (#F5E6E8)
 - **Shadows:** Hard offset neobrutalist (4px 4px 0 0 #000)
 - **Borders:** 3px solid black
 - **Prose:** Custom `.prose` class for blog typography
+- **Single theme only** — no dark/light toggle (cohesive aesthetic is core to vision)
 
 ## Key Patterns
 
 - **Path alias:** `@/*` → `./src/*`, `@/.velite` → `./.velite`
-- **'use client':** Only on components with hooks (MobileNav, ScrollReveal, CopyButton)
-- **ScrollReveal:** Intersection Observer wrapper for fade-in animations
+- **'use client':** Only on components with hooks (MobileNav, ScrollReveal, CopyButton, CodeBlock, MDXContent)
+- **ScrollReveal:** Intersection Observer wrapper for fade-in animations (respects `prefers-reduced-motion`)
+- **MDX runtime:** Compiled MDX executed via `new Function()` with custom component overrides
 
 ## Commit Convention
 

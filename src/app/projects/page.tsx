@@ -18,13 +18,8 @@ export default function ProjectsPage() {
   })
 
   return (
-    <main className="container mx-auto max-w-5xl px-6 py-8">
-      <header className="mb-12">
-        <h1 className="font-display text-4xl md:text-5xl font-bold mb-4">Projects</h1>
-        <p className="text-muted text-lg max-w-2xl">
-          Things I&apos;ve built, from side projects to open source contributions.
-        </p>
-      </header>
+    <section className="w-full mx-auto max-w-7xl px-6 pt-12 pb-16">
+      <h1 className="font-display text-4xl md:text-5xl font-bold mb-10">Projects</h1>
 
       {sortedProjects.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2">
@@ -37,6 +32,6 @@ export default function ProjectsPage() {
       ) : (
         <p className="text-muted">No projects yet. Check back soon!</p>
       )}
-    </main>
+    </section>
   )
 }

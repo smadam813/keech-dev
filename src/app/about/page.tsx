@@ -1,19 +1,14 @@
 import { Metadata } from 'next'
-import { Github, Linkedin, Download } from 'lucide-react'
+import { Download } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'About',
   description: 'Learn about Adam Keech, a software developer passionate about building tools and exploring technology. Discover his background, interests, and the story behind keech.dev.',
 }
 
-const socialLinks = [
-  { href: 'https://github.com/smadam813', icon: Github, label: 'GitHub' },
-  { href: 'https://linkedin.com/in/adam-keech', icon: Linkedin, label: 'LinkedIn' },
-]
-
 export default function AboutPage() {
   return (
-    <main className="flex-1 max-w-3xl mx-auto px-6 py-12">
+    <section className="w-full mx-auto max-w-4xl px-6 pt-12 pb-16">
       <div className="flex flex-col md:flex-row gap-8 items-start">
         {/* Photo section */}
         <div className="shrink-0">
@@ -50,27 +45,6 @@ export default function AboutPage() {
             </p>
           </div>
 
-          {/* Social links section */}
-          <div className="flex gap-4 mt-8">
-            {socialLinks.map((link) => {
-              const Icon = link.icon
-              return (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-3 border-[3px] border-black bg-surface shadow-brutal
-                             hover:shadow-brutal-hover hover:translate-x-[2px] hover:translate-y-[2px]
-                             transition-all duration-150"
-                  aria-label={link.label}
-                >
-                  <Icon className="w-6 h-6" />
-                </a>
-              )
-            })}
-          </div>
-
           {/* Resume download section */}
           <div className="mt-6">
             {/* When resume.pdf exists, change to: <a href="/resume.pdf" download className="inline-flex items-center gap-2 ...">Download Resume</a> */}
@@ -86,6 +60,6 @@ export default function AboutPage() {
           </div>
         </div>
       </div>
-    </main>
+    </section>
   )
 }

@@ -1,392 +1,209 @@
-# Technology Stack
+# Technology Stack: v1.1 Polish & Consistency
 
-**Project:** keech.dev (Personal Blog + Portfolio)
-**Researched:** 2026-01-31
-**Overall Confidence:** HIGH
+**Project:** keech.dev
+**Milestone:** v1.1 -- Mobile Navigation, iOS Viewport Fixes, Layout Normalization
+**Researched:** 2026-02-07
 
-## Executive Summary
+## TL;DR: No New Dependencies Needed
 
-For a Next.js personal blog/portfolio with MDX content deploying to Vercel, the 2025/2026 standard stack is well-established: Next.js 15.x with App Router, Velite for content management, Tailwind CSS 4 for styling, and rehype-pretty-code for syntax highlighting. This stack provides excellent developer experience, type safety, and performance while remaining simple to maintain.
+This milestone requires **zero new packages**. Everything needed is already in the stack:
+- `lucide-react` already has `Menu` and `X` icons for hamburger toggle
+- Tailwind CSS v4 already ships `min-h-dvh`, `h-dvh`, `h-svh` utilities
+- Next.js App Router already provides `usePathname` for auto-close on navigate
+- CSS `env(safe-area-inset-bottom)` is already used (but needs `viewport-fit=cover` to actually work)
+- React `useState`/`useEffect` handle all menu state needs
 
 ---
 
-## Recommended Stack
+## Current Stack (No Changes)
 
 ### Core Framework
+| Technology | Version | Purpose | Status |
+|------------|---------|---------|--------|
+| Next.js | ^16.1.6 | App Router, SSR/SSG | Keep as-is |
+| React | ^19.2.4 | UI rendering | Keep as-is |
+| Tailwind CSS | ^4.1.18 | Styling, utilities | Keep as-is |
+| Velite | ^0.3.1 | MDX content processing | Keep as-is |
 
-| Technology | Version | Purpose | Why | Confidence |
-|------------|---------|---------|-----|------------|
-| Next.js | 15.5.x | React framework | Stable production version, excellent Vercel integration, App Router is mature. Version 16 is in canary - wait for stable. | HIGH |
-| React | 19.x | UI library | Ships with Next.js 15, stable release | HIGH |
-| TypeScript | 5.x | Type safety | Non-negotiable for modern projects, excellent MDX type support | HIGH |
-
-**Rationale:** Next.js 15.5.x is the current stable release (15.5.11 as of Jan 2026). Next.js 16 is in canary with interesting features (Cache Components, streaming improvements) but not production-ready. Stick with 15.5.x for stability. The App Router is now mature and the recommended approach.
-
-**Sources:**
-- [Next.js Releases](https://github.com/vercel/next.js/releases) - v15.5.11 is latest stable
-- [Next.js MDX Guide](https://nextjs.org/docs/app/guides/mdx)
-
----
-
-### Content Layer
-
-| Technology | Version | Purpose | Why | Confidence |
-|------------|---------|---------|-----|------------|
-| Velite | 0.3.x | MDX content processing | Type-safe content layer with Zod validation, excellent image/asset handling, actively maintained | HIGH |
-
-**Why Velite over alternatives:**
-
-| Option | Status | Why Not |
-|--------|--------|---------|
-| Contentlayer | Deprecated | Unmaintained since 2023, do not use |
-| Content Collections | Active | Good option, but Velite has better asset co-location for blogs with images |
-| @next/mdx only | Works | No frontmatter validation, no type generation - fine for simple sites but lacks DX |
-
-**Velite advantages for keech.dev:**
-- Zod schema validation for frontmatter (dates, tags, descriptions)
-- Automatic TypeScript type generation
-- Built-in image/asset co-location (images next to MDX files get processed)
-- Generates type-safe data layer at build time
-- Framework agnostic output (JSON + TypeScript types)
-
-**Sources:**
-- [Velite GitHub](https://github.com/zce/velite) - v0.3.1 (Dec 2025)
-- [Contentlayer Alternatives](https://www.wisp.blog/blog/contentlayer-has-been-abandoned-what-are-the-alternatives)
+### Supporting Libraries
+| Library | Version | Purpose | Relevant to v1.1? |
+|---------|---------|---------|-------------------|
+| lucide-react | ^0.563.0 | Icons | YES -- `Menu` and `X` icons for hamburger |
+| clsx | ^2.1.1 | Conditional classes | YES -- existing `cn()` utility |
+| tailwind-merge | ^3.4.0 | Class deduplication | YES -- existing `cn()` utility |
 
 ---
 
-### Styling
+## What Each Feature Needs
 
-| Technology | Version | Purpose | Why | Confidence |
-|------------|---------|---------|-----|------------|
-| Tailwind CSS | 4.x | Utility CSS | v4 simplifies config, CSS-first approach, no config file needed | HIGH |
-| @tailwindcss/typography | latest | Prose styling | Essential for MDX content rendering | HIGH |
-| @tailwindcss/postcss | latest | PostCSS integration | Required for Tailwind v4 with Next.js | HIGH |
+### 1. Hamburger Mobile Navigation
 
-**Tailwind v4 Key Changes:**
-- No `tailwind.config.js` needed for basic setup
-- Configuration via CSS with `@theme` blocks
-- New `@plugin` syntax for loading plugins
-- `@import "tailwindcss"` instead of directives
+**Replaces:** Bottom-pinned tab bar (`mobile-nav.tsx`) with top-right hamburger menu.
 
-**Configuration approach for neobrutalist design:**
+**Stack requirements -- all already available:**
 
-```css
-/* globals.css */
-@import "tailwindcss";
-@plugin "@tailwindcss/typography";
+| Need | Solution | Already Installed? |
+|------|----------|-------------------|
+| Hamburger icon | `Menu` from `lucide-react` | YES |
+| Close icon | `X` from `lucide-react` | YES |
+| Menu state | React `useState` | YES (built-in) |
+| Auto-close on navigate | `usePathname` from `next/navigation` | YES (already used in current mobile-nav) |
+| Animated slide/fade | Tailwind CSS transition utilities | YES |
+| Backdrop overlay | Tailwind CSS opacity + fixed positioning | YES |
+| Scroll lock when open | `document.body.style.overflow = 'hidden'` | YES (vanilla JS) |
+| Accessibility | `aria-expanded`, `aria-label`, focus trapping | YES (HTML attributes) |
 
-@theme {
-  /* Cosmic psychedelic palette */
-  --color-cosmic-purple: #6B21A8;
-  --color-cosmic-pink: #DB2777;
-  --color-cosmic-blue: #0891B2;
-  --color-cosmic-gold: #D97706;
+**Architecture decision: Integrate into Header, not a separate component.**
 
-  /* Neobrutalist shadows */
-  --shadow-brutal: 4px 4px 0 0 black;
-  --shadow-brutal-lg: 6px 6px 0 0 black;
-}
-```
+The current architecture has `Header` (desktop only, `hidden md:block`) and `MobileNav` (mobile only, `md:hidden`). The hamburger button should live in the `Header` component, making it visible on mobile too. The `MobileNav` component gets replaced entirely -- its bottom-pinned tab bar approach is what we are removing.
 
-**Typography for MDX:**
+**Why NOT use a library like `hamburger-react` or `@headlessui/react`:**
+- `hamburger-react` adds a dependency for a simple icon swap (Menu to X) that is trivial with lucide-react icons and a boolean state
+- `@headlessui/react` provides `Dialog`/`Menu` primitives but is overkill for a simple slide-out nav with 4 links
+- The current project uses zero UI component libraries and benefits from that simplicity
+- Scroll lock on mobile Safari can be handled with `overflow: hidden` on the body, which works well enough for a simple overlay -- the edge cases that `body-scroll-lock` handles (scrollable inner containers) do not apply here
 
-```css
-@plugin "@tailwindcss/typography";
-
-/* In your CSS */
-.prose {
-  /* Customize prose for neobrutalist feel */
-}
-```
-
-**Sources:**
-- [Tailwind CSS Next.js Guide](https://tailwindcss.com/docs/guides/nextjs)
-- [Neobrutalism Components](https://www.neobrutalism.dev/)
-
----
-
-### Syntax Highlighting
-
-| Technology | Version | Purpose | Why | Confidence |
-|------------|---------|---------|-----|------------|
-| rehype-pretty-code | latest | Code block styling | Shiki-powered, VS Code themes, build-time highlighting | HIGH |
-| shiki | 1.x | Syntax engine | Powers rehype-pretty-code, accurate highlighting | HIGH |
-
-**Configuration:**
-
-```javascript
-// next.config.mjs
-import createMDX from '@next/mdx'
-import rehypePrettyCode from 'rehype-pretty-code'
-
-const options = {
-  theme: {
-    dark: 'github-dark',
-    light: 'github-light',
-  },
-  keepBackground: false, // Control background via CSS
-}
-
-const withMDX = createMDX({
-  options: {
-    rehypePlugins: [[rehypePrettyCode, options]],
-  },
-})
-```
-
-**Why not alternatives:**
-
-| Option | Why Not |
-|--------|---------|
-| Prism.js | Client-side, flash of unstyled content |
-| highlight.js | Less accurate than Shiki |
-| @shikijs/rehype | Works, but rehype-pretty-code adds nicer features (line highlighting, etc) |
-
-**Sources:**
-- [Rehype Pretty Code](https://rehype-pretty.pages.dev/)
-- [Shiki Syntax Highlighting](https://fiachracurran.com/blog/2025-10-22-shiki-syntax-highlighting)
-
----
-
-### Dark Mode
-
-| Technology | Version | Purpose | Why | Confidence |
-|------------|---------|---------|-----|------------|
-| next-themes | latest | Theme switching | Proven, no flash, system preference support | HIGH |
-
-**Configuration for Tailwind v4:**
+**Icon transition approach:**
 
 ```tsx
-// providers.tsx
-'use client'
-import { ThemeProvider } from 'next-themes'
-
-export function Providers({ children }) {
-  return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      {children}
-    </ThemeProvider>
-  )
-}
+// Simple conditional render -- no animation library needed
+{isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
 ```
 
-```css
-/* globals.css - Tailwind v4 dark mode variant */
-@custom-variant dark (&:where(.dark, .dark *));
-```
+For a smooth animated transition between Menu and X, CSS `transition-transform` with rotation is sufficient. No Framer Motion or animation library needed.
 
-**Sources:**
-- [next-themes GitHub](https://github.com/pacocoursey/next-themes)
-- [Next.js 15 Dark Mode Setup](https://dev.to/darshan_bajgain/setting-up-2025-nextjs-15-with-shadcn-tailwind-css-v4-no-config-needed-dark-mode-5kl)
+### 2. iOS Safari Viewport Fixes
 
----
+**Problem:** The current `mobile-nav.tsx` uses `env(safe-area-inset-bottom)` for bottom padding, and `layout.tsx` uses `min-h-dvh`. However, the project does NOT export a `viewport` configuration from the root layout, meaning `env(safe-area-inset-bottom)` may return `0` on iOS Safari because the default `viewport-fit` is `auto` (not `cover`).
 
-### Animation (Optional)
-
-| Technology | Version | Purpose | Why | Confidence |
-|------------|---------|---------|-----|------------|
-| Framer Motion | 11.x | React animations | Feature-rich, excellent for layout animations and gestures | MEDIUM |
-
-**When to use:**
-- Page transitions
-- Micro-interactions
-- Scroll-triggered animations
-- Layout animations (AnimatePresence)
-
-**Alternative consideration:**
-- Motion One (3.8kb vs 32kb) if bundle size is critical
-- CSS animations for simple hover effects (prefer this for neobrutalist "snappy" feel)
-
-**Recommendation for keech.dev:** Start with CSS animations/transitions for the neobrutalist aesthetic (hard, snappy movements). Add Framer Motion only if you need complex orchestration or layout animations.
-
-**Sources:**
-- [Motion Dev](https://motion.dev/)
-- [Framer Motion vs Motion One](https://motion.dev/blog/should-i-use-framer-motion-or-motion-one)
-
----
-
-### SEO & Metadata
-
-| Technology | Version | Purpose | Why | Confidence |
-|------------|---------|---------|-----|------------|
-| Next.js Metadata API | built-in | SEO | generateMetadata, static metadata exports | HIGH |
-| next-sitemap | latest | Sitemap generation | Generates sitemap.xml and robots.txt at build | MEDIUM |
-| rss | latest | RSS feed | Simple RSS XML generation | HIGH |
-
-**Built-in approach (recommended):**
-
-```tsx
-// app/blog/[slug]/page.tsx
-export async function generateMetadata({ params }): Promise<Metadata> {
-  const post = await getPost(params.slug)
-  return {
-    title: post.title,
-    description: post.excerpt,
-    openGraph: {
-      title: post.title,
-      description: post.excerpt,
-      images: [post.coverImage],
-    },
-  }
-}
-```
-
-**RSS Feed:** Create `app/feed.xml/route.ts` using the `rss` package.
-
-**Sources:**
-- [Next.js Metadata API](https://nextjs.org/docs/app/api-reference/functions/generate-metadata)
-- [RSS Feed in Next.js](https://spacejelly.dev/posts/how-to-add-a-sitemap-rss-feed-in-next-js-app-router)
-
----
-
-### Image Optimization
-
-| Technology | Version | Purpose | Why | Confidence |
-|------------|---------|---------|-----|------------|
-| next/image | built-in | Image optimization | Automatic optimization, lazy loading, blur placeholders | HIGH |
-| sharp | latest | Image processing | Required for blur placeholders, Vercel includes by default | HIGH |
-
-**For blur placeholders with external/dynamic images:**
-Use sharp directly rather than plaiceholder (unmaintained).
+**Fix -- one config addition, no packages:**
 
 ```typescript
-import sharp from 'sharp'
+// src/app/layout.tsx
+import type { Viewport } from 'next'
 
-async function getBlurDataURL(imagePath: string): Promise<string> {
-  const buffer = await sharp(imagePath)
-    .resize(10, 10)
-    .toBuffer()
-  return `data:image/png;base64,${buffer.toString('base64')}`
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',  // This enables env(safe-area-inset-*) on iOS
 }
 ```
 
-**Sources:**
-- [Next.js Image Component](https://nextjs.org/docs/app/api-reference/components/image)
-- [Blur Placeholder Guide](https://blog.olivierlarose.com/articles/placeholder-guide-using-next-image)
+**Why `viewport-fit: cover` matters:**
+- Without it, iOS Safari does not report safe-area insets -- `env(safe-area-inset-bottom)` evaluates to `0`
+- With it, content extends behind the home indicator bar, and the CSS env values become non-zero, allowing proper padding
+- This is a Next.js App Router configuration, not a library
+
+**Viewport unit usage:**
+- The project already uses `min-h-dvh` on `<body>` (correct)
+- The not-found page uses `min-h-[calc(100dvh-4rem)]` (correct)
+- Tailwind v4 ships `h-dvh`, `min-h-dvh`, `h-svh`, `min-h-svh` as built-in utilities (confirmed via official docs)
+- No changes needed to viewport unit strategy -- `dvh` is the right choice and is already in use
+
+**Impact on hamburger menu (when nav moves from bottom to top):**
+- Removing the bottom-fixed nav eliminates the primary iOS bottom-chrome collision issue
+- Footer no longer needs the massive `pb-[calc(6rem+env(safe-area-inset-bottom))]` mobile padding hack
+- The footer can use a simpler `pb-[env(safe-area-inset-bottom)]` or just standard padding
+- Main content `pb-20 md:pb-0` padding (currently compensating for bottom nav) can be removed
+
+### 3. Cross-Page Layout Normalization
+
+**Problem identified from codebase audit:**
+
+| Page | Container | Max Width | Issue |
+|------|-----------|-----------|-------|
+| Home | none | none | OK (centered hero) |
+| Blog listing | `container mx-auto` | `max-w-6xl` (1152px) | Widest |
+| Blog post | none | `max-w-6xl` (1152px) | Matches blog listing |
+| Projects listing | `container mx-auto` | `max-w-5xl` (1024px) | Narrower than blog |
+| Project detail | `container mx-auto` | `max-w-3xl` (768px) | Much narrower |
+| About | none | `max-w-3xl` (768px) | Matches project detail |
+| Header | none | `max-w-6xl` (1152px) | Widest |
+| Footer | none | `max-w-5xl` (1024px) | Narrower than header |
+
+**Stack requirement: None.** This is a Tailwind class normalization task, not a dependency issue. The fix is choosing a consistent `max-w-*` value and applying it uniformly.
+
+**Recommended normalization strategy:**
+- All listing pages (Blog, Projects): `max-w-5xl` -- wide enough for grid cards, not so wide they feel sparse
+- All detail pages (Blog post, Project detail, About): `max-w-3xl` -- readable prose width
+- Header and Footer: `max-w-5xl` -- matches listing page width for visual alignment
+- Home: keep as-is (centered hero, no container needed)
+
+This is purely CSS class changes. The `max-w-*` utilities are built into Tailwind.
 
 ---
 
-## Complete Package List
+## Explicitly NOT Adding
 
-### Production Dependencies
-
-```bash
-npm install next@15.5 react@19 react-dom@19 velite next-themes
-```
-
-### Dev Dependencies
-
-```bash
-npm install -D typescript @types/react @types/node \
-  tailwindcss@4 @tailwindcss/postcss @tailwindcss/typography postcss \
-  @next/mdx @mdx-js/loader @mdx-js/react @types/mdx \
-  rehype-pretty-code shiki \
-  rss @types/rss \
-  sharp
-```
-
-### Optional (add as needed)
-
-```bash
-# Animation (if needed)
-npm install framer-motion
-
-# Sitemap generation
-npm install next-sitemap
-```
+| Library | Why Not |
+|---------|---------|
+| `framer-motion` | Menu animation is a simple slide + opacity. Tailwind `transition-all` and `transform` cover it. Adding a 35KB+ library for one animation is not justified. |
+| `@headlessui/react` | Provides accessible Dialog/Menu/Popover primitives. Useful for complex dropdowns with keyboard navigation. Overkill for a 4-link mobile nav with no submenus. |
+| `hamburger-react` | Animated hamburger icon library. Lucide `Menu`/`X` with a CSS transition achieves the same visual with zero added weight. |
+| `body-scroll-lock` | Handles scroll locking edge cases (iOS scrollable inner containers). Our menu overlay has no scrollable content -- `overflow: hidden` on body suffices. |
+| `react-focus-lock` | Focus trapping library for modals. For a simple nav overlay, manual `tabIndex` management and `onKeyDown` escape handler are sufficient. |
+| `@radix-ui/react-dialog` | Full accessible dialog primitive. Same rationale as headlessui -- complexity we don't need for 4 links. |
 
 ---
 
-## What NOT to Use
+## Integration Points
 
-| Technology | Why Avoid |
-|------------|-----------|
-| Contentlayer | Deprecated, unmaintained since 2023 |
-| next-mdx-remote | Overkill for local files, @next/mdx is simpler |
-| Prism.js | Client-side highlighting causes flash |
-| plaiceholder | Unmaintained, causes Vercel build issues |
-| styled-components | Unnecessary with Tailwind, adds complexity |
-| CSS Modules | Unnecessary with Tailwind for this project |
-| Pages Router | App Router is the standard, use it |
+### Where changes happen (files affected):
+
+| File | Change | Reason |
+|------|--------|--------|
+| `src/app/layout.tsx` | Add `viewport` export with `viewportFit: 'cover'`; remove `pb-20 md:pb-0` from main; remove `<MobileNav />` | iOS fix + nav removal |
+| `src/components/layout/header.tsx` | Convert to client component; add hamburger button, slide-out overlay, `usePathname` auto-close | New mobile nav |
+| `src/components/layout/mobile-nav.tsx` | DELETE | Replaced by header hamburger |
+| `src/components/layout/footer.tsx` | Simplify mobile padding (remove bottom-nav compensation) | No longer needs to avoid bottom nav |
+| `src/app/blog/page.tsx` | Change `max-w-6xl` to `max-w-5xl` | Layout normalization |
+| `src/app/blog/[slug]/page.tsx` | Change `max-w-6xl` to `max-w-5xl` (outer grid) | Layout normalization |
+| `src/app/projects/page.tsx` | Already `max-w-5xl` -- no change | -- |
+| `src/app/projects/[slug]/page.tsx` | Already `max-w-3xl` -- no change | -- |
+| `src/app/about/page.tsx` | Already `max-w-3xl` -- no change | -- |
+| `src/app/globals.css` | Possibly add menu animation keyframes (if not using Tailwind utilities alone) | Optional |
+
+### What does NOT change:
+
+- No package.json modifications
+- No new npm installs
+- No Velite configuration changes
+- No content file changes
+- No build pipeline changes
 
 ---
 
-## Project Structure Recommendation
+## Alternatives Considered
 
-```
-keech-dev/
-├── app/
-│   ├── layout.tsx           # Root layout with providers
-│   ├── page.tsx             # Home page
-│   ├── blog/
-│   │   ├── page.tsx         # Blog index
-│   │   └── [slug]/
-│   │       └── page.tsx     # Blog post page
-│   ├── projects/
-│   │   ├── page.tsx         # Projects index
-│   │   └── [slug]/
-│   │       └── page.tsx     # Project detail
-│   └── feed.xml/
-│       └── route.ts         # RSS feed
-├── content/
-│   ├── blog/                # MDX blog posts
-│   │   └── *.mdx
-│   └── projects/            # MDX project writeups
-│       └── *.mdx
-├── components/
-│   ├── ui/                  # Neobrutalist UI components
-│   └── mdx/                 # MDX component overrides
-├── lib/
-│   └── velite.ts            # Velite helpers
-├── velite.config.ts         # Content schema
-├── next.config.mjs          # Next.js + MDX config
-├── postcss.config.mjs       # PostCSS + Tailwind
-└── globals.css              # Tailwind + theme
-```
+| Category | Recommended | Alternative | Why Not |
+|----------|-------------|-------------|---------|
+| Mobile nav pattern | Hamburger with slide-out overlay | Bottom sheet / drawer | Hamburger is universal UX, bottom sheet adds complexity |
+| Icon transition | Swap Menu/X with opacity | Animated 3-bar morph to X | Adds CSS complexity for marginal visual gain |
+| Scroll lock | `overflow: hidden` on body | `body-scroll-lock` library | No scrollable inner content in our overlay |
+| Menu animation | Tailwind `transition-all` + `translate-x` | Framer Motion | 35KB for one animation is unjustified |
+| Layout consistency | Standardize `max-w-*` classes | CSS custom property for container width | Tailwind utilities are clearer and already the project pattern |
+| Viewport fix | Next.js `viewport` export | Manual `<meta>` tag | `viewport` export is the App Router standard |
 
 ---
 
 ## Confidence Assessment
 
-| Area | Level | Reason |
-|------|-------|--------|
-| Core Framework (Next.js 15.5) | HIGH | Verified via GitHub releases, official docs |
-| Content Layer (Velite) | HIGH | Active development, verified via GitHub |
-| Styling (Tailwind v4) | HIGH | Official docs, v4 is stable |
-| Syntax Highlighting | HIGH | rehype-pretty-code is standard approach |
-| Dark Mode (next-themes) | HIGH | Industry standard, widely used |
-| Animation | MEDIUM | Framer Motion is standard but optional |
-| SEO | HIGH | Built-in Next.js APIs, well documented |
-
----
+| Claim | Confidence | Source |
+|-------|------------|--------|
+| `lucide-react` has `Menu` and `X` icons | HIGH | Official lucide.dev docs, already using lucide-react in project |
+| Tailwind v4 ships `h-dvh`, `min-h-dvh` | HIGH | Official Tailwind CSS docs (tailwindcss.com/docs/height) |
+| `usePathname` from `next/navigation` closes menu on route change | HIGH | Next.js docs + already used in current `mobile-nav.tsx` |
+| `viewport-fit: cover` enables `env(safe-area-inset-*)` on iOS | HIGH | WebKit blog, MDN docs, multiple verified sources |
+| Next.js `viewport` export supports `viewportFit` property | HIGH | Next.js generateViewport docs |
+| `overflow: hidden` on body prevents scroll in mobile Safari | MEDIUM | Works for simple overlays; edge cases exist with deeply nested scrollable content but not applicable here |
+| No new dependencies needed | HIGH | Verified every feature against existing package.json |
 
 ## Sources
 
-**Official Documentation:**
-- [Next.js MDX Guide](https://nextjs.org/docs/app/guides/mdx)
-- [Tailwind CSS Next.js Installation](https://tailwindcss.com/docs/guides/nextjs)
-- [Next.js Image Component](https://nextjs.org/docs/app/api-reference/components/image)
-- [Next.js Metadata API](https://nextjs.org/docs/app/api-reference/functions/generate-metadata)
-
-**GitHub Repositories:**
-- [Next.js Releases](https://github.com/vercel/next.js/releases) - v15.5.11 latest stable
-- [Velite](https://github.com/zce/velite) - v0.3.1
-- [next-themes](https://github.com/pacocoursey/next-themes)
-- [rehype-pretty-code](https://rehype-pretty.pages.dev/)
-
-**Community Resources:**
-- [Contentlayer Alternatives](https://www.wisp.blog/blog/contentlayer-has-been-abandoned-what-are-the-alternatives)
-- [Neobrutalism Components](https://www.neobrutalism.dev/)
-- [Josh Comeau's Blog Build](https://www.joshwcomeau.com/blog/how-i-built-my-blog/)
-
----
-
-## Roadmap Implications
-
-1. **Phase 1: Foundation** - Next.js 15.5 + Tailwind v4 + basic layout
-2. **Phase 2: Content System** - Velite setup, MDX configuration, blog structure
-3. **Phase 3: Design System** - Neobrutalist components, color palette, typography
-4. **Phase 4: Blog Features** - Syntax highlighting, dark mode, responsive
-5. **Phase 5: Portfolio** - Project pages, hardware/software showcase
-6. **Phase 6: Polish** - SEO, RSS, sitemap, performance optimization
+- [Tailwind CSS v4 Height Utilities](https://tailwindcss.com/docs/height) -- confirmed `h-dvh`, `min-h-dvh`, `h-svh` built-in
+- [Lucide Icons -- Menu](https://lucide.dev/icons/menu) -- hamburger menu icon
+- [Next.js generateViewport](https://nextjs.org/docs/app/api-reference/functions/generate-viewport) -- `viewportFit: 'cover'` support
+- [Next.js usePathname](https://nextjs.org/docs/app/api-reference/functions/use-pathname) -- route change detection
+- [WebKit: Designing Websites for iPhone X](https://webkit.org/blog/7929/designing-websites-for-iphone-x/) -- `viewport-fit=cover` and `env()` safe-area insets
+- [MDN: env() CSS function](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/env) -- safe-area-inset-* reference
+- [Understanding Mobile Viewport Units (svh, lvh, dvh)](https://medium.com/@tharunbalaji110/understanding-mobile-viewport-units-a-complete-guide-to-svh-lvh-and-dvh-0c905d96e21a)
