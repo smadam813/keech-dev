@@ -95,7 +95,8 @@ export function Header() {
           href="/"
           className="font-display font-bold text-2xl hover:text-accent motion-safe:transition-colors"
         >
-          keech.dev
+          keech
+          <span className="text-accent">.dev</span>
         </Link>
 
         {/* Desktop navigation */}
