@@ -48,8 +48,14 @@ None.
 
 None.
 
+## Quick Tasks
+
+| ID | Name | Completed |
+|----|------|-----------|
+| 001 | Style .dev in header logo with teal accent | 2026-02-08 |
+
 ## Session Continuity
 
-Last session: 2026-02-07
-Stopped at: v1.1 milestone complete
+Last session: 2026-02-08
+Stopped at: Quick task 001 complete
 Resume file: None — start next milestone with /gsd:new-milestone
