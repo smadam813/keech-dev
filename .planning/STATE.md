@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-07)
 Phase: All complete (6 phases across 2 milestones)
 Plan: N/A
 Status: Milestone v1.1 shipped
-Last activity: 2026-02-08 — Completed quick task 003: Rewrite keech.dev project post as comprehensive portfolio piece
+Last activity: 2026-02-08 — Completed quick task 004: Restyle inline code to feel lighter and more integrated with prose text
 
 ## Performance Metrics
 
@@ -55,6 +55,7 @@ None.
 | 001 | Style ".dev" in header logo with teal accent to match home page | 2026-02-08 | 9622217 | [001-style-dev-in-header-logo-with-teal-accen](./quick/001-style-dev-in-header-logo-with-teal-accen/) |
 | 002 | Remove hyperlink from keech.dev header logo | 2026-02-08 | 0532047 | [002-remove-hyperlink-from-keech-dev-header-l](./quick/002-remove-hyperlink-from-keech-dev-header-l/) |
 | 003 | Rewrite keech.dev project post as comprehensive portfolio piece | 2026-02-08 | 76f2ede | [003-rewrite-keech-dev-project-post-as-compre](./quick/003-rewrite-keech-dev-project-post-as-compre/) |
+| 004 | Restyle inline code to feel lighter and more integrated with prose text | 2026-02-08 | dcd5726 | [004-restyle-inline-code-to-feel-lighter-and-](./quick/004-restyle-inline-code-to-feel-lighter-and-/) |
 
 ## Session Continuity
 
