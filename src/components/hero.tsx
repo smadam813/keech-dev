@@ -4,13 +4,17 @@ import { useRef, useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import heroImage from '../../public/images/hero.webp'
 import { cn } from '@/lib/utils'
+import { RUNE_GLOWS, computeGlowPositions, getEntranceDelay } from '@/lib/rune-glows'
 
 export function Hero() {
   const imgRef = useRef<HTMLImageElement>(null)
+  const sectionRef = useRef<HTMLElement>(null)
   const [imageLoaded, setImageLoaded] = useState(false)
   const [revealStage, setRevealStage] = useState<'loading' | 'bg-reveal' | 'text-reveal'>('loading')
   const hasPlayedRef = useRef(false)
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
+  const [glowsActive, setGlowsActive] = useState(false)
+  const [positions, setPositions] = useState<Array<{ left: string; top: string; visible: boolean }>>([])
 
   // Path 1: onLoad fires for fresh image loads (after img.decode())
   const handleLoad = useCallback(() => {
@@ -57,8 +61,39 @@ export function Hero() {
     return () => clearTimeout(timer)
   }, [imageLoaded, prefersReducedMotion])
 
+  // Beat 3: Activate glow cascade after text reveal finishes (500ms)
+  useEffect(() => {
+    if (revealStage !== 'text-reveal' || prefersReducedMotion) return
+    const timer = setTimeout(() => setGlowsActive(true), 500)
+    return () => clearTimeout(timer)
+  }, [revealStage, prefersReducedMotion])
+
+  // ResizeObserver: recalculate glow positions when section resizes
+  useEffect(() => {
+    const section = sectionRef.current
+    if (!section) return
+
+    const update = (w: number, h: number) => {
+      setPositions(computeGlowPositions(RUNE_GLOWS, w, h))
+    }
+
+    // Initial calculation
+    const rect = section.getBoundingClientRect()
+    update(rect.width, rect.height)
+
+    const ro = new ResizeObserver((entries) => {
+      const entry = entries[0]
+      if (entry) {
+        const { width, height } = entry.contentRect
+        update(width, height)
+      }
+    })
+    ro.observe(section)
+    return () => ro.disconnect()
+  }, [])
+
   return (
-    <section className="relative flex-1 flex items-center justify-center min-h-[calc(100svh-4rem)] overflow-hidden">
+    <section ref={sectionRef} className="relative flex-1 flex items-center justify-center min-h-[calc(100svh-4rem)] overflow-hidden">
       {/* Background image with load-gated blur reveal */}
       <Image
         ref={imgRef}
@@ -84,6 +119,32 @@ export function Hero() {
           background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.35) 50%, rgba(0,0,0,0.55) 100%)'
         }}
       />
+
+      {/* Rune glow overlays */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {glowsActive && positions.length > 0 && RUNE_GLOWS.map((rune, i) => {
+          const pos = positions[i]
+          if (!pos?.visible) return null
+          return (
+            <div
+              key={rune.id}
+              className={cn(
+                'rune-glow',
+                `rune-glow--${rune.color}`,
+                glowsActive && 'rune-glow--active',
+              )}
+              style={{
+                left: pos.left,
+                top: pos.top,
+                width: `${rune.size}rem`,
+                height: `${rune.size}rem`,
+                '--entrance-delay': getEntranceDelay(i, RUNE_GLOWS.length),
+                '--breath-duration': rune.breathDuration,
+              } as React.CSSProperties}
+            />
+          )
+        })}
+      </div>
 
       {/* Centered text overlay with gated animation */}
       <div className={cn(
