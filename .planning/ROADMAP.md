@@ -12,7 +12,7 @@ This milestone fixes the hero animation timing bug and adds ambient rune glow ef
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Animation Sync & Reveal** - Fix the animation timing bug and establish load-gated reveal sequence
+- [x] **Phase 1: Animation Sync & Reveal** - Fix the animation timing bug and establish load-gated reveal sequence
 - [ ] **Phase 2: Rune Glow Effects** - Add ambient CSS glow overlays at rune positions with staggered organic timing
 
 ## Phase Details
@@ -30,7 +30,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 1 plan
 
 Plans:
-- [ ] 01-01-PLAN.md -- Load-gated two-beat hero reveal (CSS + client component + visual verification)
+- [x] 01-01-PLAN.md -- Load-gated two-beat hero reveal (CSS + client component + visual verification)
 
 ### Phase 2: Rune Glow Effects
 **Goal**: The hero image comes alive with subtle, ambient rune glows that pulse organically and reinforce the Norse visual identity
@@ -55,5 +55,5 @@ Phases execute in numeric order: 1 -> 2
 
 | Phase | Plans Complete | Status | Completed |
 |-------|---------------|--------|-----------|
-| 1. Animation Sync & Reveal | 0/1 | Not started | - |
+| 1. Animation Sync & Reveal | 1/1 | ✓ Complete | 2026-02-08 |
 | 2. Rune Glow Effects | 0/TBD | Not started | - |
