@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-07)
 Phase: All complete (6 phases across 2 milestones)
 Plan: N/A
 Status: Milestone v1.1 shipped
-Last activity: 2026-02-08 — Completed quick task 004: Restyle inline code to feel lighter and more integrated with prose text
+Last activity: 2026-02-08 — Completed quick task 005: Fix font variable inheritance scope bug and muted color WCAG contrast
 
 ## Performance Metrics
 
@@ -56,9 +56,10 @@ None.
 | 002 | Remove hyperlink from keech.dev header logo | 2026-02-08 | 0532047 | [002-remove-hyperlink-from-keech-dev-header-l](./quick/002-remove-hyperlink-from-keech-dev-header-l/) |
 | 003 | Rewrite keech.dev project post as comprehensive portfolio piece | 2026-02-08 | 76f2ede | [003-rewrite-keech-dev-project-post-as-compre](./quick/003-rewrite-keech-dev-project-post-as-compre/) |
 | 004 | Restyle inline code to feel lighter and more integrated with prose text | 2026-02-08 | dcd5726 | [004-restyle-inline-code-to-feel-lighter-and-](./quick/004-restyle-inline-code-to-feel-lighter-and-/) |
+| 005 | Fix font variable inheritance scope bug and muted color WCAG contrast | 2026-02-08 | ab95161 | [005-fix-typography-inheritance-scope-bug-and](./quick/005-fix-typography-inheritance-scope-bug-and/) |
 
 ## Session Continuity
 
 Last session: 2026-02-08
-Stopped at: Quick task 003 complete
-Resume file: None — start next milestone with /gsd:new-milestone
+Stopped at: Quick task 005 complete
+Resume file: None -- start next milestone with /gsd:new-milestone
