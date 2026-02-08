@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-07)
 Phase: All complete (6 phases across 2 milestones)
 Plan: N/A
 Status: Milestone v1.1 shipped
-Last activity: 2026-02-07 — v1.1 milestone complete
+Last activity: 2026-02-08 — Completed quick task 001: Style ".dev" in header logo with teal accent to match home page
 
 ## Performance Metrics
 
@@ -48,11 +48,11 @@ None.
 
 None.
 
-## Quick Tasks
+### Quick Tasks Completed
 
-| ID | Name | Completed |
-|----|------|-----------|
-| 001 | Style .dev in header logo with teal accent | 2026-02-08 |
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 001 | Style ".dev" in header logo with teal accent to match home page | 2026-02-08 | 9622217 | [001-style-dev-in-header-logo-with-teal-accen](./quick/001-style-dev-in-header-logo-with-teal-accen/) |
 
 ## Session Continuity
 
