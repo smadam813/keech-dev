@@ -150,16 +150,20 @@
   :not(pre) > code {
     @apply p-0.5 rounded font-mono text-sm;
     background-color: var(--color-surface);
-    border: 1px solid var(--color-muted);
-    color: var(--color-foreground);
+    border: 1px solid var(--color-foreground);
   }
 
   /* Inline code processed by rehype-pretty-code */
   span[data-rehype-pretty-code-figure] code {
     @apply p-0.5 rounded font-mono text-sm;
-    background-color: var(--color-surface);
-    border: 1px solid var(--color-muted);
-    color: var(--color-foreground);
+    background-color: rgba(0, 0, 0, 0.69) !important;
+    border: 1px solid var(--color-foreground);
+  }
+
+  /* Remove [data-line] padding inside inline code — the 16px px-4 is for fenced blocks only */
+  span[data-rehype-pretty-code-figure] [data-line] {
+    padding-left: 0.125rem !important;
+    padding-right: 0.125rem !important;
   }
 }
 
