@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-07)
 Phase: All complete (6 phases across 2 milestones)
 Plan: N/A
 Status: Milestone v1.1 shipped
-Last activity: 2026-02-08 — Completed quick task 001: Style ".dev" in header logo with teal accent to match home page
+Last activity: 2026-02-08 — Completed quick task 002: Remove hyperlink from keech.dev header logo
 
 ## Performance Metrics
 
@@ -53,9 +53,10 @@ None.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 001 | Style ".dev" in header logo with teal accent to match home page | 2026-02-08 | 9622217 | [001-style-dev-in-header-logo-with-teal-accen](./quick/001-style-dev-in-header-logo-with-teal-accen/) |
+| 002 | Remove hyperlink from keech.dev header logo | 2026-02-08 | 0532047 | [002-remove-hyperlink-from-keech-dev-header-l](./quick/002-remove-hyperlink-from-keech-dev-header-l/) |
 
 ## Session Continuity
 
 Last session: 2026-02-08
-Stopped at: Quick task 001 complete
+Stopped at: Quick task 002 complete
 Resume file: None — start next milestone with /gsd:new-milestone
