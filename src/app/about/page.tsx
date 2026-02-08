@@ -12,8 +12,8 @@ export default function AboutPage() {
     <section className="w-full mx-auto max-w-4xl px-6 pt-12 pb-16">
       <div className="flex flex-col md:flex-row gap-8 items-start">
         {/* Photo section */}
-        <div className="shrink-0">
-          <div className="relative w-48 h-48 border-[3px] border-black shadow-brutal overflow-hidden">
+        <div className="shrink-0 self-center md:self-start">
+          <div className="relative w-48 aspect-[3/4] md:w-56 border-[3px] border-black shadow-brutal overflow-hidden">
             <Image
               src="/images/headshot.webp"
               alt="Adam Keech"
