@@ -1,5 +1,31 @@
 # Project Milestones: keech.dev
 
+## v1.1 Polish & Consistency (Shipped: 2026-02-07)
+
+**Delivered:** Refined mobile navigation with hamburger menu and normalized layout consistency across all pages.
+
+**Phases completed:** 5-6 (4 plans total)
+
+**Key accomplishments:**
+
+- Replaced bottom-pinned mobile nav with hamburger menu in header (full-screen overlay, neobrutalist styling)
+- iOS Safari-safe scroll lock, inert-based focus trapping, and viewport-fit cover for safe-area support
+- Normalized listing pages (Blog, Projects) to max-w-7xl with consistent structure and spacing
+- Normalized detail pages (blog post, project, about) to max-w-4xl with uniform vertical padding
+- Eliminated all nested `<main>` tags — single `<main>` in root layout only
+
+**Stats:**
+
+- 10 files modified, +181/-113 lines
+- 2 phases, 4 plans, 8 tasks
+- 1 day (2026-02-07)
+
+**Git range:** `feat(05-01)` → `docs(06-02)`
+
+**What's next:** TBD — add real content, dark mode, RSS feed, page transitions
+
+---
+
 ## v1.0 MVP (Shipped: 2026-02-03)
 
 **Delivered:** A distinctive personal portfolio with neobrutalist design, MDX-powered blog and projects, and polished animations.
