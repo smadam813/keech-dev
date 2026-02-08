@@ -54,6 +54,28 @@
   }
 }
 
+@keyframes runeGlowEntrance {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.6);
+  }
+  to {
+    opacity: var(--glow-opacity, 0.6);
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes runeGlowBreathe {
+  0%, 100% {
+    opacity: var(--glow-opacity, 0.6);
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: calc(var(--glow-opacity, 0.6) * 0.5);
+    transform: translate(-50%, -50%) scale(0.92);
+  }
+}
+
 @layer base {
   html {
     @apply font-body bg-background text-foreground antialiased;
@@ -117,6 +139,37 @@
     animation: heroTextReveal 500ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
   }
 
+  /* Rune glow overlays */
+  .rune-glow {
+    position: absolute;
+    pointer-events: none;
+    border-radius: 50%;
+    opacity: 0;
+    will-change: opacity, transform;
+    transform: translate(-50%, -50%);
+  }
+
+  .rune-glow--active {
+    animation:
+      runeGlowEntrance 800ms ease-out var(--entrance-delay, 0ms) forwards,
+      runeGlowBreathe var(--breath-duration, 6s) ease-in-out calc(var(--entrance-delay, 0ms) + 800ms) infinite;
+  }
+
+  .rune-glow--amber {
+    background: radial-gradient(circle, rgba(217, 164, 65, 0.6) 0%, rgba(217, 164, 65, 0) 70%);
+    --glow-opacity: 0.6;
+  }
+
+  .rune-glow--teal {
+    background: radial-gradient(circle, rgba(79, 191, 191, 0.5) 0%, rgba(79, 191, 191, 0) 70%);
+    --glow-opacity: 0.5;
+  }
+
+  .rune-glow--gold {
+    background: radial-gradient(circle, rgba(232, 213, 149, 0.5) 0%, rgba(232, 213, 149, 0) 70%);
+    --glow-opacity: 0.5;
+  }
+
   /* Respect user motion preferences */
   @media (prefers-reduced-motion: reduce) {
     .animate-fade-in-up,
@@ -138,6 +191,13 @@
 
     .motion-reduce-safe {
       transition: none !important;
+    }
+
+    .rune-glow,
+    .rune-glow--active {
+      animation: none !important;
+      opacity: 0 !important;
+      will-change: auto !important;
     }
   }
 }
