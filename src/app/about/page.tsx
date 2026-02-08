@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <section className="mx-auto max-w-4xl px-6 pt-12 pb-16">
+    <section className="w-full mx-auto max-w-4xl px-6 pt-12 pb-16">
       <div className="flex flex-col md:flex-row gap-8 items-start">
         {/* Photo section */}
         <div className="shrink-0">

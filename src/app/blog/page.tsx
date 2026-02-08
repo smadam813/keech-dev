@@ -16,7 +16,7 @@ export default function BlogPage() {
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
   return (
-    <section className="mx-auto max-w-7xl px-6 pt-12 pb-16">
+    <section className="w-full mx-auto max-w-7xl px-6 pt-12 pb-16">
       <h1 className="font-display text-4xl md:text-5xl font-bold mb-10">Blog</h1>
 
       {publishedPosts.length > 0 ? (

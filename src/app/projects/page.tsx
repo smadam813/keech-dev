@@ -18,7 +18,7 @@ export default function ProjectsPage() {
   })
 
   return (
-    <section className="mx-auto max-w-7xl px-6 pt-12 pb-16">
+    <section className="w-full mx-auto max-w-7xl px-6 pt-12 pb-16">
       <h1 className="font-display text-4xl md:text-5xl font-bold mb-10">Projects</h1>
 
       {sortedProjects.length > 0 ? (
