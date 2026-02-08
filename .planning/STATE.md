@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-08)
 Phase: 9 of 9 — v1.2 Norse Identity COMPLETE
 Plan: N/A
 Status: Ready to plan next milestone
-Last activity: 2026-02-08 — Completed quick-006 (hero background optimization)
+Last activity: 2026-02-08 — Completed quick-007 (portrait photo on About page)
 
 Progress: [██████████████████████████████] 25/25 plans complete (3 milestones shipped)
 
@@ -64,9 +64,10 @@ None.
 | 004 | Restyle inline code to feel lighter and more integrated with prose text | 2026-02-08 | dcd5726 | [004-restyle-inline-code-to-feel-lighter-and-](./quick/004-restyle-inline-code-to-feel-lighter-and-/) |
 | 005 | Fix font variable inheritance scope bug and muted color WCAG contrast | 2026-02-08 | ab95161 | [005-fix-typography-inheritance-scope-bug-and](./quick/005-fix-typography-inheritance-scope-bug-and/) |
 | 006 | Replace hero background JPG with watermark-free WebP (185KB) | 2026-02-08 | 47f56b6 | [006-replace-hero-background-jpg-with-optimiz](./quick/006-replace-hero-background-jpg-with-optimiz/) |
+| 007 | Convert portrait photo to WebP and add to About page | 2026-02-08 | f3e2464 | [7-convert-portrait-photo-to-webp-and-add-t](./quick/7-convert-portrait-photo-to-webp-and-add-t/) |
 
 ## Session Continuity
 
 Last session: 2026-02-08
-Stopped at: v1.2 milestone complete
+Stopped at: Completed quick-007
 Resume file: None -- ready for /gsd:new-milestone
