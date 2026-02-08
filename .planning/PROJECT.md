@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A personal portfolio and blog at keech.dev featuring a distinctive neobrutalist design with cosmic, Norse-touched aesthetics. Showcases software projects and writing through MDX-powered content with syntax-highlighted code blocks, scroll animations, and comprehensive SEO. Fully polished mobile experience with hamburger menu navigation and consistent layouts.
+A personal portfolio and blog at keech.dev featuring a distinctive neobrutalist design with cosmic, Norse-touched aesthetics. Norse runic display font (Joel Carrouche), atmospheric hero imagery, and Elder Futhark decorative accents create a memorable identity. Showcases software projects and writing through MDX-powered content with syntax-highlighted code blocks, scroll animations, and comprehensive SEO.
 
 ## Core Value
 
@@ -57,10 +57,26 @@ A distinctive online presence that feels like stepping into a cosmic, Norse-touc
 - ✓ LYOT-02: Vertical padding standardized across all pages — v1.1
 - ✓ LYOT-03: Blog/Projects listing use aligned card layouts — v1.1
 - ✓ LYOT-04: No nested main tags (single main in root layout) — v1.1
+- ✓ TYPO-01: Norse font as display font for headings, site name, navigation — v1.2
+- ✓ TYPO-02: Font files served in WOFF2 format — v1.2
+- ✓ TYPO-03: Font loads without visible layout shift — v1.2
+- ✓ TYPO-04: Norse font renders cleanly at all heading sizes — v1.2
+- ✓ TYPO-05: Both Regular and Bold weights available — v1.2
+- ✓ HERO-01: Full-width Norse landscape hero image on home page — v1.2
+- ✓ HERO-02: "keech.dev" HTML text overlay in Norse font — v1.2
+- ✓ HERO-03: WCAG AA contrast via scrim overlay — v1.2
+- ✓ HERO-04: Hero image optimized <200KB for LCP — v1.2
+- ✓ HERO-05: Hero scales responsively — v1.2
+- ✓ RUNE-01: Reusable rune divider component — v1.2
+- ✓ RUNE-02: Elder Futhark runes as custom bullet markers — v1.2
+- ✓ RUNE-03: Navigation rune accents — v1.2
+- ✓ RUNE-05: Decorative runes use aria-hidden — v1.2
+- ✓ RUNE-06: Rune elements render consistently across browsers — v1.2
+- ✗ RUNE-04: Background texture — v1.2 (user-rejected: distracting at all opacity levels)
 
 ### Active
 
-(None — define requirements for next milestone with `/gsd:new-milestone`)
+(None — planning next milestone)
 
 ### Out of Scope
 
@@ -72,21 +88,29 @@ A distinctive online presence that feels like stepping into a cosmic, Norse-touc
 - Comments system — avoiding social mechanics for now
 - Analytics dashboard — use Vercel Analytics directly
 - Multi-language support — English only
+- CvltRvne font — demo license only, not production-suitable
+- Futhark translation of content — decorative use only, would hurt readability
+- Animated rune particle effects — too heavy, breaks neobrutalist restraint
+- Additional rune fonts — Norse font covers Latin and Runic Unicode
 
 ## Context
 
-**Current State (v1.1 shipped 2026-02-07):**
-- ~1,400 LOC TypeScript/TSX/CSS
+**Current State (v1.2 shipped 2026-02-08):**
+- ~1,781 LOC TypeScript/TSX/CSS
 - Tech stack: Next.js 16, Tailwind v4, Velite, rehype-pretty-code, Lucide React
+- Fonts: Norse (Joel Carrouche) display, Inter body
 - Deployed: https://keech.dev (keech-dev.vercel.app)
-- 6 phases, 18 plans executed across 2 milestones
+- 9 phases, 25 plans executed across 3 milestones
 
 **Content:**
 - 1 sample blog post (hello-world.mdx)
-- 1 sample project (keech-dev.mdx)
+- 1 project post (keech-dev.mdx — comprehensive portfolio piece)
 - Placeholder headshot and resume button on About page
 
-**Design inspiration:** Parachute Ending music video stills with retro-futuristic cosmic aesthetic. Norse mythology influences in geometric patterns.
+**Design identity:**
+- Neobrutalist foundation: bold borders, chunky shadows, dusty pink/teal palette
+- Norse layer: Joel Carrouche runic display font, atmospheric hero landscape, Elder Futhark rune accents
+- Cosmic inspiration: Parachute Ending music video stills, retro-futuristic aesthetic
 
 **Workflow:** MDX files in repo, Vercel rebuilds on push.
 
@@ -103,7 +127,8 @@ A distinctive online presence that feels like stepping into a cosmic, Norse-touc
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
 | Tailwind v4 CSS-first @theme | No config file needed, tokens in CSS | ✓ Good |
-| Space Grotesk + Inter fonts | Geometric display + readable body | ✓ Good |
+| Norse font (Joel Carrouche) for display | Runic-inspired Latin font deepens Norse identity; readable, freeware license | ✓ Good |
+| Bold weight for ALL Norse font display | Regular weight too thin at smaller heading sizes | ✓ Good |
 | Hard offset shadows (4px 4px 0 0) | Signature neobrutalist effect | ✓ Good |
 | Velite CLI prebuild pattern | Turbopack compatibility | ✓ Good |
 | github-dark-dimmed syntax theme | Fits cosmic palette | ✓ Good |
@@ -111,12 +136,19 @@ A distinctive online presence that feels like stepping into a cosmic, Norse-touc
 | Intersection Observer for scroll animations | Cross-browser support (CSS animation-timeline limited) | ✓ Good |
 | Single theme (no dark/light toggle) | Cohesive aesthetic is core to vision | ✓ Good |
 | Social links only for contact | Simpler than contact form | ✓ Good |
-| View Transitions deferred | API experimental in Next.js 16 | — Pending |
 | Hamburger menu replaces bottom nav | Eliminates iOS Safari bottom chrome overlap | ✓ Good |
 | iOS scroll lock via position:fixed | Only reliable approach on iOS Safari | ✓ Good |
 | Inert attribute for focus management | Simpler than manual focus trap, better browser support | ✓ Good |
 | max-w-7xl for listing pages, max-w-4xl for detail | Clear visual hierarchy between page types | ✓ Good |
 | Section tags for page containers | Avoids nested main elements, root layout owns main | ✓ Good |
+| Static image import for hero | Automatic blurDataURL generation, no manual base64 | ✓ Good |
+| Radial gradient scrim for hero | Natural vignette effect (50%/35%/55%) draws eye to center | ✓ Good |
+| --color-accent-light (#4FBFBF) | Separate variable for WCAG AA on dark backgrounds | ✓ Good |
+| CSS ::before rune bullets | Zero JS, 100% browser support | ✓ Good |
+| Context-aware prose bullets | .prose-projects CSS cascade for different rune per section type | ✓ Good |
+| Background texture rejected | User found distracting at all opacity levels (5-15%) | ✓ Good (user decision) |
+| CvltRvne font excluded | Demo license only; Norse font preferred | ✓ Good |
+| View Transitions deferred | API experimental in Next.js 16 | — Pending |
 
 ---
-*Last updated: 2026-02-07 after v1.1 milestone*
+*Last updated: 2026-02-08 after v1.2 milestone*

@@ -1,486 +1,575 @@
 # Domain Pitfalls
 
-**Domain:** Mobile Navigation Overhaul and Layout Consistency for Next.js Portfolio
+**Domain:** Norse Typography, Hero Image, and Decorative Rune Integration for Next.js Portfolio
 **Project:** keech.dev
 **Researched:** 2026-02-07
-**Confidence:** HIGH (verified via official WebKit docs, MDN, Next.js docs, and multiple community sources with confirmed reproduction)
-**Scope:** Pitfalls specific to replacing bottom-pinned mobile nav with hamburger menu, fixing iOS Safari viewport overlap, removing redundant UI, and normalizing layout consistency.
+**Confidence:** HIGH (verified via Next.js official docs, MDN, Chrome DevDocs, codebase inspection, and multiple community sources)
+**Scope:** Pitfalls specific to adding a local Norse OTF display font (replacing Google Font headings), a large PNG hero image, and decorative Elder Futhark rune elements to an existing portfolio site with established design system, WCAG AA compliance, passing Core Web Vitals, and responsive layouts.
 
 ---
 
 ## Critical Pitfalls
 
-Mistakes that cause rewrites or major issues.
+Mistakes that cause rewrites, performance regressions, or major accessibility breakage.
 
-### Pitfall 1: iOS Safari Bottom Chrome Overlap with Fixed Elements
+### Pitfall 1: 7MB Unoptimized Hero PNG Will Destroy LCP
 
-**What goes wrong:** The current bottom-pinned `MobileNav` (`fixed bottom-0`) overlaps with the `Footer` when iOS Safari's bottom chrome (address bar / home indicator bar) collapses on scroll. The nav appears to float above where the user expects it, or the footer gets buried behind both the nav and the browser chrome. This is the exact bug reported in the project context.
+**What goes wrong:** The hero image file `img/Norse_Background.png` is 7.0MB at 2752x1536 pixels, RGBA PNG format. Shipping this directly as a hero image -- even through Next.js Image component -- will cause Largest Contentful Paint (LCP) to exceed 4 seconds on mobile connections, failing Core Web Vitals. The current site passes CWV; this single addition could regress the entire performance profile.
 
-**Why it happens:** iOS Safari dynamically resizes the viewport when the user scrolls. The browser's bottom toolbar shrinks/disappears on scroll-down and reappears on scroll-up. `position: fixed; bottom: 0` elements anchor to the viewport edge, but the viewport edge itself moves. The footer uses `pb-[calc(6rem+env(safe-area-inset-bottom))]` to account for the nav, but this calculation assumes a static viewport -- when the chrome collapses, the math breaks and elements stack awkwardly.
+**Why it happens:** Large PNG files with alpha channels are inherently massive. The image optimizer in Next.js can convert to WebP/AVIF at request time, but the source file still dictates initial processing cost and the optimization pipeline has limits. A 7MB source on a 3G connection takes ~19 seconds to download even before optimization kicks in. On Vercel's free tier, repeated optimization of a 7MB source per visitor increases function execution time and can hit bandwidth limits.
 
 **Consequences:**
-- Footer content becomes untappable (interactive area does not match visual position)
-- Visual stacking where nav bar and footer overlap or leave a gap
-- Users on iPhone cannot reliably reach footer social links
-- The problem is invisible in desktop browser testing and Chrome DevTools mobile emulation
+- LCP fails (threshold: < 2.5s good, 2.5-4s needs improvement, > 4s poor)
+- Lighthouse performance score drops from green to red
+- Mobile users on slower connections see a blank or partially loaded hero for seconds
+- Vercel image optimization costs increase with oversized source files
+- Git repository bloat: 7MB binary in the repo compounds with every version
 
 **Prevention:**
-- **Replace the bottom-pinned nav entirely.** A hamburger menu in the header eliminates the root cause -- no more competing fixed-bottom elements. This is the planned approach and it is the correct one.
-- If any fixed-bottom element is retained, use `svh` (small viewport height) units rather than `dvh` or `vh` for height calculations. `svh` represents the viewport with all chrome visible, which is the safe conservative value.
-- Never use `100vh` for mobile layout calculations. Use `100dvh` for full-viewport containers and `100svh` for fixed elements.
-- Test on a real iOS device. Chrome DevTools mobile mode does **not** simulate Safari's dynamic viewport behavior.
+- **Pre-optimize the source image before it enters the codebase.** Use a tool like `sharp`, `squoosh`, or ImageMagick to:
+  1. Resize to maximum needed display width (e.g., 1920px for full-bleed desktop, generate smaller variants)
+  2. Convert to WebP or AVIF format at 80-85% quality
+  3. Target < 200KB for the primary hero image after compression
+  4. Strip the alpha channel if the background color is known (RGBA PNG is far larger than RGB)
+- Use `next/image` with explicit `width` and `height` (or `fill` with parent sizing) to prevent CLS
+- Set `preload={true}` (Next.js 16 replaces the deprecated `priority` prop) since this is the LCP element
+- Set `loading="eager"` and `fetchPriority="high"` on the hero image
+- Configure `next.config.ts` to enable AVIF: `images: { formats: ['image/avif', 'image/webp'] }`
+- Use `placeholder="blur"` with a pre-generated blurDataURL (10x10px inline base64) for perceived performance
+- Store optimized images in `public/images/` not in arbitrary directories like `img/`
 
 **Detection:**
-- Scroll down on a real iPhone in Safari and watch the footer/nav area
-- Content behind the nav bar becomes visible as a flash during scroll transitions
-- Tap targets near the bottom of the screen fail intermittently
+- Run `lighthouse` or `pagespeed.web.dev` before and after hero image addition
+- Check Network tab in DevTools: hero image transfer size should be < 300KB
+- Verify LCP element in Chrome DevTools Performance panel
 
-**Phase relevance:** Phase 1 (Navigation Overhaul) -- the hamburger menu migration eliminates this entire class of bugs.
+**Phase relevance:** Must be addressed in the very first task of the hero image phase. The source file needs optimization before any integration work begins.
+
+**Confidence:** HIGH -- verified by inspecting the actual file (`file` command: PNG 2752x1536 RGBA, `ls -lh`: 7.0MB) and cross-referencing Next.js Image docs and web performance guidelines.
 
 **Sources:**
-- [WebKit: Designing Websites for iPhone X](https://webkit.org/blog/7929/designing-websites-for-iphone-x/)
-- [Opus.ing: Fixing iOS Toolbar Overlap](https://opus.ing/posts/fixing-ios-safaris-menu-bar-overlap-css-viewport-units)
-- [WebKit Bug 261185: svh/dvh units unexpectedly equal](https://bugs.webkit.org/show_bug.cgi?id=261185)
-- [dev-tips: Overlapping bottom nav despite 100vh in iOS Safari](https://dev-tips.com/css/overlapping-bottom-navigation-bar-despite-100vh-in-ios-safari)
+- [Next.js Image Component Docs](https://nextjs.org/docs/app/api-reference/components/image)
+- [DebugBear: Next.js Image Optimization](https://www.debugbear.com/blog/nextjs-image-optimization)
+- [Chrome DevDocs: Image Optimization](https://developer.chrome.com/docs/performance/insights/font-display)
 
 ---
 
-### Pitfall 2: env(safe-area-inset-bottom) Requires viewport-fit=cover
+### Pitfall 2: Font Migration from Google to Local Breaks Size-Adjusted Fallback
 
-**What goes wrong:** The current codebase uses `env(safe-area-inset-bottom)` in both the `MobileNav` and `Footer` components, but there is no `viewport-fit=cover` configuration anywhere in the project. Without this meta tag, `env(safe-area-inset-bottom)` resolves to `0` on all devices, making the safe-area padding completely inert.
+**What goes wrong:** The codebase currently uses `next/font/google` for Space Grotesk (`src/lib/fonts.ts`). Replacing it with a Norse OTF font via `next/font/local` is not a simple path swap. The `next/font/google` module automatically generates size-adjusted fallback font metrics (using `size-adjust`, `ascent-override`, `descent-override`, `line-gap-override` CSS properties) that match the Google font's exact metrics. A custom Norse OTF font will have completely different metrics than Space Grotesk. If the fallback configuration is wrong or missing, you get visible layout shift (CLS) as the fallback font swaps to the custom font.
 
-**Why it happens:** `env(safe-area-inset-bottom)` only returns non-zero values when the viewport meta tag includes `viewport-fit=cover`. This is by design -- the browser only reports safe area insets when you opt into extending content into the unsafe area. Most developers assume `env()` "just works" because the CSS doesn't error.
+**Why it happens:** Google Fonts have pre-computed metrics in the `next/font` system. Local fonts use a generic fallback: `adjustFontFallback` defaults to `'Arial'` for `next/font/local`, which applies Arial-based size-adjust values. A decorative Norse/Viking display font will have dramatically different proportions than Arial -- wider glyphs, different x-height, different ascender/descender ratios. The auto-generated fallback metrics will be inaccurate, causing text to visibly reflow when the custom font loads.
 
 **Consequences:**
-- On devices with a home indicator (iPhone X and later), content can be obscured by the home bar
-- The footer's `pb-[calc(6rem+env(safe-area-inset-bottom))]` currently does nothing beyond the static `6rem` padding
-- The mobile nav's `paddingBottom: 'env(safe-area-inset-bottom)'` inline style is also inert
-- No visual error -- the CSS is valid, it just evaluates to zero
+- Visible text reflow (FOUT with layout shift) on every page load
+- CLS score regression -- currently passing, could fail
+- Headings jump in size/position as font swaps from Arial fallback to Norse display font
+- The effect is most visible on the large hero text `keech.dev` which uses `text-6xl` to `text-9xl`
 
 **Prevention:**
-- In the root layout, export a viewport configuration:
-  ```typescript
-  import type { Viewport } from 'next'
-  export const viewport: Viewport = {
-    width: 'device-width',
-    initialScale: 1,
-    viewportFit: 'cover',
-  }
-  ```
-- This is the Next.js App Router way to set viewport meta tags (not in the metadata export -- it is a separate `viewport` export)
-- After adding `viewport-fit=cover`, verify that all edge-to-edge elements properly account for safe areas
+- Set `display: 'swap'` on the local font declaration (this is the default and correct for a display font that users should see)
+- Set `adjustFontFallback: false` if the auto-generated Arial fallback looks wrong, then manually specify a `fallback` array with a visually closer system font
+- Alternatively, use `display: 'optional'` for the decorative Norse font -- this tells the browser: use the font if it loads within ~100ms, otherwise keep the fallback forever for this page view. This eliminates FOUT entirely at the cost of sometimes not showing the Norse font on first visit (it will be cached for subsequent visits)
+- Test the font swap visually: throttle network to Slow 3G in DevTools and watch the heading text load. Any visible jump = CLS problem
+- The Norse font file MUST be co-located relative to where `localFont()` is called. If `fonts.ts` is in `src/lib/`, the font file path is relative to that directory. Example: `src/lib/fonts/NorseFont.otf` and `src: './fonts/NorseFont.otf'`
+- Do NOT store the font in `/public/` -- `next/font/local` requires a relative path from the calling module, not a public URL
 
 **Detection:**
-- Inspect the rendered HTML and look for `viewport-fit=cover` in the viewport meta tag -- if absent, `env()` values are zero
-- On an iPhone with a home indicator, check if bottom padding actually appears
+- DevTools Performance tab: look for "Layout Shift" entries correlated with font load
+- Web Vitals extension: CLS delta after font swap
+- Visual: throttle to Slow 3G and watch for heading text jumping
 
-**Phase relevance:** Phase 1 (Navigation Overhaul) -- must fix before any safe-area-dependent layout changes.
+**Phase relevance:** Font integration phase. This is the most technically nuanced task in the milestone.
+
+**Confidence:** HIGH -- verified by reading the existing `src/lib/fonts.ts` (currently uses `next/font/google` with `display: "swap"`), cross-referencing Next.js font API docs for `adjustFontFallback`, `display`, and `fallback` options.
 
 **Sources:**
-- [MDN: env() CSS function](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/env)
-- [Next.js: generateViewport](https://nextjs.org/docs/app/api-reference/functions/generate-viewport)
-- [CSS-Tricks: The Notch and CSS](https://css-tricks.com/the-notch-and-css/)
+- [Next.js Font API Reference](https://nextjs.org/docs/app/api-reference/components/font)
+- [Chrome DevDocs: Font Fallbacks](https://developer.chrome.com/blog/font-fallbacks)
+- [Vercel Blog: Custom fonts without compromise](https://vercel.com/blog/nextjs-next-font)
 
 ---
 
-### Pitfall 3: Hamburger Menu Not Closing on Next.js Route Change
+### Pitfall 3: Elder Futhark Runes Missing from System Fonts on Mobile Devices
 
-**What goes wrong:** User taps a link in the hamburger menu, the page content changes (App Router client-side navigation), but the menu stays open. The user sees the new page content behind the still-visible menu overlay.
+**What goes wrong:** Elder Futhark runes are encoded in Unicode block U+16A0-16FF ("Runic"). If runes are rendered as raw Unicode characters (e.g., `&#x16A0;` for Fehu), they will display as empty boxes, question marks, or tofu on devices that lack a font with Runic block coverage. Android and iOS do NOT reliably include Runic Unicode support in their default system fonts. Even on Windows, support only exists in Segoe UI Historic (Windows 10+) -- not guaranteed on older systems.
 
-**Why it happens:** Next.js App Router uses client-side navigation by default. The route changes without a full page reload, so React state (including `isOpen`) persists. If the menu open/close state is not wired to route changes, the menu never closes on navigation.
+**Why it happens:** Unicode defines the codepoints, but rendering requires a font that contains glyphs for those codepoints. The Runic block is obscure and not included in most system font stacks (San Francisco on iOS, Roboto on Android, system-ui on Linux). Mobile browsers will show a missing glyph indicator (tofu square) for any Runic Unicode character unless a web font covering that range is loaded.
 
 **Consequences:**
-- User must manually close the menu after every navigation
-- Content is obscured by the open menu overlay
-- Feels broken -- users expect menu to close after selecting a destination
+- Decorative runes render as ugly tofu squares on most mobile devices
+- Inconsistent appearance across platforms: might work on Windows desktop but fail on iOS Safari
+- Screen readers may attempt to read the Unicode character names (e.g., "RUNIC LETTER FEHU FEOH FE F"), creating confusing audio
+- If runes are used for navigation or meaningful content (not just decoration), the site becomes unusable on affected devices
 
 **Prevention:**
-- Use `usePathname()` from `next/navigation` in a `useEffect` to close the menu whenever the pathname changes:
-  ```typescript
-  const pathname = usePathname()
-  useEffect(() => {
-    setIsOpen(false)
-  }, [pathname])
-  ```
-- This is the standard Next.js App Router pattern. Do NOT use router events (which are Pages Router only).
-- Place this effect in the same component that owns the `isOpen` state.
+- **Use inline SVGs for rune decorations instead of Unicode characters.** SVGs render identically on every device, have no font dependency, scale perfectly (vector), and can be styled with CSS (fill, stroke, opacity). This is the recommended approach.
+- If Unicode characters are used anyway, include a web font that covers the Runic block (e.g., Junicode, BabelStone Runic, or a subset of Noto Sans Runic) loaded via `@font-face` or `next/font/local`. Only subset the specific runes needed to minimize file size.
+- As a middle-ground: use a small custom SVG icon set of the 5-10 specific runes you want, rather than the full 96-character block
+- For either approach, mark all decorative runes with `aria-hidden="true"` (see Pitfall 5)
 
 **Detection:**
-- Open the hamburger menu, tap a nav link, observe whether the menu closes
-- Test all navigation paths, including blog post links and back button
+- Test on a real iPhone in Safari and a real Android device in Chrome
+- Open the page in Chrome DevTools with "Disable local font faces" enabled (Rendering tab)
+- Search for tofu: if any square boxes appear where runes should be, the font is missing
 
-**Phase relevance:** Phase 1 (Navigation Overhaul) -- must be implemented from the start, not added as a fix later.
+**Phase relevance:** Rune decoration phase. The SVG vs. Unicode decision should be made before implementation begins, as it affects every file where runes appear.
+
+**Confidence:** HIGH -- verified via Unicode.org Runic block chart, BabelStone font documentation, Wikipedia Runic block article, and Alan Wood's Unicode test pages.
 
 **Sources:**
-- [Next.js: usePathname](https://nextjs.org/docs/app/api-reference/functions/use-pathname)
-- [DevJonas: State change on route change with usePathname](https://devjonas.medium.com/how-to-change-a-state-when-a-route-is-changing-using-nextjs-app-directory-with-usepathname-d5c5e35b36a1)
-- [Next.js Discussion #16316: Burger menu page switching](https://github.com/vercel/next.js/discussions/16316)
+- [Unicode Runic Block Chart (U+16A0-16FF)](https://www.unicode.org/charts/PDF/U16A0.pdf)
+- [Runic Unicode Block - Wikipedia](https://en.wikipedia.org/wiki/Runic_(Unicode_block))
+- [Font Support for Runic Block](https://www.fileformat.info/info/unicode/block/runic/fontsupport.htm)
+- [BabelStone Runic Fonts](https://www.babelstone.co.uk/Fonts/Runic.html)
 
 ---
 
-### Pitfall 4: Body Scroll Not Locked When Menu Overlay Is Open
+### Pitfall 4: OTF Display Font File Size and Format Inefficiency
 
-**What goes wrong:** When the hamburger menu overlay is open, the user can still scroll the page content behind it. On iOS Safari specifically, `overflow: hidden` on the body does NOT prevent scrolling -- the page bounces and scrolls behind the overlay.
+**What goes wrong:** OTF (OpenType) font files are significantly larger than WOFF2 files. A decorative Norse display font in OTF format might be 200-500KB. The same font converted to WOFF2 would be 50-150KB. Shipping an OTF file directly through `next/font/local` means every visitor downloads an unnecessarily large font file, impacting First Contentful Paint and total page weight.
 
-**Why it happens:** iOS Safari has a long-standing behavior where `overflow: hidden` on `<body>` is ignored for touch scroll events. This is a WebKit design decision, not a bug. Desktop browsers respect `overflow: hidden` on body; iOS Safari does not.
+**Why it happens:** OTF uses less efficient compression than WOFF2. The WOFF2 format was specifically designed for web delivery with Brotli compression, achieving 30-50% smaller file sizes than OTF/TTF. Many font creators distribute in OTF/TTF format because those are the desktop-native formats. Web developers often use the file as-is without converting.
 
 **Consequences:**
-- User scrolls the background page while trying to interact with the menu
-- Disorienting visual experience
-- Can cause the user to lose their scroll position
-- Menu items may shift position if the background scrolls
+- 2-4x larger font download than necessary
+- Slower font load = longer FOUT/FOIT period
+- Impacts performance budget: a 400KB OTF font eats a significant chunk of the ~500KB total ideal page weight
+- `next/font/local` works with OTF but does not auto-convert it to WOFF2
 
 **Prevention:**
-- When the menu opens, apply `position: fixed; inset: 0; overflow: hidden` to the body, and store the current `scrollY` position
-- When the menu closes, remove those styles and restore the scroll position using `window.scrollTo(0, savedPosition)`
-- The full pattern:
+- **Convert the OTF font to WOFF2 before adding to the codebase.** Use tools like:
+  - `fonttools` / `pyftsubset`: `pyftsubset font.otf --output-file=font.woff2 --flavor=woff2`
+  - Google's `woff2_compress` tool
+  - Online converters like CloudConvert or Transfonter
+- If the font has many weights/styles but only one is needed (display headings are typically bold only), subset to the single weight needed
+- Subset the character set: if the Norse font is only used for the site title and headings, strip unused glyphs. A font subsetted to Latin characters + a few special characters can drop from 300KB to 30KB
+- Reference the WOFF2 file in `next/font/local`:
   ```typescript
-  useEffect(() => {
-    if (isOpen) {
-      const scrollY = window.scrollY
-      document.body.style.position = 'fixed'
-      document.body.style.top = `-${scrollY}px`
-      document.body.style.left = '0'
-      document.body.style.right = '0'
-      document.body.style.overflow = 'hidden'
-      return () => {
-        document.body.style.position = ''
-        document.body.style.top = ''
-        document.body.style.left = ''
-        document.body.style.right = ''
-        document.body.style.overflow = ''
-        window.scrollTo(0, scrollY)
-      }
-    }
-  }, [isOpen])
+  const norseFont = localFont({
+    src: './fonts/norse-bold.woff2',
+    weight: '700',
+    display: 'swap',
+    variable: '--font-display',
+  })
   ```
-- Alternatively, use `overscroll-behavior: none` on the overlay container (works in newer Safari versions but not universally)
 
 **Detection:**
-- Open the menu on an iPhone and try to scroll -- if the background moves, the lock is broken
-- Also test with the on-screen keyboard visible (compounds the problem)
+- Check font file size: anything over 100KB for a single-weight display font warrants investigation
+- Network tab: observe font transfer size in the Waterfall view
+- Lighthouse: "Avoid enormous network payloads" audit will flag large font files
 
-**Phase relevance:** Phase 1 (Navigation Overhaul) -- must ship with the hamburger menu, not as a follow-up.
+**Phase relevance:** Font preparation, before integration. Convert and subset first, then integrate.
+
+**Confidence:** HIGH -- OTF vs WOFF2 size differences are well-documented across multiple authoritative sources.
 
 **Sources:**
-- [Medium: I fixed a decade-long iOS Safari problem (body scroll lock)](https://stripearmy.medium.com/i-fixed-a-decade-long-ios-safari-problem-0d85f76caec0)
-- [Markus Oberlehner: Prevent body scrolling on iOS](https://markus.oberlehner.net/blog/simple-solution-to-prevent-body-scrolling-on-ios)
-- [PQINA: Prevent scrolling on iOS Safari 15](https://pqina.nl/blog/how-to-prevent-scrolling-the-page-on-ios-safari)
-- [Jay Freestone: Locking body scroll on iOS](https://www.jayfreestone.com/writing/locking-body-scroll-ios/)
+- [BrowserStack: Variable Fonts vs Static Fonts](https://www.browserstack.com/guide/variable-fonts-vs-static-fonts)
+- [MDN: Variable Fonts Guide](https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Fonts/Variable_fonts)
+- [Can I Use: WOFF2](https://caniuse.com/woff2)
 
 ---
 
 ## Moderate Pitfalls
 
-Mistakes that cause delays or noticeable UX issues.
+Issues that cause visual bugs, accessibility failures, or developer frustration but are recoverable without rewrites.
 
-### Pitfall 5: Hamburger Menu Missing Accessibility Fundamentals
+### Pitfall 5: Decorative Runes Pollute Screen Reader Experience
 
-**What goes wrong:** The hamburger menu looks fine but is completely broken for screen reader users and keyboard-only navigation. No focus management, no ARIA attributes, no escape-to-close.
+**What goes wrong:** Decorative rune elements that lack `aria-hidden="true"` will be announced by screen readers. If using Unicode characters, screen readers will read the Unicode character name (e.g., "RUNIC LETTER FEHU FEOH FE F"). If using inline SVGs without proper ARIA, screen readers may announce the SVG structure or alt text. In both cases, decorative elements create noise for assistive technology users, degrading the accessible experience that the site currently maintains (WCAG AA compliant).
 
-**Why it happens:** Developers build the visual/interaction layer first and treat accessibility as a follow-up task. But an inaccessible navigation is a critical failure, not a polish item.
+**Why it happens:** Screen readers announce all visible text content by default. Unicode characters are text content. SVGs without `aria-hidden` are treated as meaningful images. Developers add decorative elements visually and forget they exist in the accessibility tree.
 
 **Consequences:**
-- Screen reader users cannot navigate the site on mobile
-- Keyboard users get trapped or cannot reach menu items
-- Fails WCAG 2.1 AA compliance (which is table stakes for professional sites)
-- Focus escapes behind the overlay, causing confusion
+- Screen reader users hear gibberish Unicode names or SVG descriptions between meaningful content
+- WCAG AA compliance is broken (1.1.1 Non-text Content: decorative elements must be implementable in a way that assistive technology can ignore them)
+- The site's established accessibility standard regresses
 
 **Prevention:**
-- The hamburger button must have `aria-expanded="true|false"` and `aria-label="Menu"` (or `aria-label="Open navigation"` / `"Close navigation"` toggled)
-- When the menu opens, move focus to the first menu item or the close button
-- When the menu closes (via close button or Escape key), return focus to the hamburger button
-- Add `role="dialog"` or `role="navigation"` to the menu container
-- Trap focus within the menu while it is open (Tab should cycle through menu items only)
-- Listen for Escape key to close the menu
-- The menu content should be `aria-hidden="true"` when closed, or removed from the DOM entirely
+- **Every decorative rune element MUST have `aria-hidden="true"`.** No exceptions.
+- For Unicode characters: wrap in a `<span aria-hidden="true">` element
+  ```tsx
+  <span aria-hidden="true" className="rune-decoration">&#x16A0;</span>
+  ```
+- For inline SVGs: add `aria-hidden="true"` and `role="presentation"` to the `<svg>` element
+  ```tsx
+  <svg aria-hidden="true" role="presentation" viewBox="...">...</svg>
+  ```
+- Never put decorative runes inside interactive elements (buttons, links) -- `aria-hidden` is inherited by children and would hide the interactive element's accessible name
+- If a rune is used as part of meaningful content (e.g., a section heading), provide equivalent text content and hide the rune: `<h2><span aria-hidden="true">&#x16A0;</span> About Me</h2>` -- the heading text "About Me" carries the meaning
+- Add an ESLint rule or code review checkpoint: any element containing Runic Unicode (U+16A0-16FF) or rune SVG must have `aria-hidden="true"`
 
 **Detection:**
-- Navigate the site using only Tab/Shift+Tab/Enter/Escape
-- Test with VoiceOver on iOS or NVDA on Windows
-- Run axe-core or Lighthouse accessibility audit
+- Test with VoiceOver (macOS/iOS) or NVDA (Windows): navigate through the page and listen for unexpected character announcements
+- Chrome Accessibility Tree inspector: check if decorative elements appear in the tree
+- axe DevTools audit: scan for decorative content without appropriate ARIA
 
-**Phase relevance:** Phase 1 (Navigation Overhaul) -- build accessibility in from the start, not retrofitted.
+**Phase relevance:** Every task that adds rune elements. Should be a code review checkbox for every PR in this milestone.
+
+**Confidence:** HIGH -- verified via MDN aria-hidden docs, WCAG 1.1.1, and multiple accessibility authority sources (Deque, A11Y Collective, Smashing Magazine).
 
 **Sources:**
-- [DEV.to: Your hamburger menu button is inaccessible](https://dev.to/savvasstephnds/your-hamburger-menu-button-is-inaccessible-here-s-how-to-fix-it-7n)
-- [Erwin Hofman: 7 steps for accessible hamburger menus](https://www.erwinhofman.com/blog/build-web-accessible-hamburger-dropdown-menus/)
-- [a11ymatters: Mobile Navigation](https://a11ymatters.com/pattern/mobile-nav/)
+- [MDN: aria-hidden attribute](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Attributes/aria-hidden)
+- [A11Y Collective: Managing Content Visibility with aria-hidden](https://www.a11y-collective.com/blog/aria-hidden-meaning/)
+- [Deque: Creating Accessible SVGs](https://www.deque.com/blog/creating-accessible-svgs/)
 
 ---
 
-### Pitfall 6: Inconsistent max-width Across Pages
+### Pitfall 6: Tailwind CSS v4 Font Variable Registration Disconnect
 
-**What goes wrong:** Different pages use different `max-w-*` values, causing content to jump width when navigating. The current codebase has this exact problem:
-- Home: no max-width (full flex container)
-- Blog listing: `max-w-6xl`
-- Projects listing: `max-w-5xl`
-- About: `max-w-3xl`
-- Blog post detail: `max-w-6xl`
-- Project detail: `max-w-3xl`
+**What goes wrong:** The current site uses `@theme inline` in `globals.css` to bridge `next/font` CSS variables to Tailwind utilities:
+```css
+@theme inline {
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+}
+```
+When switching from `next/font/google` to `next/font/local`, the CSS variable name MUST remain `--font-display` (or the `@theme inline` block, all `font-display` utility usages, and the base layer heading rules must all be updated in lockstep). If the variable name changes -- even slightly -- every heading on the site falls back to the browser default serif font.
 
-Users perceive the width inconsistency as sloppiness, especially on larger tablets where the difference between `max-w-3xl` (48rem) and `max-w-6xl` (72rem) is 384px.
-
-**Why it happens:** Each page was built independently with "whatever looks right" width. No shared layout width convention was established. The widths may each be locally reasonable (narrow for reading, wide for grids) but the overall experience feels inconsistent.
+**Why it happens:** Tailwind CSS v4 uses CSS-first configuration. Font families are registered via `@theme` blocks that reference CSS custom properties. These properties are set on the `<html>` element by `next/font` via the `variable` option. If the local font uses a different variable name (e.g., `--font-norse` instead of `--font-display`), Tailwind's `font-display` utility resolves to nothing. The heading styles in the base layer (`h1-h6 { @apply font-display }`) stop working silently -- no build error, just wrong fonts.
 
 **Consequences:**
-- Visual jarring when navigating between pages
-- Header/footer feel disconnected from content when widths differ dramatically
-- On tablets, content "jumps" left/right as max-width changes between routes
+- All headings across the entire site render in the browser default font (usually Times New Roman)
+- No build-time error or warning -- the failure is entirely visual
+- Easy to miss in development if the developer has the Norse font installed as a system font (it would still render via system font fallback, masking the bug)
 
 **Prevention:**
-- Establish a content-width convention: pick one primary `max-w` for listing pages and one for reading/detail pages
-- Use a shared layout wrapper component (e.g., `<PageContainer variant="wide|narrow">`) to enforce consistency
-- Acceptable pattern: listing pages use `max-w-5xl`, detail/reading pages use `max-w-3xl`, but apply consistently
-- The Home page is an exception (hero layout) and does not need to match
+- **Keep the CSS variable name `--font-display` when creating the local font.**
+  ```typescript
+  const norseFont = localFont({
+    src: './fonts/norse-bold.woff2',
+    weight: '700',
+    display: 'swap',
+    variable: '--font-display',  // MUST match existing variable name
+  })
+  ```
+- If the variable name must change, update ALL three locations in lockstep:
+  1. `localFont({ variable: '--font-norse' })` in fonts.ts
+  2. `@theme inline { --font-norse: var(--font-norse); }` in globals.css
+  3. All `font-display` class usages changed to `font-norse` (or create a new `--font-display` alias)
+- The `<html>` className in `layout.tsx` must include the new font's `.variable` property (currently: `${spaceGrotesk.variable} ${inter.variable}`)
+- Test in an incognito window with DevTools "Disable local font faces" (Rendering tab) to catch fallback issues
 
 **Detection:**
-- Navigate between Blog and Projects listing pages at tablet width -- watch for content width jumping
-- Navigate from About to Blog -- the content area nearly doubles in width
+- Visual inspection: do headings use the Norse font or a serif fallback?
+- DevTools Computed Styles: check `font-family` on any `<h1>` -- it should show the Norse font name, not a system font
+- Search codebase for `font-display` usage to ensure all references are consistent
 
-**Phase relevance:** Phase 2 (Layout Consistency) -- after navigation is settled, normalize widths.
+**Phase relevance:** Font integration phase. A single variable name mismatch breaks the entire typography hierarchy.
+
+**Confidence:** HIGH -- verified by reading the current `globals.css` (lines 25-28 showing `@theme inline` usage), `fonts.ts`, and `layout.tsx`, cross-referenced with Tailwind CSS v4 font-family docs and multiple community discussions about this exact issue.
+
+**Sources:**
+- [Tailwind CSS v4: font-family](https://tailwindcss.com/docs/font-family)
+- [Tailwind Discussion #15923: Custom font family in v4 + Next.js](https://github.com/tailwindlabs/tailwindcss/discussions/15923)
+- [Tailwind Discussion #13410: NextJS font variable not applying in v4](https://github.com/tailwindlabs/tailwindcss/discussions/13410)
 
 ---
 
-### Pitfall 7: Footer Padding Calculation Breaks When Bottom Nav Is Removed
+### Pitfall 7: Hero Image CLS from Missing Dimensions or Incorrect `fill` Usage
 
-**What goes wrong:** The current footer has `pb-[calc(6rem+env(safe-area-inset-bottom))] md:py-8` to account for the bottom-pinned mobile nav. When the bottom nav is replaced with a hamburger menu, this extra padding remains, creating a massive empty gap at the bottom of every page on mobile.
+**What goes wrong:** Adding a full-width hero image with the `fill` prop but without proper parent container styling causes the image to either collapse to 0 height (invisible) or expand unboundedly, causing massive layout shift. Alternatively, using fixed `width` and `height` props on a responsive hero creates a rigid layout that doesn't adapt to viewport changes.
 
-**Why it happens:** The footer padding was coupled to the existence of the bottom nav. When one component changes, the other is forgotten. The `6rem` is hard-coded specifically to clear the 4rem nav bar plus padding.
+**Why it happens:** When using `fill`, Next.js Image sets `position: absolute` on the image, which removes it from document flow. The parent container MUST have `position: relative` (or `fixed`/`absolute`) AND explicit height or aspect ratio. Without these, the image has no dimensions to fill. Developers often add `fill` without setting up the parent, see nothing render, then try various CSS fixes that introduce layout instability.
 
 **Consequences:**
-- Huge empty space below footer on mobile
-- Footer looks broken or "too far from content"
-- Easy to miss because the change is in a different file from the nav removal
+- Hero image invisible on initial render (0-height parent)
+- Or: hero image overflows its container, overlapping other content
+- CLS spike as the image "pops in" once dimensions are resolved
+- Different behavior across viewport sizes if responsive styles are inconsistent
 
 **Prevention:**
-- When removing the `MobileNav` bottom bar, simultaneously update the footer padding
-- Remove the mobile-specific `pb-[calc(6rem+...)]` and use standard padding (e.g., `py-8`) for all breakpoints
-- Keep `env(safe-area-inset-bottom)` padding only if needed for the home indicator bar on notched iPhones (but use the correct amount -- just `env(safe-area-inset-bottom)`, not `6rem + env(...)`)
-- Consider wrapping safe-area handling in a utility class rather than inline calc()
+- For a full-width hero with maintained aspect ratio, use a container with `aspect-ratio`:
+  ```tsx
+  <div className="relative w-full aspect-[16/9]">
+    <Image
+      src="/images/hero.webp"
+      alt=""
+      fill
+      sizes="100vw"
+      preload
+      className="object-cover"
+    />
+  </div>
+  ```
+- Always provide the `sizes` prop when using `fill` -- without it, Next.js generates srcset but the browser doesn't know which size to pick, potentially downloading the largest variant
+- For the hero specifically, `sizes="100vw"` is correct since it spans the full viewport
+- Use `object-fit: cover` (via `className="object-cover"`) to prevent distortion
+- Set `alt=""` for a purely decorative background hero image (equivalent to `role="presentation"`)
+- Test at mobile, tablet, and desktop breakpoints -- the hero is the most visible element on the page
 
 **Detection:**
-- After removing the bottom nav, view any page on mobile -- the footer will have ~6rem of unexplained bottom padding
-- Compare footer spacing on mobile vs desktop
+- Resize the browser window: does the hero maintain its aspect ratio?
+- Check CLS in Lighthouse: the hero image should contribute 0 CLS
+- DevTools Elements panel: inspect the image container's computed height -- it should never be 0
 
-**Phase relevance:** Phase 1 (Navigation Overhaul) -- must be done in the same PR as the nav removal.
+**Phase relevance:** Hero image integration phase.
+
+**Confidence:** HIGH -- verified via Next.js Image component docs (`fill`, `sizes`, parent container requirements).
+
+**Sources:**
+- [Next.js Image Component: fill](https://nextjs.org/docs/app/api-reference/components/image#fill)
+- [DebugBear: Next.js Image Optimization](https://www.debugbear.com/blog/nextjs-image-optimization)
 
 ---
 
-### Pitfall 8: Hamburger Menu Transition/Animation Causing Layout Shifts
+### Pitfall 8: Norse Aesthetic Overdone -- Losing the Neobrutalist Identity
 
-**What goes wrong:** The menu slides in from the side or fades in, but during the animation, it pushes page content or causes the scrollbar to appear/disappear, creating a layout shift.
+**What goes wrong:** The existing site has a strong, cohesive neobrutalist design language: hard offset shadows, thick borders, dusty pink palette, bold geometric typography. Adding Norse elements (ornate display font, Viking imagery, runic decorations) without restraint creates a visual identity crisis. The site stops feeling like a clean neobrutalist portfolio and starts looking like a fantasy LARP site or a metal band homepage.
 
-**Why it happens:** If the menu is part of the document flow (not overlaid), it displaces content. Even if overlaid, toggling `overflow: hidden` on body can cause the scrollbar to disappear, shifting content by ~15px (scrollbar width).
-
-**Consequences:**
-- Content shifts horizontally when menu opens/closes
-- On desktop (if the breakpoint is wrong), the hamburger might appear and cause shifts
-- Layout shift hurts CLS (Cumulative Layout Shift) score
-
-**Prevention:**
-- Use `position: fixed` or `position: absolute` for the menu overlay -- never let it be in normal document flow
-- When locking body scroll, add `padding-right` equal to the scrollbar width to prevent content shift (use `window.innerWidth - document.documentElement.clientWidth` to calculate)
-- On mobile, scrollbar width is typically 0, so this mainly matters if the hamburger is visible at tablet sizes
-- Use `transform: translateX()` for slide-in animation rather than `width` or `left` changes -- transforms do not trigger layout recalculation
-
-**Detection:**
-- Watch header content when opening/closing menu -- does it shift horizontally?
-- Check CLS score in Lighthouse before and after adding the menu
-
-**Phase relevance:** Phase 1 (Navigation Overhaul) -- get the animation approach right from the start.
-
----
-
-### Pitfall 9: Removing About Page Social Links Creates Orphaned Content
-
-**What goes wrong:** The About page's social links (GitHub, LinkedIn) and the disabled "Resume Coming Soon" button are removed to de-duplicate from the footer, but the About page then feels empty or missing a call-to-action. The page loses its "contact surface."
-
-**Why it happens:** The buttons served a dual purpose: navigation shortcut AND visual weight for the about page design. Removing them solves the duplication problem but creates a design problem.
+**Why it happens:** Norse aesthetics are inherently ornamental and maximalist (knotwork, intricate letterforms, carved patterns). Neobrutalism is inherently minimal and geometric (flat colors, hard edges, stark contrasts). These two design languages pull in opposite directions. Without deliberate constraint, each new Norse element dilutes the neobrutalist foundation until the design is incoherent.
 
 **Consequences:**
-- About page feels incomplete or truncated
-- Users on the About page have no clear next action
-- The photo + bio section looks unbalanced without the social/CTA section below
+- The site loses its professional portfolio credibility
+- Design becomes cluttered and hard to navigate
+- The "cosmic, Norse-touched" vision becomes "Norse-overwhelmed"
+- Typography hierarchy breaks when an ornate display font competes with decorative runes for visual attention
+- Previous design system investments (color palette, shadow system, border conventions) are wasted
 
 **Prevention:**
-- Before removing the social links, plan what replaces them visually. Options:
-  - A "Get in touch" section that links to email or contact form (differentiates from footer)
-  - Move the resume download to a more prominent position within the bio section
-  - Add a "Recent posts" or "Featured projects" section to give the page more substance
-- The key principle: remove duplication but replace the visual weight and call-to-action purpose
-- Do NOT just delete the section and call it done
+- **Establish a "rune budget" before implementation.** Decide exactly where runes appear and enforce it:
+  - YES: Homepage hero, section dividers, footer accent
+  - NO: Navigation, blog post body, interactive elements, every heading
+- The Norse display font should ONLY be used for the site title / hero text. Navigation, headings within content, and UI elements should retain Space Grotesk (or a clean complementary font) to maintain readability
+- Rune decorations should be subtle and low-contrast (use `opacity-20` to `opacity-40`, or the muted color) -- not full-black on pink
+- Follow the design principle from actual rune stones: generous negative space around inscriptions. Runes look best with room to breathe, not crammed between content blocks
+- The existing color palette (dusty pink, teal, black) should remain dominant. Norse elements adapt TO the palette, not the other way around
+- Create a design review checkpoint: screenshot each page after adding Norse elements and compare side-by-side with the current design. If the page is unrecognizable, you've gone too far
 
 **Detection:**
-- After removing social buttons, view the About page on mobile -- does it feel like something is missing?
-- Compare the visual balance before and after
+- Squint test: squinting at the page, is the overall impression "clean with accents" or "busy and cluttered"?
+- Compare screenshots: current site vs. with Norse additions. The pages should be recognizably the same site
+- Ask: "Would a potential employer take this portfolio seriously?" If hesitation, pull back
 
-**Phase relevance:** Phase 2 (Layout Consistency) -- after nav is settled, refine page content.
+**Phase relevance:** Every phase in the milestone. This is a design-direction pitfall, not a technical one. Must be a guiding principle throughout.
 
----
+**Confidence:** HIGH -- based on design principles, competitor analysis, and the explicit project vision ("cosmic, Norse-touched" per the project requirements -- "touched" implies restraint, not domination).
 
-### Pitfall 10: Mobile Breakpoint Mismatch Between Header and Hamburger
-
-**What goes wrong:** The desktop header is `hidden md:block` (shows at 768px+) and the hamburger menu is `md:hidden` (hides at 768px+). If these breakpoints don't match exactly, there's a gap where neither navigation is visible, or both are visible simultaneously.
-
-**Why it happens:** The header and hamburger are in separate components. A developer might change one breakpoint without updating the other, or use `lg:` instead of `md:` for one.
-
-**Consequences:**
-- At exactly 768px, both menus flash or neither appears
-- On certain tablets (iPad Mini in portrait is 768px), navigation is broken
-- Users report "navigation disappeared" on specific devices
-
-**Prevention:**
-- Use the SAME Tailwind breakpoint (`md:` = 768px) consistently for both the show/hide toggle
-- Consider extracting the breakpoint to a shared constant or CSS custom property
-- Test at exactly 768px viewport width -- this is the transition point
-- The current codebase correctly uses `md:hidden` / `hidden md:block` -- preserve this when refactoring
-
-**Detection:**
-- Resize browser to exactly 768px wide -- both nav systems should swap cleanly
-- Use Chrome DevTools responsive mode and drag the width slider slowly through 760-780px
-
-**Phase relevance:** Phase 1 (Navigation Overhaul) -- verify during implementation.
-
----
-
-### Pitfall 11: Main Content Padding Not Updated After Nav Architecture Change
-
-**What goes wrong:** The root layout currently has `<main className="flex-1 flex flex-col pt-0 md:pt-16 pb-20 md:pb-0">`. The `pb-20` is padding-bottom to clear the bottom-pinned mobile nav. The `pt-0` on mobile means no top padding because the header is `hidden` on mobile. When the bottom nav is removed and the header becomes visible on mobile (via hamburger button), both of these values become wrong.
-
-**Why it happens:** The main content padding is coupled to the navigation layout. Changing navigation without updating main content padding is the most common integration mistake in this type of refactor.
-
-**Consequences:**
-- On mobile, content starts at the very top of the viewport, hidden behind the now-visible header
-- With `pb-20` still present but no bottom nav, there's 5rem of wasted space at the bottom
-- Every page appears broken on mobile until this is fixed
-
-**Prevention:**
-- When replacing bottom nav with header hamburger:
-  - Change `pt-0` to `pt-16` (or whatever the header height is) for all breakpoints
-  - Remove `pb-20` (or reduce to just safe-area padding if needed)
-  - The result should be something like `pt-16 pb-0` or simply `pt-16`
-- Update BOTH the `<main>` padding AND the footer padding in the same change
-- Create a checklist: every component that references the nav bar's dimensions must be audited
-
-**Detection:**
-- On mobile, the first content element is obscured by the header
-- There is unexplained whitespace at the bottom of every page
-
-**Phase relevance:** Phase 1 (Navigation Overhaul) -- must be part of the same atomic change.
+**Sources:**
+- [Design Work Life: 31 Viking Fonts for Norse-Inspired Designs](https://designworklife.com/viking-fonts-norse-style/)
+- [99designs: Norse and Nordic Designs](https://99designs.com/inspiration/designs/nordic)
 
 ---
 
 ## Minor Pitfalls
 
-Mistakes that cause annoyance but are quickly fixable.
+Issues that cause friction or minor bugs but are straightforward to fix.
 
-### Pitfall 12: Z-Index Stacking Conflicts Between Header, Menu Overlay, and Content
+### Pitfall 9: `next/font/local` Path Relative to Calling File, Not Project Root
 
-**What goes wrong:** The header is `z-50`, the old mobile nav was `z-50`, and the new hamburger menu overlay will also need high z-index. Without a clear z-index strategy, elements compete and the overlay may appear behind the header or content pokes through.
+**What goes wrong:** The `src` path in `localFont()` is resolved relative to the file that calls it, not the project root or `public/` directory. Developers accustomed to `public/` paths or absolute imports try paths like `/fonts/norse.woff2` or `@/fonts/norse.woff2` and get "Module not found" build errors.
 
 **Prevention:**
-- Establish a z-index scale:
-  - `z-40`: Sticky elements within content (e.g., TOC sidebar)
-  - `z-50`: Header / navigation bar
-  - `z-60` (or `z-[60]`): Menu overlay backdrop
-  - `z-70` (or `z-[70]`): Menu overlay content
-- Document the scale in a comment or the design system
-- The overlay should sit ABOVE the header, not at the same level
+- The font file should be co-located near the fonts.ts file. If `fonts.ts` is at `src/lib/fonts.ts`, place fonts at `src/lib/fonts/norse-bold.woff2`
+- Use relative path: `src: './fonts/norse-bold.woff2'`
+- Do NOT use path aliases (`@/`), absolute paths (`/`), or `public/` directory references
+- The font file should NOT be in `public/` -- `next/font/local` handles serving it with proper caching headers and optimization
+
+**Detection:** Build fails with "Module not found" error referencing the font path.
+
+**Phase relevance:** Font integration phase -- first 5 minutes of setup.
+
+**Confidence:** HIGH -- verified via Next.js font docs and multiple GitHub discussions about this exact issue.
 
 ---
 
-### Pitfall 13: Hamburger Icon Animation State Not Matching Menu State
+### Pitfall 10: `priority` Prop Deprecated in Next.js 16 -- Use `preload`
 
-**What goes wrong:** The hamburger icon animates to an X when the menu opens, but if the menu is closed via route change (usePathname effect) or Escape key rather than tapping the icon, the animation state gets out of sync. The icon shows X but the menu is closed, or vice versa.
+**What goes wrong:** The project runs Next.js 16.1.6 (verified in `package.json`). Developers following older tutorials use `priority` on the hero Image component. In Next.js 16, `priority` is deprecated. The component still works, but it may emit deprecation warnings and could be removed in a future version.
 
 **Prevention:**
-- Drive the icon animation from the same `isOpen` state variable that controls the menu
-- Never use CSS-only toggle state (`:checked` pseudo-class) -- always use React state
-- The `useEffect` that closes on pathname change will trigger a re-render, which will update the icon if the icon reads from `isOpen`
+- Use `preload={true}` instead of `priority` on the hero Image component
+- Combine with `loading="eager"` for belt-and-suspenders:
+  ```tsx
+  <Image
+    src="/images/hero.webp"
+    alt=""
+    fill
+    preload
+    loading="eager"
+    sizes="100vw"
+  />
+  ```
+- Only apply `preload` to ONE image per page -- the LCP candidate (the hero). Preloading multiple images is counterproductive
+
+**Detection:** Console deprecation warnings mentioning `priority`. Lighthouse audit: "Preload Largest Contentful Paint image".
+
+**Phase relevance:** Hero image integration phase.
+
+**Confidence:** HIGH -- verified via Next.js 16 Image component docs ("`priority` has been deprecated in favor of `preload`").
+
+**Sources:**
+- [Next.js 16 Upgrade Guide](https://nextjs.org/docs/app/guides/upgrading/version-16)
+- [Next.js Image Component API](https://nextjs.org/docs/app/api-reference/components/image)
 
 ---
 
-### Pitfall 14: Neobrutalist Border on Hamburger Menu Inconsistent with Design System
+### Pitfall 11: Hero Image Text Overlay Contrast Regression
 
-**What goes wrong:** The hamburger button and menu panel are built without the project's neobrutalist styling (3px black borders, hard offset shadows). They look like a different app from the rest of the site.
+**What goes wrong:** Placing the hero text (`keech.dev`) over a complex background image can reduce text contrast below WCAG AA thresholds (4.5:1 for normal text, 3:1 for large text). The current design has black text on a solid dusty pink background -- guaranteed high contrast. A photographic or illustrated background introduces variable brightness regions where some text areas may become unreadable.
 
 **Prevention:**
-- Apply the same border/shadow treatment to the hamburger button: `border-[3px] border-black shadow-brutal`
-- Apply it to the menu panel as well
-- Use the existing design tokens: `--shadow-brutal`, `--border-brutal`
-- The menu overlay backdrop should NOT have brutal borders (it's a scrim/overlay, not a card)
+- Apply a semi-transparent overlay between the image and text:
+  ```tsx
+  <div className="relative">
+    <Image src="/images/hero.webp" alt="" fill className="object-cover" />
+    <div className="absolute inset-0 bg-background/70" /> {/* overlay */}
+    <div className="relative z-10">
+      <h1>keech<span className="text-accent">.dev</span></h1>
+    </div>
+  </div>
+  ```
+- Test contrast with the overlay at multiple opacity levels. 60-80% opacity of the background color typically works
+- Use `colorable` (already in devDependencies) to verify contrast ratios
+- The teal accent `.dev` text needs particular attention -- teal on a dark or busy background may fail contrast
+- Consider a CSS gradient overlay (transparent at top, solid at bottom) for a more natural effect
+
+**Detection:**
+- Chrome DevTools contrast ratio checker in the color picker
+- `colorable` package (already in project devDependencies)
+- axe DevTools: "Elements must have sufficient color contrast" audit
+
+**Phase relevance:** Hero image integration phase, specifically the text overlay implementation.
+
+**Confidence:** HIGH -- WCAG contrast requirements are well-established; the risk is inherent to placing text over images.
 
 ---
 
-### Pitfall 15: Duplicate `<main>` Tag on About Page
+### Pitfall 12: Single-Weight Display Font Declared Without Explicit Weight
 
-**What goes wrong:** The About page wraps its content in `<main className="flex-1 max-w-3xl mx-auto px-6 py-12">` -- but the root layout already wraps `{children}` in a `<main>` tag. This means the About page has nested `<main>` elements, which is invalid HTML and confuses screen readers.
+**What goes wrong:** When using `next/font/local` with a non-variable font file (a static OTF/WOFF2), you MUST specify the `weight` property. If omitted, the browser assigns the default CSS weight of `400` (normal). A Norse display font is almost certainly designed as bold (700+). If it's declared as weight 400 but used with `font-bold` (Tailwind's `font-weight: 700`), the browser may attempt to synthesize bold from the normal weight -- resulting in ugly, artificially thickened letterforms. Or if the font IS actually bold but registered as 400, applying `font-bold` will do nothing visible.
 
 **Prevention:**
-- The About page (and only the About page) uses its own `<main>` tag. Change this to a `<div>` or `<section>`.
-- Audit all pages for this issue before shipping layout changes. Currently Blog listing and Projects listing also use `<main>` tags -- these all need to be `<div>` or `<section>` since the root layout provides the `<main>`.
+- Always declare the correct weight for static font files:
+  ```typescript
+  const norseFont = localFont({
+    src: './fonts/norse-bold.woff2',
+    weight: '700',          // Match the font's actual weight
+    style: 'normal',
+    display: 'swap',
+    variable: '--font-display',
+  })
+  ```
+- Check the font's metadata to determine its actual weight: use `fonttools` or an online font inspector
+- If the font is a single-weight display font marketed as "Bold" or "Black", register it at its actual weight (700 or 900)
+- Remove `font-bold` from headings if the font is already bold by design -- double-bolding produces browser-synthesized extra-bold which looks bad
+
+**Detection:**
+- Compare the font in the browser to the font in a design tool -- if it looks thicker/thinner, the weight is misconfigured
+- DevTools Computed Styles: check `font-weight` and `font-synthesis` values
+
+**Phase relevance:** Font integration phase.
+
+**Confidence:** HIGH -- standard CSS font-weight behavior, verified via MDN and Next.js font docs.
+
+---
+
+### Pitfall 13: Git Repository Bloat from Binary Assets
+
+**What goes wrong:** Adding font files (50-500KB each), a hero image (potentially megabytes), and SVG rune assets to the Git repository increases clone and pull times. Over time, as these assets are updated, Git retains every version, compounding the bloat. The current repository is lean; adding 7MB+ of binary assets is a proportionally significant increase.
+
+**Prevention:**
+- Optimize all assets BEFORE committing (Pitfall 1 for images, Pitfall 4 for fonts)
+- The hero image should be < 200KB after optimization (WebP/AVIF)
+- Font files should be < 100KB after WOFF2 conversion and subsetting
+- SVG rune files should be tiny (< 5KB each for simple rune shapes)
+- Do NOT commit the original 7MB PNG -- only the optimized version
+- Consider adding the raw/source assets to `.gitignore` and keeping them in a separate design assets location
+- If large source files must be version-controlled, consider Git LFS (but this is probably overkill for a personal portfolio)
+
+**Detection:**
+- `git diff --stat` before committing: total added bytes should be < 500KB for all new binary assets combined
+- `du -sh .git/` before and after: significant increase indicates bloat
+
+**Phase relevance:** Asset preparation, before first commit of binary files.
+
+**Confidence:** HIGH -- standard Git best practice.
 
 ---
 
 ## Phase-Specific Warnings
 
-| Phase Topic | Likely Pitfall | Mitigation |
-|-------------|---------------|------------|
-| Nav Removal | Footer padding still references old bottom nav (Pitfall 7) | Update footer padding in same PR as nav removal |
-| Nav Removal | Main content padding not updated (Pitfall 11) | Update `<main>` pt/pb values in same PR |
-| Hamburger Build | Menu stays open on route change (Pitfall 3) | Wire usePathname effect from day one |
-| Hamburger Build | iOS body scroll not locked (Pitfall 4) | Implement position:fixed scroll lock pattern |
-| Hamburger Build | Missing accessibility (Pitfall 5) | Build aria-expanded, focus trap, escape-to-close from start |
-| Viewport Fix | env() safe area inerts without viewport-fit (Pitfall 2) | Export viewport config in root layout |
-| Layout Polish | Inconsistent max-widths across pages (Pitfall 6) | Establish and enforce content width convention |
-| Layout Polish | About page feels empty after social removal (Pitfall 9) | Plan replacement content before removing |
-| Layout Polish | Duplicate `<main>` tags (Pitfall 15) | Audit all pages for nested main elements |
+| Phase Topic | Likely Pitfall | Severity | Mitigation |
+|-------------|---------------|----------|------------|
+| Font preparation | OTF not converted to WOFF2 (Pitfall 4) | Critical | Convert and subset before any integration |
+| Font integration | Variable name mismatch breaks all headings (Pitfall 6) | Critical | Keep `--font-display` variable name |
+| Font integration | Wrong weight declaration (Pitfall 12) | Moderate | Check font metadata, declare correct weight |
+| Font integration | Path resolution error (Pitfall 9) | Minor | Co-locate font file, use relative path |
+| Font integration | Fallback size-adjust mismatch causes CLS (Pitfall 2) | Critical | Test with throttled network, consider `display: 'optional'` |
+| Hero image prep | 7MB PNG shipped as-is (Pitfall 1) | Critical | Pre-optimize to < 200KB WebP/AVIF |
+| Hero image integration | Missing dimensions / bad `fill` setup (Pitfall 7) | Moderate | Use `fill` with `aspect-ratio` parent container |
+| Hero image integration | Text contrast regression (Pitfall 11) | Moderate | Semi-transparent overlay, verify with colorable |
+| Hero image integration | Using deprecated `priority` prop (Pitfall 10) | Minor | Use `preload={true}` instead |
+| Rune decoration | Unicode tofu on mobile (Pitfall 3) | Critical | Use inline SVGs, not Unicode characters |
+| Rune decoration | Screen reader pollution (Pitfall 5) | Moderate | `aria-hidden="true"` on every decorative rune |
+| All phases | Design cohesion lost (Pitfall 8) | Critical | Rune budget, restraint principle, comparison screenshots |
+| All phases | Repository bloat from unoptimized assets (Pitfall 13) | Minor | Optimize all assets before first commit |
 
 ---
 
-## Integration Risk Summary
+## Integration Risks: Protecting Existing Achievements
 
-The highest-risk moment in this milestone is the **atomic swap**: removing the bottom-pinned `MobileNav`, adding the hamburger to the `Header`, and updating all coupled padding/spacing in `layout.tsx` and `footer.tsx` simultaneously. These changes span at least 3 files and must all land together or the site will be broken on mobile.
+The following table maps each existing achievement to the pitfalls that could regress it:
 
-**Files that must change together (atomic):**
-1. `src/components/layout/mobile-nav.tsx` -- remove or replace entirely
-2. `src/components/layout/header.tsx` -- add hamburger button + menu overlay
-3. `src/app/layout.tsx` -- update `<main>` padding, add viewport export, possibly remove MobileNav import
-4. `src/components/layout/footer.tsx` -- remove bottom-nav-compensation padding
+| Achievement to Protect | Threatening Pitfalls | Protection Strategy |
+|------------------------|---------------------|---------------------|
+| **WCAG AA compliance** | Pitfall 5 (screen reader), Pitfall 11 (contrast) | `aria-hidden` on decorations, contrast overlay on hero |
+| **Core Web Vitals (LCP)** | Pitfall 1 (7MB image), Pitfall 4 (large font) | Pre-optimize all assets before integration |
+| **Core Web Vitals (CLS)** | Pitfall 2 (font fallback), Pitfall 7 (image dimensions) | Explicit dimensions, test font swap at slow network |
+| **Responsive layouts** | Pitfall 7 (fill without parent), Pitfall 8 (clutter) | aspect-ratio container, viewport testing |
+| **Typography hierarchy** | Pitfall 6 (variable mismatch), Pitfall 12 (weight), Pitfall 8 (design clash) | Keep variable names, verify weights, restraint |
+| **Design cohesion** | Pitfall 8 (overdone Norse) | Rune budget, comparison screenshots, squint test |
 
-**Testing protocol after the swap:**
-- [ ] Mobile: Header visible with hamburger icon
-- [ ] Mobile: Menu opens, links work, menu closes on navigation
-- [ ] Mobile: Background does not scroll when menu is open
-- [ ] Mobile: Footer sits at natural page bottom, no excess padding
-- [ ] Mobile: No content hidden behind header
-- [ ] Desktop: No change in behavior (header + nav links unchanged)
-- [ ] iPad (768px): Clean transition between hamburger and desktop nav
-- [ ] iPhone with notch: Safe area padding works correctly (if viewport-fit=cover added)
+---
+
+## Pre-Implementation Checklist
+
+Before writing any code for this milestone, verify:
+
+- [ ] Hero image optimized to < 200KB (WebP or AVIF, appropriate dimensions)
+- [ ] Font file converted to WOFF2 and subsetted to needed characters
+- [ ] Decision made: SVGs or Unicode for runes (SVGs recommended)
+- [ ] "Rune budget" defined: exactly which pages/locations get Norse elements
+- [ ] Font variable name strategy confirmed (keep `--font-display` or update everywhere)
+- [ ] Baseline Lighthouse scores recorded for comparison after changes
 
 ---
 
 ## Sources
 
-### Official Documentation (HIGH confidence)
-- [WebKit: Designing Websites for iPhone X](https://webkit.org/blog/7929/designing-websites-for-iphone-x/)
-- [MDN: env() CSS function](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/env)
-- [Next.js: generateViewport](https://nextjs.org/docs/app/api-reference/functions/generate-viewport)
-- [Next.js: usePathname](https://nextjs.org/docs/app/api-reference/functions/use-pathname)
-- [WebKit Bug 261185: svh/dvh units unexpectedly equal](https://bugs.webkit.org/show_bug.cgi?id=261185)
+### Official Documentation
+- [Next.js Font API Reference](https://nextjs.org/docs/app/api-reference/components/font)
+- [Next.js Image Component](https://nextjs.org/docs/app/api-reference/components/image)
+- [Next.js 16 Upgrade Guide](https://nextjs.org/docs/app/guides/upgrading/version-16)
+- [Next.js Getting Started: Fonts](https://nextjs.org/docs/app/getting-started/fonts)
+- [Tailwind CSS v4: font-family](https://tailwindcss.com/docs/font-family)
+- [MDN: aria-hidden](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Attributes/aria-hidden)
+- [MDN: Variable Fonts](https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Fonts/Variable_fonts)
 
-### Verified Community Sources (MEDIUM-HIGH confidence)
-- [Opus.ing: Fixing iOS Toolbar Overlap with CSS Viewport Units](https://opus.ing/posts/fixing-ios-safaris-menu-bar-overlap-css-viewport-units)
-- [PQINA: Prevent scrolling on iOS Safari 15](https://pqina.nl/blog/how-to-prevent-scrolling-the-page-on-ios-safari)
-- [Jay Freestone: Locking body scroll on iOS](https://www.jayfreestone.com/writing/locking-body-scroll-ios/)
-- [Markus Oberlehner: Prevent body scrolling on iOS](https://markus.oberlehner.net/blog/simple-solution-to-prevent-body-scrolling-on-ios)
-- [DEV.to: Your hamburger menu button is inaccessible](https://dev.to/savvasstephnds/your-hamburger-menu-button-is-inaccessible-here-s-how-to-fix-it-7n)
-- [Erwin Hofman: 7 steps for accessible hamburger menus](https://www.erwinhofman.com/blog/build-web-accessible-hamburger-dropdown-menus/)
-- [Ahmad Shadeed: New Viewport Units](https://ishadeed.com/article/new-viewport-units/)
+### Unicode and Runes
+- [Unicode Runic Block Chart](https://www.unicode.org/charts/PDF/U16A0.pdf)
+- [Runic Unicode Block - Wikipedia](https://en.wikipedia.org/wiki/Runic_(Unicode_block))
+- [Font Support for Runic Block](https://www.fileformat.info/info/unicode/block/runic/fontsupport.htm)
+- [BabelStone Runic Fonts](https://www.babelstone.co.uk/Fonts/Runic.html)
+- [Alan Wood's Runic Unicode Test](https://www.alanwood.net/unicode/runic.html)
 
-### Community Sources (MEDIUM confidence)
-- [GitHub dubinc/dub#2231: Mobile Menu Overlaps Footer on iOS Safari](https://github.com/dubinc/dub/issues/2231)
-- [Next.js Discussion #16316: Burger menu page switching](https://github.com/vercel/next.js/discussions/16316)
-- [dev-tips: Overlapping bottom nav despite 100vh](https://dev-tips.com/css/overlapping-bottom-navigation-bar-despite-100vh-in-ios-safari)
-- [CSS-Tricks: The Notch and CSS](https://css-tricks.com/the-notch-and-css/)
+### Performance and Optimization
+- [Chrome DevDocs: Font Fallbacks](https://developer.chrome.com/blog/font-fallbacks)
+- [Chrome DevDocs: Font Display](https://developer.chrome.com/docs/performance/insights/font-display)
+- [DebugBear: Next.js Image Optimization](https://www.debugbear.com/blog/nextjs-image-optimization)
+- [Vercel Blog: Custom fonts without compromise](https://vercel.com/blog/nextjs-next-font)
+- [DebugBear: Web Font Layout Shift](https://www.debugbear.com/blog/web-font-layout-shift)
+
+### Accessibility
+- [A11Y Collective: aria-hidden](https://www.a11y-collective.com/blog/aria-hidden-meaning/)
+- [Deque: Creating Accessible SVGs](https://www.deque.com/blog/creating-accessible-svgs/)
+- [Smashing Magazine: Accessible SVG Patterns](https://www.smashingmagazine.com/2021/05/accessible-svg-patterns-comparison/)
+
+### Design
+- [Design Work Life: Viking Fonts for Norse-Inspired Designs](https://designworklife.com/viking-fonts-norse-style/)
+- [99designs: Norse and Nordic Designs](https://99designs.com/inspiration/designs/nordic)
+
+### Community Discussions
+- [Tailwind Discussion #15923: Custom font in v4 + Next.js](https://github.com/tailwindlabs/tailwindcss/discussions/15923)
+- [Tailwind Discussion #13410: Font variable not applying in v4](https://github.com/tailwindlabs/tailwindcss/discussions/13410)
+- [Next.js Discussion #48904: next/font works locally but not on Vercel](https://github.com/vercel/next.js/discussions/48904)

@@ -6,6 +6,7 @@
   --color-foreground: #000000;
   --color-accent: #2D8B8B;
   --color-accent-hover: #3AA3A3;
+  --color-accent-light: #4FBFBF;
   --color-surface: #F5E6E8;
   --color-muted: #4A4A4A;
 
@@ -50,7 +51,23 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-display;
+    @apply font-display font-bold;
+  }
+
+  /* Norse font typography tuning */
+  h1 {
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  h2 {
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+  }
+
+  h3, h4, h5, h6 {
+    letter-spacing: 0.01em;
+    line-height: 1.3;
   }
 }
 
@@ -207,8 +224,32 @@
     @apply mb-6 pl-6;
   }
 
+  /* Note: Safari may strip list semantics when list-style: none is used.
+     MDX-generated <ul> elements retain structural <li> children and rune
+     bullets are purely decorative, so VoiceOver behavior is acceptable. */
   .prose ul {
-    list-style-type: disc;
+    list-style: none;
+    padding-left: 1.75em;
+  }
+
+  .prose ul > li {
+    position: relative;
+  }
+
+  .prose ul > li::before {
+    content: '\16A8'; /* Ansuz rune — wisdom/communication (default for blog) */
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--color-accent);
+    position: absolute;
+    left: -1.5em;
+    font-size: 1em;
+    line-height: inherit;
+  }
+
+  /* Project pages use Kenaz (craft/creative fire) instead of Ansuz */
+  .prose-projects ul > li::before {
+    content: '\16B2'; /* Kenaz rune — craft/knowledge */
   }
 
   .prose ol {
@@ -273,10 +314,13 @@
 
     .prose h2 {
       @apply text-xl mt-8 mb-3;
+      line-height: 1.2;
     }
 
     .prose h3 {
       @apply text-lg mt-6 mb-2;
+      line-height: 1.3;
     }
   }
 }
+

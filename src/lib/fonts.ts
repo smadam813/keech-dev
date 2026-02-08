@@ -1,10 +1,23 @@
-import { Space_Grotesk, Inter } from "next/font/google";
+import localFont from "next/font/local";
+import { Inter } from "next/font/google";
 
-export const spaceGrotesk = Space_Grotesk({
+export const norse = localFont({
+  src: [
+    {
+      path: "../../public/fonts/Norse-Regular.woff2",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/Norse-Bold.woff2",
+      weight: "700",
+      style: "normal",
+    },
+  ],
   variable: "--font-display",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
   display: "swap",
+  adjustFontFallback: "Arial",
+  fallback: ["Arial", "Helvetica Neue", "sans-serif"],
 });
 
 export const inter = Inter({

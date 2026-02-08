@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { Menu, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { NAV_RUNES } from '@/components/runes/rune-config'
 
 const navItems = [
   { href: '/', label: 'Home' },
@@ -103,12 +104,18 @@ export function Header() {
               key={item.href}
               href={item.href}
               className={cn(
-                'font-display font-medium text-lg motion-safe:transition-colors',
+                'font-display font-bold text-lg motion-safe:transition-colors',
                 isActive(item.href)
                   ? 'text-accent'
                   : 'text-foreground hover:text-accent'
               )}
             >
+              <span
+                aria-hidden="true"
+                className="font-display font-bold text-base opacity-60 mr-1.5 inline-block align-baseline"
+              >
+                {NAV_RUNES[item.href as keyof typeof NAV_RUNES]?.char}
+              </span>
               {item.label}
             </Link>
           ))}
@@ -166,6 +173,12 @@ export function Header() {
                   : 'text-background hover:text-accent'
               )}
             >
+              <span
+                aria-hidden="true"
+                className="font-display font-bold text-xl opacity-50 mr-2 inline-block align-baseline"
+              >
+                {NAV_RUNES[item.href as keyof typeof NAV_RUNES]?.char}
+              </span>
               {item.label}
             </Link>
           ))}

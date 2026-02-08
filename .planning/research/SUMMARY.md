@@ -1,262 +1,241 @@
 # Project Research Summary
 
-**Project:** keech.dev v1.1 Polish & Consistency
-**Domain:** Mobile Navigation Overhaul and Layout Normalization
+**Project:** keech.dev v1.2 Norse Identity
+**Domain:** Portfolio typography enhancement with Norse aesthetic
 **Researched:** 2026-02-07
 **Confidence:** HIGH
 
 ## Executive Summary
 
-This milestone addresses mobile navigation UX issues and visual consistency across the portfolio site. The current bottom-pinned tab bar navigation creates iOS Safari viewport conflicts that are architecturally unsolvable without moving navigation to the top. Research confirms that replacing the bottom nav with a hamburger menu in the header is the standard, proven approach that eliminates iOS bottom chrome overlap issues entirely.
+This milestone transforms keech.dev's visual identity by integrating Norse design elements while preserving the existing neobrutalist foundation. Research confirms this is achievable with **zero new npm dependencies** by leveraging Next.js 16 built-in capabilities. The approach replaces Space Grotesk with a custom Norse display font via `next/font/local`, adds a hero image via `next/image`, and incorporates Elder Futhark decorative elements using Unicode characters styled by the same Norse font.
 
-The recommended implementation requires zero new dependencies. Everything needed exists in the current stack: lucide-react for icons, Tailwind CSS v4 for viewport utilities and animations, Next.js App Router for auto-close on navigation, and React hooks for state management. The work is low-complexity but high-impact — fixing iOS Safari bugs that currently make footer links untappable and normalizing inconsistent page layouts that make the site feel unpolished.
+The recommended approach prioritizes restraint over maximalism. Norse elements should accent, not dominate, the existing clean neobrutalist design. The Norse font exclusively handles headings and display text; Inter body font remains unchanged. Decorative runes appear only in controlled locations (dividers, subtle accents) to avoid visual clutter that would undermine portfolio credibility. This "cosmic, Norse-touched" aesthetic means subtle atmospheric enhancement, not a fantasy-site transformation.
 
-Key risks center on integration atomicity (nav removal, footer padding, and main content padding must all change together) and iOS-specific scroll lock patterns. Both risks are well-documented with proven solutions. The milestone is achievable in 3-4 hours of focused work with clear testing protocols for iOS Safari validation.
+Key risks center on performance and design coherence. The 7MB source hero image requires pre-optimization to prevent LCP regression. Font migration from Google Fonts to local loading demands careful CSS variable coordination to avoid breaking the entire typography system. Runic Unicode characters need fallback handling for devices lacking Runic block support. Success depends on treating this as additive enhancement that respects the existing design system's constraints and achievements (WCAG AA, Core Web Vitals, responsive layouts).
 
 ## Key Findings
 
 ### Recommended Stack
 
-No new dependencies required. The existing stack already provides all necessary capabilities:
+All required capabilities are built into Next.js 16. No external dependencies needed.
 
-**Core technologies (no changes):**
-- Next.js 16 with App Router — provides `usePathname` for auto-close on navigation and `viewport` export API for iOS safe area configuration
-- Tailwind CSS v4 — ships `min-h-dvh`, `h-svh` viewport utilities and transition animations natively
-- lucide-react — already installed, provides `Menu` and `X` icons for hamburger toggle
-- React 19 — `useState` and `useEffect` handle all menu state needs
+**Core technologies:**
+- **`next/font/local`** (built-in): Loads Norse font (OTF converted to WOFF2) as display font replacing Space Grotesk. Provides automatic optimization, preloading, CLS reduction, and CSS variable output identical to current `next/font/google` pattern.
+- **`next/image`** (built-in): Handles hero PNG with automatic WebP/AVIF conversion, blur placeholder generation for static imports, LCP optimization via `preload` prop, and responsive sizing. Next.js 16 breaking change: use `preload` not deprecated `priority`.
+- **Unicode Runic block (U+16A0-U+16FF)**: Elder Futhark characters render as text via the Norse font which includes Latin extended + complete runic alphabet. Semantic, accessible, zero assets.
+- **Inline SVG in JSX**: Handles complex decorative patterns (knotwork, borders) where Unicode characters don't suffice. Inline means zero HTTP requests, full CSS control via `currentColor`.
 
-**What we're NOT adding:**
-- No Framer Motion (Tailwind transitions sufficient for simple slide/fade)
-- No @headlessui/react (overkill for 4-link nav)
-- No hamburger-react (lucide icons + boolean state accomplishes same result)
-- No body-scroll-lock library (position:fixed pattern works for simple overlay)
-
-**Critical configuration addition:**
-The project uses `env(safe-area-inset-bottom)` but lacks the required `viewport-fit=cover` configuration. This means safe-area padding currently evaluates to zero on all devices. Fix requires adding viewport export to root layout (one 6-line code block).
+**Critical finding:** The Norse font (Joel Carrouche, v2.20, free commercial license) serves double duty: display headings AND Elder Futhark rune rendering in one font file. Pre-build work involves converting OTF to WOFF2 (30-50% smaller, 5-10min one-time manual task using free online tools).
 
 ### Expected Features
 
 **Must have (table stakes):**
-- Hamburger icon with animated X transition — universal mobile menu signifier
-- Full-screen or slide-out overlay panel — clear visual hierarchy above page content
-- Body scroll lock when menu open — iOS Safari requires position:fixed pattern, not overflow:hidden
-- Escape key closes menu — accessibility baseline
-- Menu closes on navigation — App Router requires usePathname + useEffect pattern
-- Active page indicator in menu — preserve existing usePathname logic from current MobileNav
-- Consistent max-width across all pages — currently varies from max-w-3xl to max-w-6xl
-- Desktop nav unchanged — hamburger only appears below md breakpoint
+- Norse display font replacing Space Grotesk for all headings (h1-h6, logo, nav)
+- Font renders correctly at all existing heading sizes (text-6xl through text-lg)
+- Hero image on home page with "keech.dev" text overlay maintaining WCAG AA contrast
+- Hero text remains readable across all viewport sizes (scrim overlay required)
+- At least one decorative rune element visible (section divider minimum)
+- Inter body font preserved unchanged (Norse at body text sizes = illegible)
 
-**Should have (differentiators):**
-- Staggered link animation on menu open — fits existing animate-fade-in-up pattern
-- Backdrop dim/blur on menu open — signals modal context (or solid opaque for neobrutalist aesthetic)
-- Semantic nav region with ARIA — aria-expanded, aria-label, aria-controls
-- Focus trap inside open menu — Tab cycling stays within menu when open
-- Shared page container component — prevents future max-width drift
+**Should have (competitive differentiators):**
+- Rune section dividers between content sections (replaces generic `<hr>`)
+- Rune bullet markers for lists (CSS `::marker` pseudo-element)
+- Rune accents in navigation (small glyphs flanking links, desktop only)
+- Subtle runic background texture on sections (3-10% opacity, CSS data URI SVG)
+- Hero image blur-up placeholder (automatic with `next/image` static import)
+- Mobile-optimized hero crop (`object-position` adjustment for portrait viewports)
 
-**Defer (out of scope):**
-- Animated page transitions (View Transitions API still experimental in Next.js 16)
-- Off-canvas sidebar drawer (over-engineered for 4 links)
-- Bottom sheet navigation (requires gesture handling, adds complexity)
-- Moving social links to hamburger menu (footer is conventional location)
+**Defer (v2+):**
+- Animated rune fade on hero load (polish, not core)
+- Footer rune texture (footer already strong)
+- Multiple texture variants (start with one pattern)
+
+**Anti-features (explicitly avoid):**
+- Norse font for body text (illegible at 16px)
+- Full runic alphabet translations (not readable, breaks accessibility)
+- Animated particle effects (performance drain, motion sensitivity)
+- Parallax scrolling (janky on mobile, conflicts with neobrutalist flat aesthetic)
+- Rune tooltips (decorative elements should not be interactive)
+- Dark mode toggle (contradicts single-theme brand identity)
+- Overly ornate rune borders on every component (theme park effect)
 
 ### Architecture Approach
 
-Replace bottom tab bar with hamburger menu integrated into the Header component. This eliminates iOS Safari bottom chrome overlap by moving navigation to the top where browser chrome doesn't interfere.
+This milestone integrates cleanly into the existing architecture through four seams: font swap in `fonts.ts`, hero section on home page, new decorative component directory, and additive CSS design tokens.
 
-**Component boundaries:**
-1. Header (server component) — Logo, desktop nav links, renders MobileMenuButton slot
-2. MobileMenuButton (client component) — Hamburger toggle, owns `isOpen` state, renders MobileMenu
-3. MobileMenu (client component) — Full-screen overlay with nav links, auto-closes on route change
-4. Footer (server component) — Simplified padding (no bottom nav compensation)
+**Major components:**
+1. **Font system modification** — `src/lib/fonts.ts` replaces `Space_Grotesk` from `next/font/google` with `localFont` from `next/font/local`. Output CSS variable name `--font-display` stays identical, so `globals.css` and all component usages require zero changes.
+2. **Hero image component** — New `src/components/home/hero-section.tsx` Server Component uses `next/image` with `fill` prop, static import for automatic blur placeholder, scrim overlay for contrast, and z-index layering for text content.
+3. **Decorative rune components** — New `src/components/decorative/` directory contains Server Components: `RuneDivider` (horizontal separator with rune glyphs), `RuneAccent` (inline single rune), `RuneTexture` (CSS background pattern wrapper). All use Unicode U+16A0-U+16FF rendered in Norse font, fallback to inline SVG if font lacks runic glyphs.
+4. **Image optimization flow** — Move 7MB `img/Norse_Background.png` to `src/assets/hero-bg.png`, import statically. Next.js generates responsive WebP/AVIF variants at build time. Source file requires pre-optimization to ~200KB WebP before integration to avoid LCP regression.
 
-**Key patterns:**
-- Client component islands in server components — Header stays server-rendered, only MobileMenuButton ships client JS
-- Auto-close on navigation — usePathname in useEffect detects route changes (replaces Pages Router router.events)
-- Scroll lock with cleanup — position:fixed on body with saved scroll position (overflow:hidden insufficient on iOS)
-- CSS transitions over JS animation — Tailwind utilities, no Framer Motion dependency
-
-**Files affected:**
-- CREATE: `mobile-menu-button.tsx`, `mobile-menu.tsx`
-- MODIFY: `layout.tsx` (add viewport export, remove MobileNav, update main padding), `header.tsx` (add hamburger), `footer.tsx` (remove bottom-nav padding)
-- DELETE: `mobile-nav.tsx`
-
-**Layout normalization:**
-Fix duplicate `<main>` tags across Blog, Projects, and About pages (root layout already provides main wrapper). Standardize container widths to max-w-5xl for listing pages, max-w-3xl for detail/reading pages.
+**Key pattern:** Server Components for all decorative elements (zero client JS). CSS variable font propagation maintains single source of truth. Static image imports enable automatic blur placeholders. All decorative elements use `aria-hidden="true"` per existing accessibility standard.
 
 ### Critical Pitfalls
 
-1. **iOS Safari bottom chrome overlap** — Current bottom-pinned nav overlaps footer when Safari's address bar collapses on scroll. Footer becomes untappable. Prevention: Replace bottom nav with hamburger (planned approach). Detection: Test on real iPhone, not Chrome DevTools.
+1. **7MB unoptimized hero PNG will destroy LCP** — The source image is 2752x1536 RGBA PNG at 7MB. Shipping directly causes 4+ second LCP, failing Core Web Vitals. Prevention: Pre-optimize to WebP/AVIF at 80-85% quality targeting <200KB before integration. Use `next/image` with `preload={true}`, `placeholder="blur"`, and configure `next.config.ts` for AVIF support.
 
-2. **env(safe-area-inset-bottom) requires viewport-fit=cover** — Project uses env() but lacks the required viewport meta configuration. Safe-area padding currently evaluates to zero on all devices. Prevention: Export viewport config with viewportFit='cover' in root layout. This is a Next.js App Router API, not a manual meta tag.
+2. **Font migration breaks size-adjusted fallback** — Replacing Google Font with local font loses auto-generated fallback metrics. Norse display font has dramatically different proportions than Arial/Space Grotesk. Wrong fallback causes visible text reflow (CLS regression). Prevention: Set `display: 'swap'` and test font load at throttled network. Consider `display: 'optional'` to eliminate FOUT entirely. Keep CSS variable name `--font-display` identical or update all three locations (fonts.ts, globals.css, component classes) in lockstep.
 
-3. **Menu not closing on Next.js route change** — App Router uses client-side navigation. Without usePathname watching, menu stays open after link clicks. Prevention: useEffect with pathname dependency that sets isOpen to false. This must ship from day one, not added as follow-up.
+3. **Elder Futhark runes missing from system fonts on mobile** — Android/iOS lack Runic block (U+16A0-U+16FF) coverage. Unicode characters render as tofu squares on most mobile devices. Prevention: Use inline SVGs for rune decorations instead of Unicode (recommended), OR include web font covering Runic block (Junicode/BabelStone subset), OR accept inconsistency and test extensively.
 
-4. **Body scroll not locked on iOS Safari** — overflow:hidden on body is ignored by iOS Safari touch events. Background page scrolls behind open menu. Prevention: position:fixed on body + save/restore scroll position pattern (see PITFALLS.md for full code).
+4. **OTF display font file size inefficiency** — OTF files are 2-4x larger than WOFF2 (30-50% size reduction via Brotli compression). Norse font likely ~30KB each (Regular + Bold OTF). Prevention: Convert both OTF files to WOFF2 before integration using `fonttools`, `woff2_compress`, or online converters (Fontsource, Transfonter). Target <100KB total for both weights.
 
-5. **Footer padding still references old bottom nav** — Footer has `pb-[calc(6rem+env(safe-area-inset-bottom))]` to clear bottom tab bar. When nav is removed, this creates massive empty gap. Prevention: Update footer padding in same PR as nav removal. These changes must be atomic.
-
-6. **Main content padding not updated** — Root layout has `pb-20 md:pb-0` to clear bottom nav and `pt-0` because header is hidden on mobile. When header becomes visible with hamburger and bottom nav is removed, both values become wrong. Prevention: Change to `pt-16` (header height), remove `pb-20`. Must happen in same PR.
+5. **Decorative runes pollute screen reader experience** — Runes without `aria-hidden="true"` are announced as Unicode character names ("RUNIC LETTER FEHU FEOH FE F"), degrading accessibility. Breaks WCAG AA compliance. Prevention: Every decorative rune element MUST have `aria-hidden="true"`. No exceptions. Add code review checkpoint.
 
 ## Implications for Roadmap
 
-Based on research, this milestone should be implemented in 2 sequential phases with clear atomic boundaries.
+Based on research, suggested phase structure follows dependency graph: font foundation, then hero (uses font), then decorative elements (use font), then polish.
 
-### Phase 1: Navigation Overhaul (Hamburger Menu Migration)
+### Phase 1: Font Swap Preparation
+**Rationale:** All subsequent work depends on Norse font being active (hero text, rune decorations, navigation). Font conversion must happen before integration because WOFF2 conversion is external to codebase.
+**Delivers:** WOFF2 font files ready for integration
+**Actions:**
+- Download Norse font zip from Joel Carrouche official site
+- Extract `Norse.otf` and `Norse Bold.otf`
+- Convert both to WOFF2 using free online tool (Fontsource converter or Transfonter)
+- Create `src/fonts/` directory
+- Place `Norse-Regular.woff2`, `Norse-Bold.woff2`, `LICENSE.txt` in `src/fonts/`
+**Avoids:** Pitfall 4 (OTF inefficiency)
+**Research depth:** Standard (well-documented conversion tools, no research needed)
 
-**Rationale:** The hamburger menu and bottom nav removal must happen atomically. All mobile navigation functionality must exist before the old nav is deleted, ensuring users are never without navigation. This phase eliminates the iOS Safari bottom chrome conflict entirely.
+### Phase 2: Font Integration
+**Rationale:** Foundation for everything else. Must work before hero/runes can be implemented.
+**Delivers:** Norse font active sitewide for headings, Space Grotesk removed
+**Implements:**
+- Modify `src/lib/fonts.ts`: replace `Space_Grotesk` import with `localFont`, keep `--font-display` variable name
+- Update `src/app/layout.tsx`: rename import from `spaceGrotesk` to `norse`
+- Test all heading contexts for visual fit, adjust `tracking-*`/`leading-*` if needed
+**Avoids:** Pitfall 2 (fallback mismatch causing CLS), Pitfall 6 (variable name disconnect)
+**Research depth:** Medium (requires visual testing at throttled network, may need `display: 'optional'` decision)
 
-**Delivers:**
-- Hamburger menu in header (mobile only)
-- Full-screen overlay with nav links
-- Auto-close on navigation (usePathname)
-- Body scroll lock (iOS-compatible pattern)
-- Escape key closes menu
-- ARIA attributes and focus management
-- Removal of bottom-pinned MobileNav component
-- Updated footer padding (no bottom nav compensation)
-- Updated main content padding (header clearance, no bottom padding)
-- viewport-fit=cover configuration for safe-area insets
+### Phase 3: Hero Image Preparation
+**Rationale:** 7MB source file must be optimized before integration to prevent LCP disaster. Parallel to Phase 2 (font integration).
+**Delivers:** Optimized hero image <200KB ready for import
+**Actions:**
+- Pre-optimize `img/Norse_Background.png`: resize to 1920px wide, convert to WebP at 80-85% quality
+- Move to `src/assets/hero-bg.png` (or keep in `img/` for static import)
+- Verify dimensions and focal point for `object-fit: cover` cropping
+**Avoids:** Pitfall 1 (7MB image destroying LCP), Pitfall 13 (git bloat)
+**Research depth:** Standard (image optimization tools well-known)
 
-**Addresses features:**
-- Hamburger icon with X transition (table stakes)
-- Overlay panel (table stakes)
-- Menu closes on navigation (table stakes)
-- Desktop nav unchanged (table stakes)
-- Staggered link animation (differentiator)
-- Backdrop dim (differentiator)
-- ARIA semantics (differentiator)
+### Phase 4: Hero Section Implementation
+**Rationale:** Second foundation piece. Hero text uses Norse font from Phase 2. Hero is LCP element so must be performant.
+**Delivers:** Home page transformed with atmospheric hero
+**Implements:**
+- Create `src/components/home/hero-section.tsx` Server Component
+- Use `next/image` with static import, `fill`, `preload`, `placeholder="blur"`, `sizes="100vw"`
+- Add scrim overlay (`bg-foreground/50` or gradient) between image and text
+- Layer "keech.dev" text with z-index, center positioning
+- Add `next.config.ts` modification: `images: { qualities: [75, 90] }`
+- Test responsive cropping at mobile/tablet/desktop breakpoints
+**Avoids:** Pitfall 7 (CLS from missing dimensions), Pitfall 11 (contrast regression), Pitfall 10 (deprecated `priority` prop)
+**Research depth:** Medium (requires contrast testing, responsive behavior validation)
 
-**Avoids pitfalls:**
-- iOS bottom chrome overlap (Pitfall 1) — eliminated by moving nav to top
-- Menu not closing on route change (Pitfall 3) — usePathname pattern from start
-- Body scroll not locked (Pitfall 4) — position:fixed scroll lock pattern
-- Footer padding coupling (Pitfall 7) — updated in same commit
-- Main content padding (Pitfall 11) — updated in same commit
+### Phase 5: Decorative Rune Components
+**Rationale:** Unicode vs SVG decision point. Can be built in parallel with Phase 4 (both depend on font from Phase 2).
+**Delivers:** Reusable rune decoration components
+**Implements:**
+- Create `src/components/decorative/` directory
+- Build `RuneDivider` (section separator with 3-6 rune characters)
+- Build `RuneAccent` (single rune for inline use)
+- DECISION POINT: Test if Norse font renders Unicode U+16A0-U+16FF glyphs. If yes, use Unicode. If no (tofu boxes), switch to inline SVG paths.
+- All components Server Components with `aria-hidden="true"`
+**Avoids:** Pitfall 3 (Unicode tofu on mobile), Pitfall 5 (screen reader pollution), Pitfall 8 (design overdone)
+**Research depth:** High (requires testing Unicode coverage, fallback strategy decision, visual design iteration)
 
-**Critical integration points:**
-Files that must change together (atomic commit):
-1. Create `mobile-menu-button.tsx` and `mobile-menu.tsx`
-2. Modify `header.tsx` to integrate hamburger
-3. Modify `layout.tsx` to remove MobileNav, add viewport export, update main padding
-4. Modify `footer.tsx` to remove bottom-nav padding hack
-5. Delete `mobile-nav.tsx`
-
-**Testing protocol:**
-- Mobile: Header visible with hamburger, menu works, background doesn't scroll when menu open
-- Mobile: Footer sits at natural page bottom, no excess padding
-- Mobile: No content hidden behind header
-- Desktop: No change (header + nav unchanged)
-- iPad 768px: Clean transition between hamburger and desktop nav
-- iPhone with notch: Safe area padding works (verify viewport-fit=cover effective)
-
-### Phase 2: Layout Consistency (Normalization)
-
-**Rationale:** After navigation is stable, normalize container widths and clean up duplicate semantic elements. This work is independent of navigation and can be tested separately. Layout inconsistencies are currently most visible on tablet widths where max-w differences cause content to jump.
-
-**Delivers:**
-- Consistent max-width across all pages (max-w-5xl for listings, max-w-3xl for detail)
-- Fix duplicate `<main>` tags (Blog, Projects, About pages all have nested main)
-- Consistent vertical padding (standardize on py-8)
-- Optional: Extract shared PageContainer component to prevent future drift
-
-**Addresses features:**
-- Consistent max-width across pages (table stakes)
-- Shared page container component (differentiator)
-
-**Avoids pitfalls:**
-- Inconsistent max-width (Pitfall 6) — normalize to one width per page type
-- Duplicate main tags (Pitfall 15) — change page-level main to div/section
-
-**Work breakdown:**
-- Audit current container patterns (already documented in ARCHITECTURE.md)
-- Choose standard widths: max-w-5xl for listing pages, max-w-3xl for prose
-- Update 6 page files (Blog listing/detail, Projects listing/detail, About, not-found)
-- Fix semantic HTML (main → div on pages where layout provides main)
-- Optional: Create PageContainer wrapper component
+### Phase 6: Rune Integration and Polish
+**Rationale:** Final integration across pages. Must have all components from Phase 5 ready.
+**Delivers:** Cohesive Norse aesthetic sitewide
+**Implements:**
+- Add `RuneDivider` between sections on home page (after hero, before content)
+- Add `RuneAccent` to header logo or nav links (optional, test visual balance)
+- Add `RuneDivider` above footer (optional)
+- Create `RuneTexture` component with CSS data URI SVG pattern (optional)
+- Apply rune list markers to `.prose` styles (optional)
+**Avoids:** Pitfall 8 (overdone Norse losing neobrutalist identity)
+**Research depth:** Low (design iteration and visual testing, no technical unknowns)
 
 ### Phase Ordering Rationale
 
-- Phase 1 must come first because it addresses the critical iOS Safari bug and removes the root cause of footer/viewport conflicts. Layout normalization depends on knowing the final navigation architecture.
-- The two phases are technically independent (layout width changes don't affect navigation), but sequencing them reduces risk. Testing nav changes in isolation makes debugging easier.
-- Both phases are low-complexity with clear success criteria. Total effort: 3-4 hours.
+- **Font preparation before integration** because WOFF2 conversion is external, one-time task that blocks all subsequent work.
+- **Font integration first** because hero text overlay, rune characters, and all decorative elements depend on Norse font being active in CSS. If font swap breaks, nothing else works.
+- **Hero prep and font integration in parallel** because image optimization is independent of font work. Both are foundations.
+- **Hero implementation after font** because hero text must render in Norse font. Dependency enforced.
+- **Rune components parallel to hero** because both depend on font, neither depends on each other. Parallel speeds delivery.
+- **Rune integration last** because it's the most subjective (visual design iteration) and least technical. Can iterate safely once foundations are solid.
+
+This ordering minimizes risk: foundations first (font, image), then structure (hero, components), then polish (integration, visual tuning).
 
 ### Research Flags
 
-**No additional research needed:**
-- Hamburger menu pattern is well-documented with established implementations
-- iOS Safari viewport behavior is thoroughly researched in official WebKit docs
-- Next.js App Router patterns are from official documentation
-- Layout normalization is mechanical CSS class changes
+Phases likely needing deeper research during planning:
+- **Phase 5 (Rune components):** Unicode coverage testing needed. If Norse font lacks Runic glyphs, pivot to SVG implementation requires design decisions on which runes, visual style, path data generation.
+- **Phase 6 (Integration):** Visual design iteration to define "rune budget" and prevent overdone aesthetic. May need design review with PROJECT.md vision as reference.
 
-**Standard patterns apply:**
-- Client component islands (App Router best practice)
-- usePathname for route change detection (replaces Pages Router router.events)
-- position:fixed scroll lock (iOS Safari workaround, multiple verified sources)
-- Accessibility attributes (WCAG 2.1 AA compliance)
-
-**Skip `/gsd:research-phase` for both phases** — implementation is straightforward with no niche domain knowledge required.
+Phases with standard patterns (skip research-phase):
+- **Phase 1 (Font prep):** Font format conversion well-documented, free online tools available.
+- **Phase 2 (Font integration):** Next.js `next/font/local` API fully documented, clear migration path.
+- **Phase 3 (Image prep):** Image optimization standard practice, tools well-known.
+- **Phase 4 (Hero implementation):** Next.js Image component fully documented, pattern established.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | All features achievable with existing dependencies. Verified lucide-react icons exist, Tailwind v4 viewport utilities confirmed via official docs, Next.js viewport export API verified. |
-| Features | HIGH | UX research from NN/g and Interaction Design Foundation confirms hamburger menu appropriate for simple 4-link nav. Accessibility patterns from a11ymatters and WCAG docs. |
-| Architecture | HIGH | Component boundaries verified against existing codebase. Client island pattern is Next.js best practice. File changes audited, duplicate main tags confirmed in current code. |
-| Pitfalls | HIGH | iOS Safari viewport behavior verified via WebKit blog and MDN. Scroll lock pattern verified via multiple iOS-specific sources with confirmed reproduction. Navigation close behavior verified in Next.js discussions. |
+| Stack | HIGH | All features verified as Next.js 16 built-ins via official docs. Zero npm installs needed. Breaking changes documented (priority→preload, images.qualities default). |
+| Features | HIGH | Clear delineation between must-have/should-have/anti-features based on portfolio best practices, neobrutalist design principles, and WCAG compliance requirements. |
+| Architecture | HIGH | Integration seams mapped to existing codebase (fonts.ts, page.tsx, globals.css verified). Server Component pattern established, CSS variable propagation proven. |
+| Pitfalls | HIGH | Critical pitfalls verified against actual files (7MB PNG exists, fonts.ts structure inspected, Next.js 16 version confirmed in package.json). Multiple authoritative sources for each pitfall. |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-No critical gaps. Minor items to validate during implementation:
+Areas where research was inconclusive or needs validation during implementation:
 
-- **Focus trap implementation details** — Research covers the requirement (focus must stay in menu when open) but not specific implementation. Manual tabIndex management vs lightweight utility. Decide during Phase 1 based on complexity vs benefit.
-
-- **Staggered animation timing** — Research recommends 50-100ms delay per link but doesn't specify optimal value for 4 items. Quick A/B test during implementation to find what feels best with neobrutalist aesthetic.
-
-- **Exact max-width values** — Research suggests max-w-5xl for listings and max-w-3xl for detail pages, but final decision should consider existing content density. Preview at different widths during Phase 2 before committing.
-
-- **PageContainer component extraction** — Optional enhancement. Research doesn't address whether this adds value vs simple utility class. Decide during Phase 2 based on whether layout variations are likely in future work.
-
-All gaps are implementation details, not architectural unknowns. None block starting work.
+- **Norse font Unicode coverage for Runic block:** Font description confirms "Latin extended, Runic" but actual glyph rendering must be tested at Phase 5 implementation. If coverage is incomplete, fallback to inline SVG requires design iteration. Test early in Phase 5.
+- **Optimal scrim opacity for text contrast:** Research recommends 40-60% for solid overlay or gradients, but actual hero image colors dictate final value. Must test with real image using Chrome DevTools contrast checker in Phase 4.
+- **Mobile hero cropping focal point:** `object-position` value depends on hero image composition (where Yggdrasil/aurora/mountains are positioned). Research recommends `center 30%` but requires validation with actual AI-generated image in Phase 4.
+- **Font swap CLS impact:** Whether to use `display: 'swap'` (show fallback, then swap) vs `display: 'optional'` (skip font if not loaded fast enough) depends on measured CLS delta at throttled network. Requires testing in Phase 2.
+- **Rune budget definition:** How many rune decorations constitute "tasteful" vs "overdone" is subjective. Needs visual design iteration in Phase 6 with comparison screenshots against current design. Follow guideline: 2-3 rune decoration types sitewide, not per component.
 
 ## Sources
 
-### Primary (HIGH confidence)
+### PRIMARY (HIGH confidence)
 
-**Official Documentation:**
-- [Next.js generateViewport](https://nextjs.org/docs/app/api-reference/functions/generate-viewport) — viewportFit property for viewport-fit=cover
-- [Next.js usePathname](https://nextjs.org/docs/app/api-reference/functions/use-pathname) — Route change detection in App Router
-- [Tailwind CSS v4 Height Utilities](https://tailwindcss.com/docs/height) — dvh/svh/lvh viewport units built-in
-- [MDN env() CSS function](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/env) — Safe area inset CSS environment variables
-- [WebKit: Designing Websites for iPhone X](https://webkit.org/blog/7929/designing-websites-for-iphone-x/) — viewport-fit=cover and safe-area insets
-- [Lucide Icons](https://lucide.dev/icons/) — Menu and X icons verified
+**Stack research sources:**
+- [Next.js Font Optimization (App Router)](https://nextjs.org/docs/app/getting-started/fonts) — `next/font/local` API, CSS variable assignment
+- [Next.js Font API Reference](https://nextjs.org/docs/app/api-reference/components/font) — all configuration options verified
+- [Next.js Image Component](https://nextjs.org/docs/app/api-reference/components/image) — fill, preload, placeholder props
+- [Next.js 16 Upgrade Guide](https://nextjs.org/docs/app/guides/upgrading/version-16) — breaking changes (priority→preload, images.qualities)
+- [Unicode Runic Block Chart](https://www.unicode.org/charts/PDF/U16A0.pdf) — Elder Futhark code points
 
-**Standards/Specifications:**
-- [WCAG 2.1 AA](https://www.w3.org/WAI/WCAG21/quickref/) — Accessibility requirements for navigation
-- [a11ymatters: Mobile Navigation](https://a11ymatters.com/pattern/mobile-nav/) — Accessible mobile nav pattern reference
+**Features research sources:**
+- [WCAG 2.1 SC 1.4.3 Contrast (Minimum)](https://www.w3.org/WAI/WCAG21/Understanding/contrast-minimum.html) — contrast requirements
+- [W3C: Using Decorative Unicode Characters](https://www.w3.org/WAI/GL/wiki/Using_a_Decorative_Unicode_Character) — aria-hidden compliance
+- [web.dev: Custom Bullets with CSS ::marker](https://web.dev/articles/css-marker-pseudo-element) — rune list markers
 
-### Secondary (MEDIUM confidence)
+**Architecture research sources:**
+- Codebase inspection: fonts.ts, layout.tsx, globals.css, page.tsx verified
+- [A11Y Collective: SVG Accessibility](https://www.a11y-collective.com/blog/svg-accessibility/) — decorative SVG patterns
 
-**UX Research:**
-- [NN/g: Hamburger Menus and Hidden Navigation Hurt UX Metrics](https://www.nngroup.com/articles/hamburger-menus/) — Research showing hidden nav acceptable when items are few and well-known
-- [NN/g: Menu-Design Checklist: 17 UX Guidelines](https://www.nngroup.com/articles/menu-design/) — Comprehensive menu design guidelines
-- [Interaction Design Foundation: Hamburger Menu UX](https://www.interaction-design.org/literature/article/hamburger-menu-ux) — When to use hamburger menus effectively
+**Pitfalls research sources:**
+- [Chrome DevDocs: Font Fallbacks](https://developer.chrome.com/blog/font-fallbacks) — size-adjust, CLS prevention
+- [DebugBear: Next.js Image Optimization](https://www.debugbear.com/blog/nextjs-image-optimization) — LCP optimization
+- [BabelStone Runic Fonts](https://www.babelstone.co.uk/Fonts/Runic.html) — Runic Unicode coverage
 
-**Implementation Patterns:**
-- [Erwin Hofman: 7 Steps for Accessible Hamburger Menus](https://www.erwinhofman.com/blog/build-web-accessible-hamburger-dropdown-menus/) — Accessibility implementation
-- [Samuel Kraft: Safari 15 Bottom Tab Bars](https://samuelkraft.com/blog/safari-15-bottom-tab-bars-web) — iOS Safari safe area patterns
-- [Jay Freestone: Locking body scroll on iOS](https://www.jayfreestone.com/writing/locking-body-scroll-ios/) — iOS-specific scroll lock pattern
-- [PQINA: Prevent scrolling on iOS Safari 15](https://pqina.nl/blog/how-to-prevent-scrolling-the-page-on-ios-safari) — position:fixed scroll lock approach
+### SECONDARY (MEDIUM confidence)
 
-### Tertiary (Context)
+- [Joel Carrouche Norse Font](https://www.joelcarrouche.com/fonts/norse) — font specifications, license confirmation
+- [Smashing Magazine: Text Over Images Accessibility](https://www.smashingmagazine.com/2023/08/designing-accessible-text-over-images-part1/) — scrim overlay techniques
+- [Vercel Blog: Custom fonts without compromise](https://vercel.com/blog/nextjs-next-font) — next/font system internals
+- [Tailwind CSS v4 Discussions #15923, #13410](https://github.com/tailwindlabs/tailwindcss/discussions/) — CSS variable font integration patterns
 
-**Community Examples:**
-- [Smashing Magazine: Bottom Navigation Pattern](https://www.smashingmagazine.com/2019/08/bottom-navigation-pattern-mobile-web-pages/) — UX tradeoffs between navigation patterns
-- [Conflux: Tab Bar vs Hamburger Menu](https://www.weareconflux.com/en/blog/tab-bar-vs-hamburger-menu/) — Comparison research
-- [Opus.ing: iOS Viewport Units](https://opus.ing/posts/fixing-ios-safaris-menu-bar-overlap-css-viewport-units) — svh vs dvh guidance
-- [Next.js Discussion #46542](https://github.com/vercel/next.js/discussions/46542) — viewport-fit=cover support confirmed
+### TERTIARY (LOW confidence, needs validation)
+
+- Norse.otf Runic Unicode coverage: Font page states "Latin extended, Runic" but actual glyph rendering unverified. Must test in Phase 5.
+- Hero image composition focal point: Recommendations for `object-position` based on typical Norse landscape, but actual AI-generated image may differ. Validate in Phase 4.
 
 ---
 
