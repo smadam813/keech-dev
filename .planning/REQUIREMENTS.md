@@ -57,24 +57,24 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SYNC-01 | — | Pending |
-| SYNC-02 | — | Pending |
-| SYNC-03 | — | Pending |
-| SYNC-04 | — | Pending |
-| RVEAL-01 | — | Pending |
-| RVEAL-02 | — | Pending |
-| GLOW-01 | — | Pending |
-| GLOW-02 | — | Pending |
-| GLOW-03 | — | Pending |
-| GLOW-04 | — | Pending |
-| GLOW-05 | — | Pending |
-| GLOW-06 | — | Pending |
+| SYNC-01 | Phase 1 | Pending |
+| SYNC-02 | Phase 1 | Pending |
+| SYNC-03 | Phase 1 | Pending |
+| SYNC-04 | Phase 1 | Pending |
+| RVEAL-01 | Phase 1 | Pending |
+| RVEAL-02 | Phase 1 | Pending |
+| GLOW-01 | Phase 2 | Pending |
+| GLOW-02 | Phase 2 | Pending |
+| GLOW-03 | Phase 2 | Pending |
+| GLOW-04 | Phase 2 | Pending |
+| GLOW-05 | Phase 2 | Pending |
+| GLOW-06 | Phase 2 | Pending |
 
 **Coverage:**
 - v1 requirements: 12 total
-- Mapped to phases: 0
-- Unmapped: 12
+- Mapped to phases: 12
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-08*
-*Last updated: 2026-02-08 after initial definition*
+*Last updated: 2026-02-08 after roadmap creation*
