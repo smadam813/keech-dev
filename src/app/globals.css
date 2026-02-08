@@ -7,7 +7,7 @@
   --color-accent: #2D8B8B;
   --color-accent-hover: #3AA3A3;
   --color-surface: #F5E6E8;
-  --color-muted: #666666;
+  --color-muted: #4A4A4A;
 
   /* Hard offset shadows - neobrutalist signature */
   --shadow-brutal: 4px 4px 0 0 #000000;
@@ -148,16 +148,22 @@
 
   /* Inline code (not in code blocks) */
   :not(pre) > code {
-    @apply px-1.5 py-0.5 rounded font-mono text-sm;
+    @apply p-0.5 rounded font-mono text-sm;
     background-color: var(--color-surface);
     border: 1px solid var(--color-foreground);
   }
 
   /* Inline code processed by rehype-pretty-code */
   span[data-rehype-pretty-code-figure] code {
-    @apply px-1.5 py-0.5 rounded font-mono text-sm;
-    background-color: var(--color-surface);
+    @apply p-0.5 rounded font-mono text-sm;
+    background-color: rgba(0, 0, 0, 0.69) !important;
     border: 1px solid var(--color-foreground);
+  }
+
+  /* Remove [data-line] padding inside inline code — the 16px px-4 is for fenced blocks only */
+  span[data-rehype-pretty-code-figure] [data-line] {
+    padding-left: 0.125rem !important;
+    padding-right: 0.125rem !important;
   }
 }
 

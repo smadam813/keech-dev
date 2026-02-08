@@ -43,8 +43,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${spaceGrotesk.variable} ${inter.variable} min-h-dvh flex flex-col`}>
+    <html lang="en" className={`${spaceGrotesk.variable} ${inter.variable}`}>
+      <body className="min-h-dvh flex flex-col">
         <Header />
         <main className="flex-1 flex flex-col pt-16">
           {children}
