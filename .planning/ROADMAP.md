@@ -27,11 +27,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. The reveal plays as a coordinated two-beat sequence: background resolves from blur, brief pause, then text fades up
   4. Toggling prefers-reduced-motion in OS settings causes all hero animations to be skipped with content immediately visible
   5. No layout shift occurs during the hero reveal sequence (CLS remains zero for the hero section)
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 01-01: TBD
-- [ ] 01-02: TBD
+- [ ] 01-01-PLAN.md -- Load-gated two-beat hero reveal (CSS + client component + visual verification)
 
 ### Phase 2: Rune Glow Effects
 **Goal**: The hero image comes alive with subtle, ambient rune glows that pulse organically and reinforce the Norse visual identity
@@ -56,5 +55,5 @@ Phases execute in numeric order: 1 -> 2
 
 | Phase | Plans Complete | Status | Completed |
 |-------|---------------|--------|-----------|
-| 1. Animation Sync & Reveal | 0/TBD | Not started | - |
+| 1. Animation Sync & Reveal | 0/1 | Not started | - |
 | 2. Rune Glow Effects | 0/TBD | Not started | - |
