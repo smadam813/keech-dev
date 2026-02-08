@@ -91,12 +91,10 @@ export function Header() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background border-b-[3px] border-foreground">
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-        <Link
-          href="/"
-          className="font-display font-bold text-2xl hover:text-accent motion-safe:transition-colors"
-        >
-          keech.dev
-        </Link>
+        <span className="font-display font-bold text-2xl">
+          keech
+          <span className="text-accent">.dev</span>
+        </span>
 
         {/* Desktop navigation */}
         <nav className="hidden md:flex gap-8">
