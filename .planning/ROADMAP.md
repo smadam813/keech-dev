@@ -27,7 +27,7 @@ v1.1 replaces the bottom-pinned mobile navigation with a hamburger menu in the h
 - Decimal phases (5.1, 5.2): Urgent insertions if needed (marked with INSERTED)
 
 - [x] **Phase 5: Navigation Overhaul** - Replace bottom nav with hamburger menu and fix iOS viewport
-- [ ] **Phase 6: Layout Consistency** - Normalize containers, spacing, and semantic HTML across all pages
+- [x] **Phase 6: Layout Consistency** - Normalize containers, spacing, and semantic HTML across all pages
 
 ## Phase Details
 
@@ -58,8 +58,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 06-01-PLAN.md -- Normalize header, footer, and listing pages to max-w-7xl; fix nested main tags; remove subtitles; standardize spacing
-- [ ] 06-02-PLAN.md -- Normalize detail pages (blog post, project, about) to max-w-4xl; fix about page nested main; visual verification checkpoint
+- [x] 06-01-PLAN.md -- Normalize header, footer, and listing pages to max-w-7xl; fix nested main tags; remove subtitles; standardize spacing
+- [x] 06-02-PLAN.md -- Normalize detail pages (blog post, project, about) to max-w-4xl; fix about page nested main; visual verification checkpoint
 
 ## Progress
 
@@ -70,4 +70,4 @@ Phases execute in numeric order: 5 -> 6
 |-------|-----------|----------------|--------|-----------|
 | 1-4 | v1.0 | 14/14 | Complete | 2026-02-03 |
 | 5. Navigation Overhaul | v1.1 | 2/2 | Complete | 2026-02-07 |
-| 6. Layout Consistency | v1.1 | 0/? | Not started | - |
+| 6. Layout Consistency | v1.1 | 2/2 | Complete | 2026-02-07 |

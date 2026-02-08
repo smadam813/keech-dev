@@ -5,21 +5,21 @@
 See: .planning/PROJECT.md (updated 2026-02-07)
 
 **Core value:** A distinctive online presence that feels like stepping into a cosmic, Norse-touched world — memorable enough that visitors remember the site itself, not just the content.
-**Current focus:** Phase 6 in progress — layout consistency normalization
+**Current focus:** v1.1 milestone complete — all phases done
 
 ## Current Position
 
 Phase: 6 of 6 (Layout Consistency)
-Plan: 1 of 2 (Container Alignment)
-Status: In progress
-Last activity: 2026-02-07 — Completed 06-01-PLAN.md
+Plan: 2 of 2 (Detail Page Normalization)
+Status: Complete
+Last activity: 2026-02-07 — Completed Phase 6, all v1.1 work done
 
-Progress: [█████░░░░░] 50% (Phase 6: 1/2 plans)
+Progress: [██████████] 100% (Phase 6: 2/2 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 17 (14 v1.0 + 3 v1.1)
+- Total plans completed: 18 (14 v1.0 + 4 v1.1)
 - Average duration: —
 - Total execution time: ~4 days (v1.0)
 
@@ -29,12 +29,13 @@ Progress: [█████░░░░░] 50% (Phase 6: 1/2 plans)
 |-------|-------|-------|----------|
 | v1.0 (1-4) | 14 | ~4 days | — |
 | 05-navigation-overhaul | 2/2 | 3 min | 1.5 min |
-| 06-layout-consistency | 1/2 | 1 min | 1 min |
+| 06-layout-consistency | 2/2 | 2 sessions | — |
 
 **Recent Trend:**
 - 05-01: 2 min (2 tasks)
 - 05-02: 1 min (2 tasks + checkpoint)
 - 06-01: 1 min (2 tasks)
+- 06-02: 2 sessions (1 task + checkpoint + bug fix)
 - Trend: fast execution, clean plans
 
 *Updated after each plan completion*
@@ -44,6 +45,7 @@ Progress: [█████░░░░░] 50% (Phase 6: 1/2 plans)
 | Milestone | Phases | Plans | Shipped |
 |-----------|--------|-------|---------|
 | v1.0 MVP | 1-4 | 14 | 2026-02-03 |
+| v1.1 Polish & Consistency | 5-6 | 4 | 2026-02-07 |
 
 ## Accumulated Context
 
@@ -61,6 +63,8 @@ Recent decisions affecting current work:
 - [05-02]: About page social buttons removed per ABUT-04 (footer already has them)
 - [06-01]: max-w-7xl (1280px) as universal container width for global chrome and listing pages
 - [06-01]: Listing pages use section (not main) to avoid nested main elements
+- [06-02]: max-w-4xl (896px) for all detail/reading pages (blog post, project detail, about)
+- [06-02]: w-full required on all page containers inside flex-col root main
 
 ### Pending Todos
 
@@ -68,10 +72,10 @@ None.
 
 ### Blockers/Concerns
 
-None — iOS Safari bottom chrome overlap resolved (bottom nav removed, safe-area insets implemented).
+None.
 
 ## Session Continuity
 
 Last session: 2026-02-07
-Stopped at: Completed 06-01 (container alignment), ready for 06-02
-Resume file: .planning/phases/06-layout-consistency/06-02-PLAN.md
+Stopped at: Phase 6 complete, v1.1 milestone complete
+Resume file: None — milestone ready for completion audit
