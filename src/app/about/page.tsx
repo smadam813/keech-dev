@@ -1,4 +1,5 @@
 import { Metadata } from 'next'
+import Image from 'next/image'
 import { Download } from 'lucide-react'
 
 export const metadata: Metadata = {
@@ -12,11 +13,15 @@ export default function AboutPage() {
       <div className="flex flex-col md:flex-row gap-8 items-start">
         {/* Photo section */}
         <div className="shrink-0">
-          <div className="w-48 h-48 border-[3px] border-black shadow-brutal overflow-hidden">
-            {/* Replace with: <Image src="/images/headshot.jpg" alt="Adam Keech" fill className="object-cover" priority /> */}
-            <div className="w-full h-full bg-muted/30 flex items-center justify-center">
-              <span className="text-muted font-display text-lg">Photo</span>
-            </div>
+          <div className="relative w-48 h-48 border-[3px] border-black shadow-brutal overflow-hidden">
+            <Image
+              src="/images/headshot.webp"
+              alt="Adam Keech"
+              width={384}
+              height={512}
+              className="w-full h-full object-cover"
+              priority
+            />
           </div>
         </div>
 
