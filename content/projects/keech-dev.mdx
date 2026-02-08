@@ -1,29 +1,78 @@
 ---
 title: keech.dev
 slug: keech-dev
-description: Personal portfolio and blog with neobrutalist design aesthetic
+description: "Neobrutalist portfolio built with Next.js 16, Tailwind v4 CSS-first theming, and Velite MDX — ~1,400 LOC with intentional design constraints"
 date: 2026-01-31
 featured: true
 stack:
-  - Next.js
+  - Next.js 16
+  - React 19
   - TypeScript
-  - Tailwind CSS
+  - Tailwind CSS v4
   - Velite
+  - MDX
+  - Shiki
+  - Vercel
 github: https://github.com/smadam813/keech-dev
 demo: https://keech.dev
 category: side-project
 ---
 
-## Overview
+## Why I Built It
 
-This portfolio site serves as my home on the web. Built with Next.js and styled with a distinctive neobrutalist design system, it showcases my projects and writing in a memorable cosmic-themed environment. The design draws inspiration from retro-futuristic aesthetics with dusty pinks, deep teals, and bold black borders.
+I wanted an online presence that people would remember for how it felt, not just what it said. Most developer portfolios converge on the same look: dark background, sans-serif font, maybe a gradient. I wanted mine to feel like stepping into a specific world — something with texture and personality. The design vision is cosmic neobrutalism: dusty pinks, deep teals, hard black borders, and geometric weight. Think retro-futuristic poster art crossed with Norse-inspired boldness.
 
-## Technical Approach
+Using a template would have been faster, but it would have defeated the point. The site itself is a portfolio piece — it should demonstrate that I can make deliberate design and engineering decisions, not just install a theme. So I built it from scratch with Next.js 16, Tailwind v4, and Velite, keeping the scope intentionally small (~1,400 LOC across TypeScript, TSX, and CSS) and focusing on depth of thought rather than feature count.
 
-The site uses Tailwind CSS v4's CSS-first theming approach, with design tokens defined in a `@theme` block rather than a JavaScript config file. Content is managed through MDX files processed by Velite, providing type-safe content collections for both blog posts and projects.
+## Architecture Decisions
 
-Code blocks feature syntax highlighting with a custom theme, line numbers, and copy buttons. The typography is optimized for long-form reading with Space Grotesk for headings and Inter for body text.
+### Tailwind v4 CSS-First @theme Over JS Config
 
-## Outcome
+All design tokens live in `globals.css` inside a `@theme` block — colors, shadows, border widths, and animations are defined as CSS custom properties directly. There is no `tailwind.config.js` file. The mental model is simpler: tokens are just CSS variables, and I reference them with Tailwind utility classes like `bg-background` or `shadow-brutal`. The tradeoff is that this is a newer approach with less ecosystem tooling and fewer Stack Overflow answers when something breaks. But the site's token set is small enough (six colors, three shadow variants, two border widths) that the simplicity wins easily.
 
-The result is a distinctive personal site that stands apart from typical developer portfolios. The neobrutalist aesthetic creates a memorable visual identity while maintaining excellent readability and accessibility. The site serves as both a showcase of my work and a playground for exploring modern web development patterns.
+### Velite for Content Over Raw MDX or a CMS
+
+Velite processes MDX files into type-safe collections at build time, so I can write `import { posts, projects } from '@/.velite'` and get full TypeScript inference on frontmatter fields. Zod schemas validate the content structure, catching things like missing descriptions or invalid dates before they hit production.
+
+The specific build pattern matters here: Velite runs as a separate CLI prebuild step (`velite && next build`) rather than as a webpack plugin. I chose this because Turbopack — which Next.js 16 uses for dev — does not support custom webpack plugins. The Velite webpack integration simply would not work. Running it as a prebuild step sidesteps this entirely. The tradeoff is two build steps instead of one, but the separation is actually cleaner — content compilation and application bundling are independent concerns.
+
+### Single Theme, No Dark/Light Toggle
+
+This was a deliberate constraint, not a missing feature. The dusty pink `#E8B4B8` background, teal `#2D8B8B` accent, and light pink `#F5E6E8` surface color form a specific palette that IS the brand. Adding a dark mode toggle would mean maintaining two complete visual identities, each needing its own contrast ratios, shadow treatments, and surface hierarchies. Both would end up diluted. A single cohesive theme was the right call for a site where aesthetic distinctiveness is the core value.
+
+### React Copy Button Over Shiki Transformer
+
+rehype-pretty-code supports copy buttons via Shiki transformers that inject HTML at build time. The problem is that this creates SSR hydration complexity — the server-rendered HTML includes the button markup, and the client needs to hydrate it with click handlers, which is fragile across React versions. Instead, I wrapped `<pre>` elements in a React `CodeBlock` component that mounts a `CopyButton` client component. The button reads code text from the DOM via `.textContent` on the `<code>` element. Simpler, no hydration mismatch risk, and the component boundary is explicit.
+
+## Solving iOS Safari's Scroll Lock
+
+The mobile hamburger menu needs to lock background scroll while the overlay is open. On most browsers, `overflow: hidden` on `<body>` handles this. On iOS Safari, it does not — the page continues scrolling behind the overlay.
+
+The fix is `position: fixed` on `<body>` with the current scroll position stored and applied as a negative `top` offset. When the menu closes, the fixed positioning is removed and `window.scrollTo` restores the original position. The effect cleanup in the React `useEffect` handles this automatically.
+
+For focus management, I used the `inert` attribute on `<main>` instead of building a manual focus trap. When the menu opens, `main?.setAttribute('inert', '')` tells the browser to make the entire main content area non-interactive — no tab stops, no screen reader announcements, no click targets. The browser handles focus correctness natively, which is less code and more reliable than intercepting Tab key events in a focus trap loop.
+
+## Design System Approach
+
+The neobrutalist system is built on a few repeating elements:
+
+- Hard offset shadows (`4px 4px 0 0 #000`) as the signature visual element on cards, buttons, and code blocks
+- `3px solid black` borders everywhere — consistency over variety
+- Hover states that shift the shadow to `2px 2px` with `translate(2px, 2px)`, creating a tactile "press" effect
+- Space Grotesk for headings (geometric, bold, distinctive at large sizes) paired with Inter for body text (neutral, readable at paragraph length)
+- `max-w-7xl` for listing pages versus `max-w-4xl` for content pages — the wider container suits grid layouts, the narrower one keeps prose at a comfortable line length
+- `github-dark-dimmed` as the syntax highlighting theme, chosen specifically because its muted tones sit alongside the cosmic palette without competing for attention
+
+## Content Pipeline
+
+MDX files live in `content/` with Zod-validated frontmatter schemas defined in `velite.config.ts`. Velite generates type-safe collections that are importable throughout the app. rehype-pretty-code with Shiki handles syntax highlighting at build time — code blocks arrive in the browser as pre-colored HTML, no client-side JavaScript required.
+
+At runtime, the compiled MDX code is executed via `new Function()` with custom component overrides. This is where the `CodeBlock` wrapper gets injected: the `pre` element in MDX output is replaced with the React component that adds the copy button. Table of contents data is auto-generated from heading structure via Velite's `s.toc()` schema helper.
+
+## What I Learned
+
+Working with bleeding-edge versions — Next.js 16, Tailwind v4, React 19 — means documentation is thin and community answers are sparse. When the Velite webpack plugin did not work with Turbopack, there was no blog post explaining the fix. I had to read the Velite source, understand the build boundary, and arrive at the CLI prebuild pattern myself. This is the reality of early adoption: you trade ecosystem support for getting ahead of breaking changes later.
+
+Design constraints made decisions faster, not slower. With a fixed palette of six colors and a rule that everything gets `3px solid black` borders, I never spent time deliberating over subtle styling differences. The constraints were liberating — they turned a thousand small decisions into a system that answers itself.
+
+The biggest technical takeaway was the `inert` attribute. I had been reaching for focus trap libraries for years without realizing the platform now handles this natively. Setting `inert` on a DOM subtree does everything a focus trap does — removes tab stops, hides from assistive technology, prevents interaction — with zero JavaScript and zero edge cases around focus wrapping. It is the kind of thing that changes how you approach accessibility going forward.
