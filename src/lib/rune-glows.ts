@@ -12,7 +12,7 @@ const IMG_W = 2560
 const IMG_H = 1429
 
 /**
- * All 13 runes identified in the hero image.
+ * All 14 runes identified in the hero image.
  * Colors assigned by Elder Futhark aett grouping:
  *   Freyr (1st aett) = amber
  *   Hagal (2nd aett) = teal
@@ -23,19 +23,20 @@ const IMG_H = 1429
  * Breath durations varied between 5.0s and 7.5s using non-round values to prevent sync.
  */
 export const RUNE_GLOWS: RuneGlow[] = [
-  { id: 'fehu', imgX: 0.08, imgY: 0.13, color: 'amber', size: 7, breathDuration: '5.5s' },
-  { id: 'ansuz', imgX: 0.17, imgY: 0.09, color: 'amber', size: 6.5, breathDuration: '6.8s' },
-  { id: 'raidho1', imgX: 0.25, imgY: 0.14, color: 'amber', size: 6, breathDuration: '5.2s' },
-  { id: 'raidho2', imgX: 0.32, imgY: 0.11, color: 'amber', size: 6.5, breathDuration: '7.1s' },
-  { id: 'kenaz', imgX: 0.44, imgY: 0.08, color: 'amber', size: 7, breathDuration: '6.3s' },
-  { id: 'tiwaz', imgX: 0.20, imgY: 0.30, color: 'gold', size: 6, breathDuration: '5.8s' },
-  { id: 'isa', imgX: 0.38, imgY: 0.25, color: 'teal', size: 5.5, breathDuration: '7.3s' },
-  { id: 'nauthiz', imgX: 0.53, imgY: 0.20, color: 'teal', size: 5.5, breathDuration: '5.0s' },
-  { id: 'hagalaz', imgX: 0.62, imgY: 0.09, color: 'teal', size: 7, breathDuration: '6.5s' },
-  { id: 'algiz', imgX: 0.68, imgY: 0.11, color: 'teal', size: 6, breathDuration: '5.3s' },
-  { id: 'berkanan', imgX: 0.75, imgY: 0.12, color: 'gold', size: 6, breathDuration: '7.0s' },
-  { id: 'mannaz', imgX: 0.84, imgY: 0.09, color: 'gold', size: 7, breathDuration: '5.7s' },
-  { id: 'ingwaz', imgX: 0.90, imgY: 0.14, color: 'gold', size: 6.5, breathDuration: '6.2s' },
+  { id: 'fehu', imgX: 0.0425, imgY: 0.08, color: 'amber', size: 7, breathDuration: '5.5s' },
+  { id: 'ansuz', imgX: 0.145, imgY: 0.06, color: 'amber', size: 6.5, breathDuration: '6.8s' },
+  { id: 'raidho1', imgX: 0.360, imgY: 0.07, color: 'amber', size: 6, breathDuration: '5.2s' },
+  { id: 'raidho2', imgX: 0.465, imgY: 0.058, color: 'amber', size: 6.5, breathDuration: '7.1s' },
+  { id: 'kenaz', imgX: 0.415, imgY: 0.15, color: 'amber', size: 7, breathDuration: '6.3s' },
+  { id: 'tiwaz', imgX: 0.19, imgY: 0.34, color: 'gold', size: 6, breathDuration: '5.8s' },
+  { id: 'isa', imgX: 0.235, imgY: 0.175, color: 'teal', size: 5.5, breathDuration: '7.3s' },
+  { id: 'nauthiz', imgX: 0.3, imgY: 0.115, color: 'teal', size: 5.5, breathDuration: '5.0s' },
+  { id: 'hagalaz', imgX: 0.509, imgY: 0.245, color: 'teal', size: 7, breathDuration: '6.5s' },
+  { id: 'algiz', imgX: 0.56, imgY: 0.19, color: 'teal', size: 6, breathDuration: '5.3s' },
+  { id: 'berkanan', imgX: 0.616, imgY: 0.085, color: 'teal', size: 6, breathDuration: '7.0s' },
+  { id: 'mannaz', imgX: 0.673, imgY: 0.085, color: 'gold', size: 7, breathDuration: '5.7s' },
+  { id: 'ingwaz', imgX: 0.74, imgY: 0.069, color: 'gold', size: 6.5, breathDuration: '6.2s' },
+  { id: 'othala', imgX: 0.838, imgY: 0.084, color: 'teal', size: 6, breathDuration: '5.9s' },
 ]
 
 /**
