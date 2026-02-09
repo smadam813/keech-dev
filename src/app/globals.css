@@ -167,8 +167,8 @@
 
   .rune-glow--active {
     animation:
-      runeGlowEntrance 800ms ease-out forwards,
-      runeGlowBreathe var(--breath-duration, 6s) ease-in-out 800ms infinite;
+      runeGlowEntrance 800ms ease-out var(--entrance-delay, 0ms) forwards,
+      runeGlowBreathe var(--breath-duration, 6s) ease-in-out calc(800ms + var(--entrance-delay, 0ms)) infinite;
   }
 
   .rune-glow--amber {

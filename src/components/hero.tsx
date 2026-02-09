@@ -139,6 +139,7 @@ export function Hero() {
                 width: `${rune.size}rem`,
                 height: `${rune.size}rem`,
                 '--breath-duration': rune.breathDuration,
+                '--entrance-delay': `${Math.random() * 2000}ms`,
               } as React.CSSProperties}
             />
           )
