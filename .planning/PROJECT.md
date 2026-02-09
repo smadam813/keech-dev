@@ -1,31 +1,32 @@
-# Hero Polish
+# keech.dev
 
 ## What This Is
 
-Visual polish and bug fix for the keech.dev hero section. The home page background image loads slowly during client-side navigation, causing the "keech.dev" text animation to play over a bare gradient. This project syncs the animation with image readiness and adds a staggered rune glow effect to the Elder Futhark runes in the hero image.
+Personal portfolio/blog at keech.dev built with Next.js 16, React 19, Tailwind CSS v4, and Velite for MDX content. Features a neobrutalist visual identity with Norse-themed hero section including load-gated reveal animation and ambient rune glow effects.
 
 ## Core Value
 
-The hero section must feel polished and intentional — the "keech.dev" text animation should never play until the background is fully visible.
+A polished, intentional developer portfolio — fast, visually distinctive, and well-crafted in every detail.
 
 ## Requirements
 
 ### Validated
 
-- ✓ Hero section displays full-bleed background image (hero.webp) with text overlay — existing
+- ✓ Hero section displays full-bleed background image with text overlay — existing
 - ✓ "keech.dev" text uses fadeInUp animation — existing
 - ✓ Dark gradient scrim ensures WCAG AA text contrast — existing
 - ✓ Respects prefers-reduced-motion — existing
 - ✓ Static generation, no client-side data fetching — existing
+- ✓ Text animation waits for background image to be loaded/decoded before playing — v1.3
+- ✓ Back-button navigation remains fast (bfcache not broken) — v1.3
+- ✓ CSS radial gradient hotspots overlay each rune in the hero image — v1.3
+- ✓ Rune hotspots pulse with staggered timing (ember-like glow) — v1.3
+- ✓ Rune glow effect respects prefers-reduced-motion — v1.3
+- ✓ No layout shift or flash of unstyled content during navigation — v1.3
 
 ### Active
 
-- [ ] Text animation waits for background image to be loaded/decoded before playing
-- [ ] Back-button navigation remains fast (bfcache not broken)
-- [ ] CSS radial gradient hotspots overlay each rune in the hero image
-- [ ] Rune hotspots pulse with staggered timing (ember-like glow)
-- [ ] Rune glow effect respects prefers-reduced-motion
-- [ ] No layout shift or flash of unstyled content during navigation
+(No active milestone — run `/gsd:new-milestone` to start next)
 
 ### Out of Scope
 
@@ -33,33 +34,39 @@ The hero section must feel polished and intentional — the "keech.dev" text ani
 - New image assets or image layer splitting — pure CSS overlay approach
 - Dark mode — single theme is the brand
 - Interactive rune effects (hover, scroll-triggered) — ambient only
-- Other pages or components — hero section only
+- Canvas-based ambient glow — over-engineered for static image
+- Particle system / floating runes — clashes with neobrutalist identity
+- Framer Motion or GSAP — zero-library codebase precedent
 
 ## Context
 
-- The hero image is a 185KB .webp with Elder Futhark runes scattered across an aurora sky, Yggdrasil tree, and mountain range
-- Currently a server component using Next.js `<Image>` with `fill`, `placeholder="blur"`, and static import
-- The `animate-on-load` CSS class fires a 0.6s fadeInUp immediately on mount
-- Client-side navigation remounts the component, triggering the animation before the image is decoded
-- Browser back button uses bfcache, preserving the fully rendered page (hence the speed difference)
-- Rune positions in the image need to be manually mapped for CSS overlay hotspots
-- The site uses Tailwind CSS v4 with CSS-first configuration (no tailwind.config.js)
-
-## Constraints
-
-- **Tech stack**: Must stay within Next.js + Tailwind CSS + existing tooling
-- **Performance**: Hero component should remain lightweight — no heavy JS libraries for effects
-- **Accessibility**: All animations must respect prefers-reduced-motion
-- **Image**: No modifications to hero.webp — effects are pure CSS overlays
+Shipped v1.3 Hero Polish with 691 LOC across 3 source files (TypeScript + CSS).
+Tech stack: Next.js 16, React 19, Tailwind CSS v4, Velite, MDX.
+Hero section now has load-gated two-beat reveal and 14 ambient rune glows.
+Site is statically generated and deployed via git-push to Vercel.
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| CSS overlay hotspots for rune glow | No new image assets needed, pure CSS, maintainable | — Pending |
-| Staggered pulse timing | Each rune at its own rhythm feels organic, like embers | — Pending |
-| Sync animation via image onLoad | Prevents text animation playing over empty gradient | — Pending |
-| Convert Hero to client component | Need onLoad callback from Image — requires 'use client' | — Pending |
+| CSS overlay hotspots for rune glow | No new image assets needed, pure CSS, maintainable | ✓ Good — 14 runes positioned with radial gradient overlays |
+| Staggered pulse timing | Each rune at its own rhythm feels organic, like embers | ✓ Good — power-curve entrance cascade + per-rune breathing |
+| Sync animation via image onLoad | Prevents text animation playing over empty gradient | ✓ Good — dual-path detection covers all load scenarios |
+| Convert Hero to client component | Need onLoad callback from Image — requires 'use client' | ✓ Good — minimal JS, most logic is CSS-driven |
+| Separate heroTextReveal keyframe | Hero needs more visual presence at large sizes (24px vs 20px) | ✓ Good — distinct from body fadeInUp |
+| 600ms delay between bg and text reveal | Two-beat rhythm (350ms blur + 250ms pause) | ✓ Good — feels coordinated and intentional |
+| 14 runes (not 13) | Visual inspection found additional rune missed by research | ✓ Good — all runes covered |
+| Color distribution 6 teal / 4 amber / 4 gold | Adjusted from strict aett grouping for visual balance | ✓ Good — balanced across image |
+| Manual position calibration | Research estimates were off 5-15% in both axes | ✓ Good — pixel-precise alignment |
+| No mix-blend-mode | Preserves GPU-composited opacity animation | ✓ Good — smooth performance |
+
+## Constraints
+
+- **Tech stack**: Next.js + Tailwind CSS + existing tooling only
+- **Performance**: Lightweight — no heavy JS libraries for effects
+- **Accessibility**: All animations must respect prefers-reduced-motion
+- **Image**: No modifications to hero.webp — effects are pure CSS overlays
+- **Theme**: Single theme only (no dark mode) — the palette is the brand
 
 ---
-*Last updated: 2026-02-08 after initialization*
+*Last updated: 2026-02-09 after v1.3 milestone*
