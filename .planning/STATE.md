@@ -47,6 +47,12 @@ None.
 
 None.
 
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 1 | Sync rune glow fade-in timing to start simultaneously | 2026-02-09 | b02b015 | [1-sync-rune-glow-fade-in-timing-to-start-s](./quick/1-sync-rune-glow-fade-in-timing-to-start-s/) |
+
 ## Session Continuity
 
 Last session: 2026-02-09
