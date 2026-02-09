@@ -1,243 +1,244 @@
 # Project Research Summary
 
-**Project:** keech.dev v1.2 Norse Identity
-**Domain:** Portfolio typography enhancement with Norse aesthetic
-**Researched:** 2026-02-07
+**Project:** Hero Animation Synchronization and CSS Glow Effects
+**Domain:** Next.js portfolio site hero section enhancement
+**Researched:** 2026-02-08
 **Confidence:** HIGH
 
 ## Executive Summary
 
-This milestone transforms keech.dev's visual identity by integrating Norse design elements while preserving the existing neobrutalist foundation. Research confirms this is achievable with **zero new npm dependencies** by leveraging Next.js 16 built-in capabilities. The approach replaces Space Grotesk with a custom Norse display font via `next/font/local`, adds a hero image via `next/image`, and incorporates Elder Futhark decorative elements using Unicode characters styled by the same Norse font.
+This milestone involves fixing a visual bug where the hero text animation plays before the background image loads, and enhancing the hero with ambient CSS glow effects positioned at rune locations in the background image. The research reveals this is achievable with zero new dependencies — the entire feature set uses native Next.js Image callbacks, React state, and CSS animations already in the project's stack.
 
-The recommended approach prioritizes restraint over maximalism. Norse elements should accent, not dominate, the existing clean neobrutalist design. The Norse font exclusively handles headings and display text; Inter body font remains unchanged. Decorative runes appear only in controlled locations (dividers, subtle accents) to avoid visual clutter that would undermine portfolio credibility. This "cosmic, Norse-touched" aesthetic means subtle atmospheric enhancement, not a fantasy-site transformation.
+The recommended approach converts the hero component to a client component using the Next.js Image `onLoad` callback with a dual-path detection pattern (callback + useEffect with `img.complete` check) to handle cached images. CSS keyframes with class-gated animations sequence the reveal, while positioned divs with radial-gradient backgrounds create the glow effect. Performance is maintained by animating only GPU-composited properties (`opacity`, `transform`) and limiting composite layers to 3-4 maximum.
 
-Key risks center on performance and design coherence. The 7MB source hero image requires pre-optimization to prevent LCP regression. Font migration from Google Fonts to local loading demands careful CSS variable coordination to avoid breaking the entire typography system. Runic Unicode characters need fallback handling for devices lacking Runic block support. Success depends on treating this as additive enhancement that respects the existing design system's constraints and achievements (WCAG AA, Core Web Vitals, responsive layouts).
+The primary risk is the well-documented Next.js `onLoad` cached-image pitfall where the callback never fires for disk-cached or bfcache-restored images. This is mitigated with the dual-path pattern. Secondary risks include mobile GPU memory exhaustion from multiple composite layers (mitigated by consolidating gradients) and prefers-reduced-motion inconsistency between CSS and JS (mitigated by detecting motion preference in both systems). All risks have proven solutions with HIGH confidence.
 
 ## Key Findings
 
 ### Recommended Stack
 
-All required capabilities are built into Next.js 16. No external dependencies needed.
+This milestone requires zero new dependencies. The existing stack (Next.js 16.1.6, React 19.2.4, Tailwind CSS v4.1.18) provides everything needed through native browser APIs and CSS features.
 
 **Core technologies:**
-- **`next/font/local`** (built-in): Loads Norse font (OTF converted to WOFF2) as display font replacing Space Grotesk. Provides automatic optimization, preloading, CLS reduction, and CSS variable output identical to current `next/font/google` pattern.
-- **`next/image`** (built-in): Handles hero PNG with automatic WebP/AVIF conversion, blur placeholder generation for static imports, LCP optimization via `preload` prop, and responsive sizing. Next.js 16 breaking change: use `preload` not deprecated `priority`.
-- **Unicode Runic block (U+16A0-U+16FF)**: Elder Futhark characters render as text via the Norse font which includes Latin extended + complete runic alphabet. Semantic, accessible, zero assets.
-- **Inline SVG in JSX**: Handles complex decorative patterns (knotwork, borders) where Unicode characters don't suffice. Inline means zero HTTP requests, full CSS control via `currentColor`.
+- **Next.js Image `onLoad` callback** — detects when hero background image is fully loaded and placeholder removed. Built-in prop, no library needed. Requires client component.
+- **React `useState` + dual-path detection** — tracks image-loaded state via `onLoad` callback AND `useEffect` checking `img.complete` to catch already-cached images. Prevents the critical pitfall where onLoad never fires.
+- **CSS `@keyframes` with class toggle** — animation triggered by data attribute (`data-loaded`) when image state becomes true. More reliable than `animation-play-state` which can skip frames.
+- **CSS `@property` typed custom properties** — enables animating radial-gradient spread for breathing glow effect. Baseline 2024, 96% browser support. Optional enhancement; pure opacity animation is safer baseline.
+- **CSS pseudo-elements or positioned divs with `opacity` animation** — GPU-composited glow overlays. Box-shadow and filter:blur are explicitly avoided due to repaint costs.
+- **Tailwind CSS v4 `@theme` directive** — design tokens for animation timing already in use. Add glow-specific timing values alongside existing tokens.
 
-**Critical finding:** The Norse font (Joel Carrouche, v2.20, free commercial license) serves double duty: display headings AND Elder Futhark rune rendering in one font file. Pre-build work involves converting OTF to WOFF2 (30-50% smaller, 5-10min one-time manual task using free online tools).
+**Critical version notes:**
+- `onLoadingComplete` deprecated in Next.js 14 — use `onLoad` instead
+- Image `preload` prop available since Next.js 16, replaces deprecated `priority`
+- CSS `@property` baseline since 2024 across all major browsers
 
 ### Expected Features
 
-**Must have (table stakes):**
-- Norse display font replacing Space Grotesk for all headings (h1-h6, logo, nav)
-- Font renders correctly at all existing heading sizes (text-6xl through text-lg)
-- Hero image on home page with "keech.dev" text overlay maintaining WCAG AA contrast
-- Hero text remains readable across all viewport sizes (scrim overlay required)
-- At least one decorative rune element visible (section divider minimum)
-- Inter body font preserved unchanged (Norse at body text sizes = illegible)
+**Must have (table stakes — fixes bug):**
+- **Image-load-synced text animation** — text animation must not play before background loads. Currently broken during client-side navigation. Requires converting hero to client component with onLoad-gated animation.
+- **prefers-reduced-motion support** — users with vestibular disorders need all animations disabled. Extend existing pattern in globals.css (lines 89-101). All content must be visible immediately at opacity: 1.
+- **Graceful slow-load degradation** — blur placeholder handles image side; text stays at opacity: 0 until onLoad fires. Acceptable UX on slow connections.
+- **Zero layout shift** — glow layers absolutely positioned, no CLS.
+- **Animation plays once per navigation** — gate on state, not mount.
 
-**Should have (competitive differentiators):**
-- Rune section dividers between content sections (replaces generic `<hr>`)
-- Rune bullet markers for lists (CSS `::marker` pseudo-element)
-- Rune accents in navigation (small glyphs flanking links, desktop only)
-- Subtle runic background texture on sections (3-10% opacity, CSS data URI SVG)
-- Hero image blur-up placeholder (automatic with `next/image` static import)
-- Mobile-optimized hero crop (`object-position` adjustment for portrait viewports)
+**Should have (competitive advantage — core visual identity):**
+- **Staggered rune-position glow pulse** — teal/aurora glow spots positioned over rune locations with staggered timing. Uses radial-gradient backgrounds, animates opacity only for 60fps. Position coordinates are fixed since hero image is static.
+- **Organic stagger timing** — non-linear delay distribution (quadratic index or hand-tuned values) creates breathing rhythm instead of mechanical linear stagger.
+- **Coordinated reveal sequence** — three-beat entrance: image crossfade → text fadeInUp → glow pulse sequence. Uses CSS animation-delay chaining.
+- **Glow color variation by aett** — different rune groups (Freyr's/Hagal's/Tyr's aett) get slightly different glow hues. Wire existing rune-config.ts aett data to CSS custom properties.
+- **Slow ambient drift animation** — after initial pulse, continuous 4-8 second breathing cycle at low amplitude (opacity 0.3-0.6 oscillation). Stagger delays persist into infinite loop.
 
-**Defer (v2+):**
-- Animated rune fade on hero load (polish, not core)
-- Footer rune texture (footer already strong)
-- Multiple texture variants (start with one pattern)
-
-**Anti-features (explicitly avoid):**
-- Norse font for body text (illegible at 16px)
-- Full runic alphabet translations (not readable, breaks accessibility)
-- Animated particle effects (performance drain, motion sensitivity)
-- Parallax scrolling (janky on mobile, conflicts with neobrutalist flat aesthetic)
-- Rune tooltips (decorative elements should not be interactive)
-- Dark mode toggle (contradicts single-theme brand identity)
-- Overly ornate rune borders on every component (theme park effect)
+**Defer (v2+ or anti-features):**
+- **Canvas-based ambient glow** — massively over-engineered for static image. YouTube-style ambient mode exists for live video color sampling. CSS radial-gradient achieves same visual for zero bundle cost.
+- **Particle system** — creates "fantasy game" feel that clashes with neobrutalist identity. Runes are carved/anchored, not floating.
+- **Framer Motion / GSAP** — 20-40KB for single hero animation is disproportionate. Existing codebase uses zero animation libraries; CSS keyframes are established pattern.
+- **Interactive rune hover effects** — hero image runes are photographic, not precise clickable regions. False affordance.
+- **Scroll-triggered hero** — hero is above-fold, full viewport. Scroll-trigger wastes first impression. Keep on-load reveal.
+- **Dark mode glow variants** — site explicitly has no dark mode. Single palette is the brand.
 
 ### Architecture Approach
 
-This milestone integrates cleanly into the existing architecture through four seams: font swap in `fonts.ts`, hero section on home page, new decorative component directory, and additive CSS design tokens.
+The hero component (currently a server component at `src/components/hero.tsx`) must become a client component to support the `onLoad` callback. This is the correct approach — the entire component's purpose is interactive (image load detection triggers animation), making it a single cohesive client unit rather than a server wrapper with client island.
 
 **Major components:**
-1. **Font system modification** — `src/lib/fonts.ts` replaces `Space_Grotesk` from `next/font/google` with `localFont` from `next/font/local`. Output CSS variable name `--font-display` stays identical, so `globals.css` and all component usages require zero changes.
-2. **Hero image component** — New `src/components/home/hero-section.tsx` Server Component uses `next/image` with `fill` prop, static import for automatic blur placeholder, scrim overlay for contrast, and z-index layering for text content.
-3. **Decorative rune components** — New `src/components/decorative/` directory contains Server Components: `RuneDivider` (horizontal separator with rune glyphs), `RuneAccent` (inline single rune), `RuneTexture` (CSS background pattern wrapper). All use Unicode U+16A0-U+16FF rendered in Norse font, fallback to inline SVG if font lacks runic glyphs.
-4. **Image optimization flow** — Move 7MB `img/Norse_Background.png` to `src/assets/hero-bg.png`, import statically. Next.js generates responsive WebP/AVIF variants at build time. Source file requires pre-optimization to ~200KB WebP before integration to avoid LCP regression.
+1. **HeroClient component** — owns `imageLoaded` state, renders Next.js Image with onLoad callback + ref for dual-path detection, passes state to children via data attribute on parent element. Single file, not split.
+2. **CSS animation layer in globals.css** — keyframes for heroFadeIn (text entrance) and glowPulse (ambient breathing). Triggered by `.hero-loaded` descendant selectors with animation-delay chaining. All timing in CSS, not JS.
+3. **Glow overlay elements** — positioned divs (one per rune location) with radial-gradient backgrounds. Animate only opacity and transform (GPU-composited). Stagger delays via inline `--glow-index` custom property with calc().
+4. **Scrim overlay** — WCAG AA contrast gradient, pure CSS child, no state dependency.
+5. **Reduced motion bypass** — CSS media query disables animations and sets opacity: 1. JS also checks matchMedia to set loaded: true immediately for motion-sensitive users, ensuring JS and CSS state agree.
 
-**Key pattern:** Server Components for all decorative elements (zero client JS). CSS variable font propagation maintains single source of truth. Static image imports enable automatic blur placeholders. All decorative elements use `aria-hidden="true"` per existing accessibility standard.
+**Key patterns:**
+- Image load state as animation gate (onLoad callback + useEffect with img.complete check)
+- CSS class cascade for animation sequencing (parent data attribute triggers child animations)
+- CSS-only glow via text-shadow stacking or radial-gradient positioned divs
+- Inline custom property for stagger delays (`--glow-index` set in JSX, used in calc() for animation-delay)
+
+**Build order:**
+1. CSS foundation (keyframes, classes) — independently testable
+2. Client component conversion (hero.tsx) — isolated breaking change
+3. Glow effect implementation — depends on phase 2
+4. Timing polish — depends on mechanism existing
 
 ### Critical Pitfalls
 
-1. **7MB unoptimized hero PNG will destroy LCP** — The source image is 2752x1536 RGBA PNG at 7MB. Shipping directly causes 4+ second LCP, failing Core Web Vitals. Prevention: Pre-optimize to WebP/AVIF at 80-85% quality targeting <200KB before integration. Use `next/image` with `preload={true}`, `placeholder="blur"`, and configure `next.config.ts` for AVIF support.
+1. **onLoad never fires for cached/bfcache-restored images** — the most reported issue with this pattern. React binds onLoad after hydration; if img.complete is already true (cached, preloaded), the native load event fired before the listener attached. SOLUTION: Dual-path detection with `useEffect(() => { if (imgRef.current?.complete) setLoaded(true) }, [])` alongside onLoad callback. Use both ref and onLoad on Image component.
 
-2. **Font migration breaks size-adjusted fallback** — Replacing Google Font with local font loses auto-generated fallback metrics. Norse display font has dramatically different proportions than Arial/Space Grotesk. Wrong fallback causes visible text reflow (CLS regression). Prevention: Set `display: 'swap'` and test font load at throttled network. Consider `display: 'optional'` to eliminate FOUT entirely. Keep CSS variable name `--font-display` identical or update all three locations (fonts.ts, globals.css, component classes) in lockstep.
+2. **Converting hero to client component breaks static optimization unexpectedly** — `'use client'` directive pulls entire import chain into client module graph. Static image import still works but increases bundle. Worse if server-only utilities accidentally imported. SOLUTION: Keep client boundary narrow, verify bundle size delta < 1KB gzipped with `next build --debug`. Metadata exports must stay in server components (page.tsx), not hero component.
 
-3. **Elder Futhark runes missing from system fonts on mobile** — Android/iOS lack Runic block (U+16A0-U+16FF) coverage. Unicode characters render as tofu squares on most mobile devices. Prevention: Use inline SVGs for rune decorations instead of Unicode (recommended), OR include web font covering Runic block (Junicode/BabelStone subset), OR accept inconsistency and test extensively.
+3. **Animation plays before image is visible (race condition)** — CSS animation triggers on mount, but full image decode happens asynchronously. Especially visible during client-side navigation when animation completes before image fetch starts. SOLUTION: Gate animation on loaded state, not mount. Start with opacity: 0, apply animation class only when loaded becomes true.
 
-4. **OTF display font file size inefficiency** — OTF files are 2-4x larger than WOFF2 (30-50% size reduction via Brotli compression). Norse font likely ~30KB each (Regular + Bold OTF). Prevention: Convert both OTF files to WOFF2 before integration using `fonttools`, `woff2_compress`, or online converters (Fontsource, Transfonter). Target <100KB total for both weights.
+4. **Staggered CSS glow pulses cause mobile GPU memory exhaustion** — each animated glow layer (opacity/transform on large viewport area) creates separate composite layer consuming GPU texture memory. 5+ layers can exhaust budget on mobile. SOLUTION: Limit to 3-4 glow layers max. Use single element with multiple radial gradients in one background property rather than multiple divs. Avoid will-change in CSS (add/remove via JS only around animation).
 
-5. **Decorative runes pollute screen reader experience** — Runes without `aria-hidden="true"` are announced as Unicode character names ("RUNIC LETTER FEHU FEOH FE F"), degrading accessibility. Breaks WCAG AA compliance. Prevention: Every decorative rune element MUST have `aria-hidden="true"`. No exceptions. Add code review checkpoint.
+5. **prefers-reduced-motion handled inconsistently between CSS and JS** — CSS media query says "opacity: 1 !important" but JS state says "loaded: false" so content stuck invisible. SOLUTION: Detect motion preference in JS as well (ScrollReveal already does this): `const mq = window.matchMedia('(prefers-reduced-motion: reduce'); if (mq.matches) setLoaded(true)` to skip waiting for image.
+
+6. **Radial gradient glow shows visible color banding** — 8-bit color depth gives only 256 steps per channel. Subtle glow over large area creates concentric ring "stairstepping." SOLUTION: Add subtle noise texture overlay (~2% opacity, tiny PNG), use multiple intermediate color stops, keep glow opacity modest (peak 0.1-0.2).
 
 ## Implications for Roadmap
 
-Based on research, suggested phase structure follows dependency graph: font foundation, then hero (uses font), then decorative elements (use font), then polish.
+Based on combined research, this milestone naturally breaks into two phases with clear dependency chain and risk distribution.
 
-### Phase 1: Font Swap Preparation
-**Rationale:** All subsequent work depends on Norse font being active (hero text, rune decorations, navigation). Font conversion must happen before integration because WOFF2 conversion is external to codebase.
-**Delivers:** WOFF2 font files ready for integration
-**Actions:**
-- Download Norse font zip from Joel Carrouche official site
-- Extract `Norse.otf` and `Norse Bold.otf`
-- Convert both to WOFF2 using free online tool (Fontsource converter or Transfonter)
-- Create `src/fonts/` directory
-- Place `Norse-Regular.woff2`, `Norse-Bold.woff2`, `LICENSE.txt` in `src/fonts/`
-**Avoids:** Pitfall 4 (OTF inefficiency)
-**Research depth:** Standard (well-documented conversion tools, no research needed)
+### Phase 1: Image Load Sync & Animation Foundation
 
-### Phase 2: Font Integration
-**Rationale:** Foundation for everything else. Must work before hero/runes can be implemented.
-**Delivers:** Norse font active sitewide for headings, Space Grotesk removed
-**Implements:**
-- Modify `src/lib/fonts.ts`: replace `Space_Grotesk` import with `localFont`, keep `--font-display` variable name
-- Update `src/app/layout.tsx`: rename import from `spaceGrotesk` to `norse`
-- Test all heading contexts for visual fit, adjust `tracking-*`/`leading-*` if needed
-**Avoids:** Pitfall 2 (fallback mismatch causing CLS), Pitfall 6 (variable name disconnect)
-**Research depth:** Medium (requires visual testing at throttled network, may need `display: 'optional'` decision)
+**Rationale:** Fixes the reported bug and establishes the animation infrastructure that Phase 2 depends on. All critical pitfalls (onLoad cache issue, client boundary, race condition, motion preference) must be solved here before visual enhancements. This phase delivers immediate value (bug fix) and validates the core mechanism.
 
-### Phase 3: Hero Image Preparation
-**Rationale:** 7MB source file must be optimized before integration to prevent LCP disaster. Parallel to Phase 2 (font integration).
-**Delivers:** Optimized hero image <200KB ready for import
-**Actions:**
-- Pre-optimize `img/Norse_Background.png`: resize to 1920px wide, convert to WebP at 80-85% quality
-- Move to `src/assets/hero-bg.png` (or keep in `img/` for static import)
-- Verify dimensions and focal point for `object-fit: cover` cropping
-**Avoids:** Pitfall 1 (7MB image destroying LCP), Pitfall 13 (git bloat)
-**Research depth:** Standard (image optimization tools well-known)
+**Delivers:**
+- Working image-load-synced text animation
+- Hero component converted to client component with dual-path load detection
+- CSS keyframes foundation in globals.css
+- prefers-reduced-motion support in both CSS and JS
+- Coordinated reveal sequence (image → text fadeInUp)
 
-### Phase 4: Hero Section Implementation
-**Rationale:** Second foundation piece. Hero text uses Norse font from Phase 2. Hero is LCP element so must be performant.
-**Delivers:** Home page transformed with atmospheric hero
-**Implements:**
-- Create `src/components/home/hero-section.tsx` Server Component
-- Use `next/image` with static import, `fill`, `preload`, `placeholder="blur"`, `sizes="100vw"`
-- Add scrim overlay (`bg-foreground/50` or gradient) between image and text
-- Layer "keech.dev" text with z-index, center positioning
-- Add `next.config.ts` modification: `images: { qualities: [75, 90] }`
-- Test responsive cropping at mobile/tablet/desktop breakpoints
-**Avoids:** Pitfall 7 (CLS from missing dimensions), Pitfall 11 (contrast regression), Pitfall 10 (deprecated `priority` prop)
-**Research depth:** Medium (requires contrast testing, responsive behavior validation)
+**Addresses features:**
+- Image-load-synced text animation (table stakes)
+- prefers-reduced-motion respect (table stakes)
+- Graceful slow-load degradation (table stakes)
+- Zero layout shift (table stakes)
+- Animation plays once (table stakes)
+- Coordinated reveal sequence (competitive advantage)
 
-### Phase 5: Decorative Rune Components
-**Rationale:** Unicode vs SVG decision point. Can be built in parallel with Phase 4 (both depend on font from Phase 2).
-**Delivers:** Reusable rune decoration components
-**Implements:**
-- Create `src/components/decorative/` directory
-- Build `RuneDivider` (section separator with 3-6 rune characters)
-- Build `RuneAccent` (single rune for inline use)
-- DECISION POINT: Test if Norse font renders Unicode U+16A0-U+16FF glyphs. If yes, use Unicode. If no (tofu boxes), switch to inline SVG paths.
-- All components Server Components with `aria-hidden="true"`
-**Avoids:** Pitfall 3 (Unicode tofu on mobile), Pitfall 5 (screen reader pollution), Pitfall 8 (design overdone)
-**Research depth:** High (requires testing Unicode coverage, fallback strategy decision, visual design iteration)
+**Avoids pitfalls:**
+- Pitfall 1: onLoad cached image issue (dual-path detection pattern)
+- Pitfall 2: Client component boundary bloat (verify bundle size)
+- Pitfall 3: Animation race condition (load-gated animation)
+- Pitfall 5: Motion preference inconsistency (JS + CSS detection)
 
-### Phase 6: Rune Integration and Polish
-**Rationale:** Final integration across pages. Must have all components from Phase 5 ready.
-**Delivers:** Cohesive Norse aesthetic sitewide
-**Implements:**
-- Add `RuneDivider` between sections on home page (after hero, before content)
-- Add `RuneAccent` to header logo or nav links (optional, test visual balance)
-- Add `RuneDivider` above footer (optional)
-- Create `RuneTexture` component with CSS data URI SVG pattern (optional)
-- Apply rune list markers to `.prose` styles (optional)
-**Avoids:** Pitfall 8 (overdone Norse losing neobrutalist identity)
-**Research depth:** Low (design iteration and visual testing, no technical unknowns)
+**Implementation notes:**
+- Start with CSS keyframes in globals.css (can test by manually toggling classes)
+- Convert hero.tsx to client component with useState and dual-path onLoad
+- Wire className to include 'hero-loaded' when imageLoaded true
+- Verify with back-button test (cache enabled), throttled network test, reduced-motion toggle
+
+### Phase 2: Rune Glow Effects
+
+**Rationale:** Builds on proven animation foundation from Phase 1. Adds the ambient visual identity (staggered rune glow pulse) that differentiates the hero. Depends on image load state and CSS animation infrastructure being stable. Isolated risk: mobile GPU performance (composite layers).
+
+**Delivers:**
+- Staggered rune-position glow pulse overlay
+- Organic stagger timing (non-linear delay curve)
+- Glow color variation by aett (wire rune-config.ts)
+- Slow ambient drift animation (infinite breathing cycle)
+
+**Addresses features:**
+- Staggered rune-position glow pulse (competitive advantage)
+- Organic stagger timing (competitive advantage)
+- Glow color variation by aett (competitive advantage)
+- Slow ambient drift animation (competitive advantage)
+
+**Avoids pitfalls:**
+- Pitfall 4: GPU memory exhaustion (limit to 3-4 layers, combine gradients)
+- Pitfall 6: Gradient banding (noise texture, intermediate stops)
+
+**Implementation notes:**
+- Identify rune positions in hero image, encode as coordinates
+- Create positioned divs with radial-gradient backgrounds
+- Animate opacity only (not background, not box-shadow)
+- Use inline `--glow-index` custom property for stagger calc()
+- Wire aett data from rune-config.ts to --glow-color custom properties
+- Test composite layer count in Chrome DevTools Layers panel (must be <= 3-4)
+- Screenshot at 200% zoom on 8-bit display to check for banding
 
 ### Phase Ordering Rationale
 
-- **Font preparation before integration** because WOFF2 conversion is external, one-time task that blocks all subsequent work.
-- **Font integration first** because hero text overlay, rune characters, and all decorative elements depend on Norse font being active in CSS. If font swap breaks, nothing else works.
-- **Hero prep and font integration in parallel** because image optimization is independent of font work. Both are foundations.
-- **Hero implementation after font** because hero text must render in Norse font. Dependency enforced.
-- **Rune components parallel to hero** because both depend on font, neither depends on each other. Parallel speeds delivery.
-- **Rune integration last** because it's the most subjective (visual design iteration) and least technical. Can iterate safely once foundations are solid.
+- **Phase 1 first because:** The image load sync mechanism is the foundation. Glow effects depend on the loaded state and CSS animation infrastructure. The critical pitfalls (onLoad cache, client boundary, race condition) all live in Phase 1 — solving them early reduces risk.
+- **Phase 2 second because:** It's purely additive visual enhancement. If glow effects have performance issues on mobile, they can be tuned or reduced without affecting the bug fix delivered in Phase 1. The architecture supports progressive enhancement (glow layers are optional overlay children).
+- **No Phase 3 needed:** The "future consideration" features (parallax, responsive rune positions) are explicitly deferred to v2+. This milestone has a tight, achievable scope.
 
-This ordering minimizes risk: foundations first (font, image), then structure (hero, components), then polish (integration, visual tuning).
+**Dependency chain:**
+```
+[Phase 1: Image Load Sync]
+    |
+    +-- provides --> imageLoaded state
+    +-- provides --> .hero-loaded class trigger
+    +-- provides --> CSS keyframes foundation
+    +-- provides --> reduced-motion detection
+    |
+    v
+[Phase 2: Rune Glow Effects]
+    |
+    +-- depends on --> imageLoaded state (when to start glow sequence)
+    +-- depends on --> CSS animation infrastructure (keyframes, delays)
+    +-- depends on --> reduced-motion overrides (extend existing pattern)
+```
 
 ### Research Flags
 
-Phases likely needing deeper research during planning:
-- **Phase 5 (Rune components):** Unicode coverage testing needed. If Norse font lacks Runic glyphs, pivot to SVG implementation requires design decisions on which runes, visual style, path data generation.
-- **Phase 6 (Integration):** Visual design iteration to define "rune budget" and prevent overdone aesthetic. May need design review with PROJECT.md vision as reference.
+**Phases with standard patterns (skip research-phase):**
+- **Phase 1:** Well-documented Next.js Image API, established React state patterns, CSS animations are foundational. All sources are HIGH confidence (official docs, verified community solutions). No additional research needed during planning.
+- **Phase 2:** CSS gradient performance and GPU compositing are well-understood. Rune position mapping is data authoring (examining image, encoding coordinates), not research. No additional research needed.
 
-Phases with standard patterns (skip research-phase):
-- **Phase 1 (Font prep):** Font format conversion well-documented, free online tools available.
-- **Phase 2 (Font integration):** Next.js `next/font/local` API fully documented, clear migration path.
-- **Phase 3 (Image prep):** Image optimization standard practice, tools well-known.
-- **Phase 4 (Hero implementation):** Next.js Image component fully documented, pattern established.
+**Validation during implementation:**
+- Phase 1: Verify dual-path onLoad pattern with real caching behavior (back-button test mandatory)
+- Phase 2: Profile composite layers on real mobile device (Chrome remote debugging or physical test device)
+
+**No research-phase calls needed.** All patterns are verified and confidence is HIGH across all research areas.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | All features verified as Next.js 16 built-ins via official docs. Zero npm installs needed. Breaking changes documented (priority→preload, images.qualities default). |
-| Features | HIGH | Clear delineation between must-have/should-have/anti-features based on portfolio best practices, neobrutalist design principles, and WCAG compliance requirements. |
-| Architecture | HIGH | Integration seams mapped to existing codebase (fonts.ts, page.tsx, globals.css verified). Server Component pattern established, CSS variable propagation proven. |
-| Pitfalls | HIGH | Critical pitfalls verified against actual files (7MB PNG exists, fonts.ts structure inspected, Next.js 16 version confirmed in package.json). Multiple authoritative sources for each pitfall. |
+| Stack | HIGH | All techniques use native Next.js/React/CSS APIs with official documentation. No new dependencies, no version conflicts, no experimental features. CSS @property is Baseline 2024 with 96% support. |
+| Features | MEDIUM-HIGH | Table stakes features are grounded in established UX patterns (motion accessibility, progressive enhancement). Competitive features (rune glow) are novel design but built with proven techniques. Anti-features are clearly justified. |
+| Architecture | HIGH | Component structure follows existing project patterns (6th client component, CSS in globals.css, Tailwind @theme tokens). Build order has clear dependency chain. All patterns verified in codebase inspection. |
+| Pitfalls | HIGH | All critical pitfalls have verified community solutions with GitHub issue references. Recovery strategies are LOW-MEDIUM cost. Pitfall-to-phase mapping ensures prevention during correct phase. |
 
 **Overall confidence:** HIGH
 
+The entire feature set is achievable with zero new dependencies using well-documented browser APIs and CSS features. The onLoad cached-image pitfall is well-known with a proven solution. Performance constraints (GPU layers, text-shadow repaint) have clear limits and fallbacks. All sources are official docs or HIGH-confidence community discussions.
+
 ### Gaps to Address
 
-Areas where research was inconclusive or needs validation during implementation:
+**Rune position mapping:** Research assumes rune locations in the hero image are known or easily identifiable. During Phase 2 planning, the actual coordinates must be determined by examining `/public/images/hero.webp`. If rune positions are ambiguous or the image changes, the glow positions would need recalibration. **Resolution:** Document glow coordinates alongside the image asset; if hero image is updated, glow positions must be reviewed.
 
-- **Norse font Unicode coverage for Runic block:** Font description confirms "Latin extended, Runic" but actual glyph rendering must be tested at Phase 5 implementation. If coverage is incomplete, fallback to inline SVG requires design iteration. Test early in Phase 5.
-- **Optimal scrim opacity for text contrast:** Research recommends 40-60% for solid overlay or gradients, but actual hero image colors dictate final value. Must test with real image using Chrome DevTools contrast checker in Phase 4.
-- **Mobile hero cropping focal point:** `object-position` value depends on hero image composition (where Yggdrasil/aurora/mountains are positioned). Research recommends `center 30%` but requires validation with actual AI-generated image in Phase 4.
-- **Font swap CLS impact:** Whether to use `display: 'swap'` (show fallback, then swap) vs `display: 'optional'` (skip font if not loaded fast enough) depends on measured CLS delta at throttled network. Requires testing in Phase 2.
-- **Rune budget definition:** How many rune decorations constitute "tasteful" vs "overdone" is subjective. Needs visual design iteration in Phase 6 with comparison screenshots against current design. Follow guideline: 2-3 rune decoration types sitewide, not per component.
+**Mobile GPU performance threshold:** Research cites 3-4 composite layers as safe for mobile, but this is device-class dependent. Budget Android devices may struggle at 3 layers; flagship devices handle 5+. **Resolution:** Test on real low-end device (or 4x CPU throttle in DevTools). If performance issues, Phase 2 can reduce to 2-3 glow points or use single-element multi-gradient approach.
+
+**Glow visual intensity tuning:** Research provides ranges (opacity 0.3-0.6, blur radius < 20px, cycle 3-8 seconds) but optimal values depend on actual hero image aesthetics and brand feel. **Resolution:** This is polish, not a gap. Start with research-recommended ranges, iterate based on visual review. No technical blocker.
+
+**Responsive glow positions:** If hero image crops differently at mobile breakpoints (aspect ratio change), glow positions may need breakpoint-specific values. **Resolution:** Explicitly deferred to v2+ as "future consideration." Phase 2 targets desktop/tablet; mobile positions can be adjusted post-launch if needed.
 
 ## Sources
 
-### PRIMARY (HIGH confidence)
+### Primary (HIGH confidence)
+- [Next.js Image Component API Reference](https://nextjs.org/docs/app/api-reference/components/image) — onLoad, ref, preload, placeholder props and client component requirement
+- [vercel/next.js#20368](https://github.com/vercel/next.js/issues/20368) — onLoad event work incorrect (cached image pitfall)
+- [vercel/next.js Discussion #18386](https://github.com/vercel/next.js/discussions/18386) — img.complete workaround pattern
+- [MDN: @property](https://developer.mozilla.org/en-US/docs/Web/CSS/@property) — typed custom properties, browser support
+- [MDN: prefers-reduced-motion](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion) — accessibility requirements
+- [web.dev: High-performance CSS animations](https://web.dev/articles/animations-guide) — GPU-composited properties (opacity, transform)
+- [TkDodo: Ref Callbacks, React 19 and the Compiler](https://tkdodo.eu/blog/ref-callbacks-react-19-and-the-compiler) — React 19 ref cleanup pattern
+- Codebase inspection: `hero.tsx`, `scroll-reveal.tsx`, `globals.css`, `rune-config.ts`
 
-**Stack research sources:**
-- [Next.js Font Optimization (App Router)](https://nextjs.org/docs/app/getting-started/fonts) — `next/font/local` API, CSS variable assignment
-- [Next.js Font API Reference](https://nextjs.org/docs/app/api-reference/components/font) — all configuration options verified
-- [Next.js Image Component](https://nextjs.org/docs/app/api-reference/components/image) — fill, preload, placeholder props
-- [Next.js 16 Upgrade Guide](https://nextjs.org/docs/app/guides/upgrading/version-16) — breaking changes (priority→preload, images.qualities)
-- [Unicode Runic Block Chart](https://www.unicode.org/charts/PDF/U16A0.pdf) — Elder Futhark code points
+### Secondary (MEDIUM confidence)
+- [Smashing Magazine: GPU Animation](https://www.smashingmagazine.com/2016/12/gpu-animation-doing-it-right/) — composite layer memory, mobile constraints (2016 but principles valid)
+- [Cloud Four: Staggered Animations with CSS Custom Properties](https://cloudfour.com/thinks/staggered-animations-with-css-custom-properties/) — inline custom property stagger pattern
+- [Tobias Ahlin: Animate box-shadow with smooth performance](https://tobiasahlin.com/blog/how-to-animate-box-shadow/) — pseudo-element opacity technique
+- [Smashing Magazine: YouTube ambient mode glow effect](https://www.smashingmagazine.com/2023/07/recreating-youtube-ambient-mode-glow-effect/) — canvas approach (cited to justify anti-feature decision)
+- [vercel/next.js Discussion #54756](https://github.com/vercel/next.js/discussions/54756) — confirms onLoad issue persists in recent versions
+- [Medium: Back/Forward Cache Aware Next.js](https://medium.com/better-dev-nextjs-react/back-forward-cache-aware-next-js-03535b6c5fcd) — bfcache event behavior
 
-**Features research sources:**
-- [WCAG 2.1 SC 1.4.3 Contrast (Minimum)](https://www.w3.org/WAI/WCAG21/Understanding/contrast-minimum.html) — contrast requirements
-- [W3C: Using Decorative Unicode Characters](https://www.w3.org/WAI/GL/wiki/Using_a_Decorative_Unicode_Character) — aria-hidden compliance
-- [web.dev: Custom Bullets with CSS ::marker](https://web.dev/articles/css-marker-pseudo-element) — rune list markers
-
-**Architecture research sources:**
-- Codebase inspection: fonts.ts, layout.tsx, globals.css, page.tsx verified
-- [A11Y Collective: SVG Accessibility](https://www.a11y-collective.com/blog/svg-accessibility/) — decorative SVG patterns
-
-**Pitfalls research sources:**
-- [Chrome DevDocs: Font Fallbacks](https://developer.chrome.com/blog/font-fallbacks) — size-adjust, CLS prevention
-- [DebugBear: Next.js Image Optimization](https://www.debugbear.com/blog/nextjs-image-optimization) — LCP optimization
-- [BabelStone Runic Fonts](https://www.babelstone.co.uk/Fonts/Runic.html) — Runic Unicode coverage
-
-### SECONDARY (MEDIUM confidence)
-
-- [Joel Carrouche Norse Font](https://www.joelcarrouche.com/fonts/norse) — font specifications, license confirmation
-- [Smashing Magazine: Text Over Images Accessibility](https://www.smashingmagazine.com/2023/08/designing-accessible-text-over-images-part1/) — scrim overlay techniques
-- [Vercel Blog: Custom fonts without compromise](https://vercel.com/blog/nextjs-next-font) — next/font system internals
-- [Tailwind CSS v4 Discussions #15923, #13410](https://github.com/tailwindlabs/tailwindcss/discussions/) — CSS variable font integration patterns
-
-### TERTIARY (LOW confidence, needs validation)
-
-- Norse.otf Runic Unicode coverage: Font page states "Latin extended, Runic" but actual glyph rendering unverified. Must test in Phase 5.
-- Hero image composition focal point: Recommendations for `object-position` based on typical Norse landscape, but actual AI-generated image may differ. Validate in Phase 4.
+### Tertiary (LOW confidence)
+- [Free Frontend: CSS Hero Sections](https://freefrontend.com/css-hero-sections/) — pattern survey (aggregator, no primary sources)
+- [TestMu AI: Glowing Effects in CSS](https://www.testmu.ai/blog/glowing-effects-in-css/) — technique compilation (used for pattern survey only)
 
 ---
-
-*Research completed: 2026-02-07*
+*Research completed: 2026-02-08*
 *Ready for roadmap: yes*

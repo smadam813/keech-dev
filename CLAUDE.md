@@ -2,85 +2,58 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Project Overview
-
-Personal portfolio and blog website at keech.dev. Neobrutalist design aesthetic with a cosmic, Norse-touched theme. Deployed on Vercel.
-
 ## Commands
 
 ```bash
-npm run dev     # Start dev server (Velite + Next.js with Turbopack)
-npm run build   # Production build (Velite then Next.js)
-npm run lint    # ESLint validation
-npm run velite  # Rebuild content only
+npm run dev       # Velite --watch & Next.js Turbopack (two parallel processes)
+npm run build     # velite && next build (sequential — Velite must complete first)
+npm run lint      # ESLint (next/core-web-vitals + next/typescript)
+npm run start     # Serve production build
+npm run velite    # Run Velite content compilation alone (useful for debugging content issues)
 ```
 
-## Tech Stack
-
-- **Framework:** Next.js 16 with App Router (React 19)
-- **Content:** Velite (MDX → type-safe data in `.velite/`)
-- **Styling:** Tailwind CSS v4 (CSS-first @theme in globals.css, no tailwind.config)
-- **Fonts:** Space Grotesk (headings), Inter (body)
-- **Code Highlighting:** rehype-pretty-code with Shiki (`github-dark-dimmed` theme)
-- **Icons:** Lucide React
+No test framework is configured. No CI/CD pipelines exist — deployment is git-push to Vercel.
 
 ## Architecture
 
-```
-src/
-├── app/                    # Next.js App Router
-│   ├── globals.css         # Design tokens via @theme, prose styles
-│   ├── blog/[slug]/        # Dynamic blog post pages
-│   └── projects/[slug]/    # Dynamic project pages
-├── components/
-│   ├── layout/             # Header, Footer, MobileNav
-│   ├── blog/               # PostCard, MDXContent, TOC, CodeBlock
-│   ├── projects/           # ProjectCard, TechBadge
-│   └── ui/                 # ScrollReveal animation wrapper
-└── lib/                    # cn() utility, font config
+Personal portfolio/blog at keech.dev. Next.js 16 App Router with React 19, Tailwind CSS v4, and Velite for MDX content.
 
-content/                    # MDX source files (processed by Velite)
-├── posts/*.mdx
-└── projects/*.mdx
+### Content Pipeline
 
-.velite/                    # Generated (gitignored) - import content from here
-```
-
-## Content System (Velite)
-
-Content is defined in `velite.config.ts`. MDX files in `content/` are processed into type-safe data:
+MDX files in `content/posts/` and `content/projects/` are compiled by Velite at build time into type-safe collections in `.velite/` (gitignored, regenerated on every build). Import via `@/.velite`:
 
 ```typescript
 import { posts, projects } from '@/.velite'
 ```
 
-Post schema: `title, slug, date, description?, tags[], draft?, toc, body`
-Project schema: `title, slug, description, date, featured?, stack[], github?, demo?, category?, image?, body`
+Velite runs as a **separate prebuild step** (not a webpack plugin) because Turbopack doesn't support custom webpack plugins. The `velite.config.ts` defines two collections with Zod schemas, rehype-slug for heading IDs, and rehype-pretty-code with `github-dark-dimmed` theme.
 
-## Design System
+Compiled MDX is executed at runtime via `new Function()` in `MDXContent` — the `<pre>` element is overridden with a `CodeBlock` wrapper that adds a copy button. This avoids Shiki transformer hydration issues.
 
-Defined in `globals.css` using Tailwind v4's `@theme`:
+**Post frontmatter** (required: `title`, `slug`, `date`; optional: `updated`, `description`, `tags`, `draft`). **Project frontmatter** (required: `title`, `slug`, `description`, `date`; optional: `updated`, `featured`, `stack`, `github`, `demo`, `category`, `image`). Full schemas in `velite.config.ts`.
 
-- **Colors:** dusty pink background (#E8B4B8), teal accent (#2D8B8B), light pink surface (#F5E6E8)
-- **Shadows:** Hard offset neobrutalist (4px 4px 0 0 #000)
-- **Borders:** 3px solid black
-- **Prose:** Custom `.prose` class for blog typography
-- **Single theme only** — no dark/light toggle (cohesive aesthetic is core to vision)
+### Path Aliases
 
-## Key Patterns
+- `@/*` → `./src/*`
+- `@/.velite` → `./.velite` (generated content collections)
 
-- **Path alias:** `@/*` → `./src/*`, `@/.velite` → `./.velite`
-- **'use client':** Only on components with hooks (MobileNav, ScrollReveal, CopyButton, CodeBlock, MDXContent)
-- **ScrollReveal:** Intersection Observer wrapper for fade-in animations (respects `prefers-reduced-motion`)
-- **MDX runtime:** Compiled MDX executed via `new Function()` with custom component overrides
+### Component Model
 
-## Commit Convention
+Server components by default. Only 6 components use `'use client'` — each for a specific browser API need (state, IntersectionObserver, clipboard, keyboard events). The `inert` attribute is used for focus management in the mobile menu instead of JavaScript focus traps.
 
-Format: `type(phase): description`
-- Types: feat, fix, docs, test, chore
+### Styling
 
-## Planning Documents
+Tailwind CSS v4 with **CSS-first configuration** — all design tokens live in `src/app/globals.css` via `@theme` directive. There is no `tailwind.config.js`. The neobrutalist visual identity uses:
 
-Project planning in `.planning/`:
-- `PROJECT.md` - Vision and requirements
-- `STATE.md` - Current status
+- Hard-offset shadows (`--shadow-brutal: 4px 4px 0 0 #000`)
+- Bold borders (`--border-brutal: 3px`)
+- Dusty rose background, teal accents, black foreground
+- Single theme only (no dark mode) — the palette is the brand
+
+### Static Generation
+
+All content pages use `generateStaticParams()` for full static generation. No API routes, no database, no server-side data fetching.
+
+### Fonts
+
+Space Grotesk (headings) and Inter (body) configured in `src/lib/fonts.ts`, plus Norse custom WOFF2 fonts in `public/fonts/`.

@@ -1,226 +1,147 @@
-# Feature Landscape: v1.2 Norse Identity
+# Feature Research
 
-**Domain:** Norse/runic typography, hero imagery, and decorative Elder Futhark elements for a neobrutalist portfolio
-**Researched:** 2026-02-07
-**Overall Confidence:** HIGH
+**Domain:** Hero animation sync and ambient CSS glow effects for keech.dev
+**Researched:** 2026-02-08
+**Confidence:** MEDIUM -- grounded in codebase analysis and verified web techniques, but specific rune-position glow overlays are a novel design pattern without direct precedent
 
-## Table Stakes
+## Feature Landscape
 
-Features that are necessary for the Norse Identity milestone to feel complete. Missing any of these will leave the visual upgrade feeling half-done or inconsistent.
+### Table Stakes (Users Expect These)
+
+Features that must work correctly or the hero feels broken. Missing any of these creates a visible quality gap.
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| **Norse display font replacing Space Grotesk for all headings** | The entire milestone is premised on deepening the Norse aesthetic. If headings still use a generic geometric sans-serif, the milestone has not shipped. The Joel Carrouche Norse font (Regular + Bold, OTF, freeware) must replace `--font-display` sitewide. | Med | Convert OTF to WOFF2 for 25-30% smaller file size. Use `next/font/local` with `localFont()` in `fonts.ts`. Define both Regular (400) and Bold (700) weights via `src` array. Assign to `--font-display` CSS variable. Keep `display: 'swap'` to prevent FOIT (Flash of Invisible Text). Norse includes Latin extended characters plus full runic Unicode glyphs -- both useful. |
-| **Font renders correctly at all existing heading sizes** | The site has headings at `text-6xl` through `text-9xl` (home hero), `text-2xl`/`text-xl`/`text-lg` (prose headings), `text-3xl` (mobile nav), and `text-2xl` (header logo). Norse has very different metrics than Space Grotesk. If letter-spacing, line-height, or sizing looks wrong at any of these, the font swap feels broken. | Med | Norse is a display typeface with angular, wide letterforms. Test every heading context after swap: home hero, blog post titles, project titles, nav links, mobile menu, footer. May need Tailwind `tracking-*` and `leading-*` adjustments per context. `size-adjust` in `@font-face` can reduce layout shift if fallback metrics differ significantly. |
-| **Hero image on home page with "keech.dev" text overlay** | The current home page is a centered text-only splash. A Norse landscape hero image (mountains, Yggdrasil, aurora, floating runes) transforms this from a blank page into an atmospheric entry point. The text overlay must maintain WCAG AA contrast. | High | Use `next/image` with `fill` and `priority` props inside a `position: relative` wrapper. Apply `object-fit: cover` and `object-position: center` via className. Layer a scrim overlay (semi-transparent gradient or solid) between image and text to guarantee contrast. Test at all breakpoints: the image will crop differently on mobile (portrait) vs desktop (landscape). Keep the focal point centered in the source image so `object-fit: cover` cropping preserves it. |
-| **Hero text remains readable across all viewport sizes** | WCAG 2.1 SC 1.4.3 requires 4.5:1 contrast for body text and 3:1 for large text (18pt+ or 14pt+ bold). The "keech.dev" heading at `text-6xl`+ qualifies as large text, so 3:1 minimum. But the scrim must guarantee this regardless of which portion of the image shows. | Med | A full-image scrim overlay (not partial gradient) is safest because it guarantees contrast regardless of image region. Use `bg-black/50` or `bg-foreground/60` depending on palette. Test with Chrome DevTools contrast checker. Alt text on the hero image must describe the scene for screen readers. The text overlay itself should be real HTML text (not baked into the image) so screen readers and search engines can read it. |
-| **At least one decorative rune element visible in the design** | If the milestone ships a Norse font and hero image but zero rune ornaments, the "Elder Futhark elements" goal is unmet. At minimum, one rune-based decorative element (section divider, nav accent, or list marker) must appear. | Low | Start with section dividers -- they are the most visible and least invasive. Use Elder Futhark Unicode characters (U+16A0 to U+16FF) in CSS `content` property via `::before`/`::after` pseudo-elements. The Norse font itself includes these glyphs with Unicode support, so they render in the same visual style as headings. |
-| **Inter body font preserved unchanged** | The body font (Inter) must remain untouched. Norse is a display typeface with angular carved-stone aesthetics that would be unreadable at body text sizes (16px paragraph text). Web typography best practice: display fonts for headings only, clean sans-serif for body text. | None | No code change needed, but verify: the `--font-body` variable must still resolve to Inter. The font swap only touches `--font-display`. |
+| Image-load-synced text animation | Text animating before the background loads is a visible bug. Users see the headline floating on a blank/placeholder canvas, breaking the reveal moment. Currently broken during client-side navigation. | MEDIUM | Requires converting `hero.tsx` to a client component, using Next.js `Image` `onLoad` callback to gate the `animate-on-load` class. The `onLoad` event fires when the real image completes and the blur placeholder is removed. Must handle cached images (where onLoad may fire synchronously). |
+| `prefers-reduced-motion` respect for all new animations | Users with vestibular disorders can be triggered by pulsing, scaling, and glowing animations. Existing codebase already respects this for fadeInUp -- any new glow/pulse animations must follow the same pattern. | LOW | Extend the existing `@media (prefers-reduced-motion: reduce)` block in `globals.css`. For glow effects, either disable animation entirely or replace with a static reduced-opacity glow. |
+| Graceful degradation when image loads slowly | On slow connections, there must be a reasonable visual state between "placeholder" and "fully loaded." The blur placeholder from Next.js static import handles the image side. The text side needs to either be visible immediately (static) or wait without a jarring pop-in. | LOW | The blur placeholder already exists. The synced animation simply holds text at `opacity: 0` until onLoad fires, then plays fadeInUp. On slow connections, users see the blur placeholder with no text, then both resolve together. Acceptable UX. |
+| No layout shift during animation | CLS (Cumulative Layout Shift) must be zero. Text appearing, glow layers fading in, and image loading must not push content around. | LOW | Current hero is `position: relative` with `fill` image and absolutely-positioned overlays. Glow layers should be absolutely positioned within the same container. No layout impact expected if implemented as overlay layers. |
+| Animation plays only once per navigation | The reveal animation should fire when the user first arrives at the page. It should not replay on every re-render, tab switch, or scroll. Currently `animate-on-load` fires on component mount which is correct for SSR but replays on client-side nav. | LOW | Gate animation state in React state. Once the `onLoad` callback fires and animation completes, do not re-trigger. Use `animationend` event or a timeout to mark completion. |
 
-## Differentiators
+### Differentiators (Competitive Advantage)
 
-Features that elevate the Norse identity from "font swap with hero" into "cohesive atmospheric experience." Not required for the milestone to be complete, but they are what makes visitors remember the site.
+Features that elevate the hero from "functional" to "this person cares about craft." These are where the Norse identity comes alive.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| **Rune section dividers between content sections** | Horizontal rules are generic. A divider with Elder Futhark runes (e.g., `ᚠ -- ᚢ -- ᚦ` or a row of spaced runes) makes every page feel intentionally Norse. Replaces or supplements existing `<hr>` styling. | Low | CSS-only via `::before`/`::after` on `<hr>` elements or a dedicated `<RuneDivider>` component. Use Unicode rune characters in the `content` property: `content: "\16A0  \16A6  \16B7"`. Apply the display font family so runes render in Norse style. Space with `letter-spacing: 0.5em` or flexbox. Wrap in `aria-hidden="true"` per WCAG SC 1.1.1 (decorative non-text content). |
-| **Rune bullet markers for lists** | Custom list markers using Elder Futhark runes (e.g., the Fehu rune `ᚠ` or Algiz `ᛉ` as bullet points) in blog prose or project descriptions. Subtle but distinctive. | Low | Use CSS `::marker` pseudo-element with `content: "\16A0"` and `font-family: var(--font-display)`. The `::marker` pseudo-element supports `content`, `color`, and `font-*` properties. Alternatively, use `list-style-type: "\16A0  "` (with trailing space for padding). Apply only to `.prose ul` to keep scope controlled. |
-| **Rune accents in navigation** | Small rune glyphs flanking nav link labels (e.g., `ᚠ Home ᚠ`) or a single rune preceding each link. Reinforces the Norse theme in the most frequently-seen UI element. | Low | Add `::before` pseudo-elements to nav link classes with a rune character. Use `opacity: 0.4` or the muted color to keep them atmospheric rather than distracting. Only show on desktop nav -- mobile menu links are already large and bold, additional ornament would clutter. Apply `aria-hidden="true"` to decorative pseudo-content. |
-| **Subtle runic background texture on sections** | A faint repeating pattern of rune-like geometric marks behind certain page sections (hero, footer, or content areas). Adds depth without competing with content. | Med | CSS-only approach preferred for performance: use `repeating-linear-gradient` or `background-image` with a small inline SVG data URI of a simplified rune stroke. Keep opacity extremely low (5-10%) so it reads as texture, not content. Alternative: a small PNG/SVG tile (under 2KB) served from `/public/` with `background-repeat: repeat`. Avoid large raster images -- CSS patterns weigh bytes, not kilobytes. |
-| **Runic background texture in footer** | The footer (dark `bg-foreground` section) is a natural canvas for a subtle rune pattern overlay. The dark background masks texture imperfections and the contrast feels intentional. | Low | Apply background texture specifically to the `<footer>` element. Since the footer already has `bg-foreground text-background`, a white/light rune pattern at 3-5% opacity creates a parchment-like effect. Simpler than full-page textures because the footer is a contained, non-scrolling element. |
-| **Animated rune fade on hero load** | On page load, 2-3 floating rune characters fade in around the hero text with a subtle drift animation (similar to the existing `fadeInUp` but with slight horizontal movement). Atmospheric, not distracting. | Med | Create a `<FloatingRunes>` client component with `useEffect` for timing. Render 2-3 absolute-positioned rune `<span>` elements with `animate-on-load` and staggered `animation-delay`. Must respect `prefers-reduced-motion: reduce` -- disable animation, show runes statically. Keep runes small (text-sm to text-lg) and semi-transparent. |
-| **Hero image blur-up placeholder** | While the hero image loads, show a tiny blurred placeholder (the Next.js `placeholder="blur"` prop). Prevents the jarring flash of empty space above the fold. | Low | For local images, Next.js can auto-generate blur placeholders at build time when using static imports. Add `placeholder="blur"` to the Image component. For external/dynamic images, provide a `blurDataURL` (base64-encoded tiny version). Since this is a static AI-generated image in `/public/`, a static import is simplest. |
-| **Mobile-optimized hero crop** | On mobile, a 16:9 landscape hero image loses its impact because `object-fit: cover` crops the sides heavily. Provide an art-directed mobile version or adjust `object-position` per breakpoint. | Med | Two approaches: (1) Use `object-position: center 30%` on mobile to show more of the top/sky area. (2) Provide a separate portrait-oriented crop for mobile via the `<picture>` element or conditional Next.js Image `src`. Option 1 is simpler and usually sufficient. Test with the actual AI-generated image to see which area contains the most atmosphere. |
+| Staggered rune-position glow pulse | Soft teal/aurora glow spots positioned over rune locations in the background image, pulsing with staggered timing. Creates an "alive" atmosphere like runes channeling energy. Ties directly into the Elder Futhark theme that permeates the site. | MEDIUM | Use absolutely-positioned pseudo-elements or dedicated divs with CSS `radial-gradient` or `box-shadow` glow. Animate `opacity` only (not box-shadow values) for 60fps performance. Use CSS custom property `--i` index for stagger delays via `calc()`. Position coordinates are fixed since the hero image is static. |
+| Organic stagger timing (not linear) | Linear stagger (equal delay between each glow point) feels mechanical. An easing curve applied to the delay distribution -- some runes pulse almost together, others have longer gaps -- creates a breathing, organic feel. | LOW | Use non-linear index multipliers in `calc()`. For example, `animation-delay: calc(var(--i) * var(--i) * 0.15s)` creates accelerating gaps. Or hand-tune 5-7 delay values. Small effort, large perceptual difference. |
+| Coordinated image-to-text reveal sequence | Instead of image and text appearing simultaneously, a deliberate reveal order: background crossfades from blur to sharp, then text fades up, then glow points pulse on. Creates a cinematic three-beat entrance. | MEDIUM | Sequence: (1) `onLoad` fires, image crossfade happens via Next.js placeholder removal, (2) after a short delay (200-400ms), trigger text fadeInUp, (3) after text animation completes (~600ms), start glow pulse sequence. Use CSS `animation-delay` chaining or a single state machine in the client component. |
+| Subtle parallax on glow layer | Glow spots shift very slightly (5-10px) on mouse move or device tilt, creating depth separation between the static background and the glow overlay. Makes the runes feel like they exist on a separate plane. | MEDIUM | Use `mousemove` event with `transform: translate()` on the glow container. Apply a dampening factor (requestAnimationFrame + lerp) for smooth movement. Device tilt via DeviceOrientationEvent for mobile. Must be entirely optional (enhancement, not core). |
+| Glow color variation by rune aett | Different aett groups (Freyr's, Hagal's, Tyr's) get slightly different glow hues -- warm amber for Freyr's, cool teal for Hagal's, pale gold for Tyr's. Adds visual depth and rewards users who notice the rune system. | LOW | Each glow point gets a CSS custom property `--glow-color` based on its aett. Use the existing `rune-config.ts` aett data. Three color values in the theme. Minimal code, meaningful design detail. |
+| Slow ambient drift animation | After the initial pulse-in sequence completes, glow points enter a very slow continuous breathing cycle (4-8 second period). Not a sharp pulse, but a gentle opacity oscillation between 0.3 and 0.6. Background atmosphere, not attention-grabbing. | LOW | Single `@keyframes` with `animation-iteration-count: infinite` and `animation-timing-function: ease-in-out`. Long duration prevents it from feeling frenetic. The stagger delays persist into the infinite loop, so points breathe out of phase. |
 
-## Anti-Features
+### Anti-Features (Commonly Requested, Often Problematic)
 
-Features to explicitly NOT build. These are common traps when adding themed visual elements to a portfolio site.
+Features to deliberately NOT build. These would undermine the neobrutalist identity or create technical problems.
 
-| Anti-Feature | Why Avoid | What to Do Instead |
-|--------------|-----------|-------------------|
-| **Norse font for body text** | The Norse typeface is an angular display face inspired by stone-carved runes. At 16px body text size, it would be illegible, fatiguing, and inaccessible. Every web typography guide warns against display fonts for body text. Even Norse's own designer describes it as suited for "titles" and "pagan magazines" headers. | Keep Inter for all body/paragraph text. Norse exclusively for headings, nav labels, and decorative display. |
-| **Full runic alphabet translation / easter egg cipher** | Tempting to show text in actual Elder Futhark runes as a gimmick. This fails because: (1) Elder Futhark has only 24 characters and does not map cleanly to modern English; (2) no visitor can read it; (3) it replaces readable content with decoration, violating accessibility principles. | Use rune characters purely as decorative ornament (dividers, markers, texture). Never replace readable Latin text with rune transliterations. |
-| **Animated rune particles / snow-style falling runes** | Particle effects (runes drifting across the screen like snow) are visually cool but: (1) tank performance on mobile, (2) distract from content, (3) trigger motion sensitivity, (4) require canvas or complex JS. This pushes "atmospheric" into "annoying" territory. | Limit animation to the hero section on load (2-3 runes fading in once). No continuous particle systems. |
-| **Parallax scrolling on hero image** | Parallax effects on the hero image (background scrolling slower than foreground) create janky scroll performance on mobile, trigger motion sickness in sensitive users, and conflict with neobrutalist flat/bold aesthetic. Parallax implies depth; neobrutalism embraces flatness. | Use a static hero image with `object-fit: cover`. The neobrutalist hard-edge shadows and bold borders already create visual interest without parallax. |
-| **Multiple hero images / image carousel** | A carousel on the home page adds complexity (autoplay accessibility issues, gesture handling, state management) for no benefit. The home page is a landing -- one strong image is more impactful than a slideshow. | Single AI-generated hero image. Curate one excellent image rather than cycling through several mediocre ones. |
-| **Rune tooltips showing meanings** | Hovering over decorative runes to reveal "Fehu: wealth" or similar tooltips seems educational but: (1) decorative runes are not meant to be interactive; (2) tooltips are inaccessible on touch devices; (3) it positions decorative elements as interactive, confusing screen readers. | Rune characters are pure decoration. If rune meanings are interesting content, write a blog post about it. Do not attach interactivity to ornamental elements. |
-| **Dark mode / theme toggle for "nighttime Norse"** | PROJECT.md explicitly states single theme, no dark/light toggle. The cohesive dusty pink/teal palette is core to the brand identity. Adding a dark "midnight Norse" toggle fragments the visual identity. | One theme. The existing palette already evokes a cosmic dusk atmosphere. |
-| **Video hero background** | A looping video (aurora borealis, floating runes) behind the hero text seems on-theme but: (1) massively increases page weight and load time; (2) mobile browsers often block autoplay; (3) accessibility requires pause controls; (4) Vercel bandwidth costs increase. | Static image with optional CSS-only subtle animation (floating rune glyphs via `@keyframes`). |
-| **Overly ornate rune borders around every component** | Wrapping every card, code block, and button in rune-patterned borders turns "atmospheric" into "theme park." Neobrutalism relies on clean hard borders and flat shadows. Adding rune filigree to borders contradicts the design language. | Rune ornament belongs in specific controlled locations: dividers, list markers, nav accents, background textures. The existing 3px solid black borders define the neobrutalist identity and should not be replaced. |
+| Feature | Why Requested | Why Problematic | Alternative |
+|---------|---------------|-----------------|-------------|
+| Canvas-based ambient glow (YouTube-style) | YouTube's ambient mode is visually impressive and well-known. Seems like the "real" way to do ambient glow. | Massively over-engineered for a static image. YouTube's technique exists because video frames change -- it samples live color data. For a static .webp hero, a canvas pipeline adds JS weight, complexity, and a new rendering layer for zero benefit over CSS. Also breaks SSR. | CSS radial-gradient or box-shadow on positioned elements. Same visual result, zero JS for the glow itself (only JS for animation triggering). |
+| Particle system / floating rune particles | Animated rune characters drifting across the hero like snow or embers. Visually dramatic, thematically relevant. | Creates a "fantasy game landing page" feel that clashes with the neobrutalist identity. Neobrutalism is about bold, static, intentional placement -- not ambient particle noise. Also a significant performance and bundle size cost for a canvas-based particle system. | The staggered glow pulse achieves "alive" atmosphere through light rather than motion. Runes are anchored, not floating -- which aligns with their carved-in-stone cultural identity. |
+| Framer Motion or GSAP animation library | Professional animation libraries offer fine-grained timeline control, spring physics, and gesture handling. | Adding 20-40KB (Framer Motion) or 25KB (GSAP) for a single hero animation is disproportionate. The existing codebase uses zero animation libraries -- only CSS keyframes and one IntersectionObserver. The hero animation sequence is simple enough for CSS + React state. Introducing a library here sets a precedent for library creep across the site. | CSS `@keyframes` with `animation-delay` chaining. For the parallax effect, vanilla JS with `requestAnimationFrame`. The entire feature set described above can be achieved with zero new dependencies. |
+| Interactive rune hover effects on glow points | Hovering over a glow spot reveals the rune name/meaning as a tooltip. Makes the hero "interactive." | The hero image is a photograph with runes rendered into it -- the glow positions are approximate overlays, not precise clickable regions. Touch targets would be ambiguous. Adding hover state to decorative elements creates false affordance (users expect clicking does something). Also conflicts with the scrim overlay's `pointer-events-none`. | If rune interactivity is desired, build it as a separate "rune explorer" component on the /about page where runes can be properly displayed as distinct interactive elements with the existing `rune-config.ts` data. |
+| Scroll-triggered hero animation | Hero animation plays as you scroll down, with parallax layers moving at different rates. | The hero is above-the-fold, full viewport height. Scroll-triggered animation means the hero sits static on initial load (wasting the first impression) and only comes alive as the user scrolls away from it. For below-fold content, scroll-trigger is great (the site already has `ScrollReveal`). For the hero, on-load is correct. | Keep the reveal sequence triggered by image load, not scroll. The hero's job is to make an immediate impression. |
+| Dark mode / theme-variant glow colors | Supporting different glow palettes for light/dark mode. | The site explicitly has no dark mode -- the dusty rose / teal / black palette IS the brand. Building dark mode support for the glow system introduces conditional theming infrastructure for a single-theme site. The CLAUDE.md states this directly. | Single palette. The glow colors should be defined as CSS custom properties in `globals.css` alongside the existing theme tokens, but only one set of values. |
 
 ## Feature Dependencies
 
 ```
-Norse Font Swap (foundation -- do first)
-    |
-    +-- Download Norse font (Regular + Bold OTF)
-    +-- Convert OTF to WOFF2
-    +-- Configure localFont() in fonts.ts
-    +-- Replace --font-display CSS variable
-    +-- Test all heading contexts for visual fit
-    +-- Adjust letter-spacing / line-height if needed
-    |
-    v
-Hero Image (depends on font swap being done -- hero text uses Norse font)
-    |
-    +-- Acquire/generate AI Norse landscape image
-    +-- Optimize image (WebP, multiple sizes)
-    +-- Build hero section with next/image fill + priority
-    +-- Add scrim overlay for text contrast
-    +-- Position "keech.dev" text overlay
-    +-- Test responsive cropping at all breakpoints
-    +-- Add alt text for accessibility
-    +-- Add blur-up placeholder
-    |
-    +-- [Enhancement] Floating rune animation on load
-    +-- [Enhancement] Mobile-optimized object-position
-    |
-    v
-Decorative Rune Elements (independent of hero, depends on font swap)
-    |
-    +-- Rune section dividers (CSS pseudo-elements)
-    +-- Rune list markers (CSS ::marker)
-    +-- Rune nav accents (CSS ::before on nav links)
-    |
-    +-- [Enhancement] Runic background texture (CSS gradients or SVG)
-    +-- [Enhancement] Footer rune texture
-    |
-    v
-Polish & Integration (after all above)
-    |
-    +-- Cross-page visual consistency audit
-    +-- Performance testing (font load, image load, CLS)
-    +-- Accessibility audit (contrast, screen reader, motion)
+[Image load sync (fix bug)]
+    +-- triggers --> [Text fadeInUp animation]
+                        +-- triggers --> [Staggered glow pulse sequence]
+                                             +-- enhances --> [Ambient drift animation (infinite loop)]
+
+[prefers-reduced-motion support]
+    +-- constrains --> [All animation features above]
+
+[Rune position mapping]
+    +-- required by --> [Staggered glow pulse]
+    +-- required by --> [Glow color by aett]
+    +-- enhances --> [Parallax on glow layer]
+
+[Organic stagger timing]
+    +-- enhances --> [Staggered glow pulse]
+    +-- enhances --> [Ambient drift animation]
 ```
 
-**Key dependency insight:** The Norse font swap is the foundation. The hero image and rune ornaments both use the display font, so it must be integrated first. Once the font is live, the hero image and rune ornaments can be built in parallel.
+### Dependency Notes
 
-## What Makes Norse Font Usage Tasteful vs Overdone
+- **Image load sync is the foundation:** Every other animation feature depends on knowing when the image is ready. This is also the bug fix. Must be implemented first.
+- **Text animation requires image load sync:** The current text animation fires immediately on mount. Converting to onLoad-gated requires the sync mechanism to exist.
+- **Glow pulse requires rune position mapping:** Glow spots need x/y coordinates mapped to where runes appear in the hero image. This is a data authoring step (examining the image, noting rune positions, encoding as CSS or config).
+- **Aett-based glow color requires rune position mapping:** Each glow point must be associated with a specific rune to know its aett. The existing `rune-config.ts` has the aett data; the position mapping connects it to the hero image.
+- **Parallax is fully independent and optional:** It enhances the glow layer but does not depend on or block anything else. Can be added or removed without affecting the core animation sequence.
+- **`prefers-reduced-motion` constrains everything:** Every animation feature must degrade gracefully. This is not a "later" concern -- it must be built into each feature from the start.
 
-This is the central design tension of the milestone. The Norse font is inherently dramatic -- angular, carved, mythological. Used well, it creates atmosphere. Used too much, it creates a costume.
+## MVP Definition
 
-### Tasteful (DO)
+### Launch With (v1)
 
-- **Headings only.** Norse for `h1`-`h6`, nav labels, and the site logo. Everything else stays in Inter.
-- **Size creates impact.** Norse looks best large (24px+). At small sizes, its angular forms lose clarity. The existing heading hierarchy (`text-6xl` down to `text-lg`) is already well-suited.
-- **Restraint on decoration.** Two to three types of rune ornament across the entire site, not one per component. Dividers + list markers + one background texture = enough.
-- **Runes as texture, not content.** Decorative runes add atmosphere when they are small, faded, and peripheral. They should feel like weathered inscriptions on a stone wall, not a fantasy game UI.
-- **Neobrutalist framing.** The existing hard shadows, thick borders, and flat color blocks are the primary visual language. Norse elements are layered on top as accent, not replacement.
+Minimum viable implementation -- fixes the bug and delivers the core visual impact.
 
-### Overdone (DO NOT)
+- [ ] **Image-load-synced text animation** -- Fixes the reported bug. Convert hero.tsx to client component, use onLoad to gate animation.
+- [ ] **Coordinated reveal sequence** -- Image resolves, short pause, text fades up. Two-beat entrance using animation-delay.
+- [ ] **`prefers-reduced-motion` for all new animations** -- Extend existing media query block. Non-negotiable accessibility baseline.
 
-- **Norse font below 18px.** The angular forms become illegible and the site looks like a Halloween costume.
-- **Runes on every interactive element.** Buttons, form inputs, badges, and tags should stay clean. Rune ornament on interactive elements creates ambiguity about what is clickable.
-- **More than 3 rune characters visible simultaneously** (outside of a deliberate divider). A cluster of runes looks cluttered rather than atmospheric.
-- **High-opacity rune textures.** Background textures above 10% opacity compete with content. At 3-5%, they add depth. At 20%+, they add noise.
-- **Rune animation loops.** One-time fade-in on load is atmospheric. Continuous pulsing, rotating, or drifting runes are distracting and drain battery.
+### Add After Validation (v1.x)
 
-## Hero Image Technical Specification
+Features to add once the sync mechanism is proven stable.
 
-### Recommended Image Approach
+- [ ] **Staggered rune-position glow pulse** -- Core visual enhancement. Requires identifying rune positions in the hero image and placing CSS glow overlays. Add when the onLoad sequencing is solid.
+- [ ] **Organic stagger timing** -- Tune delay curve once glow points are placed and visible. Quick iteration on timing values.
+- [ ] **Glow color variation by aett** -- Wire up rune-config.ts aett data to glow colors. Small addition once glow points exist.
+- [ ] **Slow ambient drift animation** -- Add infinite breathing cycle after pulse-in sequence works. Last animation layer.
 
-| Aspect | Recommendation | Rationale |
-|--------|---------------|-----------|
-| **Source dimensions** | 1920x1080 minimum (16:9) | Standard full-width hero baseline. High-DPI displays benefit from 2560px wide source. |
-| **Format** | WebP with JPEG fallback | Next.js Image component auto-serves WebP/AVIF when browser supports it. Store original as high-quality JPEG or PNG in `/public/images/`. |
-| **File size target** | Under 200KB after optimization | Above-fold hero image loads eagerly (`priority`), so file size directly impacts LCP. |
-| **Focal point** | Center of image | `object-fit: cover` crops from edges. Center-weighted composition survives all viewport ratios. |
-| **Color palette** | Dark tones (deep blues, purples, blacks) with aurora highlights | Dark hero image + light text + scrim = easy contrast. Avoid hero images with bright areas that fight the scrim. |
-| **Content** | Mountains, Yggdrasil silhouette, aurora borealis, subtle floating runes | Per PROJECT.md spec. Yggdrasil and mountains create a horizon line that anchors the composition. Aurora provides color interest in the sky region. |
+### Future Consideration (v2+)
 
-### Scrim Overlay Strategy
+Features to defer until the animation system is mature.
 
-| Technique | When to Use | CSS |
-|-----------|-------------|-----|
-| **Full solid overlay** | Simplest, guaranteed contrast | `bg-black/50` or `bg-foreground/60` as absolute-positioned div between image and text |
-| **Bottom gradient scrim** | Image top is visually interesting and should show through | `background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)` |
-| **Radial spotlight** | Text is centered and image edges should show | `background: radial-gradient(ellipse at center, rgba(0,0,0,0.6) 0%, transparent 70%)` |
+- [ ] **Subtle parallax on glow layer** -- Mouse/tilt-driven depth effect. Requires careful performance testing on mobile. Defer until core animations are finalized.
+- [ ] **Responsive rune position mapping** -- Glow positions may need to shift at different breakpoints if the background image crops differently. Investigate after initial desktop implementation.
 
-**Recommendation for this site:** Full solid overlay. The neobrutalist aesthetic favors bold, obvious design decisions over subtle gradients. A solid `bg-foreground/50` overlay ties the hero to the existing palette and keeps the contrast deterministic. Test at 40%, 50%, and 60% opacity to find the sweet spot where the image atmosphere shows through but text is crisp.
+## Feature Prioritization Matrix
 
-### Responsive Behavior
+| Feature | User Value | Implementation Cost | Priority |
+|---------|------------|---------------------|----------|
+| Image load sync (bug fix) | HIGH | MEDIUM | P1 |
+| Coordinated reveal sequence | HIGH | LOW | P1 |
+| `prefers-reduced-motion` support | HIGH | LOW | P1 |
+| No layout shift | HIGH | LOW | P1 |
+| Animation plays once | MEDIUM | LOW | P1 |
+| Staggered rune glow pulse | HIGH | MEDIUM | P2 |
+| Organic stagger timing | MEDIUM | LOW | P2 |
+| Glow color by aett | MEDIUM | LOW | P2 |
+| Ambient drift animation | MEDIUM | LOW | P2 |
+| Parallax on glow layer | LOW | MEDIUM | P3 |
+| Responsive rune positions | LOW | MEDIUM | P3 |
 
-| Viewport | Height | Object Position | Notes |
-|----------|--------|----------------|-------|
-| Desktop (1024px+) | `h-[70vh]` or `h-[80vh]` | `object-position: center` | Full cinematic hero experience |
-| Tablet (768px-1023px) | `h-[60vh]` | `object-position: center` | Slightly shorter to avoid scroll trap |
-| Mobile (< 768px) | `h-[50vh]` or `h-[60vh]` | `object-position: center 30%` | Show more sky/aurora, less ground. Avoid full-viewport-height hero on mobile -- users need to see there is content below. |
+**Priority key:**
+- P1: Must have for launch -- fixes the bug, establishes the animation foundation
+- P2: Should have -- delivers the ambient glow visual identity
+- P3: Nice to have -- polish effects to add after core is stable
 
-## Elder Futhark Rune Reference
+## Competitor Feature Analysis
 
-Selected runes suitable for decorative use, chosen for visual distinctiveness and balance.
-
-| Rune | Unicode | Hex | Name | Visual Quality | Suggested Use |
-|------|---------|-----|------|---------------|---------------|
-| ᚠ | U+16A0 | \16A0 | Fehu | Strong vertical with diagonals | List markers, divider anchors |
-| ᚦ | U+16A6 | \16A6 | Thurisaz | Angular thorn shape | Section accents |
-| ᚨ | U+16A8 | \16A8 | Ansuz | Asymmetric diagonals | Nav accents |
-| ᚱ | U+16B1 | \16B1 | Raido | Geometric angularity | Background texture element |
-| ᚲ | U+16B2 | \16B2 | Kauna | Simple open angle | Minimal decorative marker |
-| ᚷ | U+16B7 | \16B7 | Gebo | X-shape (gift) | Divider center ornament, very balanced |
-| ᚺ | U+16BA | \16BA | Hagalaz | H-like crossbar | Structural divider element |
-| ᛇ | U+16C7 | \16C7 | Eihwaz | Vertical with offset branches | Background texture |
-| ᛉ | U+16C9 | \16C9 | Algiz | Upward branching (protection) | Strong visual anchor, section divider focus |
-| ᛏ | U+16CF | \16CF | Tiwaz | Arrow/spear pointing up | Direction indicators, nav accents |
-| ᛟ | U+16DF | \16DF | Othala | Diamond with legs (heritage) | Footer accent, site identity ornament |
-
-**Font rendering note:** These Unicode code points are in the Runic block (U+16A0-U+16FF). The Norse font by Joel Carrouche includes glyphs for these characters. When the Norse font is set as the font-family on elements using rune characters, they will render in the Norse typeface style rather than a system fallback. If the font has not loaded yet, most system fonts do NOT include Runic glyphs, so a fallback like Noto Sans Runic or the runes may render as tofu (empty boxes). Ensure the Norse font is loaded before rune ornaments are critical to layout.
-
-## Accessibility Checklist for Norse Elements
-
-| Element | Requirement | Implementation |
-|---------|-------------|----------------|
-| Decorative rune characters | Must not be announced by screen readers | Wrap in `<span aria-hidden="true">` or use CSS `content` property in pseudo-elements (inherently not in accessibility tree unless explicitly added) |
-| Hero image | Must have descriptive alt text | `alt="Norse landscape with mountains, aurora borealis, and the world tree Yggdrasil"` |
-| Hero text overlay | Must be real HTML text, not baked into image | Render as `<h1>` element positioned over the image via CSS |
-| Text contrast over hero | Must meet WCAG 2.1 SC 1.4.3 (3:1 for large text) | Scrim overlay guarantees contrast regardless of image region |
-| Rune animations | Must respect `prefers-reduced-motion` | Disable animations, show runes statically. Existing `@media (prefers-reduced-motion: reduce)` block in globals.css handles this if animation classes are used consistently |
-| Background textures | Must not interfere with text readability | Keep texture opacity at 3-10%. Test with Chrome Accessibility tools. |
-
-## MVP Recommendation
-
-For the v1.2 milestone to feel complete with minimum scope:
-
-**Prioritize (must-ship):**
-1. **Norse font swap** -- Foundation for everything else. Replaces Space Grotesk as `--font-display`.
-2. **Hero image with text overlay** -- Transforms the home page from blank splash to atmospheric entry. Includes scrim, responsive sizing, alt text.
-3. **One rune divider pattern** -- A `<hr>` replacement or section divider using 3 Elder Futhark rune characters. Proves the decorative rune concept.
-
-**Include if time allows:**
-4. Rune list markers in `.prose` styles
-5. Subtle rune nav accents on desktop nav links
-6. Hero blur-up placeholder
-
-**Defer to v1.3 or later:**
-- Runic background textures (need design iteration to get opacity/pattern right)
-- Floating rune animation on hero load (polish, not core)
-- Mobile-specific hero crop (tune after seeing the actual AI image)
-- Footer rune texture (nice-to-have, footer already looks good)
+| Feature | Award-winning portfolio sites (Awwwards) | Dev portfolio norm | keech.dev approach |
+|---------|------------------------------------------|--------------------|--------------------|
+| Hero image reveal | Cinematic sequences with GSAP/Framer. Multi-second choreography. | Basic fade-in or no animation. | Lightweight CSS-only two-beat reveal (image then text). Achieves the "intentional" feel without library weight. |
+| Ambient background effects | Canvas particle systems, WebGL shaders, video loops. | Static image or gradient. | CSS glow overlays. Matches the rune theme without over-engineering. Unique because the glow is thematically motivated (rune energy), not generic. |
+| Scroll-driven hero | Parallax layers, scroll-triggered timeline. | Fixed background, content scrolls over. | No scroll dependency. Hero makes its impression on load. Scroll-reveal exists for below-fold content already. |
+| Motion accessibility | Often missing entirely. | Rarely implemented. | First-class `prefers-reduced-motion` support on all animations. Differentiator by being responsible. |
 
 ## Sources
 
-### HIGH Confidence (Official Documentation, Authoritative References)
+- [Next.js Image Component API (onLoad callback)](https://nextjs.org/docs/app/api-reference/components/image) -- HIGH confidence, official docs
+- [Animating box-shadow with smooth performance (pseudo-element opacity technique)](https://tobiasahlin.com/blog/how-to-animate-box-shadow/) -- HIGH confidence, verified technique
+- [Staggered animations with CSS custom properties (Cloud Four)](https://cloudfour.com/thinks/staggered-animations-with-css-custom-properties/) -- HIGH confidence, verified technique
+- [Recreating YouTube's ambient mode glow effect (Smashing Magazine)](https://www.smashingmagazine.com/2023/07/recreating-youtube-ambient-mode-glow-effect/) -- HIGH confidence, used to justify anti-feature decision
+- [prefers-reduced-motion (MDN)](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/At-rules/@media/prefers-reduced-motion) -- HIGH confidence, official reference
+- [CSS GPU animation best practices (Smashing Magazine)](https://www.smashingmagazine.com/2016/12/gpu-animation-doing-it-right/) -- MEDIUM confidence, older but principles still valid
+- [next/image onLoad double-fire issue (GitHub Discussion #24757)](https://github.com/vercel/next.js/discussions/24757) -- MEDIUM confidence, community discussion with verified workaround
+- [Hero section animation best practices (various)](https://freefrontend.com/css-hero-sections/) -- LOW confidence, aggregator without primary sources
+- [CSS glow effects compilation (TestMu AI)](https://www.testmu.ai/blog/glowing-effects-in-css/) -- LOW confidence, used for pattern survey only
 
-- [Next.js Font Optimization (App Router)](https://nextjs.org/docs/app/getting-started/fonts) -- `next/font/local` API, `localFont()` usage, CSS variable assignment, `display: 'swap'`
-- [Next.js Image Component](https://nextjs.org/docs/app/api-reference/components/image) -- `fill`, `priority`, `placeholder="blur"`, `sizes` prop, responsive srcSet generation
-- [WCAG 2.1 SC 1.4.3 Contrast (Minimum)](https://www.w3.org/WAI/WCAG21/Understanding/contrast-minimum.html) -- 4.5:1 body text, 3:1 large text contrast requirements
-- [W3C: Using Decorative Unicode Characters with aria-hidden](https://www.w3.org/WAI/GL/wiki/Using_a_Decorative_Unicode_Character) -- WCAG SC 1.1.1 compliance for decorative rune characters
-- [Unicode Runic Block (U+16A0-U+16FF)](https://www.unicode.org/charts/PDF/U16A0.pdf) -- Official Unicode chart for Elder Futhark, Anglo-Saxon, and Younger Futhark rune characters
-- [W3Schools UTF-8 Runic Reference](https://www.w3schools.com/charsets/ref_utf_runic.asp) -- Quick reference for rune Unicode code points
-- [web.dev: Custom Bullets with CSS ::marker](https://web.dev/articles/css-marker-pseudo-element) -- `::marker` pseudo-element API, supported properties, Unicode content usage
-
-### MEDIUM Confidence (Verified with Multiple Sources)
-
-- [Joel Carrouche Norse Font](https://www.joelcarrouche.com/fonts/norse) -- Regular + Bold, OTF format, 100% free personal/commercial, Latin extended + Runic Unicode glyphs
-- [Norse Font Download (befonts)](https://befonts.com/norse-font.html) -- Confirms OTF format, Regular + Bold weights, @font-face example
-- [Smashing Magazine: Designing Accessible Text Over Images (Part 1)](https://www.smashingmagazine.com/2023/08/designing-accessible-text-over-images-part1/) -- Scrim, overlay, blur, and copy-space techniques for hero image text contrast
-- [WCAG.com: Content Over Images Accessibility](https://www.wcag.com/blog/content-over-images-how-does-this-ux-ui-trend-impact-accessibility/) -- WCAG SC 1.4.5 (no text as images), contrast requirements, responsive design gaps
-- [NN/g: Ensure High Contrast for Text Over Images](https://www.nngroup.com/articles/text-over-images/) -- Scrim overlay best practices, readability testing methodology
-- [CloudConvert OTF to WOFF2](https://cloudconvert.com/otf-to-woff2) -- Tool for font format conversion, 25-30% size reduction over OTF
-- [Smashing Magazine: Reduce Font Loading Impact with CSS Descriptors](https://www.smashingmagazine.com/2021/05/reduce-font-loading-impact-css-descriptors/) -- `size-adjust`, `ascent-override`, `descent-override` for zero-CLS font loading
-- [Design Work Life: Viking Fonts 2026](https://designworklife.com/viking-fonts-norse-style/) -- Display font design patterns, angular letterform characteristics
-- [Hero Image Sizing Guide](https://www.cronyxdigital.com/blog/hero-image-sizing-guide-for-desktop-mobile) -- 1920x1080 desktop, 1080x1920 mobile, center-weighted focal point strategy
-
-### LOW Confidence (Single Source, Needs Validation)
-
-- [How To Make a Hero Image in Next.js 13/14](https://www.perssondennis.com/articles/how-to-make-a-hero-image-in-nextjs-13-and-14) -- Implementation pattern with fill prop, wrapper positioning, z-index layering. Pattern aligns with official docs but specific code examples are from a single blog source.
+---
+*Feature research for: Hero animation sync and ambient CSS glow effects (keech.dev)*
+*Researched: 2026-02-08*
