@@ -2,49 +2,41 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-08)
+See: .planning/PROJECT.md (updated 2026-02-09)
 
-**Core value:** A distinctive online presence that feels like stepping into a cosmic, Norse-touched world — memorable enough that visitors remember the site itself, not just the content.
+**Core value:** A polished, intentional developer portfolio — fast, visually distinctive, and well-crafted in every detail.
 **Current focus:** Planning next milestone
 
 ## Current Position
 
-Phase: 9 of 9 — v1.2 Norse Identity COMPLETE
+Phase: v1.3 complete — no active phase
 Plan: N/A
-Status: Ready to plan next milestone
-Last activity: 2026-02-08 — Completed quick-009 (enlarge portrait photo, restore 3:4 aspect ratio)
+Status: Milestone v1.3 Hero Polish shipped 2026-02-09
+Last activity: 2026-02-09 -- v1.3 milestone archived
 
-Progress: [██████████████████████████████] 25/25 plans complete (3 milestones shipped)
+Progress: [██████████] 100% (v1.3)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 25 (14 v1.0 + 4 v1.1 + 7 v1.2)
+- Total plans completed: 2
+- Average duration: ~30 min
+- Total execution time: ~1 hour
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| v1.0 (1-4) | 14 | ~4 days | -- |
-| 05-navigation-overhaul | 2/2 | 3 min | 1.5 min |
-| 06-layout-consistency | 2/2 | 2 sessions | -- |
-| 07-norse-typography | 2/2 | 6 min | 3 min |
-| 08-hero-image | 2/2 | 3.5 min | 1.75 min |
-| 09-rune-decorations | 3/3 | 9 min | 3 min |
+| 01-animation-sync-reveal | 1 | ~15min | ~15min |
+| 02-rune-glow-effects | 1 | ~45min | ~45min |
 
-## Milestone History
-
-| Milestone | Phases | Plans | Shipped |
-|-----------|--------|-------|---------|
-| v1.0 MVP | 1-4 | 14 | 2026-02-03 |
-| v1.1 Polish & Consistency | 5-6 | 4 | 2026-02-07 |
-| v1.2 Norse Identity | 7-9 | 7 | 2026-02-08 |
+*Updated after each plan completion*
 
 ## Accumulated Context
 
 ### Decisions
 
-See PROJECT.md Key Decisions table for full history.
+Decisions are logged in PROJECT.md Key Decisions table.
 
 ### Pending Todos
 
@@ -52,23 +44,10 @@ None.
 
 ### Blockers/Concerns
 
-- ESLint 9 + Next.js 16 FlatCompat layer has circular JSON error -- `next lint` non-functional (pre-existing)
-
-### Quick Tasks Completed
-
-| # | Description | Date | Commit | Directory |
-|---|-------------|------|--------|-----------|
-| 001 | Style ".dev" in header logo with teal accent to match home page | 2026-02-08 | 9622217 | [001-style-dev-in-header-logo-with-teal-accen](./quick/001-style-dev-in-header-logo-with-teal-accen/) |
-| 002 | Remove hyperlink from keech.dev header logo | 2026-02-08 | 0532047 | [002-remove-hyperlink-from-keech-dev-header-l](./quick/002-remove-hyperlink-from-keech-dev-header-l/) |
-| 003 | Rewrite keech.dev project post as comprehensive portfolio piece | 2026-02-08 | 76f2ede | [003-rewrite-keech-dev-project-post-as-compre](./quick/003-rewrite-keech-dev-project-post-as-compre/) |
-| 004 | Restyle inline code to feel lighter and more integrated with prose text | 2026-02-08 | dcd5726 | [004-restyle-inline-code-to-feel-lighter-and-](./quick/004-restyle-inline-code-to-feel-lighter-and-/) |
-| 005 | Fix font variable inheritance scope bug and muted color WCAG contrast | 2026-02-08 | ab95161 | [005-fix-typography-inheritance-scope-bug-and](./quick/005-fix-typography-inheritance-scope-bug-and/) |
-| 006 | Replace hero background JPG with watermark-free WebP (185KB) | 2026-02-08 | 47f56b6 | [006-replace-hero-background-jpg-with-optimiz](./quick/006-replace-hero-background-jpg-with-optimiz/) |
-| 007 | Convert portrait photo to WebP and add to About page | 2026-02-08 | f3e2464 | [7-convert-portrait-photo-to-webp-and-add-t](./quick/7-convert-portrait-photo-to-webp-and-add-t/) |
-| 009 | Enlarge portrait photo and restore 3:4 aspect ratio | 2026-02-08 | 06b299e | [9-enlarge-portrait-photo-and-restore-3-4-a](./quick/9-enlarge-portrait-photo-and-restore-3-4-a/) |
+None.
 
 ## Session Continuity
 
-Last session: 2026-02-08
-Stopped at: Completed quick-009
-Resume file: None -- ready for /gsd:new-milestone
+Last session: 2026-02-09
+Stopped at: v1.3 milestone archived. Ready for next milestone.
+Resume file: N/A — start with /gsd:new-milestone

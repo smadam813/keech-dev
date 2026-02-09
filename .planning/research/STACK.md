@@ -1,493 +1,290 @@
-# Technology Stack: v1.2 Norse Identity
+# Stack Research
 
-**Project:** keech.dev
-**Milestone:** v1.2 -- Norse display font, hero image, Elder Futhark decorative elements
-**Researched:** 2026-02-07
-**Overall confidence:** HIGH
+**Domain:** Hero animation synchronization and CSS glow effects for Next.js portfolio site
+**Researched:** 2026-02-08
+**Confidence:** HIGH
 
-## TL;DR: Zero New npm Packages
+## Recommended Stack
 
-This milestone requires **zero new npm dependencies**. Everything needed is built into Next.js 16:
+This milestone requires zero new dependencies. Everything is achievable with the existing stack (Next.js 16.1.6, React 19.2.4, Tailwind CSS v4.1.18) plus native CSS and browser APIs already available.
 
-- `next/font/local` loads the Norse OTF/WOFF2 font (replaces `next/font/google` for display font)
-- `next/image` handles hero PNG optimization with automatic WebP conversion and blur placeholder
-- Unicode Runic block (U+16A0-U+16FF) renders Elder Futhark characters as text via the Norse font
-- Inline SVG in JSX handles complex decorative patterns (knotwork, borders)
+### Core Technologies
 
-The only pre-build work is converting the Norse font files from OTF to WOFF2 format (a one-time manual step using a free online tool).
+| Technology | Version | Purpose | Why Recommended |
+|------------|---------|---------|-----------------|
+| Next.js `Image` `onLoad` callback | 16.1.6 (current) | Detect when hero background image is decoded and visible | Built-in prop, fires after placeholder removal, gives direct access to the underlying `<img>` element via `event.target`. **Confidence: HIGH** -- verified in official Next.js docs (Jan 2026). |
+| React 19 `useState` + `onLoad` | 19.2.4 (current) | Track image-loaded state to conditionally trigger text animation | Simple boolean state flip. Avoids useEffect timing issues. The `onLoad` handler sets state, and a CSS class toggles based on that state. **Confidence: HIGH** -- standard React pattern. |
+| CSS `@keyframes` + class toggle | Native CSS | Sync text fadeInUp animation with image readiness | Animation is defined but not applied until a `data-loaded` attribute or class is added. More reliable than `animation-play-state` because it avoids the "animation already running" edge case. **Confidence: HIGH** -- established pattern, universal browser support. |
+| CSS `@property` | Native CSS | Animate custom properties for glow opacity and blur radius | Allows smooth interpolation of typed custom properties (e.g., `<number>`, `<color>`) that normally can't be transitioned. Enables animating `radial-gradient` stop positions and opacity values in keyframes. **Confidence: HIGH** -- Baseline since 2024, ~96% browser support per caniuse. |
+| CSS pseudo-elements (`::before`/`::after`) | Native CSS | Position glow overlays at rune locations without extra DOM nodes | Absolute-positioned pseudo-elements with `radial-gradient` backgrounds. Animate only `opacity` and `transform` for GPU compositing. **Confidence: HIGH** -- universal support, established performance pattern. |
+| Tailwind CSS v4 `@theme` directive | 4.1.18 (current) | Define animation tokens (durations, delays, easing) as design tokens | CSS-first config already in use. Add new `--animate-*` custom properties alongside existing `--animate-fade-in-up`. Keeps all timing values co-located. **Confidence: HIGH** -- already in use in codebase. |
 
----
+### Supporting Libraries
 
-## Current Stack (Unchanged)
+No new libraries required. The entire feature set is achievable with native browser APIs and CSS.
 
-| Technology | Version | Purpose | v1.2 Impact |
-|------------|---------|---------|-------------|
-| Next.js | ^16.1.6 | App Router, React 19 | Uses built-in next/font/local and next/image |
-| React | ^19.2.4 | UI rendering | No change |
-| Tailwind CSS | ^4.1.18 | CSS-first @theme styling | No change -- `--font-display` variable stays identical |
-| Velite | ^0.3.1 | MDX content processing | No change |
-| lucide-react | ^0.563.0 | UI icons | No change (runes are NOT icons) |
-| clsx + tailwind-merge | ^2.1.1 / ^3.4.0 | cn() utility | No change |
-| Inter (next/font/google) | body font | Body text | Stays as-is |
-| Space Grotesk (next/font/google) | display font | Headings | REPLACED by Norse via next/font/local |
+| Library | Version | Purpose | When to Use |
+|---------|---------|---------|-------------|
+| N/A | -- | -- | This milestone introduces no new dependencies. All techniques use native CSS and existing React/Next.js APIs. |
 
----
+### Development Tools
 
-## Stack Additions (All Built-in)
+| Tool | Purpose | Notes |
+|------|---------|-------|
+| Chrome DevTools Performance panel | Profile animation frame rate | Record the hero load sequence. Look for dropped frames during glow animations. Target 60 FPS on mid-range mobile. |
+| Chrome DevTools Animations panel | Inspect keyframe timing | Visualize staggered delays across rune glow elements. Verify animation-delay offsets. |
+| `prefers-reduced-motion` testing | Accessibility validation | Toggle in DevTools > Rendering to verify all animations respect the media query. The codebase already has this pattern in `globals.css`. |
 
-### 1. Norse Display Font via next/font/local
+## Key Technical Decisions
 
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| `next/font/local` | built-in (Next.js 16) | Load Norse font (Joel Carrouche) as display font replacing Space Grotesk | Zero dependencies, automatic optimization, preloading, CLS reduction, CSS variable output identical to current next/font/google pattern |
+### 1. Image Load Detection: `onLoad` prop (not ref, not IntersectionObserver)
 
-**Confidence:** HIGH -- verified via [Next.js Font Optimization docs](https://nextjs.org/docs/app/getting-started/fonts) and [Font API Reference](https://nextjs.org/docs/app/api-reference/components/font)
+**Use `onLoad` on the Next.js `<Image>` component.**
 
-**Font source:** Norse by Joel Carrouche (v2.20, 2014)
-- License: 100% free for personal and commercial use (Joel Carrouche Free Font EULA v1.0)
-- Weights: Regular (400) and Bold (700) as OTF files
-- Official site: https://www.joelcarrouche.com/fonts/norse
+The hero component (`src/components/hero.tsx`) is currently a server component. Adding `onLoad` requires converting it to a client component (`'use client'`). This is acceptable because:
 
-**Critical finding:** The Norse font includes BOTH Latin extended characters AND a complete runic alphabet with Unicode support (Elder Futhark, U+16A0-U+16FF range). One font serves double duty: display headings AND Elder Futhark rune rendering. No separate rune font is needed.
-
-**Format: Convert OTF to WOFF2 before loading.**
-
-Why WOFF2 over OTF:
-- WOFF2 is 30-50% smaller than OTF while preserving all OpenType features including ligatures, kerning, and alternate characters
-- Next.js official docs show WOFF2 exclusively in all examples
-- OTF is technically usable via `format('opentype')` in @font-face, but it is not documented for `next/font/local` (MEDIUM confidence it works vs HIGH confidence for WOFF2)
-- WOFF2 has universal modern browser support (Chrome 36+, Firefox 39+, Safari 12+, Edge 14+)
-
-Conversion tools (one-time, manual step):
-- Fontsource Converter: https://fontsource.org/tools/converter (client-side, no upload)
-- Transfonter: https://transfonter.org (generates @font-face CSS too)
-
-**next/font/local configuration options (all verified from official API reference):**
-
-| Option | Value | Purpose |
-|--------|-------|---------|
-| `src` | Array of `{path, weight, style}` objects | Points to WOFF2 files for Regular and Bold |
-| `variable` | `"--font-display"` | CSS variable name -- MUST match current value for zero-change in globals.css |
-| `display` | `"swap"` | Prevents FOIT (Flash of Invisible Text), shows fallback then swaps |
-| `fallback` | `["Space Grotesk", "system-ui", "sans-serif"]` | Fallback chain while Norse loads |
-| `adjustFontFallback` | `"Arial"` | Automatic size-adjust on fallback to reduce CLS during swap |
-| `preload` | `true` (default) | Preloads font in `<head>` for faster render |
-| `weight` | Not needed (specified per-file in src array) | -- |
-| `declarations` | Not needed | For advanced @font-face descriptors like ascent-override |
-
-**Integration pattern:**
-
-```typescript
-// src/lib/fonts.ts (MODIFIED -- not new file)
-import localFont from "next/font/local";
-import { Inter } from "next/font/google";
-
-export const norse = localFont({
-  src: [
-    {
-      path: "../fonts/Norse-Regular.woff2",
-      weight: "400",
-      style: "normal",
-    },
-    {
-      path: "../fonts/Norse-Bold.woff2",
-      weight: "700",
-      style: "normal",
-    },
-  ],
-  variable: "--font-display",
-  display: "swap",
-  fallback: ["Space Grotesk", "system-ui", "sans-serif"],
-  adjustFontFallback: "Arial",
-});
-
-export const inter = Inter({
-  variable: "--font-body",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-});
-```
-
-**File placement:** `src/fonts/Norse-Regular.woff2` and `src/fonts/Norse-Bold.woff2`. Fonts can be stored anywhere in the app directory tree and referenced by relative path from the importing file. The `src/fonts/` directory does not currently exist and must be created.
-
-Also include `src/fonts/LICENSE.txt` (the `freefont_EULA` file from the Norse font download zip) for proper attribution.
-
-**What changes:**
-
-| File | Change | Details |
-|------|--------|---------|
-| `src/lib/fonts.ts` | Replace Space_Grotesk with localFont | Import changes, same `--font-display` output |
-| `src/app/layout.tsx` | Rename import `spaceGrotesk` to `norse` | `className={`${norse.variable} ${inter.variable}`}` |
-| `src/fonts/` | NEW directory | Two WOFF2 files + license file |
-
-**What does NOT change:**
-
-| File | Why No Change |
-|------|---------------|
-| `src/app/globals.css` | `@theme inline { --font-display: var(--font-display); }` is generic -- works for any font assigned to this variable |
-| Any component using `font-display` class | Class references the CSS variable, not the font name |
-| Inter body font setup | Completely independent |
-| package.json | `next/font/local` is built into Next.js, no install needed |
-
----
-
-### 2. Hero Image via next/image (Static Import)
-
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| `next/image` | built-in (Next.js 16) | Optimized hero PNG on home page with text overlay | Automatic WebP/AVIF conversion, automatic blurDataURL for static imports, LCP optimization via preload prop, responsive sizing |
-
-**Confidence:** HIGH -- verified via [Next.js Image Component docs](https://nextjs.org/docs/app/api-reference/components/image) and [Next.js 16 Upgrade Guide](https://nextjs.org/docs/app/guides/upgrading/version-16)
-
-**Next.js 16-specific breaking changes affecting this feature:**
-
-| Breaking Change | Old Behavior | New Behavior | Action Required |
-|----------------|-------------|-------------|-----------------|
-| `priority` deprecated, replaced by `preload` | `priority={true}` | `preload={true}` | Use `preload` prop for hero image |
-| `images.qualities` default changed | All qualities 1-100 allowed | Only `[75]` allowed | Add `qualities: [75, 90]` to next.config.ts |
-| `minimumCacheTTL` default changed | 60 seconds | 4 hours (14400s) | No action (beneficial) |
-| `imageSizes` default removed 16 | Included 16px size | 16px removed | No impact on hero |
-
-**Why static import over string path:**
-- Automatic `width` and `height` inference -- prevents Cumulative Layout Shift
-- Automatic `blurDataURL` generation -- blur-up placeholder for free, no manual base64 encoding
-- Build-time validation -- missing image file causes build error, not a runtime 404
-- Type safety -- TypeScript knows the import is a `StaticImageData` object
-
-**Integration pattern:**
-
-```typescript
-// src/app/page.tsx
-import Image from "next/image";
-import heroImage from "@/images/hero-norse-landscape.png";
-
-export default function Home() {
-  return (
-    <div className="relative min-h-[60vh]">
-      <Image
-        src={heroImage}
-        alt="Norse landscape with Yggdrasil, mountains, and aurora borealis"
-        placeholder="blur"
-        preload
-        quality={90}
-        fill
-        sizes="100vw"
-        className="object-cover"
-      />
-      <div className="relative z-10 flex items-center justify-center min-h-[60vh]">
-        <h1 className="font-display text-6xl font-bold">
-          keech<span className="text-accent">.dev</span>
-        </h1>
-      </div>
-    </div>
-  );
-}
-```
-
-**next.config.ts change required:**
-
-```typescript
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  images: {
-    qualities: [75, 90], // 75 for general images, 90 for hero quality
-  },
-};
-
-export default nextConfig;
-```
-
-**File placement:** `src/images/hero-norse-landscape.png` (new directory). Static import requires the file to be in the source tree, not in `public/`. If the file must be in `public/` (e.g., for external referencing), use a string `src="/images/hero.png"` instead, but you lose automatic blurDataURL and dimension inference.
-
-**Performance budget for hero image:**
-
-| Metric | Value | Notes |
-|--------|-------|-------|
-| Source PNG size | Target under 2MB | Next.js optimizes at serve time |
-| Served format | WebP or AVIF (automatic) | 25-70% smaller than PNG |
-| Expected served size | ~150-300KB | Depends on dimensions and detail |
-| LCP impact | Mitigated | `preload` starts loading from `<head>` |
-| Perceived load | Near-instant | `placeholder="blur"` shows blurred preview immediately |
-| CLS impact | Zero | Static import provides exact dimensions |
-
----
-
-### 3. Elder Futhark Rune Rendering via Unicode
-
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| Unicode Runic block (U+16A0-U+16FF) | Unicode 3.0 (1999), extended in Unicode 7.0 (2014) | Render Elder Futhark rune characters as styled text | Semantic, accessible, zero additional assets. Norse font already contains these glyphs. |
-
-**Confidence:** HIGH -- verified via [Unicode Runic Chart](https://www.unicode.org/charts/PDF/U16A0.pdf), [SYMBL Unicode reference](https://symbl.cc/en/unicode/blocks/runic/), and [Joel Carrouche Norse font description](https://www.joelcarrouche.com/fonts/norse) confirming "Latin extended, Runic" character support
-
-**Approach: Render runes as Unicode text characters styled with the Norse font. NOT as SVG. NOT as images.**
-
-**Why Unicode text over SVG for individual rune characters:**
-
-| Criterion | Unicode Text | SVG Icons |
-|-----------|-------------|-----------|
-| Semantic HTML | Actual characters in the document | Decorative images requiring aria-label |
-| Font consistency | Same Norse font renders headings AND runes | Separate rendering pipeline |
-| CSS inheritance | Inherits font-size, color, letter-spacing, opacity | Requires separate fill/stroke/width styling |
-| Scalability | Scales with em/rem like any text | Needs explicit viewBox and sizing |
-| Performance | Zero additional HTTP requests or DOM weight | Inline SVG adds DOM nodes per element |
-| Maintenance | Characters in markup | Separate SVG file per rune (24 files) |
-| Theming | Responds to text-color utilities | Needs currentColor wiring |
-
-**The 24 Elder Futhark runes (Kylver Stone traditional order):**
-
-| Rune | Name | Unicode | Code Point |
-|------|------|---------|------------|
-| ᚠ | Fehu | RUNIC LETTER FEHU FEOH FE F | U+16A0 |
-| ᚢ | Uruz | RUNIC LETTER URUZ UR U | U+16A2 |
-| ᚦ | Thurisaz | RUNIC LETTER THURISAZ THURS THORN | U+16A6 |
-| ᚨ | Ansuz | RUNIC LETTER ANSUZ A | U+16A8 |
-| ᚱ | Raido | RUNIC LETTER RAIDO RAD REID R | U+16B1 |
-| ᚲ | Kenaz | RUNIC LETTER KAUNA | U+16B2 |
-| ᚷ | Gebo | RUNIC LETTER GEBO GYFU G | U+16B7 |
-| ᚹ | Wunjo | RUNIC LETTER WUNJO WYNN W | U+16B9 |
-| ᚺ | Hagalaz | RUNIC LETTER HAGLAZ H | U+16BA |
-| ᚾ | Nauthiz | RUNIC LETTER NAUDIZ NYD NAUD N | U+16BE |
-| ᛁ | Isa | RUNIC LETTER ISAZ IS ISS I | U+16C1 |
-| ᛃ | Jera | RUNIC LETTER JERAN J | U+16C3 |
-| ᛇ | Eihwaz | RUNIC LETTER IWAZ EOH | U+16C7 |
-| ᛈ | Perthro | RUNIC LETTER PERTHO PEORTH P | U+16C8 |
-| ᛉ | Algiz | RUNIC LETTER ALGIZ EOLHX | U+16C9 |
-| ᛊ | Sowilo | RUNIC LETTER SOWILO S | U+16CA |
-| ᛏ | Tiwaz | RUNIC LETTER TIWAZ TIR TYR T | U+16CF |
-| ᛒ | Berkanan | RUNIC LETTER BERKANAN BEORC BJARKAN B | U+16D2 |
-| ᛖ | Ehwaz | RUNIC LETTER EHWAZ EH E | U+16D6 |
-| ᛗ | Mannaz | RUNIC LETTER MANNAZ MAN M | U+16D7 |
-| ᛚ | Laguz | RUNIC LETTER LAUKAZ LAGU LOGR L | U+16DA |
-| ᛜ | Ingwaz | RUNIC LETTER INGWAZ | U+16DC |
-| ᛞ | Dagaz | RUNIC LETTER DAGAZ DAEG D | U+16DE |
-| ᛟ | Othala | RUNIC LETTER OTHALAN ETHEL O | U+16DF |
-
-**Full sequence (copy-pasteable):** `ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗᛚᛜᛞᛟ`
-
-**Usage patterns:**
-
-```typescript
-// Section divider -- purely decorative, hidden from screen readers
-function RuneDivider() {
-  return (
-    <div
-      aria-hidden="true"
-      className="font-display text-accent text-2xl tracking-[0.5em] text-center my-8 select-none"
-    >
-      ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ
-    </div>
-  );
-}
-
-// CSS list marker using runes
-// In globals.css:
-// .rune-list li::marker {
-//   content: "\16A0  ";
-//   font-family: var(--font-display);
-//   color: var(--color-accent);
-// }
-
-// Nav accent -- subtle rune before/after nav items
-// Via Tailwind arbitrary values:
-// before:content-['\16A0'] before:font-display before:text-accent before:mr-2
-```
-
-**Accessibility requirements:**
-- All decorative runes MUST use `aria-hidden="true"` -- screen readers should not attempt to read decorative rune characters
-- For runes that convey meaning (unlikely in this project), provide `aria-label` with the English translation
-- Use `role="separator"` on divider elements where semantically appropriate
-- Add `tabindex="-1"` to prevent keyboard focus on purely decorative elements
-
----
-
-### 4. Inline SVG for Complex Decorative Elements
-
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| Inline SVG (React JSX) | N/A (browser standard) | Knotwork borders, wave dividers, textured frames, corner ornaments | Correct tool for complex vector shapes that are not typographic characters. Inline in JSX for zero HTTP requests and full CSS control via currentColor. |
-
-**Confidence:** HIGH -- standard React pattern, verified via [A11Y Collective SVG Accessibility](https://www.a11y-collective.com/blog/svg-accessibility/) and [Smashing Magazine Accessible SVG Patterns](https://www.smashingmagazine.com/2021/05/accessible-svg-patterns-comparison/)
-
-**Use SVG for:** Complex decorative borders, Norse knotwork patterns, geometric ornament frames, wave/interlace dividers, background texture overlays.
-
-**Do NOT use SVG for:** Individual rune characters (use Unicode text -- see section 3 above).
+- The component already uses `placeholder="blur"` with a static import, so the blur data URL is generated at build time and embedded in the HTML. No SSR performance loss.
+- The `onLoad` callback fires **after** the placeholder has been removed, meaning the real image is decoded and painted. This is the exact signal needed to trigger the text animation.
+- The `ref` prop (available since v13.0.6) could provide access to `img.complete` for race-condition handling, but `onLoad` alone is sufficient here because the hero image uses `preload` (which triggers early `<link>` insertion in `<head>`) and `placeholder="blur"` (which ensures the blur is visible while loading).
 
 **Pattern:**
 
-```typescript
-// Decorative knotwork divider component
-function KnotworkDivider() {
+```tsx
+'use client'
+import { useState } from 'react'
+import Image from 'next/image'
+import heroImage from '../../public/images/hero.webp'
+
+export function Hero() {
+  const [imageLoaded, setImageLoaded] = useState(false)
+
   return (
-    <svg
-      aria-hidden="true"
-      role="separator"
-      className="w-full h-8 text-foreground"
-      viewBox="0 0 400 32"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="3"
-    >
-      <path d="M0,16 C50,0 100,32 150,16 C200,0 250,32 300,16 C350,0 400,32 400,16" />
-    </svg>
-  );
+    <section data-loaded={imageLoaded || undefined} className="...">
+      <Image
+        src={heroImage}
+        onLoad={() => setImageLoaded(true)}
+        // ... existing props
+      />
+      <div className="... hero-text">
+        <h1>keech<span>.dev</span></h1>
+      </div>
+    </section>
+  )
 }
 ```
 
-**Accessibility:** All decorative SVGs must have `aria-hidden="true"` and `tabindex="-1"` (if focusable). The `role="separator"` is appropriate for divider elements. No `<title>` or `<desc>` needed for purely decorative graphics.
+```css
+.hero-text {
+  opacity: 0;
+  transform: translateY(20px);
+}
 
-**Why NOT @svgr/webpack:** The project will have approximately 3-5 decorative SVG elements. Hand-crafted inline SVG in JSX is simpler, requires zero build config, and is more maintainable than importing .svg files through a webpack loader pipeline. If the project ever grows to 20+ SVGs, reconsider.
-
----
-
-## What NOT to Add
-
-| Library/Tool | Why NOT |
-|-------------|---------|
-| **@svgr/webpack** | Overkill for 3-5 hand-crafted decorative SVGs. Adds webpack config for no benefit. |
-| **Any rune font package** (BabelStone Runic, Junicode, FreeMono) | Norse font already includes Elder Futhark glyphs at the correct Unicode code points. Adding a second font wastes bandwidth and creates styling inconsistency. |
-| **sharp** (image processing) | Next.js uses sharp internally for image optimization. Do not install separately -- it is already a transitive dependency. |
-| **plaiceholder** or blur-generation tools | `next/image` generates blurDataURL automatically for statically imported images. Manual generation is unnecessary. |
-| **Any icon library for runes** | Runes are typographic characters, not icons. Lucide handles UI icons; runes render as text. |
-| **next-fonts** (third-party) | Deprecated package. `next/font/local` is the official built-in replacement. |
-| **CvltRvne font** | Demo license only. Project decision already excludes this (see PROJECT.md key decisions). |
-| **Google Fonts CDN for Norse** | Norse is not available on Google Fonts or any CDN. Local loading is the only option. |
-| **react-svg-inline** or similar | Unnecessary wrapper around native JSX SVG. React supports SVG natively. |
-| **Framer Motion** | Not needed for this milestone. Rune/decorative elements are static or use CSS transitions only. |
-
----
-
-## Alternatives Considered
-
-| Category | Recommended | Alternative | Why Not Alternative |
-|----------|-------------|-------------|---------------------|
-| Display font loading | `next/font/local` (WOFF2) | Manual `@font-face` in globals.css | next/font/local provides automatic preloading, font-display swap, adjustFontFallback for CLS, and CSS variable output. Manual @font-face requires reimplementing all of this. |
-| Font format | WOFF2 (converted from OTF) | OTF directly via next/font/local | WOFF2 is 30-50% smaller. All Next.js docs use WOFF2. OTF probably works but is not documented for next/font/local (MEDIUM confidence). |
-| Rune rendering | Unicode text (Norse font) | SVG icon sprite sheet | Unicode is semantic, inherits CSS text properties, needs zero additional assets. Norse font already has the glyphs -- using SVG would duplicate them. |
-| Rune rendering | Unicode text (Norse font) | CSS background-image rune assets | Images do not scale with text, do not inherit color, require separate files per rune, and are not accessible. |
-| Hero image | `next/image` static import | `<img>` tag with manual optimization | Loses format conversion (WebP/AVIF), blur placeholder, preloading, CLS prevention, and responsive sizing. |
-| Hero image | `next/image` static import | CSS `background-image` | Cannot use next/image optimization, no blur placeholder, harder responsive behavior, less accessible (no alt text). |
-| Hero image format | PNG source (Next.js converts) | Pre-converted WebP source | PNG gives highest source quality. Next.js converts to WebP/AVIF at serve time. Pre-converting loses the original quality and AVIF option. |
-| Decorative patterns | Inline JSX SVG | Imported .svg files via @svgr | For ~5 decorative elements, inline is simpler. No build config needed. |
-| Decorative patterns | Inline JSX SVG | CSS-only decorative borders | CSS cannot create complex knotwork or interlace patterns. SVG is the correct tool for custom vector artwork. |
-
----
-
-## Configuration Changes Summary
-
-### next.config.ts
-
-```typescript
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  images: {
-    qualities: [75, 90], // Required in Next.js 16. Default is [75].
-  },
-};
-
-export default nextConfig;
+[data-loaded] .hero-text {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
 ```
 
-### src/lib/fonts.ts (MODIFIED)
+**Why `data-loaded` attribute over a class:**
+- Semantic: communicates state, not styling
+- Works naturally with CSS attribute selectors
+- Avoids collision with Tailwind utility classes
 
-Replace `Space_Grotesk` from `next/font/google` with `localFont` from `next/font/local`. Keep `Inter` unchanged. Output the same `--font-display` CSS variable.
+**Confidence: HIGH** -- `onLoad` is documented in official Next.js docs, fires after placeholder removal, requires client component (acceptable tradeoff for this use case).
 
-### src/app/layout.tsx (MINIMAL change)
+### 2. Animation Trigger: Class/Attribute Toggle (not `animation-play-state`)
 
-Replace `spaceGrotesk` import name with `norse`. Template literal pattern `${norse.variable} ${inter.variable}` is identical.
+**Use a data attribute to conditionally apply the animation, rather than starting with `animation-play-state: paused` and toggling to `running`.**
 
-### src/app/globals.css (NO changes for font swap)
+Rationale:
+- `animation-play-state: paused` still allocates the animation on the compositor. The animation "exists" but is frozen. When toggled to `running`, it resumes from where it was paused, which means if there's any delay between initial render and the toggle, the animation may appear to "skip" its beginning.
+- The class/attribute toggle approach means the animation doesn't exist at all until the image loads. When the attribute appears, the animation starts fresh from `from {}`.
+- This is the same pattern used by `scroll-reveal.tsx` in the existing codebase (class toggle between `opacity-0 translate-y-5` and `animate-fade-in-up`).
 
-The `@theme inline { --font-display: var(--font-display); }` block is already generic. May add new CSS classes for rune decorative elements (`.rune-divider`, `.rune-list`) but this is additive, not a modification.
+**Confidence: HIGH** -- matches existing codebase pattern, avoids known `animation-play-state` timing quirks.
 
-### New files
+### 3. Glow/Pulse Overlays: Pseudo-Elements with `opacity` + `transform` Animation
 
-| File | Purpose |
-|------|---------|
-| `src/fonts/Norse-Regular.woff2` | Norse font Regular weight |
-| `src/fonts/Norse-Bold.woff2` | Norse font Bold weight |
-| `src/fonts/LICENSE.txt` | Joel Carrouche Free Font EULA |
-| `src/images/hero-norse-landscape.png` | AI-generated Norse landscape hero image |
+**Use absolutely-positioned `<div>` elements (one per rune glow location) with `radial-gradient` backgrounds, animating only `opacity` for the pulse effect.**
 
----
+Architecture:
+- Each glow point is a `<div>` with `position: absolute`, placed at known rune coordinates using `top`/`left` percentages.
+- The glow itself is a `radial-gradient(circle, rgba(teal, 0.4) 0%, transparent 70%)` background.
+- The pulse animation modulates `opacity` between 0.3 and 0.8 (or similar range) using `@keyframes`.
+- Stagger the pulse across rune positions using `animation-delay` with a CSS custom property `--glow-index` set inline.
 
-## Performance Budget Impact
+**Why pure `opacity` animation (not `box-shadow`, not `filter: blur`, not gradient animation):**
 
-| Asset | Current | After v1.2 | Delta |
-|-------|---------|------------|-------|
-| Display font | Space Grotesk (~25KB via Google CDN + DNS lookup) | Norse (~30-50KB WOFF2 self-hosted, no external DNS) | +5-25KB font, -1 DNS lookup |
-| Hero image | None | ~150-300KB (WebP served, source PNG) | +150-300KB (home page only) |
-| Rune characters | N/A | 0KB (rendered by Norse font already loaded) | Zero |
-| SVG decorations | None | ~2-5KB inline (3-5 elements) | Negligible |
-| **Total home page** | ~25KB fonts | ~180-375KB | Acceptable for portfolio |
-| **Total other pages** | ~25KB fonts | ~30-55KB fonts | Minimal increase |
+| Technique | GPU-Composited? | Repaint Cost | Verdict |
+|-----------|----------------|--------------|---------|
+| `opacity` animation | YES | None (compositor only) | **Use this** |
+| `transform: scale()` animation | YES | None (compositor only) | Combine with opacity for "breathing" effect |
+| `box-shadow` animation | NO | Full repaint per frame | **Avoid** -- CPU-bound, causes jank on mobile |
+| `filter: blur()` animation | Partial | Texture re-rasterization | **Avoid** -- expensive, especially on multiple elements |
+| `background-image` (gradient) animation | NO | Full repaint per frame | **Avoid** -- gradients aren't directly animatable without @property |
 
-**LCP optimization:**
-- Hero image: `preload` starts loading from `<head>` before body parsing
-- Hero image: `placeholder="blur"` provides near-instant perceived load
-- Norse font: `display: "swap"` prevents Flash of Invisible Text
-- Norse font: `adjustFontFallback: "Arial"` minimizes layout shift during font swap
-- Self-hosting eliminates Google Fonts CDN round-trip (saves ~50-100ms)
+**Using `@property` for gradient animation (optional enhancement):**
 
----
+If a more dynamic glow spread is desired (not just opacity pulsing), CSS `@property` allows animating a typed custom property used within a `radial-gradient`:
+
+```css
+@property --glow-spread {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 50%;
+}
+
+.rune-glow {
+  background: radial-gradient(circle, rgba(79, 191, 191, 0.4) 0%, transparent var(--glow-spread));
+  animation: glowPulse 3s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+  0%, 100% { --glow-spread: 50%; opacity: 0.3; }
+  50% { --glow-spread: 70%; opacity: 0.7; }
+}
+```
+
+This allows the glow radius to "breathe" in addition to fading. `@property` is Baseline 2024 (~96% global support). However, note that animating `--glow-spread` inside a gradient **does trigger repaints** (it changes the background-image computation). For 5-8 rune glows, this is acceptable on modern hardware but should be tested on mobile. The pure `opacity` approach is safer.
+
+**Confidence: HIGH** for opacity-only approach. **MEDIUM** for @property gradient approach (works, but requires mobile performance testing).
+
+### 4. Staggered Animation Delays: CSS Custom Properties (not sibling-index)
+
+**Use inline `style` attributes to set a `--glow-index` custom property on each rune glow element, then compute `animation-delay` in CSS with `calc()`.**
+
+```tsx
+{runePositions.map((pos, i) => (
+  <div
+    key={i}
+    className="rune-glow"
+    style={{
+      '--glow-index': i,
+      top: pos.top,
+      left: pos.left,
+    } as React.CSSProperties}
+  />
+))}
+```
+
+```css
+.rune-glow {
+  animation: glowPulse 3s ease-in-out infinite;
+  animation-delay: calc(var(--glow-index) * 0.4s);
+}
+```
+
+**Why not CSS `sibling-index()`:** Only 70% browser support (no Firefox). Not production-ready.
+
+**Why not `nth-child` with hardcoded delays:** The rune positions are data-driven (known coordinates on the hero image). Using `--glow-index` via inline style is cleaner than maintaining nth-child rules that must match element order.
+
+**Confidence: HIGH** -- custom property stagger is a well-established pattern with universal browser support.
+
+### 5. Reduced Motion: Extend Existing Pattern
+
+The codebase already handles `prefers-reduced-motion` in `globals.css` (lines 89-101). Extend this:
+
+```css
+@media (prefers-reduced-motion: reduce) {
+  .rune-glow {
+    animation: none !important;
+    opacity: 0.5 !important; /* Static glow, no pulse */
+  }
+
+  .hero-text {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+```
+
+**Confidence: HIGH** -- extends existing accessibility pattern.
 
 ## Installation
 
 ```bash
-# No new npm packages. Zero installs.
+# No new packages needed.
+# This milestone uses only:
+# - Next.js Image onLoad (built-in)
+# - React useState (built-in)
+# - CSS @keyframes, @property, custom properties (native CSS)
+# - Tailwind CSS v4 @theme directive (already configured)
 ```
 
-**Pre-build steps (one-time, manual):**
+## Alternatives Considered
 
-1. Download Norse font zip from https://www.joelcarrouche.com/fonts/norse
-2. Extract `Norse.otf` and `Norse Bold.otf` from the zip
-3. Convert both to WOFF2 using https://fontsource.org/tools/converter (processes client-side, no upload)
-4. Create `src/fonts/` directory
-5. Place `Norse-Regular.woff2`, `Norse-Bold.woff2`, and `LICENSE.txt` (from zip's `freefont_EULA` file) in `src/fonts/`
-6. Create `src/images/` directory
-7. Place hero PNG image in `src/images/`
+| Recommended | Alternative | When to Use Alternative |
+|-------------|-------------|-------------------------|
+| `onLoad` callback | `ref` + `img.complete` check in useEffect | If you need to detect already-cached images that loaded before React hydration. Not needed here because `placeholder="blur"` ensures a visible state during loading. |
+| `onLoad` callback | `IntersectionObserver` | If the image is below the fold and you want to detect when it scrolls into view. Not applicable -- hero is above-fold. |
+| Data attribute toggle | `animation-play-state: paused/running` | If you need to pause/resume an animation mid-flight (e.g., pause on hover). Not needed here -- animation should start fresh. |
+| `opacity` animation for glow | `box-shadow` animation | Never for this use case. `box-shadow` triggers full repaints and will jank on mobile with multiple glow points. |
+| `opacity` animation for glow | `filter: drop-shadow()` animation | Never for multiple elements. Each `filter` change re-rasterizes the compositing layer. |
+| Inline `--glow-index` custom property | CSS `sibling-index()` | When Firefox ships support and you're targeting only modern browsers (currently 70% support, no Firefox). |
+| CSS `@property` typed custom properties | JavaScript-driven animation (requestAnimationFrame) | If you need physics-based spring animations or complex choreography. Overkill for ambient pulse effects. |
+| Pure CSS animations | Framer Motion / React Spring | If you need gesture-driven, spring-physics, or layout animations. Adds 30-50KB bundle weight for ambient glow effects that CSS handles natively. |
 
----
+## What NOT to Use
 
-## Confidence Assessment
+| Avoid | Why | Use Instead |
+|-------|-----|-------------|
+| Framer Motion / React Spring | Adds 30-50KB for ambient effects CSS handles natively. Overkill for opacity/transform pulses. These libraries are for interactive gesture animations and layout transitions. | CSS `@keyframes` with `opacity` and `transform` |
+| `animation-play-state: paused` then toggle to `running` | Animation "exists" while paused, consuming compositor resources. If toggle timing drifts, animation appears to skip its beginning. Known edge case on Safari. | Conditionally apply animation via data attribute / class toggle |
+| `box-shadow` animation | CPU-bound, triggers full repaint per frame. With 5-8 glow points animating simultaneously, this will cause visible jank on mobile devices. | `opacity` animation on pseudo-elements or positioned divs with `radial-gradient` background |
+| `filter: blur()` animation on multiple elements | Each blur change re-rasterizes the element's compositing layer. Acceptable for one element, problematic for 5-8. | Static `radial-gradient` with animated `opacity` (gradient already provides the soft-edge "blur" look) |
+| `@starting-style` for entry animation | Only relevant to CSS transitions, not `@keyframes` animations. The animation trigger here is state-driven (image loaded), not DOM entry. | Standard `@keyframes` with conditional class/attribute |
+| CSS `sibling-index()` for stagger delays | No Firefox support (70% global coverage). Not production-ready for a public site. | Inline `--glow-index` custom property via `style` attribute |
+| JavaScript `requestAnimationFrame` loop | Runs on main thread, blocks other JS. CSS animations run on the compositor thread. For simple pulse effects, JS offers no benefit and worse performance. | CSS `@keyframes` with `animation-iteration-count: infinite` |
 
-| Claim | Confidence | Source |
-|-------|------------|--------|
-| `next/font/local` supports WOFF2 files and CSS variable output | HIGH | [Next.js Font API Reference](https://nextjs.org/docs/app/api-reference/components/font), all official examples |
-| `next/font/local` configuration options (src, variable, display, fallback, adjustFontFallback) | HIGH | [Next.js Font API Reference](https://nextjs.org/docs/app/api-reference/components/font) |
-| OTF format works directly with `next/font/local` | MEDIUM | Not explicitly documented; community sources suggest it works via format('opentype'), but all official examples use WOFF2 |
-| Norse font includes Elder Futhark Unicode characters | HIGH | [Joel Carrouche Norse font page](https://www.joelcarrouche.com/fonts/norse) states "Latin extended, Runic" with "complete runic alphabet with unicode support" |
-| Norse font is free for commercial use | HIGH | [Joel Carrouche font page](https://www.joelcarrouche.com/fonts/norse), [1001Fonts](https://www.1001fonts.com/norse-font.html), [FontSpace](https://www.fontspace.com/norse-font-f21080) -- all confirm 100% free |
-| `next/image` static import auto-generates blurDataURL | HIGH | [Next.js Image docs](https://nextjs.org/docs/app/getting-started/images) -- "blurDataURL is added automatically" for static imports |
-| `priority` renamed to `preload` in Next.js 16 | HIGH | [Next.js 16 Upgrade Guide](https://nextjs.org/docs/app/guides/upgrading/version-16), [Image Component docs](https://nextjs.org/docs/app/api-reference/components/image) |
-| `images.qualities` default changed to `[75]` in Next.js 16 | HIGH | [Next.js 16 Upgrade Guide](https://nextjs.org/docs/app/guides/upgrading/version-16) |
-| Elder Futhark runes are in Unicode block U+16A0-U+16FF | HIGH | [Unicode.org Runic chart](https://www.unicode.org/charts/PDF/U16A0.pdf), [SYMBL reference](https://symbl.cc/en/unicode/blocks/runic/) |
-| WOFF2 is 30-50% smaller than OTF | HIGH | Multiple sources including [Fontsource](https://fontsource.org/tools/converter), [W3C WOFF2 spec](https://www.w3.org/TR/WOFF2/) |
-| Zero new npm dependencies needed | HIGH | All features verified as Next.js built-ins |
+## Stack Patterns by Variant
 
----
+**If the hero image loads very fast (cached / local):**
+- The `onLoad` fires almost synchronously after mount
+- The text animation starts with no perceptible delay
+- This is the happy path for repeat visitors and SPA navigation
+
+**If the hero image loads slowly (cold load, slow network):**
+- `placeholder="blur"` shows immediately (blur data is inlined in HTML)
+- Text remains hidden (`opacity: 0`) until real image arrives
+- When `onLoad` fires, text fades in on top of the now-visible image
+- The glow pulse starts simultaneously (or with a short additional delay for sequence)
+
+**If user prefers reduced motion:**
+- All animations are suppressed via `@media (prefers-reduced-motion: reduce)`
+- Text is visible immediately (`opacity: 1`)
+- Glow overlays show at static 50% opacity (ambient presence without motion)
+
+**If you later want more complex animation choreography:**
+- Upgrade to Framer Motion `AnimatePresence` for exit animations
+- Use `motion.div` with `variants` for orchestrated sequences
+- This is a future consideration, not needed for ambient glow + synced fade-in
+
+## Version Compatibility
+
+| Package | Compatible With | Notes |
+|---------|-----------------|-------|
+| next@16.1.6 | `Image` `onLoad` prop | Available since Next.js 13. `preload` prop available since Next.js 16.0.0. `priority` deprecated in 16 (use `preload`). |
+| next@16.1.6 | `Image` `ref` prop | Available since Next.js 13.0.6. Not needed for this approach but available as fallback. |
+| react@19.2.4 | Ref cleanup callbacks | React 19 supports cleanup return from ref callbacks. Useful if later adding IntersectionObserver to rune glow elements. |
+| tailwindcss@4.1.18 | `@theme` directive, `@property` | Tailwind v4 uses `@property` internally for its own custom properties. Custom `@property` rules in `globals.css` work alongside Tailwind's. |
+| CSS `@property` | All major browsers | Baseline 2024. ~96% global support. Chrome 85+, Firefox 128+, Safari 15.4+. |
+| CSS `@keyframes` | All browsers | Universal support. No concerns. |
+| CSS custom properties in `calc()` | All major browsers | Baseline. ~97% global support. |
 
 ## Sources
 
-### Official Documentation (HIGH confidence)
-- [Next.js Font Optimization](https://nextjs.org/docs/app/getting-started/fonts) -- local font loading patterns
-- [Next.js Font API Reference](https://nextjs.org/docs/app/api-reference/components/font) -- all configuration options
-- [Next.js Image Component](https://nextjs.org/docs/app/api-reference/components/image) -- props including preload, quality, placeholder
-- [Next.js Image Optimization](https://nextjs.org/docs/app/getting-started/images) -- static import, auto blurDataURL
-- [Next.js 16 Upgrade Guide](https://nextjs.org/docs/app/guides/upgrading/version-16) -- breaking changes
-- [Unicode Runic Block Chart](https://www.unicode.org/charts/PDF/U16A0.pdf) -- official code point reference
+- [Next.js Image Component API Reference (official docs)](https://nextjs.org/docs/app/api-reference/components/image) -- verified `onLoad`, `ref`, `preload`, `placeholder` props and their behavior. **HIGH confidence.**
+- [TkDodo: Ref Callbacks, React 19 and the Compiler](https://tkdodo.eu/blog/ref-callbacks-react-19-and-the-compiler) -- verified React 19 ref cleanup callback pattern. **HIGH confidence.**
+- [web.dev: @property baseline support](https://web.dev/blog/at-property-baseline) -- verified `@property` is Baseline 2024. **HIGH confidence.**
+- [CSS-Tricks: Staggered Animations with CSS Custom Properties](https://cloudfour.com/thinks/staggered-animations-with-css-custom-properties/) -- verified inline custom property stagger pattern. **HIGH confidence.**
+- [SitePoint: CSS Box Shadow Animation Performance](https://www.sitepoint.com/css-box-shadow-animation-performance/) -- verified box-shadow triggers full repaints. **HIGH confidence.**
+- [Tobias Ahlin: Animate box-shadow with smooth performance](https://tobiasahlin.com/blog/how-to-animate-box-shadow/) -- verified pseudo-element opacity technique for shadow-like effects. **HIGH confidence.**
+- [web.dev: High-performance CSS animations](https://web.dev/articles/animations-guide) -- verified `opacity` and `transform` are compositor-only properties. **HIGH confidence.**
+- [caniuse: sibling-count/sibling-index](https://caniuse.com/wf-sibling-count) -- verified 70% support, no Firefox. **HIGH confidence.**
+- [Next.js GitHub Discussion #18386](https://github.com/vercel/next.js/discussions/18386) -- community patterns for image load detection. **MEDIUM confidence** (community discussion, not official docs).
+- [MDN: animation-play-state](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/animation-play-state) -- verified paused/running behavior. **HIGH confidence.**
+- [MDN: @starting-style](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/At-rules/@starting-style) -- verified it applies to transitions only, not keyframe animations. **HIGH confidence.**
 
-### Font Sources (HIGH confidence)
-- [Norse Font by Joel Carrouche](https://www.joelcarrouche.com/fonts/norse) -- official font page
-- [Norse on 1001Fonts](https://www.1001fonts.com/norse-font.html) -- license confirmation
-- [Norse on FontSpace](https://www.fontspace.com/norse-font-f21080) -- format and license details
-
-### Reference Material (MEDIUM confidence)
-- [SYMBL Unicode Runic Block](https://symbl.cc/en/unicode/blocks/runic/) -- character listing and names
-- [BabelStone Runic Elder Futhark](https://www.babelstone.co.uk/Fonts/ElderFuthark.html) -- rune reference (not using this font)
-- [SVG Accessibility - A11Y Collective](https://www.a11y-collective.com/blog/svg-accessibility/) -- decorative SVG best practices
-- [Accessible SVG Patterns - Smashing Magazine](https://www.smashingmagazine.com/2021/05/accessible-svg-patterns-comparison/) -- aria-hidden patterns
-- [Fontsource Font Converter](https://fontsource.org/tools/converter) -- OTF to WOFF2 tool
+---
+*Stack research for: Hero animation synchronization and CSS glow effects*
+*Researched: 2026-02-08*
