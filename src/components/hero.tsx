@@ -6,6 +6,20 @@ import heroImage from '../../public/images/hero.webp'
 import { cn } from '@/lib/utils'
 import { RUNE_GLOWS, computeGlowPositions } from '@/lib/rune-glows'
 
+// Power curve entrance delays with randomized order (Fisher-Yates shuffle).
+// 3000ms total cascade, exponent 1.5 — same feel as original but spatial order varies each load.
+function buildShuffledDelays(count: number): string[] {
+  const indices = Array.from({ length: count }, (_, i) => i)
+  for (let i = indices.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[indices[i], indices[j]] = [indices[j], indices[i]]
+  }
+  return indices.map((order) => {
+    const fraction = count > 1 ? order / (count - 1) : 0
+    return `${Math.round(3000 * Math.pow(fraction, 1.5))}ms`
+  })
+}
+
 export function Hero() {
   const imgRef = useRef<HTMLImageElement>(null)
   const sectionRef = useRef<HTMLElement>(null)
@@ -15,6 +29,7 @@ export function Hero() {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
   const [glowsActive, setGlowsActive] = useState(false)
   const [positions, setPositions] = useState<Array<{ left: string; top: string; visible: boolean }>>([])
+  const entranceDelays = useRef(buildShuffledDelays(RUNE_GLOWS.length))
 
   // Path 1: onLoad fires for fresh image loads (after img.decode())
   const handleLoad = useCallback(() => {
@@ -139,7 +154,7 @@ export function Hero() {
                 width: `${rune.size}rem`,
                 height: `${rune.size}rem`,
                 '--breath-duration': rune.breathDuration,
-                '--entrance-delay': `${Math.random() * 2000}ms`,
+                '--entrance-delay': entranceDelays.current[i],
               } as React.CSSProperties}
             />
           )
