@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-09)
 Phase: v1.3 complete — no active phase
 Plan: N/A
 Status: Milestone v1.3 Hero Polish shipped 2026-02-09
-Last activity: 2026-02-09 -- quick task 3 completed (random rune glow entrance delays)
+Last activity: 2026-02-09 -- quick task 3 completed (randomized rune glow entrance order)
 
 Progress: [██████████] 100% (v1.3)
 
@@ -55,7 +55,7 @@ None.
 |---|-------------|------|--------|-----------|
 | 1 | Sync rune glow fade-in timing to start simultaneously | 2026-02-09 | b02b015 | [1-sync-rune-glow-fade-in-timing-to-start-s](./quick/1-sync-rune-glow-fade-in-timing-to-start-s/) |
 | 2 | Address npm audit vulnerabilities (remove colorable, rewrite validate-colors) | 2026-02-09 | c39de54 | [2-address-npm-audit-vulnerabilities](./quick/2-address-npm-audit-vulnerabilities/) |
-| 3 | Random rune glow entrance delays (0-2000ms per rune) | 2026-02-09 | 1087c90 | [3-revert-sequential-rune-glow-fade-in-and-](./quick/3-revert-sequential-rune-glow-fade-in-and-/) |
+| 3 | Randomized rune glow entrance order (power curve, shuffled per load) | 2026-02-09 | fb14daf | [3-revert-sequential-rune-glow-fade-in-and-](./quick/3-revert-sequential-rune-glow-fade-in-and-/) |
 
 ## Session Continuity
 
