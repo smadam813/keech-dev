@@ -72,13 +72,3 @@ export function computeGlowPositions(
   })
 }
 
-/**
- * Non-linear entrance delay using a power curve (exponent 1.5).
- * Earlier runes enter quickly, later ones progressively slower.
- * Total cascade spans ~3000ms from first to last.
- */
-export function getEntranceDelay(index: number, total: number): string {
-  const totalCascade = 3000
-  const fraction = total > 1 ? index / (total - 1) : 0
-  return `${Math.round(totalCascade * Math.pow(fraction, 1.5))}ms`
-}

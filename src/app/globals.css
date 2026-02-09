@@ -167,23 +167,23 @@
 
   .rune-glow--active {
     animation:
-      runeGlowEntrance 800ms ease-out var(--entrance-delay, 0ms) forwards,
-      runeGlowBreathe var(--breath-duration, 6s) ease-in-out calc(var(--entrance-delay, 0ms) + 800ms) infinite;
+      runeGlowEntrance 800ms ease-out forwards,
+      runeGlowBreathe var(--breath-duration, 6s) ease-in-out 800ms infinite;
   }
 
   .rune-glow--amber {
-    background: radial-gradient(circle, rgba(217, 164, 65, 0.6) 0%, rgba(217, 164, 65, 0) 70%);
-    --glow-opacity: 0.40;
+    background: radial-gradient(circle, rgba(217, 164, 65, 0.69) 0%, rgba(217, 164, 65, 0) 70%);
+    --glow-opacity: 0.5;
   }
 
   .rune-glow--teal {
-    background: radial-gradient(circle, rgba(79, 191, 191, 0.5) 0%, rgba(79, 191, 191, 0) 70%);
-    --glow-opacity: 0.40;
+    background: radial-gradient(circle, rgba(79, 191, 191, 0.69) 0%, rgba(79, 191, 191, 0) 70%);
+    --glow-opacity: 0.5;
   }
 
   .rune-glow--gold {
-    background: radial-gradient(circle, rgba(232, 213, 149, 0.5) 0%, rgba(232, 213, 149, 0) 70%);
-    --glow-opacity: 0.40;
+    background: radial-gradient(circle, rgba(232, 213, 149, 0.69) 0%, rgba(232, 213, 149, 0) 70%);
+    --glow-opacity: 0.5;
   }
 
   /* Respect user motion preferences */
