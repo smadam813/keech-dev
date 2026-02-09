@@ -37,6 +37,7 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -48,6 +49,7 @@
     opacity: 0;
     transform: translateY(24px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -59,6 +61,7 @@
     opacity: 0;
     transform: translate(-50%, -50%) scale(0.6);
   }
+
   to {
     opacity: var(--glow-opacity, 0.6);
     transform: translate(-50%, -50%) scale(1);
@@ -66,10 +69,13 @@
 }
 
 @keyframes runeGlowBreathe {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: var(--glow-opacity, 0.6);
     transform: translate(-50%, -50%) scale(1);
   }
+
   50% {
     opacity: calc(var(--glow-opacity, 0.6) * 0.5);
     transform: translate(-50%, -50%) scale(0.92);
@@ -83,7 +89,12 @@
     overscroll-behavior: none;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-display font-bold;
   }
 
@@ -98,7 +109,10 @@
     line-height: 1.2;
   }
 
-  h3, h4, h5, h6 {
+  h3,
+  h4,
+  h5,
+  h6 {
     letter-spacing: 0.01em;
     line-height: 1.3;
   }
@@ -109,6 +123,7 @@
    ========================================================================== */
 
 @layer components {
+
   /* Intersection Observer triggered animation */
   .animate-fade-in-up {
     animation: fadeInUp 0.5s ease-out forwards;
@@ -122,7 +137,8 @@
   /* Hero background blur-to-sharp reveal */
   .hero-bg {
     filter: blur(12px);
-    transform: translateZ(0); /* Safari GPU promotion for filter transition */
+    transform: translateZ(0);
+    /* Safari GPU promotion for filter transition */
     transition: filter 350ms ease-out;
   }
 
@@ -157,21 +173,22 @@
 
   .rune-glow--amber {
     background: radial-gradient(circle, rgba(217, 164, 65, 0.6) 0%, rgba(217, 164, 65, 0) 70%);
-    --glow-opacity: 0.6;
+    --glow-opacity: 0.40;
   }
 
   .rune-glow--teal {
     background: radial-gradient(circle, rgba(79, 191, 191, 0.5) 0%, rgba(79, 191, 191, 0) 70%);
-    --glow-opacity: 0.5;
+    --glow-opacity: 0.40;
   }
 
   .rune-glow--gold {
     background: radial-gradient(circle, rgba(232, 213, 149, 0.5) 0%, rgba(232, 213, 149, 0) 70%);
-    --glow-opacity: 0.5;
+    --glow-opacity: 0.40;
   }
 
   /* Respect user motion preferences */
   @media (prefers-reduced-motion: reduce) {
+
     .animate-fade-in-up,
     .animate-on-load,
     .hero-text--reveal {
@@ -207,6 +224,7 @@
    ========================================================================== */
 
 @layer components {
+
   /* Code block container - neobrutalist styling */
   figure[data-rehype-pretty-code-figure] {
     @apply my-6 overflow-hidden rounded-lg;
@@ -241,7 +259,7 @@
     counter-reset: line;
   }
 
-  code[data-line-numbers] > [data-line]::before {
+  code[data-line-numbers]>[data-line]::before {
     counter-increment: line;
     content: counter(line);
     display: inline-block;
@@ -265,7 +283,7 @@
   }
 
   /* Inline code (not in code blocks) */
-  :not(pre) > code {
+  :not(pre)>code {
     @apply p-0.5 rounded font-mono text-sm;
     background-color: var(--color-surface);
     border: 1px solid var(--color-foreground);
@@ -333,12 +351,13 @@
     padding-left: 1.75em;
   }
 
-  .prose ul > li {
+  .prose ul>li {
     position: relative;
   }
 
-  .prose ul > li::before {
-    content: '\16A8'; /* Ansuz rune — wisdom/communication (default for blog) */
+  .prose ul>li::before {
+    content: '\16A8';
+    /* Ansuz rune — wisdom/communication (default for blog) */
     font-family: var(--font-display);
     font-weight: 700;
     color: var(--color-accent);
@@ -349,8 +368,9 @@
   }
 
   /* Project pages use Kenaz (craft/creative fire) instead of Ansuz */
-  .prose-projects ul > li::before {
-    content: '\16B2'; /* Kenaz rune — craft/knowledge */
+  .prose-projects ul>li::before {
+    content: '\16B2';
+    /* Kenaz rune — craft/knowledge */
   }
 
   .prose ol {
@@ -362,8 +382,8 @@
   }
 
   /* Nested lists */
-  .prose li > ul,
-  .prose li > ol {
+  .prose li>ul,
+  .prose li>ol {
     @apply mt-2 mb-0;
   }
 
@@ -424,4 +444,3 @@
     }
   }
 }
-
