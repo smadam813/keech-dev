@@ -4,7 +4,7 @@ import { useRef, useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import heroImage from '../../public/images/hero.webp'
 import { cn } from '@/lib/utils'
-import { RUNE_GLOWS, computeGlowPositions, getEntranceDelay } from '@/lib/rune-glows'
+import { RUNE_GLOWS, computeGlowPositions } from '@/lib/rune-glows'
 
 export function Hero() {
   const imgRef = useRef<HTMLImageElement>(null)
@@ -138,7 +138,6 @@ export function Hero() {
                 top: pos.top,
                 width: `${rune.size}rem`,
                 height: `${rune.size}rem`,
-                '--entrance-delay': getEntranceDelay(i, RUNE_GLOWS.length),
                 '--breath-duration': rune.breathDuration,
               } as React.CSSProperties}
             />
