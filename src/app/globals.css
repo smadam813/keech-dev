@@ -327,6 +327,13 @@
     @apply font-display text-lg font-bold mt-6 mb-2;
   }
 
+  /* Anchor scroll offset — clears fixed header (h-16 = 4rem) + 1rem breathing room */
+  .prose h2,
+  .prose h3,
+  .prose h4 {
+    scroll-margin-top: 5rem;
+  }
+
   /* Paragraphs */
   .prose p {
     @apply mb-6;
