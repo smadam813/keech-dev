@@ -12,7 +12,7 @@ Every claim should have evidence. If you say something is faster, show the bench
 
 ## 2. Frontload Value
 
-State what the post delivers in the opening sentences. The first paragraph is the make-or-break moment -- most readers skim the first sentence and decide whether to continue.
+State what the post delivers in the opening sentences. The first paragraph is the make-or-break moment. Most readers skim the first sentence and decide whether to continue.
 
 No throat-clearing. No "In this post, I will..." No historical preamble before the substance. Start with the insight, the technique, or the result.
 
@@ -22,7 +22,7 @@ No throat-clearing. No "In this post, I will..." No historical preamble before t
 
 Use more examples than feels natural. Real-world examples dramatically reduce misinterpretation. Readers who disagree with your prose will often agree with your examples.
 
-Start from real code and simplify -- never invent artificial scenarios from scratch. Use realistic variable names, realistic data shapes, realistic error cases. Complete working code when possible.
+Start from real code and simplify. Never invent artificial scenarios from scratch. Use realistic variable names, realistic data shapes, realistic error cases. Complete working code when possible.
 
 **Anti-pattern:** `foo`, `bar`, `baz`, `myFunction`, `doStuff`. These teach nothing about the real usage context.
 
@@ -32,7 +32,7 @@ Write using ordinary words and simple sentences. The less energy readers spend p
 
 Cut caveats unless they add genuine value. Write "companies reward pragmatic engineers" not "in my experience, I have seen that companies tend to reward pragmatic engineers, though every company operates differently."
 
-Write for one specific person -- a friend or coworker who is smart but unfamiliar with this particular topic. If it works for them, it works for most readers.
+Write for one specific person, a friend or coworker who is smart but unfamiliar with this particular topic. If it works for them, it works for most readers.
 
 ## 5. Structure for Scanning
 
@@ -44,7 +44,7 @@ Use code blocks, bullet lists, and bold text to break up walls of prose. Dense p
 
 ## 6. Build Trust
 
-Acknowledge what you do not know. No project is perfect -- ignoring the downsides risks seeming like you do not understand them. Discuss tradeoffs and limitations honestly.
+Acknowledge what you do not know. No project is perfect. Ignoring the downsides risks seeming like you do not understand them. Discuss tradeoffs and limitations honestly.
 
 Provide context about why you are writing this. A sentence like "I spent two days debugging this and could not find a clear explanation anywhere" builds more trust than positioning yourself as an authority.
 
@@ -52,7 +52,7 @@ Readers trust writers who show their reasoning, not just their conclusions.
 
 ## 7. Dual-Audience Writing
 
-Use the inverted pyramid: broadest value first, detail deepening as the reader scrolls. Each section should be valuable on its own -- a reader can stop at any point and walk away informed.
+Use the inverted pyramid: broadest value first, detail deepening as the reader scrolls. Each section should be valuable on its own. A reader can stop at any point and walk away informed.
 
 Do not write at a "medium" level that satisfies no one. Instead, design the structure so readers self-select their depth. Put the practical takeaway up front. Put the implementation details and edge cases later.
 
@@ -70,6 +70,6 @@ These failure modes (drawn from Julia Evans' analysis) consistently produce conf
 
 - **Inconsistent reader knowledge:** Explaining what a for loop is in one paragraph, then assuming knowledge of malloc in the next. Pick a level and stay there.
 - **Starting abstract:** Leading with formal definitions instead of concrete examples. Open with a specific, realistic scenario and work backward to the abstraction.
-- **Strained analogies:** Extended metaphors that force readers to decode the mapping. Keep analogies brief -- a single idea, not an elaborate system.
+- **Strained analogies:** Extended metaphors that force readers to decode the mapping. Keep analogies brief. A single idea, not an elaborate system.
 - **What without why:** Describing what a tool does without explaining why anyone would use it. Always lead with the problem before the solution.
 - **Unrealistic examples:** Code samples that no one would write in a real project. Start from real code and simplify.

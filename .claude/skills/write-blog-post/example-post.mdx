@@ -57,7 +57,7 @@ const { data } = trpc.user.getById.useQuery({ id: userId });
 // data is automatically typed as User | null
 ```
 
-The key insight: **you never write a response type**. The client infers it from the server implementation. Add a field on the server, and the client sees it immediately -- or gets a type error if it references something that changed.
+The key insight: **you never write a response type**. The client infers it from the server implementation. Add a field on the server, and the client sees it immediately, or gets a type error if it references something that changed.
 
 ## Where tRPC Fell Short
 
@@ -71,10 +71,10 @@ Not everything improved. Two pain points stood out during migration:
 
 tRPC makes sense when your frontend and backend share a TypeScript codebase. If any of these apply, REST is probably the better choice:
 
-- **Multiple client languages** -- mobile apps in Swift/Kotlin, external partners
-- **Public API surface** -- developers expect REST or GraphQL documentation
-- **Simple CRUD with few endpoints** -- the type safety gains do not justify the setup cost for a 5-endpoint app
+- **Multiple client languages.** Mobile apps in Swift/Kotlin, external partners.
+- **Public API surface.** Developers expect REST or GraphQL documentation.
+- **Simple CRUD with few endpoints.** The type safety gains do not justify the setup cost for a 5-endpoint app.
 
 ## What I Would Do Differently
 
-If I migrated again, I would start with the highest-churn endpoints first -- the ones where type drift caused the most bugs. Migrating 40 endpoints in one sprint was unnecessary pressure. The gradual approach, running tRPC and REST side by side, works well and carries less risk.
+If I migrated again, I would start with the highest-churn endpoints first, the ones where type drift caused the most bugs. Migrating 40 endpoints in one sprint was unnecessary pressure. The gradual approach, running tRPC and REST side by side, works well and carries less risk.

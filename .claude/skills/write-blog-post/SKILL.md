@@ -18,14 +18,14 @@ Follow these steps in order:
 
 2. **Read the example post** at `.claude/skills/write-blog-post/example-post.mdx` for format reference showing the expected output structure.
 
-3. **Research the topic** -- spawn 2-3 `blog-researcher` subagents in parallel via the Task tool (`subagent_type: "blog-researcher"`), each covering a different research angle:
+3. **Research the topic.** Spawn 2-3 `blog-researcher` subagents in parallel via the Task tool (`subagent_type: "blog-researcher"`), each covering a different research angle:
    - **Agent 1 — Core concepts:** Current best practices, key facts, authoritative definitions, and how the topic fits into the broader ecosystem.
    - **Agent 2 — Practical examples:** Real-world code patterns, case studies, tutorials, and concrete implementations worth referencing.
    - **Agent 3 — Pitfalls & tradeoffs:** Common mistakes, limitations, counterarguments, performance considerations, and what the "other side" looks like.
 
    Each agent will return structured findings with source URLs. Wait for all agents to complete before proceeding.
 
-4. **Synthesize research** -- review all findings from the research agents and:
+4. **Synthesize research.** Review all findings from the research agents and:
    - Identify the strongest 3-5 insights that are specific and well-sourced.
    - Select the most concrete examples worth including or adapting.
    - Note any contradictions between sources that are worth discussing.
@@ -36,7 +36,7 @@ Follow these steps in order:
 
 6. **Get today's date** with `date +%Y-%m-%d` for the frontmatter date field.
 
-7. **Plan the post structure** -- outline 3-5 main sections based on the topic and research findings. Each section should earn its place. Ground the outline in specific examples and facts from the research.
+7. **Plan the post structure.** Outline 3-5 main sections based on the topic and research findings. Each section should earn its place. Ground the outline in specific examples and facts from the research.
 
 8. **Write the complete MDX file** following the frontmatter requirements and content structure below. Integrate research findings naturally — cite specific facts, use real examples, and acknowledge tradeoffs where relevant.
 
@@ -64,9 +64,9 @@ Always set `draft: true` so the author can review before publishing. Remind the 
 
 ## Content Structure Requirements
 
-- Use `##` for main sections -- these become Table of Contents entries via rehype-slug
+- Use `##` for main sections. These become Table of Contents entries via rehype-slug.
 - Use `###` for subsections
-- Do NOT use `#` (h1) -- the page template renders the title as h1 automatically
+- Do NOT use `#` (h1). The page template renders the title as h1 automatically.
 - Use fenced code blocks with language identifiers (rehype-pretty-code handles syntax highlighting with the github-dark-dimmed theme)
 - **Bold key phrases** for scannability
 - Keep paragraphs short (2-4 sentences max)
@@ -87,13 +87,14 @@ Before saving, verify the post against these criteria:
 
 ## What NOT to Do
 
+- Do not use emdashes or `--` as punctuation. Use periods, commas, colons, or parentheses instead. Break the sentence into two if needed.
 - Do not use emojis in the post content
 - Do not add import statements (Velite handles MDX compilation)
 - Do not use JSX components (only standard markdown + code blocks)
-- Do not include a "Conclusion" section that restates everything -- end with a forward-looking thought or call to action instead
-- Do not use the word "straightforward" or "simply" -- these dismiss complexity
-- Do not start with throat-clearing or preamble -- frontload value immediately
-- Do not use foo/bar/baz in examples -- use realistic names and scenarios
+- Do not include a "Conclusion" section that restates everything. End with a forward-looking thought or call to action instead.
+- Do not use the word "straightforward" or "simply". These dismiss complexity.
+- Do not start with throat-clearing or preamble. Frontload value immediately.
+- Do not use foo/bar/baz in examples. Use realistic names and scenarios.
 
 ## After Writing
 
