@@ -57,6 +57,7 @@ Follow these steps in order:
     - **Neobrutalist (site default)**: Dusty rose background, teal accents, black borders/shadows, flat colors, geometric sans-serif. Matches keech.dev's existing design system.
     - **Clean/minimal**: White or light gray background, single accent color, thin lines, no drop shadows. Good for professional or documentation-style posts.
     - **Dark mode technical**: Dark background, syntax-highlight-inspired palette, monospace elements. Good for developer-focused posts.
+    - **Psychedelic Cosmic**: Psychedelic cosmic illustration style inspired by Parachute Ending animation stills. Void black background (#000000), dusty rose (#D4838A), electric blue (#3B6FC2), gold/amber (#D9A428), neon green (#4ADB5E), crimson (#CC3030), lavender (#9878C0), nebula magenta (#6B2848). Bold flat colors, strong graphic outlines, no gradients or soft shadows.
     - **Custom**: Let the user describe their preferred style in free text.
 
     If the user selects "Neobrutalist," read `src/app/globals.css` to pull the exact current color tokens rather than hardcoding values.
