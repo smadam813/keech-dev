@@ -1,7 +1,7 @@
 ---
 name: blog-researcher
+description: Research agent that gathers sourced facts, examples, and tradeoffs for blog posts.
 tools: WebSearch, WebFetch, Read, Glob, Grep
-model: opus
 ---
 
 # Blog Research Agent
