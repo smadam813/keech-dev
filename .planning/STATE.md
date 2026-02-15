@@ -12,16 +12,16 @@ See: .planning/PROJECT.md (updated 2026-02-09)
 Phase: v1.3 complete — no active phase
 Plan: N/A
 Status: Milestone v1.3 Hero Polish shipped 2026-02-09
-Last activity: 2026-02-15 -- quick task 5 completed (write-blog-post Claude Code skill)
+Last activity: 2026-02-15 -- quick task 6 completed (blog post heading teal accent borders)
 
 Progress: [██████████] 100% (v1.3)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 7
-- Average duration: ~15 min
-- Total execution time: ~1 hour
+- Total plans completed: 8
+- Average duration: ~13 min
+- Total execution time: ~1h 6min
 
 **By Phase:**
 
@@ -34,6 +34,7 @@ Progress: [██████████] 100% (v1.3)
 | quick-3 | 1 | ~1min | ~1min |
 | quick-4 | 1 | ~1min | ~1min |
 | quick-5 | 1 | ~2min | ~2min |
+| quick-6 | 1 | ~6min | ~6min |
 
 *Updated after each plan completion*
 
@@ -60,9 +61,10 @@ None.
 | 3 | Randomized rune glow entrance order (power curve, shuffled per load) | 2026-02-09 | fb14daf | [3-revert-sequential-rune-glow-fade-in-and-](./quick/3-revert-sequential-rune-glow-fade-in-and-/) |
 | 4 | Wider blog post layout (max-w-6xl) + anchor scroll offset for headings | 2026-02-12 | 89337c6 | [4-improve-blog-post-readability-wider-cont](./quick/4-improve-blog-post-readability-wider-cont/) |
 | 5 | Create /write-blog-post Claude Code skill with writing guide and example | 2026-02-15 | 0957511 | [5-create-claude-code-skill-for-writing-blo](./quick/5-create-claude-code-skill-for-writing-blo/) |
+| 6 | Blog post h2/h3 headings with teal accent bottom borders | 2026-02-15 | bd99416 | [6-improve-blog-post-section-headers-to-be-](./quick/6-improve-blog-post-section-headers-to-be-/) |
 
 ## Session Continuity
 
 Last session: 2026-02-15
-Stopped at: Completed quick-5: /write-blog-post Claude Code skill
+Stopped at: Completed quick-6: blog post heading teal accent borders
 Resume file: N/A — start with /gsd:new-milestone
