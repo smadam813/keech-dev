@@ -1,0 +1,80 @@
+<!-- This is a format reference for the write-blog-post skill. Not a real post. -->
+---
+title: "Why I Switched from REST to tRPC in My Next.js App"
+slug: why-i-switched-from-rest-to-trpc
+date: 2026-01-15
+description: "After maintaining 40+ REST endpoints with hand-written types, I moved to tRPC and cut my API boilerplate by 60%. Here is what worked, what did not, and when REST is still the better choice."
+tags:
+  - nextjs
+  - trpc
+  - typescript
+  - api-design
+draft: true
+---
+
+**I spent three months maintaining hand-written TypeScript types for 40+ REST endpoints before I accepted the obvious: the types were always out of sync with the actual responses.** tRPC eliminated that entire class of bug by sharing types between client and server at build time. This post covers the migration, the parts that went smoothly, and the parts that made me reconsider.
+
+## The Problem with Hand-Written API Types
+
+Every REST endpoint in our Next.js app had a matching TypeScript interface on the client side. When a backend dev added a field to the response, the frontend type would not update until someone noticed a bug in production.
+
+```typescript
+// The type said this:
+interface UserResponse {
+  id: string;
+  name: string;
+  email: string;
+}
+
+// But the API actually returned this:
+{
+  id: string;
+  name: string;
+  email: string;
+  avatarUrl: string | null;  // added last sprint, nobody updated the type
+}
+```
+
+This happened constantly. Not because anyone was careless, but because **there was no mechanism forcing the types to stay in sync**. Code review caught some of it. Production bugs caught the rest.
+
+## What tRPC Actually Changes
+
+tRPC generates client types directly from your server router definitions. You define a procedure once, and the client knows the exact input and output types without any extra work.
+
+```typescript
+// server: define the procedure
+export const userRouter = router({
+  getById: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ input }) => {
+      const user = await db.user.findUnique({ where: { id: input.id } });
+      return user; // TypeScript infers the return type from Prisma
+    }),
+});
+
+// client: fully typed, zero manual type definitions
+const { data } = trpc.user.getById.useQuery({ id: userId });
+// data is automatically typed as User | null
+```
+
+The key insight: **you never write a response type**. The client infers it from the server implementation. Add a field on the server, and the client sees it immediately -- or gets a type error if it references something that changed.
+
+## Where tRPC Fell Short
+
+Not everything improved. Two pain points stood out during migration:
+
+**File uploads required workarounds.** tRPC is built around JSON-serializable data. Uploading files meant either base64-encoding them (wasteful) or keeping a separate REST endpoint for uploads. We kept one REST route for file uploads and used tRPC for everything else.
+
+**Third-party API consumers could not use it.** tRPC is a TypeScript-to-TypeScript solution. If external teams or services need to call your API, they need a standard REST or GraphQL interface. We added an OpenAPI export using `trpc-openapi` for our public endpoints, which added complexity we did not anticipate.
+
+## When REST Is Still the Right Call
+
+tRPC makes sense when your frontend and backend share a TypeScript codebase. If any of these apply, REST is probably the better choice:
+
+- **Multiple client languages** -- mobile apps in Swift/Kotlin, external partners
+- **Public API surface** -- developers expect REST or GraphQL documentation
+- **Simple CRUD with few endpoints** -- the type safety gains do not justify the setup cost for a 5-endpoint app
+
+## What I Would Do Differently
+
+If I migrated again, I would start with the highest-churn endpoints first -- the ones where type drift caused the most bugs. Migrating 40 endpoints in one sprint was unnecessary pressure. The gradual approach, running tRPC and REST side by side, works well and carries less risk.
