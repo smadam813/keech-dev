@@ -50,10 +50,34 @@ Tailwind CSS v4 with **CSS-first configuration** — all design tokens live in `
 - Dusty rose background, teal accents, black foreground
 - Single theme only (no dark mode) — the palette is the brand
 
+### Rune Design Language
+
+Elder Futhark runes are used as a thematic design element throughout the site — not just decoration but part of the brand identity:
+
+- **Navigation**: Each route has a mapped rune (Othala → Home, Ansuz → Blog, Kenaz → Projects, Mannaz → About) defined in `src/components/runes/rune-config.ts`
+- **Hero**: 14 rune glows positioned over the hero image with breathing animations. Positioning data in `src/lib/rune-glows.ts` uses 0–1 fraction coordinates, computed against `object-fit: cover` scaling via `computeGlowPositions()`
+- **Animation timing**: Rune breathing durations use non-round values (5.0s–7.5s) to prevent visual synchronization
+- Runes are colored by aett grouping: Freyr (amber), Hagal (teal), Tyr (gold)
+
+### Animation Patterns
+
+- **Reduced-motion**: Checked on mount via `prefers-reduced-motion` media query and listened for changes; all animations respect this
+- **Hero reveal sequence**: Orchestrated with setTimeout — image blur→sharp, then text fade-up, then rune glow cascade
+- **Scroll reveal**: `ScrollReveal` component wraps elements with single-fire IntersectionObserver (threshold 0.1)
+- **Scroll lock**: Uses `position: fixed` approach (iOS Safari safe, unlike `overflow: hidden`)
+
 ### Static Generation
 
-All content pages use `generateStaticParams()` for full static generation. No API routes, no database, no server-side data fetching.
+All content pages use `generateStaticParams()` for full static generation. No API routes, no database, no server-side data fetching. SEO handled by `sitemap.ts` and `robots.ts` in app root.
+
+### Utilities
+
+- `cn()` in `src/lib/utils.ts` — clsx + tailwind-merge for combining Tailwind classes without conflicts. Used throughout all components.
 
 ### Fonts
 
-Space Grotesk (headings) and Inter (body) configured in `src/lib/fonts.ts`, plus Norse custom WOFF2 fonts in `public/fonts/`.
+Space Grotesk (headings) and Inter (body) configured in `src/lib/fonts.ts`, plus Norse custom WOFF2 fonts in `public/fonts/`. Font CSS variables: `--font-display` (Norse), `--font-body` (Inter).
+
+## Blog Writing Skill
+
+The `.claude/skills/write-blog-post/` skill orchestrates end-to-end blog post creation: spawns 2–3 `blog-researcher` subagents in parallel, synthesizes research, writes MDX, generates image prompts, and validates with `npm run velite`. Writing principles are in `.claude/skills/write-blog-post/writing-guide.md` — specificity over abstraction, frontload value, conversational tone, no emdashes or emojis.
