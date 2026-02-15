@@ -3,7 +3,7 @@ name: write-blog-post
 description: Write a blog post for keech.dev. Generates a complete MDX file with valid frontmatter and publishes to content/posts/. Use when asked to write, draft, or create a blog post.
 argument-hint: "[topic or description of the blog post]"
 disable-model-invocation: true
-allowed-tools: Read, Write, Glob, Grep, Bash(date *)
+allowed-tools: Read, Write, Glob, Grep, Bash(date *), Task(blog-researcher)
 ---
 
 # Write a Blog Post for keech.dev
@@ -18,17 +18,31 @@ Follow these steps in order:
 
 2. **Read the example post** at `.claude/skills/write-blog-post/example-post.mdx` for format reference showing the expected output structure.
 
-3. **Check existing posts** with `Glob content/posts/*.mdx` to avoid duplicate slugs and see what topics already exist.
+3. **Research the topic** -- spawn 2-3 `blog-researcher` subagents in parallel via the Task tool (`subagent_type: "blog-researcher"`), each covering a different research angle:
+   - **Agent 1 — Core concepts:** Current best practices, key facts, authoritative definitions, and how the topic fits into the broader ecosystem.
+   - **Agent 2 — Practical examples:** Real-world code patterns, case studies, tutorials, and concrete implementations worth referencing.
+   - **Agent 3 — Pitfalls & tradeoffs:** Common mistakes, limitations, counterarguments, performance considerations, and what the "other side" looks like.
 
-4. **Get today's date** with `date +%Y-%m-%d` for the frontmatter date field.
+   Each agent will return structured findings with source URLs. Wait for all agents to complete before proceeding.
 
-5. **Plan the post structure** -- outline 3-5 main sections based on the topic. Each section should earn its place. Consider what specific knowledge gap the post fills.
+4. **Synthesize research** -- review all findings from the research agents and:
+   - Identify the strongest 3-5 insights that are specific and well-sourced.
+   - Select the most concrete examples worth including or adapting.
+   - Note any contradictions between sources that are worth discussing.
+   - Determine the specific knowledge gap this post fills that existing content does not.
+   - Discard anything generic, unsupported, or tangential.
 
-6. **Write the complete MDX file** following the frontmatter requirements and content structure below.
+5. **Check existing posts** with `Glob content/posts/*.mdx` to avoid duplicate slugs and see what topics already exist.
 
-7. **Save the file** to `content/posts/{slug}.mdx` using the Write tool.
+6. **Get today's date** with `date +%Y-%m-%d` for the frontmatter date field.
 
-8. **Verify compilation** by running `npm run velite` to confirm the post compiles without errors.
+7. **Plan the post structure** -- outline 3-5 main sections based on the topic and research findings. Each section should earn its place. Ground the outline in specific examples and facts from the research.
+
+8. **Write the complete MDX file** following the frontmatter requirements and content structure below. Integrate research findings naturally — cite specific facts, use real examples, and acknowledge tradeoffs where relevant.
+
+9. **Save the file** to `content/posts/{slug}.mdx` using the Write tool.
+
+10. **Verify compilation** by running `npm run velite` to confirm the post compiles without errors.
 
 ## Frontmatter Requirements
 
@@ -38,7 +52,7 @@ Every post must start with valid YAML frontmatter matching the Velite Post schem
 ---
 title: "[max 99 chars, descriptive and specific]"
 slug: "[kebab-case, derived from title]"
-date: "[YYYY-MM-DD, today's date from step 4]"
+date: "[YYYY-MM-DD, today's date from step 6]"
 description: "[max 300 chars, one-sentence summary that frontloads value]"
 tags:
   - "[relevant lowercase tags]"
