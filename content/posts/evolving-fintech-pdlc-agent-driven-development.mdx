@@ -15,6 +15,8 @@ draft: false
 
 This post covers what an agent-driven PDLC actually looks like, why fintech's regulatory constraints make the transition easier (not harder), and how to manage the change without cratering morale.
 
+![The DORA Paradox: individual metrics like code quality and review speed improved, but team outcomes like throughput and stability declined](/images/posts/dora-paradox.webp)
+
 ## Why Your PDLC Breaks When AI Shows Up
 
 Traditional agile assumes human-speed iteration. Two-week sprints, daily standups, retrospectives. These ceremonies exist because humans need coordination rhythms to stay aligned. AI coding assistants do not care about your sprint cadence.
@@ -39,11 +41,7 @@ Here is the core shift: **instead of AI tools that autocomplete your code, you g
 
 A typical flow looks like this:
 
-```
-Analyst (discovery) → PM (PRD) → Architect (technical blueprint)
-→ Scrum Master (story sharding) → Developer (implementation)
-→ QA (validation)
-```
+![Agent-driven development pipeline: Analyst produces a brief, PM produces a PRD, Architect produces a design, Scrum Master produces stories, Developer produces code, QA validates](/images/posts/agent-driven-workflow.webp)
 
 Each agent produces a versioned document. The PM agent outputs a PRD. The Architect agent outputs a technical design referencing that PRD. The Scrum Master "shards" the design into atomic story files, each containing just enough context for a developer agent to implement without loading the entire project.
 
@@ -78,6 +76,8 @@ The practical implication: **retrofitting compliance onto unstructured AI usage 
 Plaid, a fintech company handling sensitive financial data, achieved over 75% of engineers regularly using AI coding tools within six months. Their approach is the best public case study for how regulated companies can pull this off.
 
 Here is a phased rollout synthesized from Plaid's experience, Faros AI's scaling framework, and DORA's adoption research, adapted for a 50-200 person fintech engineering org:
+
+![Phased rollout timeline: Foundation (Weeks 1-4), Pilot (Weeks 5-12), Structure (Weeks 13-20), Expansion (Weeks 21-36), Steady State (Week 37+)](/images/posts/phased-rollout-timeline.webp)
 
 ### Phase 1: Foundation (Weeks 1-4)
 
@@ -132,6 +132,8 @@ The structured workflow is now the standard PDLC. Quarterly compliance reviews v
 A financial services firm following a similar timeline achieved 82% training completion, 75% team-wide AI tool adoption, and a 40% reduction in negative attitudes toward AI over nine months.
 
 ## Change Management That Does Not Tank Morale
+
+![What drives AI adoption: AI acceptable-use policies (+451%), dedicated learning time (+131%), addressing developer concerns (+125%), local team champions (+22%). Source: DORA Research](/images/posts/what-drives-ai-adoption.webp)
 
 Here is the tension you are managing: the 2025 Stack Overflow Developer Survey found that 80% of developers use AI tools in their workflows, but only 29% trust AI accuracy, down from 40% the previous year. Adoption is up. Trust is down. That gap is where morale problems live.
 
