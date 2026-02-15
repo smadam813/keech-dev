@@ -105,11 +105,11 @@ date: "[YYYY-MM-DD, use today's date shown above]"
 description: "[max 300 chars, one-sentence summary that frontloads value]"
 tags:
   - "[relevant lowercase tags]"
-draft: true
+draft: false
 ---
 ```
 
-Always set `draft: true` so the author can review before publishing. Remind the author to set `draft: false` when ready to publish.
+Always set `draft: false` so the author can review the post locally with `npm run dev`. Remind the author to verify the post looks correct before deploying.
 
 ## Content Structure Requirements
 
