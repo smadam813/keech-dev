@@ -3,149 +3,82 @@ name: write-blog-post
 description: Writes a complete blog post for keech.dev as an MDX file with research-backed content, valid frontmatter, and image generation prompts. Publishes to content/posts/. Use when asked to write, draft, create, or compose a blog post.
 argument-hint: "[topic or description of the blog post]"
 disable-model-invocation: true
-allowed-tools: Read, Write, Glob, Grep, Bash(npm run *), Task(general-purpose), AskUserQuestion
+allowed-tools: Read, Glob, Grep, Bash(npm run *), Task(general-purpose), AskUserQuestion
 ---
 
 # Write a Blog Post for keech.dev
 
-You are writing a blog post for keech.dev. The topic is: $ARGUMENTS
+You are the orchestrator for writing a blog post on keech.dev. The topic is: $ARGUMENTS
 
 **Today's date:** !`date +%Y-%m-%d`
 
-## Process
+Your job is to coordinate research, collect user preferences, then delegate writing and image-prompt generation to subagents. **Do NOT read research files, the writing guide, or the example post yourself.** Subagents handle all heavy content work.
 
-Follow these steps in order:
+## Step 1: Derive the slug
 
-1. **Read the writing guide** at `.claude/skills/write-blog-post/writing-guide.md` for writing principles and tone guidance.
+Create a kebab-case slug from the topic (e.g., "Team Topologies for AI Agents" becomes `team-topologies-ai-agents`).
 
-2. **Read the example post** at `.claude/skills/write-blog-post/example-post.mdx` for format reference showing the expected output structure.
+## Step 2: Research the topic
 
-3. **Research the topic.** Read the research instructions at `.claude/skills/write-blog-post/research-instructions.md`, then spawn 2-3 `general-purpose` subagents in parallel via the Task tool (`subagent_type: "general-purpose"`). In each agent's prompt, include the full research instructions you just read along with the post slug and assigned angle. Tell each agent: "The post slug is `{slug}`. Save your research to `.research/{slug}/{angle}.md`." Each agent covers a different research angle:
-   - **Agent 1 — Core concepts:** Current best practices, key facts, authoritative definitions, and how the topic fits into the broader ecosystem.
-   - **Agent 2 — Practical examples:** Real-world code patterns, case studies, tutorials, and concrete implementations worth referencing.
-   - **Agent 3 — Pitfalls & tradeoffs:** Common mistakes, limitations, counterarguments, performance considerations, and what the "other side" looks like.
+Read the research instructions at `.claude/skills/write-blog-post/research-instructions.md`, then spawn 2-3 `general-purpose` subagents in parallel via the Task tool (`subagent_type: "general-purpose"`). In each agent's prompt, include the full research instructions you just read along with the post slug and assigned angle. Tell each agent: "The post slug is `{slug}`. Save your research to `.research/{slug}/{angle}.md`."
 
-   Each agent will save its full findings to `.research/{slug}/` and return a brief summary with the file path. Wait for all agents to complete before proceeding.
+Research angles:
+- **Agent 1 (Core concepts):** Current best practices, key facts, authoritative definitions, and how the topic fits into the broader ecosystem.
+- **Agent 2 (Practical examples):** Real-world code patterns, case studies, tutorials, and concrete implementations worth referencing.
+- **Agent 3 (Pitfalls & tradeoffs):** Common mistakes, limitations, counterarguments, performance considerations, and what the "other side" looks like.
 
-4. **Synthesize research.** Read the research files saved by each agent in `.research/{slug}/`. Review all findings and:
-   - Identify the strongest 3-5 insights that are specific and well-sourced.
-   - Select the most concrete examples worth including or adapting.
-   - Note any contradictions between sources that are worth discussing.
-   - Determine the specific knowledge gap this post fills that existing content does not.
-   - Discard anything generic, unsupported, or tangential.
+Each agent saves full findings to `.research/{slug}/` and returns a **brief summary (3-5 sentences)** with the file path. Wait for all agents to complete.
 
-5. **Check existing posts** with `Glob content/posts/*.mdx` to avoid duplicate slugs and see what topics already exist.
+## Step 3: Collect user preferences
 
-6. **Plan the post structure.** Outline 3-5 main sections based on the topic and research findings. Each section should earn its place. Ground the outline in specific examples and facts from the research.
+Present the research summaries to the user via `AskUserQuestion` with two questions:
 
-7. **Write the complete MDX file** following the frontmatter requirements and content structure below. Integrate research findings naturally — cite specific facts, use real examples, and acknowledge tradeoffs where relevant.
+**Question 1** (header: "Angle"):
+> "Here are the research summaries:\n\n{paste each agent's summary}\n\nAny specific angles or emphasis you want for the post?"
 
-8. **Save the file** to `content/posts/{slug}.mdx` using the Write tool.
+Options:
+- "Use your best judgment" (description: "Pick the strongest thread from the research")
+- "Focus on practical/how-to" (description: "Emphasize concrete steps and code examples")
+- "Focus on analysis/opinion" (description: "Emphasize tradeoffs, comparisons, and perspective")
 
-9. **Verify compilation** by running `npm run velite` to confirm the post compiles without errors.
+**Question 2** (header: "Image style"):
+> "What visual style should the image generation prompts use?"
 
-10. **Ask about image style.** Use AskUserQuestion to ask the author what visual
-    style they want for image generation prompts. If they select the site default
-    (neobrutalist), read `src/app/globals.css` to extract the current color tokens
-    from the `@theme` block.
+Options:
+- "Neobrutalist (site default)" (description: "Dusty rose background, teal accents, black borders/shadows, flat colors. Matches keech.dev's design system.")
+- "Clean/minimal" (description: "White or light gray background, single accent color, thin lines, no drop shadows.")
+- "Dark mode technical" (description: "Dark background, syntax-highlight-inspired palette, monospace elements.")
+- "Psychedelic Cosmic" (description: "Void black background, bold flat colors (dusty rose, electric blue, gold, neon green), strong graphic outlines, no gradients.")
 
-    **Question to ask:**
+## Step 4: Gather context for subagents
 
-    > "What visual style should the image generation prompts use?"
+Run these in parallel:
+- If the user selected "Neobrutalist," read `src/app/globals.css` and extract the `@theme` color tokens (~15 lines). Otherwise set color tokens to empty string.
+- `Glob content/posts/*.mdx` to collect existing slugs.
 
-    **Options:**
-    - **Neobrutalist (site default)**: Dusty rose background, teal accents, black borders/shadows, flat colors, geometric sans-serif. Matches keech.dev's existing design system.
-    - **Clean/minimal**: White or light gray background, single accent color, thin lines, no drop shadows. Good for professional or documentation-style posts.
-    - **Dark mode technical**: Dark background, syntax-highlight-inspired palette, monospace elements. Good for developer-focused posts.
-    - **Psychedelic Cosmic**: Psychedelic cosmic illustration style inspired by Parachute Ending animation stills. Void black background (#000000), dusty rose (#D4838A), electric blue (#3B6FC2), gold/amber (#D9A428), neon green (#4ADB5E), crimson (#CC3030), lavender (#9878C0), nebula magenta (#6B2848). Bold flat colors, strong graphic outlines, no gradients or soft shadows.
-    - **Custom**: Let the user describe their preferred style in free text.
+## Step 5: Spawn the writer subagent
 
-    If the user selects "Neobrutalist," read `src/app/globals.css` to pull the exact current color tokens rather than hardcoding values.
+Spawn a single `general-purpose` subagent via the Task tool. In its prompt, provide:
+- The topic, slug, and today's date
+- The list of existing post slugs (so it avoids duplicates)
+- The user's angle/emphasis preference
+- The research directory path: `.research/{slug}/`
+- Instruction: "Read `.claude/skills/write-blog-post/writer-instructions.md` for your full instructions. Follow them exactly."
 
-11. **Generate image prompts.** Review the completed post and identify 3-5 sections
-    that would benefit from a diagram, infographic, chart, or visual. Prioritize
-    data-heavy sections, process flows, timelines, and comparisons. For each:
-    - Write a detailed image generation prompt incorporating the chosen style
-    - Include specific data points, labels, and flow steps from the post content
-    - Specify aspect ratio (16:9 for wide diagrams, 4:3 for charts) and placement location
-    Save all prompts to `.research/{slug}/image-prompts.md` using this format:
+Wait for the writer to return a completion summary (file path, title, structure overview, compilation status).
 
-    ```markdown
-    # Image Prompts for: {post title}
+## Step 6: Spawn the image-prompt subagent
 
-    **Visual style:** {style name and key tokens}
-    **Post file:** content/posts/{slug}.mdx
-    **Recommended output location:** public/images/posts/
+Spawn a single `general-purpose` subagent via the Task tool. In its prompt, provide:
+- The post file path (from the writer's summary)
+- The slug
+- The user's chosen image style
+- The color tokens (if neobrutalist was selected)
+- Instruction: "Read `.claude/skills/write-blog-post/image-prompt-instructions.md` for your full instructions. Follow them exactly."
 
-    ---
+Wait for the image-prompt agent to return a summary (file path, count, one-line per prompt).
 
-    ## 1. {Descriptive name}
-
-    **Placement:** {section heading and position}
-    **Aspect ratio:** 16:9
-    **Suggested filename:** {slug-fragment}.webp
-
-    > {The full image generation prompt}
-
-    ---
-
-    ## 2. {Descriptive name}
-    ...
-    ```
-
-## Frontmatter Requirements
-
-Every post must start with valid YAML frontmatter matching the Velite Post schema:
-
-```yaml
----
-title: "[max 99 chars, descriptive and specific]"
-slug: "[kebab-case, derived from title]"
-date: "[YYYY-MM-DD, use today's date shown above]"
-description: "[max 300 chars, one-sentence summary that frontloads value]"
-tags:
-  - "[relevant lowercase tags]"
-draft: false
----
-```
-
-Always set `draft: false` so the author can review the post locally with `npm run dev`. Remind the author to verify the post looks correct before deploying.
-
-## Content Structure Requirements
-
-- Use `##` for main sections. These become Table of Contents entries via rehype-slug.
-- Use `###` for subsections
-- Do NOT use `#` (h1). The page template renders the title as h1 automatically.
-- Use fenced code blocks with language identifiers (rehype-pretty-code handles syntax highlighting with the github-dark-dimmed theme)
-- **Bold key phrases** for scannability
-- Keep paragraphs short (2-4 sentences max)
-- Include at least one code example if the topic is technical
-
-## Quality Checklist
-
-Before saving, verify the post against these criteria:
-
-- [ ] Does the opening paragraph immediately tell the reader what they will learn?
-- [ ] Are there concrete examples, not just abstract descriptions?
-- [ ] Is the tone conversational but not flippant?
-- [ ] Does every section earn its place (no filler)?
-- [ ] Are code examples realistic (no foo/bar/baz)?
-- [ ] Is the slug unique among existing posts?
-- [ ] Is the title under 99 characters?
-- [ ] Is the description under 300 characters?
-
-## What NOT to Do
-
-- Do not use emdashes or `--` as punctuation. Use periods, commas, colons, or parentheses instead. Break the sentence into two if needed.
-- Do not use emojis in the post content
-- Do not add import statements (Velite handles MDX compilation)
-- Do not use JSX components (only standard markdown + code blocks)
-- Do not include a "Conclusion" section that restates everything. End with a forward-looking thought or call to action instead.
-- Do not use the word "straightforward" or "simply". These dismiss complexity.
-- Do not start with throat-clearing or preamble. Frontload value immediately.
-- Do not use foo/bar/baz in examples. Use realistic names and scenarios.
-
-## After Writing
+## Step 7: Report results
 
 Tell the author:
 1. The file path where the post was saved
@@ -154,5 +87,5 @@ Tell the author:
 4. Suggest running the images through webp conversion before adding to the post
 5. Recommend placement: `public/images/posts/{descriptive-name}.webp`
 6. Suggest they review the content and make any personal adjustments
-7. Remind them to set `draft: false` when ready to publish
+7. Remind them that `draft: false` is set so they can preview with `npm run dev`
 8. Recommend running `npm run build` to verify everything compiles before deploying
