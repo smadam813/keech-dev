@@ -1,6 +1,7 @@
 ---
 name: blog-researcher
 tools: WebSearch, WebFetch, Read, Glob, Grep
+model: opus
 ---
 
 # Blog Research Agent
