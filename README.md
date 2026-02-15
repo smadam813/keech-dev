@@ -1,6 +1,6 @@
 # keech.dev
 
-A personal portfolio and blog with a distinctive **neobrutalist design** — bold borders, hard-offset shadows, and a cosmic palette of dusty rose, teal, and gold. Norse-touched geometric accents throughout.
+A personal portfolio and blog with a distinctive **neobrutalist design**: bold borders, hard-offset shadows, and a cosmic palette of dusty rose, teal, and gold. An Elder Futhark rune system runs through the site as a thematic layer, with runes mapped to navigation routes, a glowing constellation over the hero image, and colors grouped by aett (Freyr amber, Hagal teal, Tyr gold).
 
 **[keech.dev](https://keech.dev)**
 
@@ -18,7 +18,7 @@ A personal portfolio and blog with a distinctive **neobrutalist design** — bol
 
 ## Design System
 
-The visual identity is defined entirely in CSS via Tailwind v4's `@theme` directive — no `tailwind.config.js` needed.
+The visual identity is defined entirely in CSS via Tailwind v4's `@theme` directive. No `tailwind.config.js` needed.
 
 ```css
 --color-background: #E8B4B8;   /* dusty rose    */
@@ -30,7 +30,7 @@ The visual identity is defined entirely in CSS via Tailwind v4's `@theme` direct
 --border-width:     3px;                 /* bold, confident       */
 ```
 
-Single theme by design — the aesthetic **is** the brand.
+Single theme by design. The aesthetic **is** the brand.
 
 ## Architecture
 
@@ -44,8 +44,10 @@ src/
 │   ├── layout/                 # Header (hamburger nav), Footer
 │   ├── blog/                   # PostCard, MDXContent, CodeBlock, TOC
 │   ├── projects/               # ProjectCard, TechBadge
-│   └── ui/                     # ScrollReveal (Intersection Observer)
-└── lib/                        # cn() utility, font config
+│   ├── runes/                  # RuneDivider, rune-config
+│   ├── ui/                     # ScrollReveal (Intersection Observer)
+│   └── hero.tsx                # Hero section with rune glow overlay
+└── lib/                        # cn(), font config, rune-glows
 
 content/
 ├── posts/*.mdx                 # Blog posts
@@ -61,18 +63,18 @@ MDX files in `content/` are processed by Velite at build time into type-safe col
 ```typescript
 import { posts, projects } from '@/.velite'
 
-// Full type safety — title, slug, date, tags, toc, body, readingTime
+// Full type safety: title, slug, date, tags, toc, body, readingTime
 ```
 
-The MDX pipeline includes heading slugs, syntax highlighting with `github-dark-dimmed`, line numbers, and highlighted lines — all configured in `velite.config.ts`.
+The MDX pipeline includes heading slugs, syntax highlighting with `github-dark-dimmed`, line numbers, and highlighted lines, all configured in `velite.config.ts`.
 
 ## Features
 
-- **Responsive** — mobile-first with hamburger menu, sticky TOC on desktop
-- **Accessible** — WCAG AA contrast, `prefers-reduced-motion`, `inert` focus management, semantic HTML
-- **SEO** — dynamic metadata, OpenGraph, sitemap.xml, robots.txt
-- **Performant** — static generation, image optimization, minimal client JS
-- **Scroll animations** — Intersection Observer with single-trigger and motion preference respect
+- **Responsive:** mobile-first with hamburger menu, sticky TOC on desktop
+- **Accessible:** WCAG AA contrast, `prefers-reduced-motion`, `inert` focus management, semantic HTML
+- **SEO:** dynamic metadata, OpenGraph, sitemap.xml, robots.txt
+- **Performant:** static generation, image optimization, minimal client JS
+- **Scroll animations:** Intersection Observer with single-trigger and motion preference respect
 
 ## Development
 
@@ -85,7 +87,7 @@ npm run lint      # ESLint
 
 ## How It Was Built
 
-This site was built with [Claude Code](https://docs.anthropic.com/en/docs/claude-code) as a pair programming partner — from design system decisions through implementation. AI-assisted development with human direction and judgment throughout.
+This site was built with [Claude Code](https://docs.anthropic.com/en/docs/claude-code) as a pair programming partner, from design system decisions through implementation. AI-assisted development with human direction and judgment throughout.
 
 ## License
 
