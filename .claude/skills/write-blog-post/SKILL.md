@@ -3,7 +3,7 @@ name: write-blog-post
 description: Write a blog post for keech.dev. Generates a complete MDX file with valid frontmatter and publishes to content/posts/. Use when asked to write, draft, or create a blog post.
 argument-hint: "[topic or description of the blog post]"
 disable-model-invocation: true
-allowed-tools: Read, Write, Glob, Grep, Bash(date *), Task(blog-researcher)
+allowed-tools: Read, Write, Glob, Grep, Bash(date *), Task(blog-researcher), AskUserQuestion
 ---
 
 # Write a Blog Post for keech.dev
@@ -18,14 +18,14 @@ Follow these steps in order:
 
 2. **Read the example post** at `.claude/skills/write-blog-post/example-post.mdx` for format reference showing the expected output structure.
 
-3. **Research the topic.** Spawn 2-3 `blog-researcher` subagents in parallel via the Task tool (`subagent_type: "blog-researcher"`), each covering a different research angle:
+3. **Research the topic.** Spawn 2-3 `blog-researcher` subagents in parallel via the Task tool (`subagent_type: "blog-researcher"`). Include the post slug in each agent's prompt so they know where to save their research files. Tell each agent: "The post slug is `{slug}`. Save your research to `.research/{slug}/{angle}.md`." Each agent covers a different research angle:
    - **Agent 1 — Core concepts:** Current best practices, key facts, authoritative definitions, and how the topic fits into the broader ecosystem.
    - **Agent 2 — Practical examples:** Real-world code patterns, case studies, tutorials, and concrete implementations worth referencing.
    - **Agent 3 — Pitfalls & tradeoffs:** Common mistakes, limitations, counterarguments, performance considerations, and what the "other side" looks like.
 
-   Each agent will return structured findings with source URLs. Wait for all agents to complete before proceeding.
+   Each agent will save its full findings to `.research/{slug}/` and return a brief summary with the file path. Wait for all agents to complete before proceeding.
 
-4. **Synthesize research.** Review all findings from the research agents and:
+4. **Synthesize research.** Read the research files saved by each agent in `.research/{slug}/`. Review all findings and:
    - Identify the strongest 3-5 insights that are specific and well-sourced.
    - Select the most concrete examples worth including or adapting.
    - Note any contradictions between sources that are worth discussing.
@@ -43,6 +43,54 @@ Follow these steps in order:
 9. **Save the file** to `content/posts/{slug}.mdx` using the Write tool.
 
 10. **Verify compilation** by running `npm run velite` to confirm the post compiles without errors.
+
+11. **Ask about image style.** Use AskUserQuestion to ask the author what visual
+    style they want for image generation prompts. If they select the site default
+    (neobrutalist), read `src/app/globals.css` to extract the current color tokens
+    from the `@theme` block.
+
+    **Question to ask:**
+
+    > "What visual style should the image generation prompts use?"
+
+    **Options:**
+    - **Neobrutalist (site default)**: Dusty rose background, teal accents, black borders/shadows, flat colors, geometric sans-serif. Matches keech.dev's existing design system.
+    - **Clean/minimal**: White or light gray background, single accent color, thin lines, no drop shadows. Good for professional or documentation-style posts.
+    - **Dark mode technical**: Dark background, syntax-highlight-inspired palette, monospace elements. Good for developer-focused posts.
+    - **Custom**: Let the user describe their preferred style in free text.
+
+    If the user selects "Neobrutalist," read `src/app/globals.css` to pull the exact current color tokens rather than hardcoding values.
+
+12. **Generate image prompts.** Review the completed post and identify 3-5 sections
+    that would benefit from a diagram, infographic, chart, or visual. Prioritize
+    data-heavy sections, process flows, timelines, and comparisons. For each:
+    - Write a detailed image generation prompt incorporating the chosen style
+    - Include specific data points, labels, and flow steps from the post content
+    - Specify aspect ratio (16:9 for wide diagrams, 4:3 for charts) and placement location
+    Save all prompts to `.research/{slug}/image-prompts.md` using this format:
+
+    ```markdown
+    # Image Prompts for: {post title}
+
+    **Visual style:** {style name and key tokens}
+    **Post file:** content/posts/{slug}.mdx
+    **Recommended output location:** public/images/posts/
+
+    ---
+
+    ## 1. {Descriptive name}
+
+    **Placement:** {section heading and position}
+    **Aspect ratio:** 16:9
+    **Suggested filename:** {slug-fragment}.webp
+
+    > {The full image generation prompt}
+
+    ---
+
+    ## 2. {Descriptive name}
+    ...
+    ```
 
 ## Frontmatter Requirements
 
@@ -100,6 +148,10 @@ Before saving, verify the post against these criteria:
 
 Tell the author:
 1. The file path where the post was saved
-2. Suggest they review the content and make any personal adjustments
-3. Remind them to set `draft: false` when ready to publish
-4. Recommend running `npm run build` to verify everything compiles before deploying
+2. The file path of the image prompts file (`.research/{slug}/image-prompts.md`)
+3. That they should generate images using their preferred tool (Gemini, Midjourney, DALL-E, etc.)
+4. Suggest running the images through webp conversion before adding to the post
+5. Recommend placement: `public/images/posts/{descriptive-name}.webp`
+6. Suggest they review the content and make any personal adjustments
+7. Remind them to set `draft: false` when ready to publish
+8. Recommend running `npm run build` to verify everything compiles before deploying
