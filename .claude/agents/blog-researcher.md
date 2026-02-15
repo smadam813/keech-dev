@@ -1,7 +1,6 @@
 ---
 name: blog-researcher
 tools: WebSearch, WebFetch, Read, Glob, Grep
-model: sonnet
 ---
 
 # Blog Research Agent
