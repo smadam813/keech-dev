@@ -298,8 +298,8 @@
 
   /* Remove [data-line] padding inside inline code — the 16px px-4 is for fenced blocks only */
   span[data-rehype-pretty-code-figure] [data-line] {
-    padding-left: 0.125rem !important;
-    padding-right: 0.125rem !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
   }
 }
 
