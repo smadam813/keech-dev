@@ -29,40 +29,31 @@ Research angles:
 
 Each agent saves full findings to `.research/{slug}/` and returns a **brief summary (3-5 sentences)** with the file path. Wait for all agents to complete.
 
-## Step 3: Collect user preferences
+## Step 3: Synthesize research
 
-Present the research summaries to the user via `AskUserQuestion` with two questions:
+Spawn a single `general-purpose` subagent via the Task tool. In its prompt, provide:
+- The research directory path: `.research/{slug}/`
+- Instruction: "Read every file in `.research/{slug}/`. Synthesize all findings into a single consolidated brief at `.research/{slug}/synthesis.md`. Merge overlapping ideas, resolve contradictions, and organize the material into clear themes the writer can build from. Return the file path and a 3-5 sentence summary of the key takeaways."
 
-**Question 1** (header: "Angle"):
-> "Here are the research summaries:\n\n{paste each agent's summary}\n\nAny specific angles or emphasis you want for the post?"
+Wait for the agent to return its summary.
 
-Options:
-- "Use your best judgment" (description: "Pick the strongest thread from the research")
-- "Focus on practical/how-to" (description: "Emphasize concrete steps and code examples")
-- "Focus on analysis/opinion" (description: "Emphasize tradeoffs, comparisons, and perspective")
+## Step 4: Collect user preferences
 
-**Question 2** (header: "Image style"):
+Present the research synthesis summary to the user via `AskUserQuestion` with one question:
+
+**Question 1** (header: "Image style"):
 > "What visual style should the image generation prompts use?"
 
 Options:
 - "Neobrutalist (site default)" (description: "Dusty rose background, teal accents, black borders/shadows, flat colors. Matches keech.dev's design system.")
-- "Clean/minimal" (description: "White or light gray background, single accent color, thin lines, no drop shadows.")
-- "Dark mode technical" (description: "Dark background, syntax-highlight-inspired palette, monospace elements.")
 - "Psychedelic Cosmic" (description: "Void black background, bold flat colors (dusty rose, electric blue, gold, neon green), strong graphic outlines, no gradients.")
-
-## Step 4: Gather context for subagents
-
-Run these in parallel:
-- If the user selected "Neobrutalist," read `src/app/globals.css` and extract the `@theme` color tokens (~15 lines). Otherwise set color tokens to empty string.
-- `Glob content/posts/*.mdx` to collect existing slugs.
 
 ## Step 5: Spawn the writer subagent
 
 Spawn a single `general-purpose` subagent via the Task tool. In its prompt, provide:
 - The topic, slug, and today's date
-- The list of existing post slugs (so it avoids duplicates)
-- The user's angle/emphasis preference
-- The research directory path: `.research/{slug}/`
+- The synthesis file path: `.research/{slug}/synthesis.md`
+- Instruction: "Glob `content/posts/*.mdx` to check for slug collisions before writing."
 - Instruction: "Read `.claude/skills/write-blog-post/writer-instructions.md` for your full instructions. Follow them exactly."
 
 Wait for the writer to return a completion summary (file path, title, structure overview, compilation status).
@@ -73,7 +64,6 @@ Spawn a single `general-purpose` subagent via the Task tool. In its prompt, prov
 - The post file path (from the writer's summary)
 - The slug
 - The user's chosen image style
-- The color tokens (if neobrutalist was selected)
 - Instruction: "Read `.claude/skills/write-blog-post/image-prompt-instructions.md` for your full instructions. Follow them exactly."
 
 Wait for the image-prompt agent to return a summary (file path, count, one-line per prompt).
@@ -87,5 +77,4 @@ Tell the author:
 4. Suggest running the images through webp conversion before adding to the post
 5. Recommend placement: `public/images/posts/{descriptive-name}.webp`
 6. Suggest they review the content and make any personal adjustments
-7. Remind them that `draft: false` is set so they can preview with `npm run dev`
-8. Recommend running `npm run build` to verify everything compiles before deploying
+7. Recommend running `npm run build` to verify everything compiles before deploying

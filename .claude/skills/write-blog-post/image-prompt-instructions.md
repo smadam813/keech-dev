@@ -1,6 +1,6 @@
 # Image Prompt Agent Instructions
 
-You are generating image prompts for a keech.dev blog post. The orchestrator has provided you with: the post file path, slug, chosen image style, and color tokens (if neobrutalist).
+You are generating image prompts for a keech.dev blog post. The orchestrator has provided you with: the post file path, slug, and chosen image style.
 
 Follow these steps in order.
 
@@ -28,13 +28,7 @@ For each identified section, write a detailed image generation prompt incorporat
 ### Style References
 
 **Neobrutalist (site default):**
-Use the exact color tokens provided by the orchestrator. General characteristics: hard-offset shadows, bold black borders (3px), flat colors, geometric sans-serif typography, no gradients or soft shadows. Dusty rose backgrounds, teal accents, black foreground.
-
-**Clean/minimal:**
-White or light gray (#F5F5F5) background, single accent color (#2563EB blue or #059669 green), thin 1px lines, no drop shadows, generous whitespace, system sans-serif typography. Flat icons, minimal decoration.
-
-**Dark mode technical:**
-Dark background (#1E1E2E or #0D1117), syntax-highlight-inspired palette: green (#A6E3A1) for success/values, blue (#89B4FA) for types/labels, yellow (#F9E2AF) for warnings/highlights, red (#F38BA8) for errors, gray (#6C7086) for secondary text. Monospace typography, code-editor aesthetic.
+Read `src/app/globals.css` and extract the `@theme` color tokens to use as your palette. General characteristics: hard-offset shadows, bold black borders (3px), flat colors, geometric sans-serif typography, no gradients or soft shadows. Dusty rose backgrounds, teal accents, black foreground.
 
 **Psychedelic Cosmic:**
 Void black background (#000000). Bold flat colors: dusty rose (#D4838A), electric blue (#3B6FC2), gold/amber (#D9A428), neon green (#4ADB5E), crimson (#CC3030), lavender (#9878C0), nebula magenta (#6B2848). Strong graphic outlines, no gradients or soft shadows. Cosmic/psychedelic illustration style inspired by Parachute Ending animation stills.
