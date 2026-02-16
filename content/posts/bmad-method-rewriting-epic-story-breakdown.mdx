@@ -19,19 +19,6 @@ The [BMAD Method](https://github.com/bmad-code-org/BMAD-METHOD) (Breakthrough Me
 
 A traditional Jira story is roughly 100 words. Context lives in human memory, linked documents that may be stale, and tribal knowledge from standups. A BMAD story file is a structured markdown document containing architectural context, acceptance criteria, implementation tasks mapped to those criteria via `(AC: #N)` notation, security requirements, testing edge cases, dependency maps, source citations back to the PRD and architecture docs, a "Learnings from Previous Stories" section, and a Dev Agent Record for implementation-time notes.
 
-Here is the structural hierarchy shift:
-
-```
-Traditional:
-  Epic > Feature > Story > Task
-  Context: scattered across Jira fields, Confluence, human memory
-
-BMAD:
-  Product Brief > PRD > Architecture > Epics > Stories
-  Context: pushed down into each story file
-  File: docs/stories/1.1.add-item-to-cart.story.md
-```
-
 ![Traditional context fragmentation vs. BMAD's consolidated story file: scattered Jira cards, Confluence docs, and human memory on the left; a single self-contained markdown file with all sections embedded on the right](/images/posts/bmad-context-architecture-comparison.webp)
 
 The naming convention (`{epicNum}.{storyNum}.{storyTitle}.story.md`) is deliberate. Stories live in `docs/stories/` as first-class versioned artifacts in your repo, not as records in a third-party tool. Each one is self-contained by design: an AI agent can load a single story file and begin implementation without loading the full project documentation. BMAD's sharding mechanism targets a context window of roughly 8,000 tokens per story, down from 30,000+ for full project docs.
@@ -43,17 +30,6 @@ The naming convention (`{epicNum}.{storyNum}.{storyTitle}.story.md`) is delibera
 In a traditional flow, a PM writes "Integrate Stripe" as an 8-point story in Sprint 4. The developer picks it up, reads the one-liner, spends half a day figuring out which Stripe API version to use, discovers the architecture does not account for webhooks, and pulls in a senior engineer for a design discussion.
 
 In BMAD, the flow looks different:
-
-```
-Phase 2: PM Agent produces PRD.md (requirements, personas, epic hierarchy)
-Phase 3: Architect Agent produces architecture.md (Stripe API v2024-12-18,
-         webhook handling via queue, idempotency key strategy)
-Phase 3: PM Agent shards PRD into docs/prd/epic-1.md, epic-2.md
-Phase 4: SM Agent generates docs/stories/2.1.stripe-integration.story.md
-         (contains: Stripe version, webhook architecture, error handling
-          strategy, acceptance criteria with test cases, security
-          requirements for PCI scope)
-```
 
 ![BMAD phased pipeline: Product Brief flows to PRD, Architecture, and Stories, with agent roles and context pushed down into self-contained story files](/images/posts/bmad-phased-pipeline.webp)
 
@@ -139,9 +115,11 @@ Teams maintaining both BMAD story files and Jira tickets experience status diver
 
 Community integrations are emerging. An Atlassian Orchestrator plugin (`@groupby/bmad-plugin-atlassian-orchestrator`) bridges BMAD docs and Jira. A community MCP server enables AI agents to read and write Jira via API. BMAD v6 includes a `tracking_system` field in `sprint-status.yaml` as a placeholder. But integration with existing PM tools is an active area of development, not a solved problem.
 
-### Brownfield projects break the model
+### Brownfield support has matured, with caveats
 
-BMAD assumes a linear flow: Brief, PRD, Architecture, Stories. Bug investigation, feature additions to existing systems, and iterative discovery workflows do not fit this sequence cleanly. The Brief, PRD, and Architecture are system-wide singletons, making multi-feature parallel work difficult. The user becomes "the coordination engine," manually relaying information between agents that have no shared context mechanism.
+Early brownfield adoption was rough. Issues [#446](https://github.com/bmad-code-org/BMAD-METHOD/issues/446), [#563](https://github.com/bmad-code-org/BMAD-METHOD/issues/563), and [#497](https://github.com/bmad-code-org/BMAD-METHOD/issues/497) documented agent coordination gaps, duplicated document-first workflows, and naming inconsistencies between brownfield and standard templates. All three were resolved by November 2025. BMAD v6 now includes a dedicated `document-project` command for analyzing existing codebases, brownfield-specific architecture templates, and a workflow that does not require starting from a product brief.
+
+The remaining friction is structural rather than buggy. The full Brief, PRD, Architecture, Stories pipeline assumes you are defining a system from scratch. For brownfield work (bug investigation, feature additions to an existing codebase, iterative discovery), you typically skip the Brief and PRD phases and enter at the architecture or story level. That works, but it means the upstream traceability chain that makes greenfield BMAD stories so self-contained is thinner. You trade some context richness for the ability to start where the work actually begins.
 
 ## The Evolutionary Architecture Tension
 
