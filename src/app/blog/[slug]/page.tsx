@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation'
 import { MDXContent } from '@/components/blog/mdx-content'
 import { TableOfContents } from '@/components/blog/toc'
 import { TagChip } from '@/components/blog/tag-chip'
+import { ArrowLeft } from 'lucide-react'
+import Link from 'next/link'
 import type { Metadata } from 'next'
 
 interface PostPageProps {
@@ -62,6 +64,15 @@ export default async function PostPage({ params }: PostPageProps) {
 
   return (
     <article className="w-full mx-auto max-w-6xl px-6 pt-12 pb-16">
+      {/* Back link */}
+      <Link
+        href="/blog"
+        className="inline-flex items-center gap-2 text-muted hover:text-foreground transition-colors mb-8"
+      >
+        <ArrowLeft size={16} />
+        <span>All Blog Posts</span>
+      </Link>
+
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_16rem] gap-12 lg:gap-16">
         {/* Main content */}
         <div>
