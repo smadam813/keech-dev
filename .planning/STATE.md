@@ -12,16 +12,16 @@ See: .planning/PROJECT.md (updated 2026-02-09)
 Phase: v1.3 complete — no active phase
 Plan: N/A
 Status: Milestone v1.3 Hero Polish shipped 2026-02-09
-Last activity: 2026-02-15 -- quick task 7 completed (blog post heading sizes increased)
+Last activity: 2026-02-16 -- quick task 8 completed (back-to-blog navigation link on blog post pages)
 
 Progress: [██████████] 100% (v1.3)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 9
-- Average duration: ~12 min
-- Total execution time: ~1h 7min
+- Total plans completed: 10
+- Average duration: ~11 min
+- Total execution time: ~1h 8min
 
 **By Phase:**
 
@@ -36,6 +36,7 @@ Progress: [██████████] 100% (v1.3)
 | quick-5 | 1 | ~2min | ~2min |
 | quick-6 | 1 | ~6min | ~6min |
 | quick-7 | 1 | ~1min | ~1min |
+| quick-8 | 1 | ~1min | ~1min |
 
 *Updated after each plan completion*
 
@@ -64,9 +65,10 @@ None.
 | 5 | Create /write-blog-post Claude Code skill with writing guide and example | 2026-02-15 | 0957511 | [5-create-claude-code-skill-for-writing-blo](./quick/5-create-claude-code-skill-for-writing-blo/) |
 | 6 | Blog post h2/h3 headings with teal accent bottom borders | 2026-02-15 | bd99416 | [6-improve-blog-post-section-headers-to-be-](./quick/6-improve-blog-post-section-headers-to-be-/) |
 | 7 | Increased blog post heading sizes for stronger visual hierarchy | 2026-02-15 | 328ee62 | [7-improve-visibility-of-blog-post-section-](./quick/7-improve-visibility-of-blog-post-section-/) |
+| 8 | Back-to-blog navigation link on blog post pages | 2026-02-16 | a9f1ed9 | [8-add-back-to-blog-navigation-link-on-blog](./quick/8-add-back-to-blog-navigation-link-on-blog/) |
 
 ## Session Continuity
 
-Last session: 2026-02-15
-Stopped at: Completed quick-7: blog post heading sizes increased for visual hierarchy
+Last session: 2026-02-16
+Stopped at: Completed quick-8: back-to-blog navigation link on blog post pages
 Resume file: N/A — start with /gsd:new-milestone
