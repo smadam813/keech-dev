@@ -10,7 +10,23 @@ Every claim should have evidence. If you say something is faster, show the bench
 
 **Test:** Can a reader take a concrete action after reading any given paragraph? If not, make it more specific.
 
-## 2. Frontload Value
+## 2. Personal Voice First
+
+This blog is written in Adam's voice. Every post should read like Adam sharing what he has learned, not like a research report summarizing what others found.
+
+**Lead with personal experience, not external sources.** Open with your own take, your team's situation, or a problem you encountered firsthand. External references (reports, expert quotes, case studies) are supporting evidence woven into your narrative, never the headline.
+
+Wrong: "The 2024 DORA Report found that AI tools decreased throughput by 1.5%."
+Right: "My team has been experimenting with AI coding tools for six months, and the productivity gains have been uneven. The DORA Report's finding of a 1.5% throughput drop tracks with what I have seen firsthand."
+
+Wrong: "Chris Lema argues that context should live in the file system."
+Right: "I have been burned by context loss between agent sessions enough times to appreciate what Chris Lema means when he says intelligence should live in the file system, not memory."
+
+The pattern: personal context first, then the external source as corroboration or contrast. Readers came to keech.dev for Adam's perspective. The research supports the perspective; it does not replace it.
+
+**Test:** Does the opening paragraph contain a first-person sentence before any external citation? If not, restructure it.
+
+## 3. Frontload Value
 
 State what the post delivers in the opening sentences. The first paragraph is the make-or-break moment. Most readers skim the first sentence and decide whether to continue.
 
@@ -18,7 +34,7 @@ No throat-clearing. No "In this post, I will..." No historical preamble before t
 
 **Test:** If a reader stops after the first paragraph, do they know exactly what this post offers?
 
-## 3. Concrete Examples
+## 4. Concrete Examples
 
 Use more examples than feels natural. Real-world examples dramatically reduce misinterpretation. Readers who disagree with your prose will often agree with your examples.
 
@@ -26,7 +42,7 @@ Start from real code and simplify. Never invent artificial scenarios from scratc
 
 **Anti-pattern:** `foo`, `bar`, `baz`, `myFunction`, `doStuff`. These teach nothing about the real usage context.
 
-## 4. Conversational Tone
+## 5. Conversational Tone
 
 Write using ordinary words and simple sentences. The less energy readers spend parsing your prose, the more they have for your ideas.
 
@@ -34,7 +50,7 @@ Cut caveats unless they add genuine value. Write "companies reward pragmatic eng
 
 Write for one specific person, a friend or coworker who is smart but unfamiliar with this particular topic. If it works for them, it works for most readers.
 
-## 5. Structure for Scanning
+## 6. Structure for Scanning
 
 Short paragraphs (2-4 sentences). **Bold key phrases** so skimmers catch the important bits. Clear section headings that tell readers what they will get, not clever headings that obscure the content.
 
@@ -42,7 +58,7 @@ Progressive disclosure: basics first, depth later. Let readers who need the simp
 
 Use code blocks, bullet lists, and bold text to break up walls of prose. Dense paragraphs signal "this will be hard to read" even when the content is not complex.
 
-## 6. Build Trust
+## 7. Build Trust
 
 Acknowledge what you do not know. No project is perfect. Ignoring the downsides risks seeming like you do not understand them. Discuss tradeoffs and limitations honestly.
 
@@ -50,13 +66,13 @@ Provide context about why you are writing this. A sentence like "I spent two day
 
 Readers trust writers who show their reasoning, not just their conclusions.
 
-## 7. Dual-Audience Writing
+## 8. Dual-Audience Writing
 
 Use the inverted pyramid: broadest value first, detail deepening as the reader scrolls. Each section should be valuable on its own. A reader can stop at any point and walk away informed.
 
 Do not write at a "medium" level that satisfies no one. Instead, design the structure so readers self-select their depth. Put the practical takeaway up front. Put the implementation details and edge cases later.
 
-## 8. Title Craft
+## 9. Title Craft
 
 Be specific. "How I Cut Our Docker Build Time from 20 Minutes to 2" outperforms "Optimizing Docker Builds." Personal framing ("I built...", "How I...") signals a real person with real experience.
 
@@ -64,7 +80,7 @@ Create genuine curiosity gaps without clickbait. The title should make the reade
 
 Aim for titles under 70 characters for good display across platforms.
 
-## 9. Common Anti-Patterns to Avoid
+## 10. Common Anti-Patterns to Avoid
 
 These failure modes (drawn from Julia Evans' analysis) consistently produce confusing writing:
 
@@ -73,3 +89,5 @@ These failure modes (drawn from Julia Evans' analysis) consistently produce conf
 - **Strained analogies:** Extended metaphors that force readers to decode the mapping. Keep analogies brief. A single idea, not an elaborate system.
 - **What without why:** Describing what a tool does without explaining why anyone would use it. Always lead with the problem before the solution.
 - **Unrealistic examples:** Code samples that no one would write in a real project. Start from real code and simplify.
+- **Leading with external sources:** Opening a section or the entire post with what a report said, what an expert claimed, or what a study found. The reader should encounter Adam's experience or take before encountering any external reference.
+- **Unsourced name-drops:** Mentioning a person, report, or organization by name without linking to the source. Every named reference needs an inline link. See the citation guidance in writer-instructions.md.

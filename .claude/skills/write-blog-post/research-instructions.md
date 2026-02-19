@@ -23,7 +23,7 @@ Structure your research file with these sections:
 - [Known issue, limitation, or counterargument] — *Source: [URL or reference]*
 
 ### Source URLs
-- [Title or description](URL)
+- [Author/Org — Title or description](URL)
 
 After saving, return a brief summary (3-5 sentences) of your most important findings and the file path where the full research was saved.
 
@@ -35,3 +35,4 @@ After saving, return a brief summary (3-5 sentences) of your most important find
 - **Be specific over generic.** "React 19 added the `use` hook for promise unwrapping" is useful. "React has many features" is not.
 - **Never fabricate sources, statistics, or quotes.** If you cannot find what you need, report the gap.
 - **Include version numbers and dates** when relevant so the post author knows if information might be stale.
+- **Collect citation-ready metadata.** For every source, record the author name (or organization), the publication or platform name, and the URL. The writer agent needs all three to construct proper inline attribution. Use the format `[Author/Org — Title](URL)` in the Source URLs section.

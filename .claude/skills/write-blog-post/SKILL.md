@@ -76,5 +76,5 @@ Tell the author:
 3. That they should generate images using their preferred tool (Gemini, Midjourney, DALL-E, etc.)
 4. Suggest running the images through webp conversion before adding to the post
 5. Recommend placement: `public/images/posts/{descriptive-name}.webp`
-6. Suggest they review the content and make any personal adjustments
+6. Highlight that first-person sections need Adam's review. The writer agent ghostwrites personal framing based on Adam's professional context, but Adam should review and refine any first-person anecdotes, adding real details from his experience where the writer used general framing.
 7. Recommend running `npm run build` to verify everything compiles before deploying
