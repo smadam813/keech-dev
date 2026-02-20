@@ -24,12 +24,12 @@ export function PostCard({ post }: PostCardProps) {
   return (
     <Link
       href={`/blog/${post.slug}`}
-      className="block group"
+      className="block h-full group"
     >
       <article
         className="h-full p-6 bg-surface border-[3px] border-black shadow-brutal
                    hover:shadow-brutal-hover hover:translate-x-[2px] hover:translate-y-[2px]
-                   transition-all duration-150"
+                   transition-all duration-150 flex flex-col"
       >
         <header className="mb-4">
           <h2 className="font-display text-xl font-bold group-hover:text-accent transition-colors">
@@ -47,7 +47,7 @@ export function PostCard({ post }: PostCardProps) {
         </p>
 
         {post.tags.length > 0 && (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 mt-auto">
             {post.tags.map((tag) => (
               <TagChip key={tag} tag={tag} />
             ))}
