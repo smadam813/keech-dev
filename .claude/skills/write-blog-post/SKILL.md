@@ -20,7 +20,7 @@ Create a kebab-case slug from the topic (e.g., "Team Topologies for AI Agents" b
 
 ## Step 2: Research the topic
 
-Read the research instructions at `.claude/skills/write-blog-post/research-instructions.md`, then spawn 2-3 `general-purpose` subagents in parallel via the Task tool (`subagent_type: "general-purpose"`). In each agent's prompt, include the full research instructions you just read along with the post slug and assigned angle. Tell each agent: "The post slug is `{slug}`. Save your research to `.research/{slug}/{angle}.md`."
+Read the research instructions at `.claude/skills/write-blog-post/research-instructions.md`, then spawn 3 `general-purpose` subagents in parallel via the Task tool (`subagent_type: "general-purpose"`). In each agent's prompt, include the full research instructions you just read along with the post slug and assigned angle. Tell each agent: "The post slug is `{slug}`. Save your research to `.research/{slug}/{angle}.md`."
 
 Research angles:
 - **Agent 1 (Core concepts):** Current best practices, key facts, authoritative definitions, and how the topic fits into the broader ecosystem.
