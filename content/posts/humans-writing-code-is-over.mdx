@@ -19,7 +19,9 @@ This post is about why Dahl's statement matters more than the dozens that came b
 
 Every few months, a tech leader declares coding is dead. [Jensen Huang told a GTC audience](https://analyticsindiamag.com/ai-trends/11-times-coding-died-in-2025/) in 2023 that "everyone is a programmer now." [Dario Amodei predicted](https://finance.yahoo.com/news/anthropic-ceo-says-ai-could-193020957.html) in March 2025 that AI would write 90% of code within three to six months. [Satya Nadella said](https://www.cnbc.com/2025/04/29/satya-nadella-says-as-much-as-30percent-of-microsoft-code-is-written-by-ai.html) 20-30% of Microsoft's code was already AI-written. [Tobias Lutke told Shopify teams](https://analyticsindiamag.com/ai-trends/11-times-coding-died-in-2025/) they must prove AI cannot do work before hiring a human.
 
-I have tracked these predictions since 2023, and the pattern is consistent: **bold claims, partial delivery, then a quiet recalibration.** By end of 2025, [41% of code was AI-generated](https://www.index.dev/blog/ai-pair-programming-statistics), not 90%. Amodei's timeline passed without materializing at industry scale, though [Anthropic's CPO claimed](https://officechai.com/ai/dario-amodei-had-predicted-90-of-code-would-be-written-by-ai-but-now-at-anthropic-its-effectively-100-anthropic-cpo/) it came true internally.
+I have tracked these predictions since 2023, and the pattern is consistent: **bold claims, partial delivery, then a quiet recalibration.**
+
+![Timeline of CEO predictions about coding's death from 2023-2026 contrasted with actual industry data, with Ryan Dahl's practitioner perspective highlighted](/images/posts/predictions-vs-reality-timeline.webp) By end of 2025, [41% of code was AI-generated](https://www.index.dev/blog/ai-pair-programming-statistics), not 90%. Amodei's timeline passed without materializing at industry scale, though [Anthropic's CPO claimed](https://officechai.com/ai/dario-amodei-had-predicted-90-of-code-would-be-written-by-ai-but-now-at-anthropic-its-effectively-100-anthropic-cpo/) it came true internally.
 
 **So why does Ryan Dahl's version hit differently?**
 
@@ -42,6 +44,8 @@ The [2025 Stack Overflow Developer Survey](https://survey.stackoverflow.co/2025/
 But buried in the same Stack Overflow survey: **only 29% trust AI accuracy, down from 40% the prior year.** 46% actively distrust AI output. The number one frustration, cited by 66% of developers, is "AI solutions that are almost right, but not quite."
 
 I recognize this on my own team. People use the tools because not using them feels like falling behind. But they do not trust the output. **84% adoption, 29% trust. A workforce using tools it does not believe in.** That gap is where the real problems live.
+
+![Two vertical bars showing 84% AI tool adoption towering over 29% trust, separated by a lightning-bolt chasm representing the trust gap](/images/posts/adoption-trust-chasm.webp)
 
 ### The perception-reality gap
 
@@ -69,14 +73,7 @@ This is what I described in my [post on agent-driven development](/blog/evolving
 
 On my team, the daily work for a senior engineer increasingly looks like this:
 
-```
-Before (2024):           After (2026):
-80% coding               10% coding
-10% meetings             30% architecture & code review
-10% planning             30% agent orchestration & prompting
-                         20% mentoring & collaboration
-                         10% meetings
-```
+![Side-by-side pie charts comparing 2024 engineer time allocation (80% coding) against 2026 (30% architecture, 30% orchestration, 10% coding)](/images/posts/engineer-role-inversion.webp)
 
 That is not a theoretical model. It is the pattern I see playing out, and it aligns with what [byteiota documented](https://byteiota.com/software-engineering-2026-ai-reshapes-developer-jobs/) across the industry. The shift is real. But it raises a question that keeps me up at night.
 
@@ -95,6 +92,8 @@ The pipeline is collapsing from multiple directions:
 
 [Source: Stack Overflow Blog](https://stackoverflow.blog/2025/12/26/ai-vs-gen-z/)
 
+![A crumbling funnel diagram showing the narrowing junior developer pipeline with statistics at each stage](/images/posts/junior-pipeline-collapse.webp)
+
 I asked in my [BMAD post](/blog/bmad-method-rewriting-epic-story-breakdown) what happens to knowledge transfer when estimation ceremonies disappear. Dahl's statement raises the same question at a larger scale: **if juniors never write code, how do they learn to orchestrate it?** The skills that make a great orchestrator (architecture intuition, debugging instinct, knowing what "wrong" looks like) are skills developed through years of writing code and making mistakes.
 
 ### The Air France 447 problem
@@ -112,6 +111,8 @@ The speed of AI code generation is real. So is the debt it creates.
 [GitClear analyzed 211 million changed lines](https://www.gitclear.com/ai_assistant_code_quality_2025_research) across Google, Microsoft, Meta, and enterprise repos. **Code duplication blocks (5+ identical lines) increased 8x during 2024.** Copy/paste exceeded refactored ("moved") code for the first time in recorded history. Code churn (new code revised within two weeks) rose from 3.1% in 2020 to 5.7% in 2024.
 
 AI generates code by pattern matching against training data. It does not refactor. It duplicates. And that duplication compounds.
+
+![A tightening downward spiral mapping compounding AI-generated technical debt with data points from GitClear, Veracode, CodeRabbit, and CircleCI](/images/posts/ai-code-debt-spiral.webp)
 
 ### Security is worse, not better
 
