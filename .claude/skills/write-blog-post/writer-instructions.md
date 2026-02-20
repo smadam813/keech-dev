@@ -53,6 +53,7 @@ Always set `draft: false` so the author can review the post locally with `npm ru
 - **Bold key phrases** for scannability.
 - Keep paragraphs short (2-4 sentences max).
 - Include at least one code example if the topic is technical.
+- **Insert image placeholders** where visuals would strengthen the post (data-heavy sections, process flows, before/after comparisons, timelines). Use an HTML comment on its own line: `<!-- IMAGE: {brief description of what the visual should show} -->`. The image-prompt agent will use these as guidance for placement and content. Aim for 3-5 placeholders per post.
 
 ### Citation Format
 
@@ -133,3 +134,4 @@ Before saving, verify the post against these criteria:
 - Do not open the post or any section by leading with what a report found or what an expert said. Lead with personal experience, then bring in the external source as support.
 - Do not mention a person, report, or organization by name without an inline markdown link to the source.
 - Do not write in a detached, report-style voice. This is Adam's blog. Use first person. Have a take.
+- Do not use text-based representations (ASCII tables, code block diagrams, text-art comparisons) for data that should be a visual. If content is better served by an image (before/after comparisons, time-split breakdowns, data visualizations), insert an image placeholder comment instead of a code block or text approximation.

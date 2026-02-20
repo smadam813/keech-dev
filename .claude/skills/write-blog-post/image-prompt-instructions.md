@@ -10,7 +10,9 @@ Read the blog post from disk at the file path provided by the orchestrator.
 
 ## Step 2: Identify sections that need visuals
 
-Review the post and identify 3-5 sections that would benefit from a diagram, infographic, chart, or visual. Prioritize:
+Scan the post for `<!-- IMAGE: ... -->` placeholder comments left by the writer agent. These indicate where the writer intended a visual and describe what it should show. Use these as your primary guide for placement and content.
+
+If fewer than 3 placeholders exist, also review the post for additional sections that would benefit from a diagram, infographic, chart, or visual. Prioritize:
 - Data-heavy sections (benchmarks, comparisons, statistics)
 - Process flows (step-by-step sequences, pipelines, lifecycles)
 - Timelines or evolution narratives

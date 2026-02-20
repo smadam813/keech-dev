@@ -74,7 +74,14 @@ Tell the author:
 1. The file path where the post was saved
 2. The file path of the image prompts file (`.research/{slug}/image-prompts.md`)
 3. That they should generate images using their preferred tool (Gemini, Midjourney, DALL-E, etc.)
-4. Suggest running the images through webp conversion before adding to the post
-5. Recommend placement: `public/images/posts/{descriptive-name}.webp`
-6. Highlight that first-person sections need Adam's review. The writer agent ghostwrites personal framing based on Adam's professional context, but Adam should review and refine any first-person anecdotes, adding real details from his experience where the writer used general framing.
-7. Recommend running `npm run build` to verify everything compiles before deploying
+4. Recommend placement: `public/images/posts/{descriptive-name}.webp`
+5. Highlight that first-person sections need Adam's review. The writer agent ghostwrites personal framing based on Adam's professional context, but Adam should review and refine any first-person anecdotes, adding real details from his experience where the writer used general framing.
+6. Recommend running `npm run build` to verify everything compiles before deploying
+
+## Step 8: Insert images (after user provides them)
+
+When the user provides generated images, handle the full insertion:
+1. **Convert to WebP** using `npx sharp-cli -i "{source}" -o public/images/posts/{filename}.webp --format webp`
+2. **Read the image prompts file** at `.research/{slug}/image-prompts.md` to get placement instructions for each image
+3. **Replace `<!-- IMAGE: ... -->` placeholder comments** in the post with proper markdown image references: `![alt text](/images/posts/{filename}.webp)`
+4. **Run `npm run velite`** to verify the post still compiles
