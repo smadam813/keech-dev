@@ -51,14 +51,16 @@ export default async function PostPage({ params }: PostPageProps) {
   const formattedDate = new Intl.DateTimeFormat('en-US', {
     year: 'numeric',
     month: 'long',
-    day: 'numeric'
+    day: 'numeric',
+    timeZone: 'UTC'
   }).format(new Date(post.date))
 
   const formattedUpdated = post.updated
     ? new Intl.DateTimeFormat('en-US', {
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
+      timeZone: 'UTC'
     }).format(new Date(post.updated))
     : null
 

@@ -17,7 +17,8 @@ export function PostCard({ post }: PostCardProps) {
   const formattedDate = new Intl.DateTimeFormat('en-US', {
     year: 'numeric',
     month: 'long',
-    day: 'numeric'
+    day: 'numeric',
+    timeZone: 'UTC'
   }).format(new Date(post.date))
 
   return (
