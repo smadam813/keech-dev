@@ -2,17 +2,19 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-09)
+See: .planning/PROJECT.md (updated 2026-02-21)
 
 **Core value:** A polished, intentional developer portfolio — fast, visually distinctive, and well-crafted in every detail.
-**Current focus:** Planning next milestone
+**Current focus:** Phase 3: Infrastructure & API
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-02-21 — Milestone v1.4 started
+Phase: 3 of 5 (Infrastructure & API)
+Plan: — (not yet planned)
+Status: Ready to plan
+Last activity: 2026-02-21 — Roadmap created for v1.4 Blog Stats
+
+Progress: [██████████░░░░░░░░░░] 50% (milestone phases 0/3)
 
 ## Performance Metrics
 
@@ -27,14 +29,7 @@ Last activity: 2026-02-21 — Milestone v1.4 started
 |-------|-------|-------|----------|
 | 01-animation-sync-reveal | 1 | ~15min | ~15min |
 | 02-rune-glow-effects | 1 | ~45min | ~45min |
-| quick-1 | 1 | ~1min | ~1min |
-| quick-2 | 1 | ~1min | ~1min |
-| quick-3 | 1 | ~1min | ~1min |
-| quick-4 | 1 | ~1min | ~1min |
-| quick-5 | 1 | ~2min | ~2min |
-| quick-6 | 1 | ~6min | ~6min |
-| quick-7 | 1 | ~1min | ~1min |
-| quick-8 | 1 | ~1min | ~1min |
+| quick-1 through quick-8 | 8 | ~14min | ~2min |
 
 *Updated after each plan completion*
 
@@ -43,6 +38,11 @@ Last activity: 2026-02-21 — Milestone v1.4 started
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
+
+- Reading time is already implemented via Velite `s.metadata()` — zero new work required
+- Use `@upstash/redis` (not deprecated `@vercel/kv`) with `Redis.fromEnv()`
+- IP deduplication uses SHA-256 hashing with 24h TTL — never store raw IPs
+- View count fires from client component `useEffect` to avoid static-to-dynamic regression
 
 ### Pending Todos
 
@@ -67,6 +67,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-02-16
-Stopped at: Completed quick-8: back-to-blog navigation link on blog post pages
-Resume file: N/A — start with /gsd:new-milestone
+Last session: 2026-02-21
+Stopped at: Roadmap created for v1.4 Blog Stats milestone
+Resume file: None — next step is /gsd:plan-phase 3
