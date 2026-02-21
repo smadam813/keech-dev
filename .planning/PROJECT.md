@@ -24,9 +24,21 @@ A polished, intentional developer portfolio — fast, visually distinctive, and 
 - ✓ Rune glow effect respects prefers-reduced-motion — v1.3
 - ✓ No layout shift or flash of unstyled content during navigation — v1.3
 
+## Current Milestone: v1.4 Blog Stats
+
+**Goal:** Add public view counts and reading time to blog posts — the site's first backend integration.
+
+**Target features:**
+- Public view counts on blog posts (backed by Vercel KV)
+- Reading time estimates calculated at build time
+- API route for view count tracking
+
 ### Active
 
-(No active milestone — run `/gsd:new-milestone` to start next)
+- [ ] Public view counts displayed on blog post pages and blog listing
+- [ ] View count persistence via Vercel KV (Upstash Redis)
+- [ ] API route for incrementing and fetching view counts
+- [ ] Reading time estimates on blog post pages and blog listing
 
 ### Out of Scope
 
@@ -69,4 +81,4 @@ Site is statically generated and deployed via git-push to Vercel.
 - **Theme**: Single theme only (no dark mode) — the palette is the brand
 
 ---
-*Last updated: 2026-02-09 after v1.3 milestone*
+*Last updated: 2026-02-21 after v1.4 milestone start*

@@ -9,12 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-09)
 
 ## Current Position
 
-Phase: v1.3 complete — no active phase
-Plan: N/A
-Status: Milestone v1.3 Hero Polish shipped 2026-02-09
-Last activity: 2026-02-16 -- quick task 8 completed (back-to-blog navigation link on blog post pages)
-
-Progress: [██████████] 100% (v1.3)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-21 — Milestone v1.4 started
 
 ## Performance Metrics
 
