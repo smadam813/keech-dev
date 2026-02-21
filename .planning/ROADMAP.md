@@ -21,7 +21,7 @@ See: `.planning/milestones/v1.3-ROADMAP.md` for full details.
 
 **Milestone Goal:** Add public view counts to blog posts — the site's first backend integration.
 
-- [ ] **Phase 3: Infrastructure & API** - Redis client, route handlers, and IP deduplication
+- [x] **Phase 3: Infrastructure & API** - Redis client, route handlers, and IP deduplication
 - [ ] **Phase 4: Post Page Integration** - View counter on individual blog posts with static generation preserved
 - [ ] **Phase 5: Listing & Polish** - View counts on blog listing, number formatting, and graceful degradation
 
@@ -40,7 +40,7 @@ See: `.planning/milestones/v1.3-ROADMAP.md` for full details.
 **Plans**: 1 plan
 
 Plans:
-- [ ] 03-01-PLAN.md — Redis client, view count API with GET/POST handlers and IP deduplication
+- [x] 03-01-PLAN.md — Redis client, view count API with GET/POST handlers and IP deduplication
 
 ### Phase 4: Post Page Integration
 **Goal**: Visitors see a live view count on every blog post, and the page remains statically generated
@@ -78,6 +78,6 @@ Phases execute in numeric order: 3 -> 4 -> 5
 |-------|-----------|----------------|--------|-----------|
 | 1. Animation Sync & Reveal | v1.3 | 1/1 | Complete | 2026-02-08 |
 | 2. Rune Glow Effects | v1.3 | 1/1 | Complete | 2026-02-08 |
-| 3. Infrastructure & API | v1.4 | 0/1 | Not started | - |
+| 3. Infrastructure & API | v1.4 | 1/1 | Complete | 2026-02-21 |
 | 4. Post Page Integration | v1.4 | 0/? | Not started | - |
 | 5. Listing & Polish | v1.4 | 0/? | Not started | - |

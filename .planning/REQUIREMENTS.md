@@ -9,11 +9,11 @@ Requirements for Blog Stats milestone. Each maps to roadmap phases.
 
 ### Infrastructure
 
-- [ ] **INFRA-01**: Upstash Redis client configured via `Redis.fromEnv()` with Vercel Marketplace env vars
-- [ ] **INFRA-02**: POST `/api/views/[slug]` increments view count and returns new total
-- [ ] **INFRA-03**: GET `/api/views/[slug]` returns current view count without incrementing
-- [ ] **INFRA-04**: IP-based deduplication with SHA-256 hashing and 24h TTL prevents refresh spam
-- [ ] **INFRA-05**: Route handler uses `force-dynamic` to prevent build-time caching
+- [x] **INFRA-01**: Upstash Redis client configured via `Redis.fromEnv()` with Vercel Marketplace env vars
+- [x] **INFRA-02**: POST `/api/views/[slug]` increments view count and returns new total
+- [x] **INFRA-03**: GET `/api/views/[slug]` returns current view count without incrementing
+- [x] **INFRA-04**: IP-based deduplication with SHA-256 hashing and 24h TTL prevents refresh spam
+- [x] **INFRA-05**: Route handler uses `force-dynamic` to prevent build-time caching
 
 ### View Display
 
@@ -54,11 +54,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INFRA-01 | Phase 3 | Pending |
-| INFRA-02 | Phase 3 | Pending |
-| INFRA-03 | Phase 3 | Pending |
-| INFRA-04 | Phase 3 | Pending |
-| INFRA-05 | Phase 3 | Pending |
+| INFRA-01 | Phase 3 | Complete |
+| INFRA-02 | Phase 3 | Complete |
+| INFRA-03 | Phase 3 | Complete |
+| INFRA-04 | Phase 3 | Complete |
+| INFRA-05 | Phase 3 | Complete |
 | VIEW-01 | Phase 4 | Pending |
 | VIEW-02 | Phase 4 | Pending |
 | VIEW-03 | Phase 5 | Pending |

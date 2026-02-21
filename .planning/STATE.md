@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-21)
 ## Current Position
 
 Phase: 3 of 5 (Infrastructure & API)
-Plan: — (not yet planned)
-Status: Ready to plan
-Last activity: 2026-02-21 — Roadmap created for v1.4 Blog Stats
+Plan: 1/1 complete
+Status: Phase 3 complete — ready for Phase 4
+Last activity: 2026-02-21 — Completed 03-01 View Count API
 
-Progress: [██████████░░░░░░░░░░] 50% (milestone phases 0/3)
+Progress: [█████████████░░░░░░░] 67% (milestone phases 1/3)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 10
-- Average duration: ~11 min
-- Total execution time: ~1h 8min
+- Total plans completed: 11
+- Average duration: ~10 min
+- Total execution time: ~1h 10min
 
 **By Phase:**
 
@@ -29,6 +29,7 @@ Progress: [██████████░░░░░░░░░░] 50% (mi
 |-------|-------|-------|----------|
 | 01-animation-sync-reveal | 1 | ~15min | ~15min |
 | 02-rune-glow-effects | 1 | ~45min | ~45min |
+| 03-infrastructure-api | 1 | ~2min | ~2min |
 | quick-1 through quick-8 | 8 | ~14min | ~2min |
 
 *Updated after each plan completion*
@@ -43,6 +44,10 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - Use `@upstash/redis` (not deprecated `@vercel/kv`) with `Redis.fromEnv()`
 - IP deduplication uses SHA-256 hashing with 24h TTL — never store raw IPs
 - View count fires from client component `useEffect` to avoid static-to-dynamic regression
+- Pipeline (not transaction) for dedup+increment -- negligible race risk, simpler code
+- POST returns `{ slug, views, deduplicated }` so Phase 4 client knows repeat visits
+- No slug validation against published posts -- harmless orphan keys
+- Redis key prefixes: `views:` for counters, `dedup:` for IP dedup keys
 
 ### Pending Todos
 
@@ -68,5 +73,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-21
-Stopped at: Roadmap created for v1.4 Blog Stats milestone
-Resume file: None — next step is /gsd:plan-phase 3
+Stopped at: Completed 03-01-PLAN.md (View Count API)
+Resume file: None — next step is /gsd:plan-phase 4
