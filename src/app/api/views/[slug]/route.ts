@@ -36,14 +36,18 @@ export async function POST(
     const ip = forwarded?.split(',')[0]?.trim() ?? '127.0.0.1'
     const ipHash = hashIP(ip)
 
-    const p = redis.pipeline()
-    p.set(`dedup:${slug}:${ipHash}`, '1', { ex: 86400, nx: true })
-    p.incr(`views:${slug}`)
-    const [dedupResult, viewCount] = await p.exec<[string | null, number]>()
+    // Step 1: Check/set dedup key (NX = only if not exists, 24h TTL)
+    const dedupResult = await redis.set(`dedup:${slug}:${ipHash}`, '1', { ex: 86400, nx: true })
 
-    const deduplicated = dedupResult === null
-
-    return Response.json({ slug, views: viewCount, deduplicated })
+    if (dedupResult === 'OK') {
+      // First visit from this IP within 24h — increment
+      const viewCount = await redis.incr(`views:${slug}`)
+      return Response.json({ slug, views: viewCount, deduplicated: false })
+    } else {
+      // Repeat visit — return current count without incrementing
+      const views = await redis.get<number>(`views:${slug}`) ?? 0
+      return Response.json({ slug, views, deduplicated: true })
+    }
   } catch (error) {
     console.error('[views] Redis error:', error)
     return Response.json(
