@@ -37,10 +37,10 @@ See: `.planning/milestones/v1.3-ROADMAP.md` for full details.
   3. Repeated POSTs from the same IP within 24 hours do not inflate the count beyond the first increment
   4. No raw IP addresses are stored in Redis (only SHA-256 hashes)
   5. GET requests return fresh data on every call (not cached at build time)
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 03-01: TBD
+- [ ] 03-01-PLAN.md — Redis client, view count API with GET/POST handlers and IP deduplication
 
 ### Phase 4: Post Page Integration
 **Goal**: Visitors see a live view count on every blog post, and the page remains statically generated
@@ -78,6 +78,6 @@ Phases execute in numeric order: 3 -> 4 -> 5
 |-------|-----------|----------------|--------|-----------|
 | 1. Animation Sync & Reveal | v1.3 | 1/1 | Complete | 2026-02-08 |
 | 2. Rune Glow Effects | v1.3 | 1/1 | Complete | 2026-02-08 |
-| 3. Infrastructure & API | v1.4 | 0/? | Not started | - |
+| 3. Infrastructure & API | v1.4 | 0/1 | Not started | - |
 | 4. Post Page Integration | v1.4 | 0/? | Not started | - |
 | 5. Listing & Polish | v1.4 | 0/? | Not started | - |
