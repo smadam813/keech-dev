@@ -1,244 +1,164 @@
 # Project Research Summary
 
-**Project:** Hero Animation Synchronization and CSS Glow Effects
-**Domain:** Next.js portfolio site hero section enhancement
-**Researched:** 2026-02-08
+**Project:** Blog Stats — View Count Tracking and Reading Time Display
+**Domain:** Next.js serverless blog with Redis-backed view counters
+**Researched:** 2026-02-21
 **Confidence:** HIGH
 
 ## Executive Summary
 
-This milestone involves fixing a visual bug where the hero text animation plays before the background image loads, and enhancing the hero with ambient CSS glow effects positioned at rune locations in the background image. The research reveals this is achievable with zero new dependencies — the entire feature set uses native Next.js Image callbacks, React state, and CSS animations already in the project's stack.
+This milestone adds blog statistics to keech.dev: public view counts backed by Upstash Redis, and reading time display. The key finding that changes the scope: **reading time is already fully implemented.** Velite's `s.metadata()` computes reading time at build time, and both `post-card.tsx` and `[slug]/page.tsx` already display it. The actual work in v1.4 is entirely about view counts — the first backend integration, the first API route, and the first runtime data fetching in what has been a 100% static site.
 
-The recommended approach converts the hero component to a client component using the Next.js Image `onLoad` callback with a dual-path detection pattern (callback + useEffect with `img.complete` check) to handle cached images. CSS keyframes with class-gated animations sequence the reveal, while positioned divs with radial-gradient backgrounds create the glow effect. Performance is maintained by animating only GPU-composited properties (`opacity`, `transform`) and limiting composite layers to 3-4 maximum.
+The recommended approach is a thin dynamic layer on top of the static foundation. Pages remain statically generated via `generateStaticParams()`. A small `'use client'` component (`ViewCounter`) mounts after hydration and fires a POST to `/api/views/[slug]`, which increments a Redis counter via `redis.incr()` and returns the new count. Reading the count and incrementing happen in a single round trip. On the blog listing page, view counts are fetched via GET (no increment). The only new dependency is `@upstash/redis` — HTTP/REST-based, serverless-compatible, and the Vercel-recommended replacement for the now-sunset `@vercel/kv`.
 
-The primary risk is the well-documented Next.js `onLoad` cached-image pitfall where the callback never fires for disk-cached or bfcache-restored images. This is mitigated with the dual-path pattern. Secondary risks include mobile GPU memory exhaustion from multiple composite layers (mitigated by consolidating gradients) and prefers-reduced-motion inconsistency between CSS and JS (mitigated by detecting motion preference in both systems). All risks have proven solutions with HIGH confidence.
+The primary risk is accidentally converting static pages to dynamic by fetching view counts inside server components. This degrades TTFB from ~50ms (CDN) to ~200ms+ (server render) and defeats the purpose of static generation. The mitigation is clear: the view count increment must live in a client component that fires after hydration — never in the page server component. Link prefetch inflation (Next.js prefetching triggering view increments) is avoided by the same pattern, since `useEffect` hooks do not run during prefetch. IP-based deduplication with a 24h TTL using `SET NX EX 86400` prevents refresh spam from inflating counts.
 
 ## Key Findings
 
 ### Recommended Stack
 
-This milestone requires zero new dependencies. The existing stack (Next.js 16.1.6, React 19.2.4, Tailwind CSS v4.1.18) provides everything needed through native browser APIs and CSS features.
+One new dependency: `@upstash/redis@^1.36.2`. This is an HTTP/REST Redis client that uses `fetch()` under the hood — no TCP connections, no connection pooling, compatible with Vercel serverless and Edge Runtime. `@vercel/kv` is deprecated for new projects as of December 2024 and must not be used. The Vercel Marketplace Upstash integration auto-provisions the required environment variables (`UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`). `Redis.fromEnv()` reads both automatically.
+
+Redis key pattern: `pageviews:posts:{slug}` for view counts, `deduplicate:{hash(ip)}:{slug}` for deduplication. The free tier (500K commands/month, 256MB) is more than sufficient for a personal blog.
 
 **Core technologies:**
-- **Next.js Image `onLoad` callback** — detects when hero background image is fully loaded and placeholder removed. Built-in prop, no library needed. Requires client component.
-- **React `useState` + dual-path detection** — tracks image-loaded state via `onLoad` callback AND `useEffect` checking `img.complete` to catch already-cached images. Prevents the critical pitfall where onLoad never fires.
-- **CSS `@keyframes` with class toggle** — animation triggered by data attribute (`data-loaded`) when image state becomes true. More reliable than `animation-play-state` which can skip frames.
-- **CSS `@property` typed custom properties** — enables animating radial-gradient spread for breathing glow effect. Baseline 2024, 96% browser support. Optional enhancement; pure opacity animation is safer baseline.
-- **CSS pseudo-elements or positioned divs with `opacity` animation** — GPU-composited glow overlays. Box-shadow and filter:blur are explicitly avoided due to repaint costs.
-- **Tailwind CSS v4 `@theme` directive** — design tokens for animation timing already in use. Add glow-specific timing values alongside existing tokens.
-
-**Critical version notes:**
-- `onLoadingComplete` deprecated in Next.js 14 — use `onLoad` instead
-- Image `preload` prop available since Next.js 16, replaces deprecated `priority`
-- CSS `@property` baseline since 2024 across all major browsers
+- `@upstash/redis@^1.36.2`: Persistent view count storage — the only serverless-compatible Redis client; uses HTTP not TCP, no connection management
+- Next.js Route Handlers (built-in): `app/api/views/[slug]/route.ts` for GET (fetch count) and POST (increment + return count) — no new package required
+- React 19 `useEffect` (built-in): Fire-and-forget view tracking from client component after hydration
+- Velite `s.metadata()` (existing, already configured): Reading time computation — already complete, zero new work required
 
 ### Expected Features
 
-**Must have (table stakes — fixes bug):**
-- **Image-load-synced text animation** — text animation must not play before background loads. Currently broken during client-side navigation. Requires converting hero to client component with onLoad-gated animation.
-- **prefers-reduced-motion support** — users with vestibular disorders need all animations disabled. Extend existing pattern in globals.css (lines 89-101). All content must be visible immediately at opacity: 1.
-- **Graceful slow-load degradation** — blur placeholder handles image side; text stays at opacity: 0 until onLoad fires. Acceptable UX on slow connections.
-- **Zero layout shift** — glow layers absolutely positioned, no CLS.
-- **Animation plays once per navigation** — gate on state, not mount.
+**Must have (table stakes):**
+- View count displayed on individual post page — inline with existing date/reading time metadata
+- View count increments on page visit — POST from client component on mount, returns new count
+- IP-based deduplication (24h TTL) — prevents refresh spam; 2 Redis commands instead of 1, hash IPs with SHA-256, never store raw IPs
+- View count persistence across deploys — Upstash Redis is external to Vercel build lifecycle
+- Reading time on post cards and post page — already done, zero new work required
 
-**Should have (competitive advantage — core visual identity):**
-- **Staggered rune-position glow pulse** — teal/aurora glow spots positioned over rune locations with staggered timing. Uses radial-gradient backgrounds, animates opacity only for 60fps. Position coordinates are fixed since hero image is static.
-- **Organic stagger timing** — non-linear delay distribution (quadratic index or hand-tuned values) creates breathing rhythm instead of mechanical linear stagger.
-- **Coordinated reveal sequence** — three-beat entrance: image crossfade → text fadeInUp → glow pulse sequence. Uses CSS animation-delay chaining.
-- **Glow color variation by aett** — different rune groups (Freyr's/Hagal's/Tyr's aett) get slightly different glow hues. Wire existing rune-config.ts aett data to CSS custom properties.
-- **Slow ambient drift animation** — after initial pulse, continuous 4-8 second breathing cycle at low amplitude (opacity 0.3-0.6 oscillation). Stagger delays persist into infinite loop.
+**Should have (competitive advantage):**
+- Suspense streaming with static shell — post content serves from CDN instantly, view count streams in; avoids making the page fully dynamic
+- Neobrutalist view counter styling — `Eye` icon from Lucide (already in use), `text-muted` treatment matching existing metadata row
+- Number formatting with locale awareness — `toLocaleString()` for commas; optional `formatViews()` for K/M suffixes at scale
+- View count on blog listing cards — batch fetch via GET (no increment) to avoid N+1 requests
 
-**Defer (v2+ or anti-features):**
-- **Canvas-based ambient glow** — massively over-engineered for static image. YouTube-style ambient mode exists for live video color sampling. CSS radial-gradient achieves same visual for zero bundle cost.
-- **Particle system** — creates "fantasy game" feel that clashes with neobrutalist identity. Runes are carved/anchored, not floating.
-- **Framer Motion / GSAP** — 20-40KB for single hero animation is disproportionate. Existing codebase uses zero animation libraries; CSS keyframes are established pattern.
-- **Interactive rune hover effects** — hero image runes are photographic, not precise clickable regions. False affordance.
-- **Scroll-triggered hero** — hero is above-fold, full viewport. Scroll-trigger wastes first impression. Keep on-load reveal.
-- **Dark mode glow variants** — site explicitly has no dark mode. Single palette is the brand.
+**Defer (v2+):**
+- Sort by popularity toggle — only meaningful with 10+ posts (currently 3)
+- View count in Open Graph metadata — polish after counts are meaningful
+- Engagement features (likes/reactions) — separate milestone requiring session management
+- Admin analytics dashboard — use Vercel Analytics instead; don't rebuild it
 
 ### Architecture Approach
 
-The hero component (currently a server component at `src/components/hero.tsx`) must become a client component to support the `onLoad` callback. This is the correct approach — the entire component's purpose is interactive (image load detection triggers animation), making it a single cohesive client unit rather than a server wrapper with client island.
+The architecture preserves the static foundation by treating view counts as a "dynamic island." Pages keep `generateStaticParams()` for full static generation. A `'use client'` `ViewCounter` component (the 7th in the project) mounts after hydration and communicates with a Route Handler, which is the only component that touches Redis directly. The Route Handler must export `dynamic = 'force-dynamic'` on the GET method to prevent Next.js from caching it at build time — a common App Router pitfall where GET handlers get prerendered with counts frozen at 0.
 
 **Major components:**
-1. **HeroClient component** — owns `imageLoaded` state, renders Next.js Image with onLoad callback + ref for dual-path detection, passes state to children via data attribute on parent element. Single file, not split.
-2. **CSS animation layer in globals.css** — keyframes for heroFadeIn (text entrance) and glowPulse (ambient breathing). Triggered by `.hero-loaded` descendant selectors with animation-delay chaining. All timing in CSS, not JS.
-3. **Glow overlay elements** — positioned divs (one per rune location) with radial-gradient backgrounds. Animate only opacity and transform (GPU-composited). Stagger delays via inline `--glow-index` custom property with calc().
-4. **Scrim overlay** — WCAG AA contrast gradient, pure CSS child, no state dependency.
-5. **Reduced motion bypass** — CSS media query disables animations and sets opacity: 1. JS also checks matchMedia to set loaded: true immediately for motion-sensitive users, ensuring JS and CSS state agree.
-
-**Key patterns:**
-- Image load state as animation gate (onLoad callback + useEffect with img.complete check)
-- CSS class cascade for animation sequencing (parent data attribute triggers child animations)
-- CSS-only glow via text-shadow stacking or radial-gradient positioned divs
-- Inline custom property for stagger delays (`--glow-index` set in JSX, used in calc() for animation-delay)
-
-**Build order:**
-1. CSS foundation (keyframes, classes) — independently testable
-2. Client component conversion (hero.tsx) — isolated breaking change
-3. Glow effect implementation — depends on phase 2
-4. Timing polish — depends on mechanism existing
+1. `src/lib/redis.ts` — Upstash Redis client singleton (`Redis.fromEnv()`), imported only by server-side code
+2. `src/app/api/views/[slug]/route.ts` — Route Handler; POST increments and returns count, GET returns count without incrementing
+3. `src/components/blog/view-counter.tsx` — `'use client'` component; POSTs on mount with `track` prop, GET-only for listing page display; graceful degradation if API fails
+4. `src/app/blog/[slug]/page.tsx` — Modified to render `<ViewCounter slug={post.slug} track />` in the metadata row (page stays static)
+5. `src/app/blog/page.tsx` — Modified to show view counts on post cards; uses GET to read counts without inflating them
 
 ### Critical Pitfalls
 
-1. **onLoad never fires for cached/bfcache-restored images** — the most reported issue with this pattern. React binds onLoad after hydration; if img.complete is already true (cached, preloaded), the native load event fired before the listener attached. SOLUTION: Dual-path detection with `useEffect(() => { if (imgRef.current?.complete) setLoaded(true) }, [])` alongside onLoad callback. Use both ref and onLoad on Image component.
+1. **Static-to-dynamic page regression** — Adding a server-side Redis call inside the page component silently converts the page from static (CDN, ~50ms) to dynamic (server render, ~200ms+). Avoid by keeping all Redis access in the Route Handler, reached only via the client component's `fetch()`.
 
-2. **Converting hero to client component breaks static optimization unexpectedly** — `'use client'` directive pulls entire import chain into client module graph. Static image import still works but increases bundle. Worse if server-only utilities accidentally imported. SOLUTION: Keep client boundary narrow, verify bundle size delta < 1KB gzipped with `next build --debug`. Metadata exports must stay in server components (page.tsx), not hero component.
+2. **GET Route Handler cached at build time** — In Next.js App Router, GET handlers without dynamic function calls get prerendered at build time. View counts freeze at their build-time values (0 for new posts). Fix: `export const dynamic = 'force-dynamic'` on the route handler from day one.
 
-3. **Animation plays before image is visible (race condition)** — CSS animation triggers on mount, but full image decode happens asynchronously. Especially visible during client-side navigation when animation completes before image fetch starts. SOLUTION: Gate animation on loaded state, not mount. Start with opacity: 0, apply animation class only when loaded becomes true.
+3. **Link prefetch inflating view counts** — Next.js prefetches linked routes in the viewport. If increment logic runs server-side, visiting `/blog` inflates counts for every visible post. The client component pattern (`useEffect` on mount) is the correct mitigation: prefetch loads the static shell but never executes `useEffect`.
 
-4. **Staggered CSS glow pulses cause mobile GPU memory exhaustion** — each animated glow layer (opacity/transform on large viewport area) creates separate composite layer consuming GPU texture memory. 5+ layers can exhaust budget on mobile. SOLUTION: Limit to 3-4 glow layers max. Use single element with multiple radial gradients in one background property rather than multiple divs. Avoid will-change in CSS (add/remove via JS only around animation).
+4. **Redis credentials exposed to client** — Never prefix Upstash env vars with `NEXT_PUBLIC_`. Client components must call `/api/views/[slug]`, not Upstash directly. Redis import belongs only in `lib/redis.ts`, which is server-only.
 
-5. **prefers-reduced-motion handled inconsistently between CSS and JS** — CSS media query says "opacity: 1 !important" but JS state says "loaded: false" so content stuck invisible. SOLUTION: Detect motion preference in JS as well (ScrollReveal already does this): `const mq = window.matchMedia('(prefers-reduced-motion: reduce'); if (mq.matches) setLoaded(true)` to skip waiting for image.
+5. **No deduplication — refresh spam inflates counts** — Raw `INCR` on every POST call means refreshing 50 times adds 50 views. Use `SET deduplicate:{hash(ip)}:{slug} 1 NX EX 86400` before `INCR`; only increment if the SET succeeds. Hash IPs with SHA-256 — never store raw IPs.
 
-6. **Radial gradient glow shows visible color banding** — 8-bit color depth gives only 256 steps per channel. Subtle glow over large area creates concentric ring "stairstepping." SOLUTION: Add subtle noise texture overlay (~2% opacity, tiny PNG), use multiple intermediate color stops, keep glow opacity modest (peak 0.1-0.2).
+6. **Layout shift (CLS) when view count loads** — A conditional `{views && <span>}` that adds/removes a DOM node shifts surrounding content. Always render the count container in static HTML with a fixed-width placeholder (e.g., `--`) that reserves space.
 
 ## Implications for Roadmap
 
-Based on combined research, this milestone naturally breaks into two phases with clear dependency chain and risk distribution.
+Based on combined research, the work decomposes into a clear dependency chain. The suggested phase structure follows the build order identified in ARCHITECTURE.md, extended with the polish and listing considerations from FEATURES.md and PITFALLS.md.
 
-### Phase 1: Image Load Sync & Animation Foundation
+### Phase 1: Infrastructure and API
+**Rationale:** The Route Handler and Redis client are blockers for all other work. No UI can be built until these work and are verified with `curl`. This phase has zero risk to existing pages since it only adds new files.
+**Delivers:** A working `/api/views/[slug]` endpoint (GET + POST with deduplication) and a Redis client singleton. Locally testable before any UI is touched.
+**Addresses:** Redis setup, API route, IP deduplication, key schema, credential security
+**Avoids:** GET handler caching (force-dynamic from day one), credential exposure (server-only from day one)
 
-**Rationale:** Fixes the reported bug and establishes the animation infrastructure that Phase 2 depends on. All critical pitfalls (onLoad cache issue, client boundary, race condition, motion preference) must be solved here before visual enhancements. This phase delivers immediate value (bug fix) and validates the core mechanism.
+### Phase 2: Post Page Integration
+**Rationale:** The individual post page is simpler than the listing page (one slug, one counter) and is the primary use case. Prove the full stack works here before extending to the listing.
+**Delivers:** View count displayed inline with reading time and date on `/blog/[slug]`. Counter increments on visit. Page remains statically generated.
+**Addresses:** View count display on post page, client-side increment trigger, static shell preservation, Suspense fallback for no-flash loading
+**Avoids:** Static-to-dynamic regression (client component pattern), prefetch inflation, layout shift (placeholder element always present)
 
-**Delivers:**
-- Working image-load-synced text animation
-- Hero component converted to client component with dual-path load detection
-- CSS keyframes foundation in globals.css
-- prefers-reduced-motion support in both CSS and JS
-- Coordinated reveal sequence (image → text fadeInUp)
+### Phase 3: Blog Listing Integration
+**Rationale:** Listing page has extra complexity — N posts need counts fetched without incrementing any of them, and N concurrent API calls should be avoided. Address after the post page pattern is proven.
+**Delivers:** View counts on all post cards in `/blog`. Uses GET (not POST) to fetch counts without inflating them. Batch fetching via `redis.mget()` to avoid N+1 requests at scale.
+**Addresses:** View count on listing page, GET vs POST distinction, batch fetch strategy
+**Avoids:** Listing page inflating counts (GET-only mode), N+1 API calls as post count grows
 
-**Addresses features:**
-- Image-load-synced text animation (table stakes)
-- prefers-reduced-motion respect (table stakes)
-- Graceful slow-load degradation (table stakes)
-- Zero layout shift (table stakes)
-- Animation plays once (table stakes)
-- Coordinated reveal sequence (competitive advantage)
-
-**Avoids pitfalls:**
-- Pitfall 1: onLoad cached image issue (dual-path detection pattern)
-- Pitfall 2: Client component boundary bloat (verify bundle size)
-- Pitfall 3: Animation race condition (load-gated animation)
-- Pitfall 5: Motion preference inconsistency (JS + CSS detection)
-
-**Implementation notes:**
-- Start with CSS keyframes in globals.css (can test by manually toggling classes)
-- Convert hero.tsx to client component with useState and dual-path onLoad
-- Wire className to include 'hero-loaded' when imageLoaded true
-- Verify with back-button test (cache enabled), throttled network test, reduced-motion toggle
-
-### Phase 2: Rune Glow Effects
-
-**Rationale:** Builds on proven animation foundation from Phase 1. Adds the ambient visual identity (staggered rune glow pulse) that differentiates the hero. Depends on image load state and CSS animation infrastructure being stable. Isolated risk: mobile GPU performance (composite layers).
-
-**Delivers:**
-- Staggered rune-position glow pulse overlay
-- Organic stagger timing (non-linear delay curve)
-- Glow color variation by aett (wire rune-config.ts)
-- Slow ambient drift animation (infinite breathing cycle)
-
-**Addresses features:**
-- Staggered rune-position glow pulse (competitive advantage)
-- Organic stagger timing (competitive advantage)
-- Glow color variation by aett (competitive advantage)
-- Slow ambient drift animation (competitive advantage)
-
-**Avoids pitfalls:**
-- Pitfall 4: GPU memory exhaustion (limit to 3-4 layers, combine gradients)
-- Pitfall 6: Gradient banding (noise texture, intermediate stops)
-
-**Implementation notes:**
-- Identify rune positions in hero image, encode as coordinates
-- Create positioned divs with radial-gradient backgrounds
-- Animate opacity only (not background, not box-shadow)
-- Use inline `--glow-index` custom property for stagger calc()
-- Wire aett data from rune-config.ts to --glow-color custom properties
-- Test composite layer count in Chrome DevTools Layers panel (must be <= 3-4)
-- Screenshot at 200% zoom on 8-bit display to check for banding
+### Phase 4: Polish and Hardening
+**Rationale:** Apply finish after the data pipeline is working end-to-end. These items improve UX and resilience but do not block functionality.
+**Delivers:** Number formatting (locale-aware commas), graceful ad blocker degradation, CLS verification with Lighthouse, error handling when Redis is unreachable, reading time clamping (`Math.max(1, readingTime)`) if needed.
+**Addresses:** Number formatting utility, error handling, placeholder UX, edge cases
+**Avoids:** Jarring number flash, broken page on Redis downtime, CLS regression
 
 ### Phase Ordering Rationale
 
-- **Phase 1 first because:** The image load sync mechanism is the foundation. Glow effects depend on the loaded state and CSS animation infrastructure. The critical pitfalls (onLoad cache, client boundary, race condition) all live in Phase 1 — solving them early reduces risk.
-- **Phase 2 second because:** It's purely additive visual enhancement. If glow effects have performance issues on mobile, they can be tuned or reduced without affecting the bug fix delivered in Phase 1. The architecture supports progressive enhancement (glow layers are optional overlay children).
-- **No Phase 3 needed:** The "future consideration" features (parallax, responsive rune positions) are explicitly deferred to v2+. This milestone has a tight, achievable scope.
-
-**Dependency chain:**
-```
-[Phase 1: Image Load Sync]
-    |
-    +-- provides --> imageLoaded state
-    +-- provides --> .hero-loaded class trigger
-    +-- provides --> CSS keyframes foundation
-    +-- provides --> reduced-motion detection
-    |
-    v
-[Phase 2: Rune Glow Effects]
-    |
-    +-- depends on --> imageLoaded state (when to start glow sequence)
-    +-- depends on --> CSS animation infrastructure (keyframes, delays)
-    +-- depends on --> reduced-motion overrides (extend existing pattern)
-```
+- **Infrastructure first:** All phases depend on Phase 1. Nothing is testable without the Redis connection and Route Handler.
+- **Post page before listing:** The listing adds the GET vs POST distinction and N+1 complexity. Phase 2 isolates the core pattern before adding that complexity.
+- **Polish last:** UX refinements (formatting, CLS, error handling) require the full pipeline to be functional for meaningful testing.
+- **Dependency chain:** Upstash Redis setup -> Route Handler -> Client Component -> Post Page Integration -> Listing Integration -> Polish. Each step depends on the previous.
 
 ### Research Flags
 
-**Phases with standard patterns (skip research-phase):**
-- **Phase 1:** Well-documented Next.js Image API, established React state patterns, CSS animations are foundational. All sources are HIGH confidence (official docs, verified community solutions). No additional research needed during planning.
-- **Phase 2:** CSS gradient performance and GPU compositing are well-understood. Rune position mapping is data authoring (examining image, encoding coordinates), not research. No additional research needed.
+Phases with standard patterns (skip `/gsd:research-phase`):
+- **Phase 1:** Well-documented. Upstash official docs, Next.js Route Handler docs, and the official Upstash tutorial all agree on the implementation. `Redis.fromEnv()`, `redis.incr()`, `SET NX EX`, `force-dynamic` are all verified patterns with HIGH confidence sources.
+- **Phase 2:** Standard client component / static island pattern. The Upstash blog tutorial demonstrates the exact approach. No novel decisions.
+- **Phase 3:** GET vs POST distinction and `redis.mget()` for batch fetching are standard Redis patterns with no ambiguity.
+- **Phase 4:** Pure polish — no research needed.
 
-**Validation during implementation:**
-- Phase 1: Verify dual-path onLoad pattern with real caching behavior (back-button test mandatory)
-- Phase 2: Profile composite layers on real mobile device (Chrome remote debugging or physical test device)
-
-**No research-phase calls needed.** All patterns are verified and confidence is HIGH across all research areas.
+No phases require deeper research. All patterns are well-documented with official sources at HIGH confidence.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | All techniques use native Next.js/React/CSS APIs with official documentation. No new dependencies, no version conflicts, no experimental features. CSS @property is Baseline 2024 with 96% support. |
-| Features | MEDIUM-HIGH | Table stakes features are grounded in established UX patterns (motion accessibility, progressive enhancement). Competitive features (rune glow) are novel design but built with proven techniques. Anti-features are clearly justified. |
-| Architecture | HIGH | Component structure follows existing project patterns (6th client component, CSS in globals.css, Tailwind @theme tokens). Build order has clear dependency chain. All patterns verified in codebase inspection. |
-| Pitfalls | HIGH | All critical pitfalls have verified community solutions with GitHub issue references. Recovery strategies are LOW-MEDIUM cost. Pitfall-to-phase mapping ensures prevention during correct phase. |
+| Stack | HIGH | All decisions verified against official Upstash docs, Vercel storage docs, npm registry. `@vercel/kv` deprecation confirmed by multiple sources including GitHub issues and Vercel community discussions. |
+| Features | HIGH | Reading time confirmed by direct codebase inspection (lines cited in velite.config.ts, post-card.tsx, page.tsx). View count patterns verified against official Upstash tutorial and Vercel's portfolio template. |
+| Architecture | HIGH | Route Handler caching behavior verified against Next.js 15 changelog and official docs. Static island pattern confirmed by Vercel's own App Router guide and "Common App Router Mistakes" post. |
+| Pitfalls | HIGH | All 6 critical pitfalls verified against official sources: Vercel's App Router mistakes post, Next.js caching docs, Upstash dedup tutorial, Next.js data security guide. |
 
 **Overall confidence:** HIGH
 
-The entire feature set is achievable with zero new dependencies using well-documented browser APIs and CSS features. The onLoad cached-image pitfall is well-known with a proven solution. Performance constraints (GPU layers, text-shadow repaint) have clear limits and fallbacks. All sources are official docs or HIGH-confidence community discussions.
-
 ### Gaps to Address
 
-**Rune position mapping:** Research assumes rune locations in the hero image are known or easily identifiable. During Phase 2 planning, the actual coordinates must be determined by examining `/public/images/hero.webp`. If rune positions are ambiguous or the image changes, the glow positions would need recalibration. **Resolution:** Document glow coordinates alongside the image asset; if hero image is updated, glow positions must be reviewed.
-
-**Mobile GPU performance threshold:** Research cites 3-4 composite layers as safe for mobile, but this is device-class dependent. Budget Android devices may struggle at 3 layers; flagship devices handle 5+. **Resolution:** Test on real low-end device (or 4x CPU throttle in DevTools). If performance issues, Phase 2 can reduce to 2-3 glow points or use single-element multi-gradient approach.
-
-**Glow visual intensity tuning:** Research provides ranges (opacity 0.3-0.6, blur radius < 20px, cycle 3-8 seconds) but optimal values depend on actual hero image aesthetics and brand feel. **Resolution:** This is polish, not a gap. Start with research-recommended ranges, iterate based on visual review. No technical blocker.
-
-**Responsive glow positions:** If hero image crops differently at mobile breakpoints (aspect ratio change), glow positions may need breakpoint-specific values. **Resolution:** Explicitly deferred to v2+ as "future consideration." Phase 2 targets desktop/tablet; mobile positions can be adjusted post-launch if needed.
+- **Deduplication with `x-forwarded-for` reliability:** Vercel sets this header reliably, but the research notes a caveat about trusting it in non-Vercel environments. Since this site is Vercel-only, no gap exists. Document in code comments.
+- **View counts on listing — scope call:** Research presents two valid positions — listing views add social proof but introduce GET fetch complexity. With only 3 posts currently, individual GETs are acceptable. The key schema (`pageviews:posts:{slug}`) supports `MGET` without refactoring if needed later. Roadmapper may choose to defer Phase 3 to a follow-on if scope needs trimming.
+- **Whether to show counts on listing at all:** A defensible v1.4 scope is view counts on the post page only (Phases 1-2 + 4), deferring the listing to v1.4.1. Flag this as an explicit decision point in the roadmap.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- [Next.js Image Component API Reference](https://nextjs.org/docs/app/api-reference/components/image) — onLoad, ref, preload, placeholder props and client component requirement
-- [vercel/next.js#20368](https://github.com/vercel/next.js/issues/20368) — onLoad event work incorrect (cached image pitfall)
-- [vercel/next.js Discussion #18386](https://github.com/vercel/next.js/discussions/18386) — img.complete workaround pattern
-- [MDN: @property](https://developer.mozilla.org/en-US/docs/Web/CSS/@property) — typed custom properties, browser support
-- [MDN: prefers-reduced-motion](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion) — accessibility requirements
-- [web.dev: High-performance CSS animations](https://web.dev/articles/animations-guide) — GPU-composited properties (opacity, transform)
-- [TkDodo: Ref Callbacks, React 19 and the Compiler](https://tkdodo.eu/blog/ref-callbacks-react-19-and-the-compiler) — React 19 ref cleanup pattern
-- Codebase inspection: `hero.tsx`, `scroll-reveal.tsx`, `globals.css`, `rune-config.ts`
+- [Upstash Redis TypeScript SDK](https://upstash.com/docs/redis/sdks/ts/getstarted) — `Redis.fromEnv()`, env var names, installation
+- [Upstash Vercel Integration docs](https://upstash.com/docs/redis/howto/vercelintegration) — auto-provisioned env vars, Vercel Marketplace setup
+- [Upstash Blog: Adding a View Counter to Next.js](https://upstash.com/blog/nextjs13-approuter-view-counter) — IP dedup pattern, INCR, client component reporter pattern
+- [Vercel Storage docs — Redis on Vercel](https://vercel.com/docs/redis) — Vercel KV sunset confirmed, Upstash Marketplace as replacement
+- [Next.js Route Handlers docs](https://nextjs.org/docs/app/getting-started/route-handlers) — caching behavior, force-dynamic, Web standard Request/Response
+- [Vercel: Common App Router Mistakes](https://vercel.com/blog/common-mistakes-with-the-next-js-app-router-and-how-to-fix-them) — static-to-dynamic pitfall, GET handler caching trap
+- [Next.js Data Security guide](https://nextjs.org/docs/app/guides/data-security) — environment variable exposure warnings, NEXT_PUBLIC_ risks
+- [Upstash Pricing](https://upstash.com/docs/redis/overall/pricing) — free tier: 500K commands/month, 256MB
+- Codebase analysis: `velite.config.ts`, `src/app/blog/[slug]/page.tsx`, `src/app/blog/page.tsx`, `src/components/blog/post-card.tsx` — reading time already implemented (verified line numbers)
 
 ### Secondary (MEDIUM confidence)
-- [Smashing Magazine: GPU Animation](https://www.smashingmagazine.com/2016/12/gpu-animation-doing-it-right/) — composite layer memory, mobile constraints (2016 but principles valid)
-- [Cloud Four: Staggered Animations with CSS Custom Properties](https://cloudfour.com/thinks/staggered-animations-with-css-custom-properties/) — inline custom property stagger pattern
-- [Tobias Ahlin: Animate box-shadow with smooth performance](https://tobiasahlin.com/blog/how-to-animate-box-shadow/) — pseudo-element opacity technique
-- [Smashing Magazine: YouTube ambient mode glow effect](https://www.smashingmagazine.com/2023/07/recreating-youtube-ambient-mode-glow-effect/) — canvas approach (cited to justify anti-feature decision)
-- [vercel/next.js Discussion #54756](https://github.com/vercel/next.js/discussions/54756) — confirms onLoad issue persists in recent versions
-- [Medium: Back/Forward Cache Aware Next.js](https://medium.com/better-dev-nextjs-react/back-forward-cache-aware-next-js-03535b6c5fcd) — bfcache event behavior
+- [Scastiel: View counter with React Server Components](https://scastiel.dev/view-counter-react-server-components) — async server component display pattern
+- [Josh Comeau: How I Built My Blog](https://www.joshwcomeau.com/blog/how-i-built-my-blog/) — hit counter and like button design reference
+- [Lee Robinson: Real-Time Blog Post Views](https://leerob.com/blog/real-time-post-views) — original Next.js view counter pattern (now redirects to GitHub)
+- [Vercel Community: Switching from Vercel KV to Upstash](https://community.vercel.com/t/switching-from-vercel-kv-to-upstash-kv-questions/2660) — migration path confirmation
+- [Vercel: Next.js Portfolio Pageview Counter Template](https://vercel.com/templates/next.js/nextjs-portfolio-pageview-counter) — official template demonstrating pattern
 
-### Tertiary (LOW confidence)
-- [Free Frontend: CSS Hero Sections](https://freefrontend.com/css-hero-sections/) — pattern survey (aggregator, no primary sources)
-- [TestMu AI: Glowing Effects in CSS](https://www.testmu.ai/blog/glowing-effects-in-css/) — technique compilation (used for pattern survey only)
+### Tertiary (supporting)
+- [Vercel Storage GitHub Issue #829](https://github.com/vercel/storage/issues/829) — Vercel KV documentation removal and deprecation timeline
+- [npm: @upstash/redis](https://www.npmjs.com/package/@upstash/redis) — version 1.36.2, published Feb 2026
 
 ---
-*Research completed: 2026-02-08*
+*Research completed: 2026-02-21*
 *Ready for roadmap: yes*

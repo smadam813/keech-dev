@@ -1,290 +1,275 @@
 # Stack Research
 
-**Domain:** Hero animation synchronization and CSS glow effects for Next.js portfolio site
-**Researched:** 2026-02-08
+**Domain:** Blog stats -- view count tracking and reading time display for Next.js portfolio blog
+**Researched:** 2026-02-21
 **Confidence:** HIGH
+
+## Executive Summary
+
+This milestone requires exactly **one new dependency**: `@upstash/redis` for view count persistence. Reading time is already computed by Velite's `s.metadata()` and already displayed in the UI -- no stack changes needed for that feature. The site's first API route (Next.js Route Handler) will be added for view count increment/fetch, but that requires no new packages since Route Handlers are built into Next.js App Router.
+
+**Critical context:** Vercel KV (`@vercel/kv`) has been **sunset**. It was a whitelabeled Upstash Redis product. The replacement is direct Upstash Redis integration via the Vercel Marketplace, using `@upstash/redis`. Do not use `@vercel/kv` for new projects.
 
 ## Recommended Stack
 
-This milestone requires zero new dependencies. Everything is achievable with the existing stack (Next.js 16.1.6, React 19.2.4, Tailwind CSS v4.1.18) plus native CSS and browser APIs already available.
-
-### Core Technologies
+### New Dependencies
 
 | Technology | Version | Purpose | Why Recommended |
 |------------|---------|---------|-----------------|
-| Next.js `Image` `onLoad` callback | 16.1.6 (current) | Detect when hero background image is decoded and visible | Built-in prop, fires after placeholder removal, gives direct access to the underlying `<img>` element via `event.target`. **Confidence: HIGH** -- verified in official Next.js docs (Jan 2026). |
-| React 19 `useState` + `onLoad` | 19.2.4 (current) | Track image-loaded state to conditionally trigger text animation | Simple boolean state flip. Avoids useEffect timing issues. The `onLoad` handler sets state, and a CSS class toggles based on that state. **Confidence: HIGH** -- standard React pattern. |
-| CSS `@keyframes` + class toggle | Native CSS | Sync text fadeInUp animation with image readiness | Animation is defined but not applied until a `data-loaded` attribute or class is added. More reliable than `animation-play-state` because it avoids the "animation already running" edge case. **Confidence: HIGH** -- established pattern, universal browser support. |
-| CSS `@property` | Native CSS | Animate custom properties for glow opacity and blur radius | Allows smooth interpolation of typed custom properties (e.g., `<number>`, `<color>`) that normally can't be transitioned. Enables animating `radial-gradient` stop positions and opacity values in keyframes. **Confidence: HIGH** -- Baseline since 2024, ~96% browser support per caniuse. |
-| CSS pseudo-elements (`::before`/`::after`) | Native CSS | Position glow overlays at rune locations without extra DOM nodes | Absolute-positioned pseudo-elements with `radial-gradient` backgrounds. Animate only `opacity` and `transform` for GPU compositing. **Confidence: HIGH** -- universal support, established performance pattern. |
-| Tailwind CSS v4 `@theme` directive | 4.1.18 (current) | Define animation tokens (durations, delays, easing) as design tokens | CSS-first config already in use. Add new `--animate-*` custom properties alongside existing `--animate-fade-in-up`. Keeps all timing values co-located. **Confidence: HIGH** -- already in use in codebase. |
+| `@upstash/redis` | ^1.36.2 | HTTP-based Redis client for view count storage | The only connectionless (HTTP/REST) Redis client designed for serverless. No TCP connections to manage. Works in Vercel serverless functions and Edge Runtime. Uses `fetch()` under the hood. Upstash is Vercel's recommended Redis provider (Vercel Marketplace integration). Free tier covers 500K commands/month -- more than sufficient for a personal blog. **Confidence: HIGH** -- verified via Upstash official docs, npm registry, and Vercel docs. |
+
+### Existing Stack (No Changes Needed)
+
+| Technology | Version | Role in This Milestone | Notes |
+|------------|---------|----------------------|-------|
+| Next.js App Router | 16.1.6 | Route Handlers for `/api/views` endpoint | Route Handlers (`route.ts` in `app/api/`) use Web standard Request/Response APIs. Already built into Next.js. No new package needed. |
+| Velite `s.metadata()` | 0.3.1 | Reading time calculation at build time | Already configured in `velite.config.ts`. Returns `{ readingTime: number, wordCount: number }`. Already transformed to `post.readingTime` and displayed as `"{n} min read"` in both `post-card.tsx` and `[slug]/page.tsx`. **Reading time is done. No work needed.** |
+| React 19 | 19.2.4 | Client component for view count reporter | A small `'use client'` component will fire a POST to the view count API on mount. Standard `useEffect` pattern. |
 
 ### Supporting Libraries
 
-No new libraries required. The entire feature set is achievable with native browser APIs and CSS.
-
 | Library | Version | Purpose | When to Use |
 |---------|---------|---------|-------------|
-| N/A | -- | -- | This milestone introduces no new dependencies. All techniques use native CSS and existing React/Next.js APIs. |
+| None needed | -- | -- | This milestone requires only `@upstash/redis`. No rate limiting library, no analytics library, no additional utilities. |
 
 ### Development Tools
 
 | Tool | Purpose | Notes |
 |------|---------|-------|
-| Chrome DevTools Performance panel | Profile animation frame rate | Record the hero load sequence. Look for dropped frames during glow animations. Target 60 FPS on mid-range mobile. |
-| Chrome DevTools Animations panel | Inspect keyframe timing | Visualize staggered delays across rune glow elements. Verify animation-delay offsets. |
-| `prefers-reduced-motion` testing | Accessibility validation | Toggle in DevTools > Rendering to verify all animations respect the media query. The codebase already has this pattern in `globals.css`. |
+| Upstash Console | Inspect Redis keys, monitor usage | Free at console.upstash.com. See stored view counts, debug key patterns. |
+| `.env.local` | Local development credentials | Store `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` for local dev. Add `.env*.local` to `.gitignore` (Next.js default). |
 
 ## Key Technical Decisions
 
-### 1. Image Load Detection: `onLoad` prop (not ref, not IntersectionObserver)
+### 1. Upstash Redis via `@upstash/redis` (not `@vercel/kv`, not `ioredis`)
 
-**Use `onLoad` on the Next.js `<Image>` component.**
+**Use `@upstash/redis` directly.**
 
-The hero component (`src/components/hero.tsx`) is currently a server component. Adding `onLoad` requires converting it to a client component (`'use client'`). This is acceptable because:
+- `@vercel/kv` is **sunset**. Vercel removed its docs, stopped offering Vercel KV for new projects, and recommends Upstash Redis via the Vercel Marketplace instead. Using `@vercel/kv` for a new project would be building on a deprecated foundation.
+- `@upstash/redis` is HTTP/REST-based (uses `fetch()`), meaning zero connection management. No connection pooling, no connection timeouts, no cold-start connection overhead. Each Redis command is a single HTTP request.
+- `ioredis` requires a persistent TCP connection, which is incompatible with serverless functions that spin up/down. It also requires `REDIS_URL` with a TCP connection string, not available from Upstash's REST API.
 
-- The component already uses `placeholder="blur"` with a static import, so the blur data URL is generated at build time and embedded in the HTML. No SSR performance loss.
-- The `onLoad` callback fires **after** the placeholder has been removed, meaning the real image is decoded and painted. This is the exact signal needed to trigger the text animation.
-- The `ref` prop (available since v13.0.6) could provide access to `img.complete` for race-condition handling, but `onLoad` alone is sufficient here because the hero image uses `preload` (which triggers early `<link>` insertion in `<head>`) and `placeholder="blur"` (which ensures the blur is visible while loading).
+**Client initialization pattern:**
 
-**Pattern:**
+```typescript
+// src/lib/redis.ts
+import { Redis } from '@upstash/redis'
 
-```tsx
-'use client'
-import { useState } from 'react'
-import Image from 'next/image'
-import heroImage from '../../public/images/hero.webp'
-
-export function Hero() {
-  const [imageLoaded, setImageLoaded] = useState(false)
-
-  return (
-    <section data-loaded={imageLoaded || undefined} className="...">
-      <Image
-        src={heroImage}
-        onLoad={() => setImageLoaded(true)}
-        // ... existing props
-      />
-      <div className="... hero-text">
-        <h1>keech<span>.dev</span></h1>
-      </div>
-    </section>
-  )
-}
+export const redis = Redis.fromEnv()
+// Reads UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN
+// from process.env automatically
 ```
 
-```css
-.hero-text {
-  opacity: 0;
-  transform: translateY(20px);
-}
+**Confidence: HIGH** -- verified via Upstash official docs, Vercel storage deprecation notices, and npm registry.
 
-[data-loaded] .hero-text {
-  animation: fadeInUp 0.6s ease-out forwards;
-}
-```
+### 2. Environment Variables: `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN`
 
-**Why `data-loaded` attribute over a class:**
-- Semantic: communicates state, not styling
-- Works naturally with CSS attribute selectors
-- Avoids collision with Tailwind utility classes
+The Vercel Marketplace Upstash integration auto-provisions these two env vars when you install it:
 
-**Confidence: HIGH** -- `onLoad` is documented in official Next.js docs, fires after placeholder removal, requires client component (acceptable tradeoff for this use case).
+| Variable | Source | Scope |
+|----------|--------|-------|
+| `UPSTASH_REDIS_REST_URL` | Auto-set by Vercel Marketplace integration | All Vercel environments |
+| `UPSTASH_REDIS_REST_TOKEN` | Auto-set by Vercel Marketplace integration | All Vercel environments |
 
-### 2. Animation Trigger: Class/Attribute Toggle (not `animation-play-state`)
+For local development, copy these from the Upstash Console or Vercel dashboard into `.env.local`.
 
-**Use a data attribute to conditionally apply the animation, rather than starting with `animation-play-state: paused` and toggling to `running`.**
+`Redis.fromEnv()` reads exactly these variable names. No custom configuration needed.
+
+**Confidence: HIGH** -- verified via Upstash Vercel integration docs.
+
+### 3. Route Handler for View Counts (not Server Action)
+
+**Use a Next.js Route Handler (`app/api/views/[slug]/route.ts`), not a Server Action.**
 
 Rationale:
-- `animation-play-state: paused` still allocates the animation on the compositor. The animation "exists" but is frozen. When toggled to `running`, it resumes from where it was paused, which means if there's any delay between initial render and the toggle, the animation may appear to "skip" its beginning.
-- The class/attribute toggle approach means the animation doesn't exist at all until the image loads. When the attribute appears, the animation starts fresh from `from {}`.
-- This is the same pattern used by `scroll-reveal.tsx` in the existing codebase (class toggle between `opacity-0 translate-y-5` and `animate-fade-in-up`).
+- View count increment is a fire-and-forget POST from a client component. It does not need form binding or React transition integration.
+- A Route Handler gives explicit HTTP method control (GET for fetching count, POST for incrementing).
+- The view count API could potentially be called from outside the React tree (e.g., og:image generators, external tools) -- Route Handlers are standard HTTP endpoints.
+- Server Actions are better suited for mutations triggered from React forms/components that need built-in optimistic updates. A view counter is not a form.
 
-**Confidence: HIGH** -- matches existing codebase pattern, avoids known `animation-play-state` timing quirks.
+**Confidence: HIGH** -- Route Handlers are the established pattern for this use case across Next.js community.
 
-### 3. Glow/Pulse Overlays: Pseudo-Elements with `opacity` + `transform` Animation
+### 4. Reading Time: Already Done
 
-**Use absolutely-positioned `<div>` elements (one per rune glow location) with `radial-gradient` backgrounds, animating only `opacity` for the pulse effect.**
+The Velite config already has this pipeline fully working:
 
-Architecture:
-- Each glow point is a `<div>` with `position: absolute`, placed at known rune coordinates using `top`/`left` percentages.
-- The glow itself is a `radial-gradient(circle, rgba(teal, 0.4) 0%, transparent 70%)` background.
-- The pulse animation modulates `opacity` between 0.3 and 0.8 (or similar range) using `@keyframes`.
-- Stagger the pulse across rune positions using `animation-delay` with a CSS custom property `--glow-index` set inline.
-
-**Why pure `opacity` animation (not `box-shadow`, not `filter: blur`, not gradient animation):**
-
-| Technique | GPU-Composited? | Repaint Cost | Verdict |
-|-----------|----------------|--------------|---------|
-| `opacity` animation | YES | None (compositor only) | **Use this** |
-| `transform: scale()` animation | YES | None (compositor only) | Combine with opacity for "breathing" effect |
-| `box-shadow` animation | NO | Full repaint per frame | **Avoid** -- CPU-bound, causes jank on mobile |
-| `filter: blur()` animation | Partial | Texture re-rasterization | **Avoid** -- expensive, especially on multiple elements |
-| `background-image` (gradient) animation | NO | Full repaint per frame | **Avoid** -- gradients aren't directly animatable without @property |
-
-**Using `@property` for gradient animation (optional enhancement):**
-
-If a more dynamic glow spread is desired (not just opacity pulsing), CSS `@property` allows animating a typed custom property used within a `radial-gradient`:
-
-```css
-@property --glow-spread {
-  syntax: '<percentage>';
-  inherits: false;
-  initial-value: 50%;
-}
-
-.rune-glow {
-  background: radial-gradient(circle, rgba(79, 191, 191, 0.4) 0%, transparent var(--glow-spread));
-  animation: glowPulse 3s ease-in-out infinite;
-}
-
-@keyframes glowPulse {
-  0%, 100% { --glow-spread: 50%; opacity: 0.3; }
-  50% { --glow-spread: 70%; opacity: 0.7; }
-}
+```typescript
+// velite.config.ts (existing)
+metadata: s.metadata(),  // Computes { readingTime: number, wordCount: number }
+// ...
+.transform(data => ({
+  ...data,
+  readingTime: data.metadata.readingTime  // Surfaces it as top-level field
+}))
 ```
 
-This allows the glow radius to "breathe" in addition to fading. `@property` is Baseline 2024 (~96% global support). However, note that animating `--glow-spread` inside a gradient **does trigger repaints** (it changes the background-image computation). For 5-8 rune glows, this is acceptable on modern hardware but should be tested on mobile. The pure `opacity` approach is safer.
+Both `src/app/blog/[slug]/page.tsx` (line 88) and `src/components/blog/post-card.tsx` (line 41) already display `{post.readingTime} min read`. This feature is complete. The milestone work for reading time is limited to verifying the display looks correct in context with view counts alongside it.
 
-**Confidence: HIGH** for opacity-only approach. **MEDIUM** for @property gradient approach (works, but requires mobile performance testing).
+**Confidence: HIGH** -- verified by reading the codebase directly.
 
-### 4. Staggered Animation Delays: CSS Custom Properties (not sibling-index)
+### 5. Redis Key Pattern: `pageviews:posts:{slug}`
 
-**Use inline `style` attributes to set a `--glow-index` custom property on each rune glow element, then compute `animation-delay` in CSS with `calc()`.**
+Use a namespaced key pattern for view counts:
 
-```tsx
-{runePositions.map((pos, i) => (
-  <div
-    key={i}
-    className="rune-glow"
-    style={{
-      '--glow-index': i,
-      top: pos.top,
-      left: pos.left,
-    } as React.CSSProperties}
-  />
-))}
+```
+pageviews:posts:{slug}
 ```
 
-```css
-.rune-glow {
-  animation: glowPulse 3s ease-in-out infinite;
-  animation-delay: calc(var(--glow-index) * 0.4s);
-}
+Redis commands needed:
+- `INCR pageviews:posts:{slug}` -- atomically increment on page view
+- `GET pageviews:posts:{slug}` -- fetch count for display
+- `MGET pageviews:posts:slug1 pageviews:posts:slug2 ...` -- batch fetch for blog listing page
+
+All three are single Redis commands (one HTTP request each). `MGET` is important for the blog listing page to avoid N+1 requests.
+
+**Confidence: HIGH** -- standard Redis pattern for counters.
+
+### 6. View Count Deduplication: IP Hash with TTL (Optional)
+
+The Upstash blog tutorial demonstrates deduplication via hashed IP + NX + EX:
+
+```typescript
+const ip = request.headers.get('x-forwarded-for') ?? 'unknown'
+const hash = await sha256(ip)
+const dedupKey = `deduplicate:${hash}:${slug}`
+
+const isNew = await redis.set(dedupKey, true, { nx: true, ex: 86400 })
+if (!isNew) return NextResponse.json({ counted: false }, { status: 202 })
+
+await redis.incr(`pageviews:posts:${slug}`)
 ```
 
-**Why not CSS `sibling-index()`:** Only 70% browser support (no Firefox). Not production-ready.
+This prevents the same visitor from inflating counts within 24 hours. For a personal blog, this is a nice-to-have, not a requirement. A simpler v1 without deduplication is viable.
 
-**Why not `nth-child` with hardcoded delays:** The rune positions are data-driven (known coordinates on the hero image). Using `--glow-index` via inline style is cleaner than maintaining nth-child rules that must match element order.
-
-**Confidence: HIGH** -- custom property stagger is a well-established pattern with universal browser support.
-
-### 5. Reduced Motion: Extend Existing Pattern
-
-The codebase already handles `prefers-reduced-motion` in `globals.css` (lines 89-101). Extend this:
-
-```css
-@media (prefers-reduced-motion: reduce) {
-  .rune-glow {
-    animation: none !important;
-    opacity: 0.5 !important; /* Static glow, no pulse */
-  }
-
-  .hero-text {
-    animation: none !important;
-    opacity: 1 !important;
-    transform: none !important;
-  }
-}
-```
-
-**Confidence: HIGH** -- extends existing accessibility pattern.
+**Confidence: MEDIUM** -- pattern is well-documented but adds complexity. Recommend implementing in the same phase since it is only a few extra lines.
 
 ## Installation
 
 ```bash
-# No new packages needed.
-# This milestone uses only:
-# - Next.js Image onLoad (built-in)
-# - React useState (built-in)
-# - CSS @keyframes, @property, custom properties (native CSS)
-# - Tailwind CSS v4 @theme directive (already configured)
+# Single new dependency
+npm install @upstash/redis
+```
+
+```bash
+# Vercel Marketplace setup (one-time, in Vercel dashboard)
+# 1. Go to vercel.com/marketplace/upstash
+# 2. Install integration
+# 3. Create a Redis database (free tier)
+# 4. Env vars auto-provisioned: UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN
+```
+
+```bash
+# Local development
+# Create .env.local with credentials from Upstash Console
+echo "UPSTASH_REDIS_REST_URL=https://your-db.upstash.io" >> .env.local
+echo "UPSTASH_REDIS_REST_TOKEN=your-token-here" >> .env.local
 ```
 
 ## Alternatives Considered
 
 | Recommended | Alternative | When to Use Alternative |
 |-------------|-------------|-------------------------|
-| `onLoad` callback | `ref` + `img.complete` check in useEffect | If you need to detect already-cached images that loaded before React hydration. Not needed here because `placeholder="blur"` ensures a visible state during loading. |
-| `onLoad` callback | `IntersectionObserver` | If the image is below the fold and you want to detect when it scrolls into view. Not applicable -- hero is above-fold. |
-| Data attribute toggle | `animation-play-state: paused/running` | If you need to pause/resume an animation mid-flight (e.g., pause on hover). Not needed here -- animation should start fresh. |
-| `opacity` animation for glow | `box-shadow` animation | Never for this use case. `box-shadow` triggers full repaints and will jank on mobile with multiple glow points. |
-| `opacity` animation for glow | `filter: drop-shadow()` animation | Never for multiple elements. Each `filter` change re-rasterizes the compositing layer. |
-| Inline `--glow-index` custom property | CSS `sibling-index()` | When Firefox ships support and you're targeting only modern browsers (currently 70% support, no Firefox). |
-| CSS `@property` typed custom properties | JavaScript-driven animation (requestAnimationFrame) | If you need physics-based spring animations or complex choreography. Overkill for ambient pulse effects. |
-| Pure CSS animations | Framer Motion / React Spring | If you need gesture-driven, spring-physics, or layout animations. Adds 30-50KB bundle weight for ambient glow effects that CSS handles natively. |
+| `@upstash/redis` (REST/HTTP) | `ioredis` (TCP) | When running in a long-lived server (not serverless). Offers full Redis protocol, Lua scripting, pub/sub. Not compatible with Vercel serverless or Edge Runtime. |
+| `@upstash/redis` | `@vercel/kv` | **Never for new projects.** Vercel KV is sunset. `@vercel/kv` was a thin wrapper around `@upstash/redis` anyway. |
+| `@upstash/redis` | Vercel Postgres / Supabase | When you need relational data, joins, or complex queries. Massive overkill for a single counter per blog post. Adds connection pooling complexity. |
+| `@upstash/redis` | Local JSON file / filesystem | Never in serverless. Serverless functions have ephemeral filesystems. Data would be lost on every cold start. |
+| `@upstash/redis` | Third-party analytics (Plausible, Umami) | When you want full analytics (referrers, geography, sessions). Heavier integration, often requires a separate service/self-host. For just a public view counter, Redis is simpler and cheaper. |
+| Route Handler | Server Action | When the mutation is tightly coupled to a React form with optimistic UI. View counters are fire-and-forget, not form-driven. |
+| Route Handler | Edge Middleware | When you need to run on every request before routing. Middleware is for auth, redirects, rewrites -- not for counting page views. |
 
 ## What NOT to Use
 
 | Avoid | Why | Use Instead |
 |-------|-----|-------------|
-| Framer Motion / React Spring | Adds 30-50KB for ambient effects CSS handles natively. Overkill for opacity/transform pulses. These libraries are for interactive gesture animations and layout transitions. | CSS `@keyframes` with `opacity` and `transform` |
-| `animation-play-state: paused` then toggle to `running` | Animation "exists" while paused, consuming compositor resources. If toggle timing drifts, animation appears to skip its beginning. Known edge case on Safari. | Conditionally apply animation via data attribute / class toggle |
-| `box-shadow` animation | CPU-bound, triggers full repaint per frame. With 5-8 glow points animating simultaneously, this will cause visible jank on mobile devices. | `opacity` animation on pseudo-elements or positioned divs with `radial-gradient` background |
-| `filter: blur()` animation on multiple elements | Each blur change re-rasterizes the element's compositing layer. Acceptable for one element, problematic for 5-8. | Static `radial-gradient` with animated `opacity` (gradient already provides the soft-edge "blur" look) |
-| `@starting-style` for entry animation | Only relevant to CSS transitions, not `@keyframes` animations. The animation trigger here is state-driven (image loaded), not DOM entry. | Standard `@keyframes` with conditional class/attribute |
-| CSS `sibling-index()` for stagger delays | No Firefox support (70% global coverage). Not production-ready for a public site. | Inline `--glow-index` custom property via `style` attribute |
-| JavaScript `requestAnimationFrame` loop | Runs on main thread, blocks other JS. CSS animations run on the compositor thread. For simple pulse effects, JS offers no benefit and worse performance. | CSS `@keyframes` with `animation-iteration-count: infinite` |
+| `@vercel/kv` | **Sunset.** Vercel removed docs, stopped new provisioning. Building on deprecated infrastructure. | `@upstash/redis` directly |
+| `ioredis` / `redis` (node-redis) | TCP-based. Incompatible with serverless cold starts. Connection management overhead. Not Edge Runtime compatible. | `@upstash/redis` (HTTP/REST, connectionless) |
+| `reading-time` npm package | Unnecessary. Velite's `s.metadata()` already computes `readingTime` at build time. Adding another package duplicates existing functionality. | Velite `s.metadata().readingTime` (already in use) |
+| `@upstash/ratelimit` | Over-engineered for a personal blog view counter. Adds another dependency for a problem that barely exists at this traffic level. If needed later, simple IP dedup with `SET NX EX` covers it. | Manual `SET key NX EX 86400` pattern |
+| Framer Motion / any animation lib for count display | The codebase has a zero-animation-library constraint. A view count number does not need entrance animations. | Static render or CSS transition if counter updates |
+| Database (Postgres, MongoDB, etc.) | Massive overkill. A view counter is a single integer per slug. Redis `INCR` is purpose-built for atomic counters. A database adds connection pooling, migrations, ORM, and 10x complexity for a simpler problem. | Redis `INCR` via `@upstash/redis` |
 
 ## Stack Patterns by Variant
 
-**If the hero image loads very fast (cached / local):**
-- The `onLoad` fires almost synchronously after mount
-- The text animation starts with no perceptible delay
-- This is the happy path for repeat visitors and SPA navigation
+**For the blog post page (individual post):**
+- Server component fetches view count via `redis.get()` at request time
+- A tiny `'use client'` component fires `POST /api/views/[slug]` on mount to increment
+- `revalidate` or `dynamic = 'force-dynamic'` on the page to ensure fresh counts (or use ISR with short revalidation)
 
-**If the hero image loads slowly (cold load, slow network):**
-- `placeholder="blur"` shows immediately (blur data is inlined in HTML)
-- Text remains hidden (`opacity: 0`) until real image arrives
-- When `onLoad` fires, text fades in on top of the now-visible image
-- The glow pulse starts simultaneously (or with a short additional delay for sequence)
+**For the blog listing page (all posts):**
+- Use `redis.mget()` to batch-fetch all view counts in a single Redis command
+- This avoids N+1 requests (one per post)
+- The listing page needs to become dynamic (or use ISR) to show current counts
 
-**If user prefers reduced motion:**
-- All animations are suppressed via `@media (prefers-reduced-motion: reduce)`
-- Text is visible immediately (`opacity: 1`)
-- Glow overlays show at static 50% opacity (ambient presence without motion)
+**For static generation compatibility:**
+- The site currently uses `generateStaticParams()` for full static generation
+- Adding view counts means post pages must fetch data at request time
+- Use `export const dynamic = 'force-dynamic'` or `export const revalidate = 60` (ISR) on the blog post page
+- The blog listing page similarly needs ISR or dynamic rendering
 
-**If you later want more complex animation choreography:**
-- Upgrade to Framer Motion `AnimatePresence` for exit animations
-- Use `motion.div` with `variants` for orchestrated sequences
-- This is a future consideration, not needed for ambient glow + synced fade-in
+**For local development without Redis:**
+- Guard Redis calls with a fallback: if env vars are missing, return 0 for view count
+- This keeps `npm run dev` working without Redis credentials
 
 ## Version Compatibility
 
 | Package | Compatible With | Notes |
 |---------|-----------------|-------|
-| next@16.1.6 | `Image` `onLoad` prop | Available since Next.js 13. `preload` prop available since Next.js 16.0.0. `priority` deprecated in 16 (use `preload`). |
-| next@16.1.6 | `Image` `ref` prop | Available since Next.js 13.0.6. Not needed for this approach but available as fallback. |
-| react@19.2.4 | Ref cleanup callbacks | React 19 supports cleanup return from ref callbacks. Useful if later adding IntersectionObserver to rune glow elements. |
-| tailwindcss@4.1.18 | `@theme` directive, `@property` | Tailwind v4 uses `@property` internally for its own custom properties. Custom `@property` rules in `globals.css` work alongside Tailwind's. |
-| CSS `@property` | All major browsers | Baseline 2024. ~96% global support. Chrome 85+, Firefox 128+, Safari 15.4+. |
-| CSS `@keyframes` | All browsers | Universal support. No concerns. |
-| CSS custom properties in `calc()` | All major browsers | Baseline. ~97% global support. |
+| `@upstash/redis@^1.36.2` | Next.js 16.1.6 | Uses standard `fetch()`. Works in Node.js runtime and Edge Runtime. No Next.js version constraints. |
+| `@upstash/redis@^1.36.2` | Vercel Serverless + Edge | Designed specifically for these environments. HTTP-based, no TCP. |
+| `@upstash/redis@^1.36.2` | TypeScript 5.9.3 | Full TypeScript support. All Redis commands are typed. |
+| Next.js Route Handlers | Next.js 13+ (App Router) | Stable since Next.js 13. Uses Web standard `Request`/`Response`. `app/api/views/[slug]/route.ts` pattern. |
+| Velite `s.metadata()` | Velite 0.3.1 | Already configured and working. Returns `{ readingTime: number, wordCount: number }`. |
+
+## Upstash Free Tier Limits
+
+| Resource | Free Tier Limit | Adequate? |
+|----------|----------------|-----------|
+| Commands/month | 500,000 | YES -- a personal blog with even 1,000 daily visitors would use ~60K commands/month (view + increment per visit, plus listing page fetches) |
+| Data size | 256 MB | YES -- view counts are integers. Even 10,000 blog posts would use < 1 MB |
+| Databases | 10 | YES -- only 1 needed |
+| Regions | 1 (single region) | YES -- sufficient for a personal blog. Multi-region available on paid plans. |
+
+## Integration Points
+
+### New Files to Create
+
+| File | Purpose |
+|------|---------|
+| `src/lib/redis.ts` | Redis client singleton. `Redis.fromEnv()` with graceful fallback if env vars missing. |
+| `src/app/api/views/[slug]/route.ts` | Route Handler. GET returns count, POST increments count. |
+| `src/components/blog/view-counter.tsx` | `'use client'` component. Fires POST on mount, optionally displays count. |
+| `.env.local` | Local dev credentials (gitignored by Next.js default). |
+
+### Existing Files to Modify
+
+| File | Change |
+|------|--------|
+| `src/app/blog/[slug]/page.tsx` | Add view count display in header metadata. Add `ViewCounter` client component. May need `dynamic` or `revalidate` export. |
+| `src/app/blog/page.tsx` | Batch-fetch view counts with `redis.mget()`. Display on post cards. May need `dynamic` or `revalidate` export. |
+| `src/components/blog/post-card.tsx` | Add optional `views` prop to display count. |
+| `.gitignore` | Verify `.env*.local` is already gitignored (Next.js default -- likely already present). |
+
+### No Changes Needed
+
+| File | Why |
+|------|-----|
+| `velite.config.ts` | Reading time already configured and working |
+| `next.config.ts` | No config changes needed for Route Handlers or Upstash |
+| `package.json` scripts | No script changes. `npm run build` still works (Velite then Next.js). |
+| `globals.css` | View counts are text, not animations. Standard Tailwind classes suffice. |
 
 ## Sources
 
-- [Next.js Image Component API Reference (official docs)](https://nextjs.org/docs/app/api-reference/components/image) -- verified `onLoad`, `ref`, `preload`, `placeholder` props and their behavior. **HIGH confidence.**
-- [TkDodo: Ref Callbacks, React 19 and the Compiler](https://tkdodo.eu/blog/ref-callbacks-react-19-and-the-compiler) -- verified React 19 ref cleanup callback pattern. **HIGH confidence.**
-- [web.dev: @property baseline support](https://web.dev/blog/at-property-baseline) -- verified `@property` is Baseline 2024. **HIGH confidence.**
-- [CSS-Tricks: Staggered Animations with CSS Custom Properties](https://cloudfour.com/thinks/staggered-animations-with-css-custom-properties/) -- verified inline custom property stagger pattern. **HIGH confidence.**
-- [SitePoint: CSS Box Shadow Animation Performance](https://www.sitepoint.com/css-box-shadow-animation-performance/) -- verified box-shadow triggers full repaints. **HIGH confidence.**
-- [Tobias Ahlin: Animate box-shadow with smooth performance](https://tobiasahlin.com/blog/how-to-animate-box-shadow/) -- verified pseudo-element opacity technique for shadow-like effects. **HIGH confidence.**
-- [web.dev: High-performance CSS animations](https://web.dev/articles/animations-guide) -- verified `opacity` and `transform` are compositor-only properties. **HIGH confidence.**
-- [caniuse: sibling-count/sibling-index](https://caniuse.com/wf-sibling-count) -- verified 70% support, no Firefox. **HIGH confidence.**
-- [Next.js GitHub Discussion #18386](https://github.com/vercel/next.js/discussions/18386) -- community patterns for image load detection. **MEDIUM confidence** (community discussion, not official docs).
-- [MDN: animation-play-state](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/animation-play-state) -- verified paused/running behavior. **HIGH confidence.**
-- [MDN: @starting-style](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/At-rules/@starting-style) -- verified it applies to transitions only, not keyframe animations. **HIGH confidence.**
+- [Upstash Redis TypeScript SDK -- Get Started](https://upstash.com/docs/redis/sdks/ts/getstarted) -- verified `Redis.fromEnv()`, env var names, installation. **HIGH confidence.**
+- [Upstash Vercel Integration docs](https://upstash.com/docs/redis/howto/vercelintegration) -- verified auto-provisioned env vars, setup flow. **HIGH confidence.**
+- [Upstash Blog: Adding a View Counter to Next.js](https://upstash.com/blog/nextjs13-approuter-view-counter) -- verified IP dedup pattern with SET NX EX, INCR pattern, client component reporter. **HIGH confidence.**
+- [Vercel Storage docs -- Redis on Vercel](https://vercel.com/docs/redis) -- confirmed Vercel KV sunset, Upstash Marketplace replacement. **HIGH confidence.**
+- [Vercel Storage GitHub Issue #829](https://github.com/vercel/storage/issues/829) -- confirmed Vercel KV documentation removal and deprecation. **HIGH confidence.**
+- [npm: @upstash/redis](https://www.npmjs.com/package/@upstash/redis) -- verified latest version 1.36.2 (published Feb 2026). **HIGH confidence.**
+- [Next.js Route Handlers docs](https://nextjs.org/docs/app/getting-started/route-handlers) -- verified Web standard Request/Response API, supported methods. **HIGH confidence.**
+- [Velite Schemas docs](https://velite.js.org/guide/velite-schemas) -- verified `s.metadata()` returns `{ readingTime: number, wordCount: number }`. **HIGH confidence.**
+- [Upstash Pricing](https://upstash.com/docs/redis/overall/pricing) -- verified free tier: 500K commands/month, 256MB, 10 databases. **HIGH confidence.**
 
 ---
-*Stack research for: Hero animation synchronization and CSS glow effects*
-*Researched: 2026-02-08*
+*Stack research for: Blog stats -- view count tracking and reading time for keech.dev*
+*Researched: 2026-02-21*

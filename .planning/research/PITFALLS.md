@@ -1,179 +1,151 @@
 # Pitfalls Research
 
-**Domain:** Hero animation sync and CSS glow effects (Next.js Image + CSS animations)
-**Researched:** 2026-02-08
-**Confidence:** HIGH (verified against Next.js official docs, MDN, and community issue trackers)
+**Domain:** Blog view counts (Upstash Redis) and reading time for a statically-generated Next.js 16 blog
+**Researched:** 2026-02-21
+**Confidence:** HIGH (verified against Next.js official docs, Upstash official docs, Vercel blog, and community implementations)
 
 ## Critical Pitfalls
 
-### Pitfall 1: onLoad Never Fires for Cached / bfcache-Restored Images
+### Pitfall 1: Accidentally Opting the Entire Blog Post Page Out of Static Generation
 
 **What goes wrong:**
-The `onLoad` callback on `next/image` does not fire when the browser serves the image from disk cache or restores the page from bfcache (back/forward cache). The hero text animation is gated on `onLoad`, so the title stays at `opacity: 0` forever -- the user sees a blank hero. This is the single most reported issue with animation-gated-on-onLoad patterns in Next.js (see [vercel/next.js#20368](https://github.com/vercel/next.js/issues/20368), [Discussion #18386](https://github.com/vercel/next.js/discussions/18386)).
+The blog post page (`/blog/[slug]/page.tsx`) is currently fully static via `generateStaticParams()`. Adding a server-side `fetch()` or direct Redis call to retrieve view counts inside the page component causes Next.js to detect dynamic data access and either error ("cannot use dynamic API in a statically generated page") or silently switch the entire page to dynamic rendering. Build times increase, TTFB degrades, and you lose the performance characteristics that make the site fast.
 
 **Why it happens:**
-React binds the `onLoad` event handler after hydration. If the `<img>` element has already `complete === true` (cached image, bfcache restore, fast network on a preloaded asset), the native `load` event has already fired before React attaches its listener. The handler simply never runs. The `preload` prop on the current hero Image makes this more likely because the browser aggressively fetches the image during HTML parsing -- before React hydration.
+Developers naturally think "I need view counts on this page, so I'll fetch them in the page component." In the App Router, any uncached async data access inside a page or layout marks the route as dynamic. This is especially confusing because `generateStaticParams()` is still present -- it looks like the page should be static, but the runtime fetch overrides it. The Vercel blog explicitly calls this out as a [common mistake](https://vercel.com/blog/common-mistakes-with-the-next-js-app-router-and-how-to-fix-them).
 
 **How to avoid:**
-Use a **dual-path detection** pattern in a `useEffect`:
-
-```typescript
-const imgRef = useRef<HTMLImageElement>(null)
-const [loaded, setLoaded] = useState(false)
-
-// Path 1: onLoad fires for non-cached images
-const handleLoad = () => setLoaded(true)
-
-// Path 2: useEffect catches already-complete images
-useEffect(() => {
-  if (imgRef.current?.complete) setLoaded(true)
-}, [])
-```
-
-Pass both `ref={imgRef}` and `onLoad={handleLoad}` to the Image component. The `useEffect` runs after mount and catches any image that completed before React attached listeners. This handles disk cache, bfcache, and preloaded-asset scenarios.
+Keep the page component fully static. Fetch view counts from a **client component** that calls the API route after mount. The page renders instantly from the static shell, and the view count fills in asynchronously. This is the pattern used by the [Upstash official view counter tutorial](https://upstash.com/blog/nextjs13-approuter-view-counter): a `ReportView` client component that fires a POST on mount, and the view count is displayed from a separate client-side fetch.
 
 **Warning signs:**
-- Hero text invisible after pressing the browser back button
-- Hero text invisible on refresh (especially with fast local cache)
-- Works perfectly in dev (slower loads) but breaks in production (fast CDN + cache)
-- Lighthouse shows LCP painted but hero text never appears
+- `next build` output shows the blog post route as `lambda` or `server` instead of `static`
+- Build logs mention "Dynamic server usage" for blog routes
+- TTFB on blog posts increases from ~50ms to ~200ms+
 
 **Phase to address:**
-Phase 1 (Image load detection) -- this must be solved before any animation gating logic is added.
+Phase 1 (API route + client component architecture). Get the boundary between static page and dynamic view count right from the start.
 
 ---
 
-### Pitfall 2: Converting Hero to Client Component Breaks Static Optimization Unexpectedly
+### Pitfall 2: GET Route Handler Caching Returns Stale View Counts
 
 **What goes wrong:**
-Adding `'use client'` to the hero to support `onLoad` and `useState` converts the entire hero component tree into a client component. If not done carefully, this pulls the static import of `heroImage` (which provides the `blurDataURL` at build time) into the client bundle, increasing JS payload. Worse, developers sometimes accidentally move metadata exports or other server-only logic into the client boundary.
+A `GET` Route Handler in the App Router is **cached by default** and prerendered at build time. If you create `GET /api/views/[slug]` to return view counts, it gets cached during `next build` with a count of 0 and never updates. Every visitor sees "0 views" (or whatever count existed at build time) until the next deploy.
 
 **Why it happens:**
-The `'use client'` directive marks the file and all its imports as part of the client module graph. The current hero is a server component that statically imports `heroImage` from `public/images/hero.webp` -- Velite/Next.js generates the blur placeholder at build time and embeds it in the module. When this file becomes a client component, the static import metadata (width, height, blurDataURL) still works, but the import chain now ships to the client. If other server-only utilities get imported into the same file, they will error or bloat the bundle.
+This is a Next.js App Router behavior that surprises developers coming from Pages Router API routes (which were always dynamic). The [official docs](https://nextjs.org/docs/app/getting-started/route-handlers) state: "Route Handlers are not cached by default. You can, however, opt into caching for GET methods." But the nuance is that GET handlers **without** dynamic functions like `cookies()`, `headers()`, or a `dynamic` export are treated as static during build. Developers create a GET handler, test it in dev (where it works because dev mode is always dynamic), then deploy and find it frozen.
 
 **How to avoid:**
-Keep the client boundary as narrow as possible. Two proven patterns:
+Two options, depending on architecture:
 
-1. **Thin client wrapper:** Create a `HeroClient` component that only handles the `onLoad` state and animation classes. The parent server component owns layout, the Image import, and the scrim overlay. Pass `heroImage` as a prop.
+1. **Use `export const dynamic = 'force-dynamic'`** on the GET route handler so it always runs at request time
+2. **Skip the GET handler entirely** -- have the POST handler (which increments the view) also return the current count, and fetch the initial count client-side from the same POST endpoint with a `read-only` flag, or use a single POST that both increments and returns
 
-2. **Single-file with clean imports:** If keeping it in one file, ensure only browser-safe imports exist. The static image import is fine in a client component (Next.js handles it), but verify no server utilities leak in.
-
-Verify the client bundle size before/after with `next build --debug` or the bundle analyzer.
+Option 1 is simpler and more conventional. The route is lightweight (single Redis GET), so dynamic rendering adds negligible latency.
 
 **Warning signs:**
-- Build warnings about server-only modules in client components
-- Unexpected increase in client JS bundle size for the home page
-- `metadata` export in the same file as `'use client'` (will silently fail -- metadata must be in a server component)
+- View counts never change after deploy
+- View counts work in `npm run dev` but not in production
+- Build output shows the API route as "static" (circle icon)
 
 **Phase to address:**
-Phase 1 (Component architecture) -- decide the client/server boundary before writing any animation code.
+Phase 1 (API route creation). Must be configured correctly on day one.
 
 ---
 
-### Pitfall 3: Animation Plays Before Image Is Visible (Race Condition)
+### Pitfall 3: Link Prefetching Inflates View Counts
 
 **What goes wrong:**
-The CSS `fadeInUp` animation fires on component mount (via `.animate-on-load` class), but the actual image may not be decoded and painted yet. Users see the title text animate upward over a blank/blurred background, then the image pops in a moment later. During client-side navigation (Next.js soft nav), this race condition is worse because the component mounts, the animation plays immediately, but the image fetch hasn't even started.
+Next.js `<Link>` prefetches routes when they enter the viewport. The blog listing page (`/blog`) shows multiple post cards, each with a `<Link>` to the post. If the view count increment happens server-side (via the page component or middleware), prefetching silently triggers the increment for every visible post card -- even posts the user never clicks. A single visit to `/blog` inflates counts for 3-10 posts simultaneously.
 
 **Why it happens:**
-CSS `animation` triggers on element insertion into the DOM, which happens at mount time. The `placeholder="blur"` shows a low-res blurDataURL instantly, but the full image decode happens asynchronously. On slow connections or during client-side navigation, there is a visible gap between "animation complete" and "full image painted."
+Prefetching is enabled by default on `<Link>`. In production, Next.js prefetches the page data for linked routes. If the view increment logic runs as part of the server-rendered page (or in middleware that matches the route), the prefetch request triggers it. The [Upstash blog](https://upstash.com/blog/nextjs13-approuter-view-counter) does not warn about this because their implementation uses a client-side `ReportView` component that only fires when the page actually mounts -- but if you deviate from that pattern, prefetch inflation is a trap.
 
 **How to avoid:**
-Gate the animation on image load state, not on mount:
-
-1. Start the text overlay with `opacity: 0` (no animation class applied).
-2. When `loaded` state becomes `true` (from the dual-path detection in Pitfall 1), apply the animation class.
-3. For `prefers-reduced-motion: reduce`, skip the animation entirely and render at `opacity: 1` immediately.
-
-The blur placeholder provides an acceptable visual during the gap, so gating only the text animation (not the entire hero visibility) avoids a blank section.
+**Never increment view counts server-side in the page component or in middleware.** Use a dedicated client component (`ViewCounter`) that calls the API route via `useEffect` after mount. Prefetch loads the static HTML shell but does not execute client-side `useEffect` hooks, so the counter only fires when a user actually navigates to the page.
 
 **Warning signs:**
-- Text animates in over a gray/blurred rectangle on throttled network in DevTools
-- Animation looks fine on fast connections but janky on 3G simulation
-- Client-side navigation (click Home in nav) shows text before image
+- View counts are suspiciously high relative to actual traffic
+- Posts on the first screen of `/blog` have disproportionately higher counts
+- View count for a post increases when you only visit `/blog` without clicking the post
 
 **Phase to address:**
-Phase 1 (Animation sync logic) -- core requirement of the milestone.
+Phase 1 (architecture). The increment trigger location is a foundational decision.
 
 ---
 
-### Pitfall 4: Staggered CSS Glow Pulses Cause Mobile GPU Memory Exhaustion
+### Pitfall 4: Exposing Redis Credentials to the Client
 
 **What goes wrong:**
-Each CSS-animated glow overlay (radial gradient pseudo-element with pulsing opacity/scale) creates a separate GPU composite layer. With multiple rune-position glows pulsing on staggered `animation-delay` values, mobile browsers allocate excessive GPU memory. On constrained devices (older iPhones, budget Android), this causes frame drops, visual glitches, or in extreme cases browser tab crashes.
+Developers prefix Upstash Redis environment variables with `NEXT_PUBLIC_` (e.g., `NEXT_PUBLIC_UPSTASH_REDIS_REST_TOKEN`) so they can use them in client components, inadvertently exposing the Redis token in the browser. Anyone can view source, extract the token, and read/write/delete arbitrary keys in your Redis database.
 
 **Why it happens:**
-Animated `opacity` and `transform` properties trigger GPU compositing -- which is normally good for performance. But each independently animated element becomes its own compositing layer, consuming texture memory proportional to its pixel area. Full-viewport radial gradient overlays are large-area layers. Three to five of them running simultaneously can consume 10-30MB of GPU memory on a mobile device.
+The view counter client component needs to talk to Redis. The instinct is "I need the Redis URL in my client component." But the whole point of the API route is to be the intermediary. Client components should call `/api/views`, which calls Redis server-side. The [Next.js docs on data security](https://nextjs.org/docs/app/guides/data-security) explicitly warn about this pattern.
 
 **How to avoid:**
-- **Limit to 3-4 glow layers maximum.** Each one is full- or near-full-viewport.
-- **Use a single animated layer** with multiple radial gradients in one `background` property rather than multiple overlapping `<div>` elements. Multiple backgrounds on one element share a single composite layer.
-- **Keep blur radius under 20px** for any `filter: blur()` or `box-shadow` glow effects -- GPU workload scales exponentially with blur radius.
-- **Avoid `will-change` in CSS.** Only add it programmatically via JS immediately before animation starts, and remove it after. Permanent `will-change` in stylesheets forces the browser to maintain composite layers indefinitely.
-- **Test on a real low-end device** (or Chrome DevTools > Rendering > "Emulate CSS media feature prefers-reduced-motion" + throttle CPU 4x).
+- Redis credentials (`UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`) must **never** have the `NEXT_PUBLIC_` prefix
+- Initialize Redis only in server-side code (`lib/redis.ts` imported only by route handlers)
+- Client components call the API route (`/api/views/[slug]`), never Redis directly
+- Add a `.env.example` file documenting correct variable names without the `NEXT_PUBLIC_` prefix
 
 **Warning signs:**
-- Chrome DevTools > Layers panel shows 5+ composite layers for the hero section
-- Chrome DevTools > Performance tab shows "Composite Layers" taking > 2ms per frame
-- Mobile Safari shows visual artifacts (black rectangles, flickering)
-- Android Chrome shows "Aw, Snap!" on budget devices
+- `NEXT_PUBLIC_UPSTASH` appearing in any `.env` file
+- Redis import appearing in any file with `'use client'`
+- Browser network tab showing direct requests to `*.upstash.io`
 
 **Phase to address:**
-Phase 2 (Glow effects implementation) -- validate composite layer count during development, not after.
+Phase 1 (environment setup). Verify in code review before first deploy.
 
 ---
 
-### Pitfall 5: prefers-reduced-motion Handled Inconsistently Between CSS and JS
+### Pitfall 5: No View Deduplication -- Refresh Spam Inflates Counts
 
 **What goes wrong:**
-The existing CSS handles `prefers-reduced-motion: reduce` by removing animation with `!important`. But when JS state gates the animation (the new `loaded` state pattern), the JS path and CSS path can disagree. Example: CSS says "no animation, opacity: 1" but JS state says `loaded === false` so the element stays at `opacity: 0`. The user who prefers reduced motion sees nothing.
+A naive `INCR pageviews:slug` on every API call means refreshing the page 50 times adds 50 views. A single curious user (or a bot) can make a post appear viral. Counts become meaningless as a signal.
 
 **Why it happens:**
-Two independent systems (CSS media queries and React state) both influence visibility. The CSS `prefers-reduced-motion` rule sets `opacity: 1 !important`, which should override, but if the JS uses inline styles or a non-animation class like `opacity-0` (Tailwind utility), CSS specificity wars begin. The `!important` in the media query might win for the animation property but lose for an inline `style={{ opacity: 0 }}`.
+`INCR` is the simplest Redis pattern and appears in many tutorials. It is atomic and fast, which makes it feel correct. But it counts *page loads*, not *unique visitors*. The distinction matters for any metric displayed publicly.
 
 **How to avoid:**
-Detect the motion preference in JS as well (the existing `ScrollReveal` component already does this -- follow the same pattern):
+Use the Upstash-recommended deduplication pattern:
 
-```typescript
-useEffect(() => {
-  const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
-  if (mq.matches) setLoaded(true) // Skip waiting for image, show immediately
-}, [])
-```
+1. Hash the visitor's IP with SHA-256 for privacy
+2. Use `SET dedupe:{hash}:{slug} 1 NX EX 86400` (set only if not exists, expire after 24 hours)
+3. Only call `INCR pageviews:{slug}` if the SET succeeded (meaning this is a new visitor for this slug in the last 24h)
 
-This ensures the JS state and CSS state agree: reduced-motion users see content immediately without waiting for image load or animation.
+This uses 2 Redis commands per view instead of 1, but provides meaningful counts. The 24-hour window is a reasonable balance -- the same person reading a post twice in a day counts once, but a return visit the next day counts again.
 
 **Warning signs:**
-- Toggle "Reduce motion" in OS settings -- hero text should appear instantly, not be stuck invisible
-- Automated accessibility tests (axe-core) won't catch this -- manual testing required
-- The `ScrollReveal` component already handles this correctly; inconsistency between components is the signal
+- View counts spike when you test by refreshing
+- Single IP addresses generating dozens of views per post
+- View counts seem disproportionately high vs. site analytics
 
 **Phase to address:**
-Phase 1 (Animation sync logic) -- must be implemented alongside the load-gated animation, not as an afterthought.
+Phase 1 (API route implementation). Deduplication must be in the first implementation, not bolted on later.
 
 ---
 
-### Pitfall 6: Radial Gradient Glow Shows Visible Color Banding
+### Pitfall 6: Layout Shift (CLS) When View Count Loads Asynchronously
 
 **What goes wrong:**
-CSS `radial-gradient()` with a glow effect (transparent to colored to transparent) displays visible banding -- concentric rings of stepped color rather than a smooth gradient. This is especially noticeable on 8-bit displays (most consumer monitors) and when the gradient spans a large viewport area with subtle color transitions.
+The view count loads after the page renders (client-side fetch). If the count element has no reserved space, the number appearing pushes surrounding content down, causing a visible layout shift. On the blog listing page, multiple counts loading at different times creates a "popcorn" effect where cards jump around.
 
 **Why it happens:**
-8-bit-per-channel color depth gives only 256 steps per channel. A subtle glow that transitions from `rgba(79,191,191,0.0)` to `rgba(79,191,191,0.15)` over hundreds of pixels has fewer than 40 distinct color values to distribute across those pixels. The result is visible "stairstepping."
+The statically-rendered page ships with the reading time, date, and tags. The view count is the one piece of dynamic data that appears later. Developers add a `{views && <span>{views} views</span>}` conditional that creates/removes a DOM element, shifting layout. This is especially visible on this site because the post metadata line uses flexbox with `gap` -- adding an element changes the row's width and potentially wraps.
 
 **How to avoid:**
-- **Add a subtle noise texture overlay** (a tiny 100x100 PNG of barely-visible noise at ~2% opacity) to break up banding perceptually. This is the industry-standard solution used by film VFX.
-- **Use multiple color stops** with intermediate opacity values to create smoother transitions.
-- **Keep glow opacity modest** (peak around 0.1-0.2) -- higher contrast gradients band less visibly than ultra-subtle ones.
-- **Test on a standard sRGB monitor**, not just a wide-gamut display (which may mask banding).
+- Always render the view count container in the static HTML, even before data loads
+- Use a fixed-width placeholder or skeleton (e.g., `---` or a small pulsing bar) that matches the final element size
+- On the blog listing page, consider **not** showing view counts at all (only on the detail page) to avoid N concurrent fetches on load
+- If showing counts on the listing, use a single batch API call (`/api/views` returning all slugs) instead of N individual calls
 
 **Warning signs:**
-- Visible concentric rings in the glow, especially on solid-color backgrounds
-- More obvious on dark or uniform image regions
-- Screenshot the hero and zoom 200% -- banding will be clearly visible if present
+- CLS score increases after adding view counts (check with Lighthouse)
+- Text shifting visible on page load, especially on slower connections
+- Conditional rendering (`{views && ...}`) instead of always-present containers
 
 **Phase to address:**
-Phase 2 (Glow effects implementation) -- address during initial CSS authoring, not as a polish step.
+Phase 2 (UI integration). After the API route works, the display strategy needs careful layout treatment.
 
 ---
 
@@ -181,77 +153,100 @@ Phase 2 (Glow effects implementation) -- address during initial CSS authoring, n
 
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
-| Using inline `style` for glow gradients instead of CSS classes | Fast iteration, easy to tweak values | Bypasses Tailwind design system, no prefers-reduced-motion integration, harder to maintain | During prototyping only -- move to CSS classes before merge |
-| Putting all animation logic in the hero component | Single file, easy to understand | Duplicates patterns already in `ScrollReveal`; if animation timing changes, two places to update | Never -- extract a shared hook (`useImageLoaded`) from the start |
-| Skipping the `img.complete` check and relying solely on `onLoad` | Simpler code, works in dev | Breaks on cached images in production (Pitfall 1) | Never |
-| Using `will-change: transform, opacity` permanently in CSS | Slightly smoother initial animation frame | Permanent GPU memory allocation for all hero layers, even when not animating | Never -- add/remove via JS around animation lifecycle |
+| Skip deduplication, use raw INCR | Simpler API route (1 Redis command) | Meaningless counts, easy to game | Never for public-facing counts |
+| Fetch views inside server component | No client component needed | Entire page becomes dynamic, TTFB degrades, loses SSG | Never for this site's architecture |
+| Individual fetch per post on listing page | Simple per-card component | N API calls on `/blog` load, slow, hits Redis quota | Acceptable with <5 posts, problematic at 10+ |
+| Hardcode reading time WPM | No configuration needed | Can't tune for different content types (code-heavy vs. prose) | Acceptable if Velite's default (200 WPM) is sufficient |
+| Skip IP hashing, store raw IPs | Simpler dedup logic | Privacy concern, potential GDPR issue, unnecessary PII storage | Never |
+
+## Integration Gotchas
+
+| Integration | Common Mistake | Correct Approach |
+|-------------|----------------|------------------|
+| Upstash Redis | Using `@vercel/kv` (deprecated for new projects) | Use `@upstash/redis` directly -- Vercel KV is no longer available for new projects, Upstash is the recommended path |
+| Upstash Redis | Calling Redis from client components | Only call Redis from route handlers or server actions; client components call the API route |
+| Upstash Redis | Not using `Redis.fromEnv()` | Use `Redis.fromEnv()` which auto-reads `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` |
+| Vercel deployment | Forgetting to add env vars to Vercel project settings | Redis works in dev with `.env.local` but fails in production without Vercel env var configuration |
+| Velite readingTime | Re-implementing reading time instead of using built-in | Velite's `s.metadata()` already computes `readingTime` -- the codebase already uses it in the transform step and displays it |
 
 ## Performance Traps
 
 | Trap | Symptoms | Prevention | When It Breaks |
 |------|----------|------------|----------------|
-| Animating `background` (gradient) instead of `opacity` on glow layers | Dropped frames, janky pulse | Animate only `opacity` and `transform` on glow elements; keep gradient static | Immediately on 2x CPU throttle in DevTools |
-| Large `filter: blur()` radius on glow pseudo-elements | GPU paint time > 16ms, stuttering on scroll | Keep blur under 20px; prefer `radial-gradient` for soft edges instead of blur filter | On any mobile device with blur > 30px |
-| Multiple full-viewport composite layers | High GPU memory, mobile crashes | Combine multiple gradients into one element's `background` property | At 4-5+ animated layers on mobile (budget Android ~3 layers safe) |
-| Not using `animation-fill-mode: forwards` on fade-in | Element flashes visible, then animates, then settles | Always pair opacity-0 initial state with `forwards` fill mode | Immediately visible as a flash on page load |
+| N+1 API calls on blog listing | Slow listing page, N concurrent requests to `/api/views/[slug]` | Batch endpoint: `GET /api/views` returns `{ [slug]: count }` for all posts | At 10+ posts, noticeable at 20+ |
+| No Redis connection reuse | Cold start latency on every API call | `@upstash/redis` uses HTTP (REST), not TCP -- no connection pool needed, but avoid creating new `Redis()` instances per request; use a module-level singleton | Not a bottleneck with REST-based Upstash, but bad habit |
+| Fetching views on every page navigation | Excessive API calls, quota consumption | Cache view counts client-side with SWR or simple state; don't re-fetch on back navigation | At scale with many users navigating between posts |
+| Upstash free tier quota exhaustion | API returns errors, view counts stop updating | Free tier: 500K commands/month (~16K/day). At 2 commands per view (dedup + incr), supports ~8K views/day. For a personal blog, this is more than sufficient. Monitor via Upstash dashboard | At ~250K monthly page views |
+
+## Security Mistakes
+
+| Mistake | Risk | Prevention |
+|---------|------|------------|
+| `NEXT_PUBLIC_` prefix on Redis credentials | Full Redis access from any browser, data deletion, injection | Never prefix Redis vars with `NEXT_PUBLIC_`; only access in server code |
+| No rate limiting on the POST endpoint | Bot can spam millions of increments, exhaust Redis quota | Add basic rate limiting: IP-based cooldown (the dedup pattern partially handles this) |
+| Trusting `x-forwarded-for` header without validation | IP spoofing to bypass deduplication | On Vercel, use the request's IP from `request.headers.get('x-forwarded-for')` which Vercel sets reliably; don't accept arbitrary header values in other environments |
+| Storing raw IP addresses | GDPR/privacy violation, unnecessary PII | Hash IPs with SHA-256 before storing as dedup keys; the hash is sufficient for deduplication |
 
 ## UX Pitfalls
 
 | Pitfall | User Impact | Better Approach |
 |---------|-------------|-----------------|
-| Glow pulse animation is too fast or too pronounced | Draws eye away from title text; can trigger vestibular discomfort | Keep pulse period >= 3 seconds, peak opacity change <= 0.1, and respect `prefers-reduced-motion` |
-| Hero text animation plays every client-side navigation | Repetitive animation annoys returning visitors | Consider: animate only on first visit (sessionStorage flag) or only on full page load (not soft nav) |
-| Animation blocks content visibility for too long | Users on slow connections see blank hero for seconds | Cap maximum wait time (e.g., 2-second timeout fallback that shows text even if image hasn't loaded) |
-| Glow colors clash with hero image in certain regions | Visual noise instead of atmospheric enhancement | Position glows at known image regions (dark areas of the runic hero image), not arbitrary positions |
+| Showing "0 views" while loading | Feels broken, misleading count | Show a subtle placeholder (e.g., `--` or a small skeleton pulse) until the real count loads |
+| Showing exact low numbers ("2 views") | Draws attention to low engagement, looks sad on new posts | Consider a minimum threshold (e.g., only show counts above 10) or show all counts honestly -- for a personal blog, authenticity is fine |
+| View count flashing from 0 to N | Jarring visual update, draws unnecessary attention | Fade in the count or use a number transition; or simply render the count element as invisible until data arrives, then fade to visible |
+| Reading time showing "0 min read" | Broken for very short posts or posts with only code | Velite's `s.metadata()` returns `readingTime` in minutes; clamp to minimum 1 with `Math.max(1, readingTime)` |
+| Inconsistent metadata between listing and detail | Listing shows views but detail doesn't (or vice versa) | Decide: views on both pages or detail-only. Recommendation: views on detail page only (avoids batch fetch complexity) |
 
 ## "Looks Done But Isn't" Checklist
 
-- [ ] **Image load detection:** Test with DevTools > Network > "Disable cache" OFF and navigate back to home via browser back button -- hero text must appear
-- [ ] **prefers-reduced-motion:** Toggle OS setting -- all animations must stop, all content must be visible (not stuck at opacity: 0)
-- [ ] **Client-side navigation:** Click a nav link away, then click Home -- animation and glows must work correctly (not stuck, not double-playing)
-- [ ] **Mobile GPU memory:** Check Chrome DevTools > Layers panel -- hero should have <= 3 composite layers total for glow effects
-- [ ] **Color banding:** Screenshot hero on an 8-bit sRGB monitor at 1080p, zoom to 200% -- gradient transitions should not show visible steps
-- [ ] **Layout shift (CLS):** The animation must not cause any layout shift -- verify `opacity` and `transform` only, never `height`/`margin`/`padding` changes
-- [ ] **Timeout fallback:** Throttle network to Slow 3G -- hero text must appear within 2-3 seconds regardless of image load state
-- [ ] **Bundle size:** Compare `next build` output for home page JS before and after -- increase should be minimal (< 1KB gzipped for the client component conversion)
+- [ ] **View counter:** Works after deploy, not just in dev -- verify `next build && next start` locally before deploying
+- [ ] **View counter:** Handles missing/undefined slug gracefully -- API route returns 400, not a Redis error
+- [ ] **View counter:** Deduplication actually works -- test by refreshing; count should increment only once per 24h window
+- [ ] **View counter:** Bot/crawler traffic filtered -- check that Googlebot visits don't inflate counts
+- [ ] **View counter:** Works with ad blockers -- some ad blockers block requests to `/api/` paths; ensure the page renders correctly even if the view count fetch fails
+- [ ] **Reading time:** Already works -- Velite `s.metadata().readingTime` is already computed and displayed in `post-card.tsx` and `[slug]/page.tsx`. The existing `readingTime: data.metadata.readingTime` transform in `velite.config.ts` handles this. No new work needed unless changing the display format.
+- [ ] **Environment variables:** Configured in Vercel project settings, not just in `.env.local`
+- [ ] **Error handling:** API route returns graceful error (not 500) if Redis is unreachable; page renders without view count rather than crashing
+- [ ] **Layout stability:** View count placeholder reserves space; no CLS when count loads
 
 ## Recovery Strategies
 
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| onLoad never fires (Pitfall 1) | LOW | Add `useEffect` with `img.complete` check -- 5-line fix, no architecture change |
-| Client component boundary too wide (Pitfall 2) | MEDIUM | Extract thin client wrapper, restructure imports -- may require splitting file |
-| Animation race condition (Pitfall 3) | LOW | Gate animation class on `loaded` state instead of mount -- CSS class swap |
-| GPU memory exhaustion (Pitfall 4) | MEDIUM | Consolidate multiple gradient divs into single `background` -- requires reworking glow markup |
-| Motion preference inconsistency (Pitfall 5) | LOW | Add `matchMedia` check in `useEffect` -- mirrors existing `ScrollReveal` pattern |
-| Gradient banding (Pitfall 6) | LOW | Add noise texture overlay and intermediate color stops -- CSS-only fix |
+| Static page became dynamic | LOW | Move Redis call out of page component into client component; no data migration needed |
+| Redis credentials exposed | MEDIUM | Rotate tokens immediately in Upstash console, update Vercel env vars, redeploy. Check Redis for unauthorized writes. |
+| Inflated view counts (no dedup) | LOW | Add dedup logic, optionally reset counters. For a personal blog, slightly inflated historical counts are harmless. |
+| GET handler cached at build time | LOW | Add `export const dynamic = 'force-dynamic'` to the route handler, redeploy |
+| CLS from view count loading | LOW | Add fixed-width placeholder element, CSS-only fix, no architecture change |
+| Free tier quota exhausted | LOW | Upstash pauses writes but data persists. Upgrade to pay-as-you-go ($0.20/100K requests) or optimize command usage. |
 
 ## Pitfall-to-Phase Mapping
 
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
-| onLoad never fires for cached images | Phase 1: Image load detection | Back-button test with cache enabled; `img.complete` check present in code |
-| Client component boundary too wide | Phase 1: Component architecture | Bundle size delta < 1KB gzipped; no server-only imports in client file |
-| Animation race condition | Phase 1: Animation sync | Throttled network test; animation gated on `loaded` state, not mount |
-| GPU memory exhaustion on mobile | Phase 2: Glow implementation | Chrome Layers panel shows <= 3 hero composite layers |
-| Motion preference inconsistency | Phase 1: Animation sync | OS reduced-motion toggle shows all content immediately |
-| Gradient color banding | Phase 2: Glow implementation | 200% zoom screenshot on 8-bit display shows smooth gradients |
+| Static-to-dynamic page regression | Phase 1: API + Architecture | `next build` output shows blog routes as static (circle icon) |
+| GET handler caching stale counts | Phase 1: API route creation | Test in production: increment count, verify GET returns updated value |
+| Link prefetch inflating counts | Phase 1: Client component design | Visit `/blog` listing, verify no POST calls fire for visible post links |
+| Redis credential exposure | Phase 1: Environment setup | Search codebase for `NEXT_PUBLIC_UPSTASH`; inspect browser network tab |
+| No deduplication | Phase 1: API implementation | Refresh a post 10 times; verify count increments only once |
+| Layout shift on count load | Phase 2: UI integration | Run Lighthouse on blog post page; CLS should remain < 0.1 |
+| Reading time edge cases | Phase 1: Velite integration check | Verify `readingTime` already works (it does); only add `Math.max(1, ...)` clamping if needed |
+| Batch fetch for listing page | Phase 2: Blog listing integration | If showing counts on listing, verify single API call fetches all counts |
+| Ad blocker resilience | Phase 2: Error handling | Test with uBlock Origin enabled; page should render normally without view count |
+| Bot traffic inflation | Phase 2: Hardening | Check user-agent filtering in API route; verify Googlebot doesn't increment |
 
 ## Sources
 
-- [Next.js Image Component docs (App Router)](https://nextjs.org/docs/app/api-reference/components/image) -- onLoad behavior, `'use client'` requirement, onLoadingComplete deprecation (HIGH confidence)
-- [vercel/next.js#20368: onLoad event work incorrect](https://github.com/vercel/next.js/issues/20368) -- core issue with onLoad and cached images (HIGH confidence)
-- [vercel/next.js Discussion #18386: ref, complete, loaded event](https://github.com/vercel/next.js/discussions/18386) -- `img.complete` workaround pattern (HIGH confidence)
-- [vercel/next.js Discussion #54756: onLoad not triggering](https://github.com/vercel/next.js/discussions/54756) -- confirms issue persists in recent versions (MEDIUM confidence)
-- [MDN: prefers-reduced-motion](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/At-rules/@media/prefers-reduced-motion) -- media query behavior and accessibility requirements (HIGH confidence)
-- [Smashing Magazine: CSS GPU Animation](https://www.smashingmagazine.com/2016/12/gpu-animation-doing-it-right/) -- composite layer memory, mobile GPU constraints (HIGH confidence)
-- [CSS-Tricks: box-shadow vs drop-shadow](https://css-tricks.com/breaking-css-box-shadow-vs-drop-shadow/) -- performance characteristics of shadow/glow approaches (MEDIUM confidence)
-- [MDN: will-change](https://developer.mozilla.org/en-US/docs/Web/CSS/will-change) -- overuse pitfalls, memory implications (HIGH confidence)
-- [MDN: animation-fill-mode](https://developer.mozilla.org/en-US/docs/Web/CSS/animation-fill-mode) -- forwards fill mode for opacity animations (HIGH confidence)
-- [Pope Tech: Accessible animation and movement](https://blog.pope.tech/2025/12/08/design-accessible-animation-and-movement/) -- reduced-motion best practices (MEDIUM confidence)
-- [Hoverify: CSS gradient performance](https://tryhoverify.com/blog/i-wish-i-had-known-this-sooner-about-css-gradient-performance/) -- gradient rendering cost, banding (MEDIUM confidence)
-- [Back/Forward Cache Aware Next.js (Medium)](https://medium.com/better-dev-nextjs-react/back-forward-cache-aware-next-js-03535b6c5fcd) -- bfcache event behavior with Next.js (MEDIUM confidence)
+- [Upstash: Adding a View Counter to your Next.js Blog](https://upstash.com/blog/nextjs13-approuter-view-counter) -- official implementation guide with dedup pattern
+- [Vercel: Common Mistakes with the Next.js App Router](https://vercel.com/blog/common-mistakes-with-the-next-js-app-router-and-how-to-fix-them) -- GET handler caching, unnecessary route handlers, revalidation
+- [Next.js: Route Handlers](https://nextjs.org/docs/app/getting-started/route-handlers) -- caching behavior, dynamic config
+- [Next.js: Data Security](https://nextjs.org/docs/app/guides/data-security) -- environment variable exposure warnings
+- [Next.js: Prefetching](https://nextjs.org/docs/app/guides/prefetching) -- Link prefetch behavior
+- [Upstash: Pricing & Limits](https://upstash.com/docs/redis/overall/pricing) -- free tier: 500K commands/month, 256MB storage
+- [Vercel Community: KV Daily Request Limit](https://community.vercel.com/t/kv-daily-request-limit/1512) -- quota exhaustion patterns
+- [Vercel Community: Switching from Vercel KV to Upstash](https://community.vercel.com/t/switching-from-vercel-kv-to-upstash-kv-questions/2660) -- @vercel/kv deprecated for new projects
+- [Next.js: Resolving Static to Dynamic Error](https://nextjs.org/docs/messages/app-static-to-dynamic-error) -- why uncached fetches break SSG
 
 ---
-*Pitfalls research for: Hero animation sync and CSS glow effects*
-*Researched: 2026-02-08*
+*Pitfalls research for: Blog view counts + reading time (keech.dev v1.4)*
+*Researched: 2026-02-21*

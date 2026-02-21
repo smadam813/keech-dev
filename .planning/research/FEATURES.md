@@ -1,147 +1,168 @@
 # Feature Research
 
-**Domain:** Hero animation sync and ambient CSS glow effects for keech.dev
-**Researched:** 2026-02-08
-**Confidence:** MEDIUM -- grounded in codebase analysis and verified web techniques, but specific rune-position glow overlays are a novel design pattern without direct precedent
+**Domain:** Blog stats -- view counts and reading time for keech.dev
+**Researched:** 2026-02-21
+**Confidence:** HIGH -- well-established patterns with extensive community precedent; reading time already implemented in codebase
 
 ## Feature Landscape
 
 ### Table Stakes (Users Expect These)
 
-Features that must work correctly or the hero feels broken. Missing any of these creates a visible quality gap.
+Features that blog readers and developer portfolio visitors assume exist when they see "X views" and "Y min read" metadata. Missing any of these creates a broken or amateurish impression.
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| Image-load-synced text animation | Text animating before the background loads is a visible bug. Users see the headline floating on a blank/placeholder canvas, breaking the reveal moment. Currently broken during client-side navigation. | MEDIUM | Requires converting `hero.tsx` to a client component, using Next.js `Image` `onLoad` callback to gate the `animate-on-load` class. The `onLoad` event fires when the real image completes and the blur placeholder is removed. Must handle cached images (where onLoad may fire synchronously). |
-| `prefers-reduced-motion` respect for all new animations | Users with vestibular disorders can be triggered by pulsing, scaling, and glowing animations. Existing codebase already respects this for fadeInUp -- any new glow/pulse animations must follow the same pattern. | LOW | Extend the existing `@media (prefers-reduced-motion: reduce)` block in `globals.css`. For glow effects, either disable animation entirely or replace with a static reduced-opacity glow. |
-| Graceful degradation when image loads slowly | On slow connections, there must be a reasonable visual state between "placeholder" and "fully loaded." The blur placeholder from Next.js static import handles the image side. The text side needs to either be visible immediately (static) or wait without a jarring pop-in. | LOW | The blur placeholder already exists. The synced animation simply holds text at `opacity: 0` until onLoad fires, then plays fadeInUp. On slow connections, users see the blur placeholder with no text, then both resolve together. Acceptable UX. |
-| No layout shift during animation | CLS (Cumulative Layout Shift) must be zero. Text appearing, glow layers fading in, and image loading must not push content around. | LOW | Current hero is `position: relative` with `fill` image and absolutely-positioned overlays. Glow layers should be absolutely positioned within the same container. No layout impact expected if implemented as overlay layers. |
-| Animation plays only once per navigation | The reveal animation should fire when the user first arrives at the page. It should not replay on every re-render, tab switch, or scroll. Currently `animate-on-load` fires on component mount which is correct for SSR but replays on client-side nav. | LOW | Gate animation state in React state. Once the `onLoad` callback fires and animation completes, do not re-trigger. Use `animationend` event or a timeout to mark completion. |
+| Reading time on post cards (blog listing) | ALREADY IMPLEMENTED. `PostCard` component shows `{post.readingTime} min read` on every card. Velite computes this at build time via `s.metadata()`. Zero work needed. | DONE | `velite.config.ts` line 26: `readingTime: data.metadata.readingTime`. PostCard line 41: `{post.readingTime} min read`. |
+| Reading time on individual post page | ALREADY IMPLEMENTED. Post page header shows `{post.readingTime} min read` inline with date and updated time. | DONE | `src/app/blog/[slug]/page.tsx` line 88: `{post.readingTime} min read`. |
+| View count displayed on individual post page | When a blog advertises view counts, users expect to see the count on the post they're reading. Standard position: inline with date and reading time metadata, separated by a dot/bullet. Format: "1,234 views". | LOW | Server component fetches count from Redis. Display as `<span>{views.toLocaleString()} views</span>` in the existing metadata row alongside date, reading time, and updated date. |
+| View count displayed on blog listing cards | If post pages show views, the listing page should too. Social proof drives click-through -- users gravitate toward posts with higher counts. | LOW | Pass view counts to `PostCard`. The tricky part: the blog listing page is currently fully static. Adding view counts requires either making it dynamic or using a client component for just the count. |
+| View count increments on page visit | The counter must actually count. One visit = one increment. Users don't see this directly, but stale or stuck counts undermine trust. | MEDIUM | API route (POST `/api/views/[slug]`) increments Redis counter via `redis.incr()`. Called from a client component's `useEffect` on mount. This is the site's first API route and first client-side fetch -- a meaningful architectural shift from "zero runtime data fetching." |
+| View count persistence across deploys | Counts must survive redeployments. A counter that resets to zero on every deploy is worse than no counter. | LOW | Upstash Redis is external to Vercel's build/deploy lifecycle. Data persists independently. No migration or backup concerns at this scale. |
+| Reasonable accuracy (not obviously wrong) | If a post shows "2 views" after being linked on Twitter, users notice. Counts don't need to be perfect, but they can't be laughably wrong. | MEDIUM | IP-based deduplication with a 24h TTL prevents the same visitor from inflating counts within a session. Hash the IP (never store raw IPs) + slug as a Redis key with `NX` + `EX 86400`. Only increment if the dedup key was successfully set. |
 
 ### Differentiators (Competitive Advantage)
 
-Features that elevate the hero from "functional" to "this person cares about craft." These are where the Norse identity comes alive.
+Features that elevate beyond basic "number next to title." These signal engineering craft and attention to detail.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| Staggered rune-position glow pulse | Soft teal/aurora glow spots positioned over rune locations in the background image, pulsing with staggered timing. Creates an "alive" atmosphere like runes channeling energy. Ties directly into the Elder Futhark theme that permeates the site. | MEDIUM | Use absolutely-positioned pseudo-elements or dedicated divs with CSS `radial-gradient` or `box-shadow` glow. Animate `opacity` only (not box-shadow values) for 60fps performance. Use CSS custom property `--i` index for stagger delays via `calc()`. Position coordinates are fixed since the hero image is static. |
-| Organic stagger timing (not linear) | Linear stagger (equal delay between each glow point) feels mechanical. An easing curve applied to the delay distribution -- some runes pulse almost together, others have longer gaps -- creates a breathing, organic feel. | LOW | Use non-linear index multipliers in `calc()`. For example, `animation-delay: calc(var(--i) * var(--i) * 0.15s)` creates accelerating gaps. Or hand-tune 5-7 delay values. Small effort, large perceptual difference. |
-| Coordinated image-to-text reveal sequence | Instead of image and text appearing simultaneously, a deliberate reveal order: background crossfades from blur to sharp, then text fades up, then glow points pulse on. Creates a cinematic three-beat entrance. | MEDIUM | Sequence: (1) `onLoad` fires, image crossfade happens via Next.js placeholder removal, (2) after a short delay (200-400ms), trigger text fadeInUp, (3) after text animation completes (~600ms), start glow pulse sequence. Use CSS `animation-delay` chaining or a single state machine in the client component. |
-| Subtle parallax on glow layer | Glow spots shift very slightly (5-10px) on mouse move or device tilt, creating depth separation between the static background and the glow overlay. Makes the runes feel like they exist on a separate plane. | MEDIUM | Use `mousemove` event with `transform: translate()` on the glow container. Apply a dampening factor (requestAnimationFrame + lerp) for smooth movement. Device tilt via DeviceOrientationEvent for mobile. Must be entirely optional (enhancement, not core). |
-| Glow color variation by rune aett | Different aett groups (Freyr's, Hagal's, Tyr's) get slightly different glow hues -- warm amber for Freyr's, cool teal for Hagal's, pale gold for Tyr's. Adds visual depth and rewards users who notice the rune system. | LOW | Each glow point gets a CSS custom property `--glow-color` based on its aett. Use the existing `rune-config.ts` aett data. Three color values in the theme. Minimal code, meaningful design detail. |
-| Slow ambient drift animation | After the initial pulse-in sequence completes, glow points enter a very slow continuous breathing cycle (4-8 second period). Not a sharp pulse, but a gentle opacity oscillation between 0.3 and 0.6. Background atmosphere, not attention-grabbing. | LOW | Single `@keyframes` with `animation-iteration-count: infinite` and `animation-timing-function: ease-in-out`. Long duration prevents it from feeling frenetic. The stagger delays persist into the infinite loop, so points breathe out of phase. |
+| Streaming view count with Suspense fallback | The post page remains fully static (fast TTFB) while the view count streams in via React Suspense. Users see the post content instantly; the view count appears a beat later. No loading spinner, no layout shift -- the count slot is reserved in the metadata line. This is a textbook PPR (Partial Pre-Rendering) use case in Next.js 16. | MEDIUM | Wrap the `ViewCount` server component in `<Suspense fallback={<span>-- views</span>}>`. The static shell (title, content, reading time) serves immediately from CDN. The view count resolves server-side and streams into the page. No client JS needed for display. |
+| Neobrutalist view counter styling | The view count and reading time aren't plain text -- they match the site's bold visual identity. A small eye icon or tally mark prefix, consistent with the 3px borders and hard shadows elsewhere. | LOW | Use an existing Lucide icon (`Eye` or `Clock`) at 14-16px inline with the text. Keep it monochrome to match the `text-muted` treatment of the existing date display. No new design system -- extend the existing metadata row styling. |
+| Number formatting with locale awareness | "1234 views" vs "1,234 views". At scale, "12.3K views" reads better than "12,345 views". | LOW | `toLocaleString()` for comma formatting. Consider a `formatViews(n)` utility: under 1,000 show exact, over 1,000 show "1.2K", over 1M show "1.2M". Simple but polished. |
+| Sorted by popularity option | "Sort by views" alongside the default date sort on the blog listing. Lets readers find the most-read content. | MEDIUM | Requires fetching all view counts on the listing page. Could be a client-side toggle that re-sorts the already-fetched data. Deferred -- only valuable once there are enough posts (10+) to make sorting meaningful. Currently only 3 posts. |
+| View count in Open Graph / SEO metadata | "This post has been read 5,000 times" in the OG description adds social proof when shared on Twitter/LinkedIn. | LOW | Append view count to the dynamically generated `description` in `generateMetadata()`. Requires the page to be dynamically rendered (which it will be once view counts are added). |
 
 ### Anti-Features (Commonly Requested, Often Problematic)
 
-Features to deliberately NOT build. These would undermine the neobrutalist identity or create technical problems.
+Features that seem good but create problems for a personal developer blog at this scale.
 
 | Feature | Why Requested | Why Problematic | Alternative |
 |---------|---------------|-----------------|-------------|
-| Canvas-based ambient glow (YouTube-style) | YouTube's ambient mode is visually impressive and well-known. Seems like the "real" way to do ambient glow. | Massively over-engineered for a static image. YouTube's technique exists because video frames change -- it samples live color data. For a static .webp hero, a canvas pipeline adds JS weight, complexity, and a new rendering layer for zero benefit over CSS. Also breaks SSR. | CSS radial-gradient or box-shadow on positioned elements. Same visual result, zero JS for the glow itself (only JS for animation triggering). |
-| Particle system / floating rune particles | Animated rune characters drifting across the hero like snow or embers. Visually dramatic, thematically relevant. | Creates a "fantasy game landing page" feel that clashes with the neobrutalist identity. Neobrutalism is about bold, static, intentional placement -- not ambient particle noise. Also a significant performance and bundle size cost for a canvas-based particle system. | The staggered glow pulse achieves "alive" atmosphere through light rather than motion. Runes are anchored, not floating -- which aligns with their carved-in-stone cultural identity. |
-| Framer Motion or GSAP animation library | Professional animation libraries offer fine-grained timeline control, spring physics, and gesture handling. | Adding 20-40KB (Framer Motion) or 25KB (GSAP) for a single hero animation is disproportionate. The existing codebase uses zero animation libraries -- only CSS keyframes and one IntersectionObserver. The hero animation sequence is simple enough for CSS + React state. Introducing a library here sets a precedent for library creep across the site. | CSS `@keyframes` with `animation-delay` chaining. For the parallax effect, vanilla JS with `requestAnimationFrame`. The entire feature set described above can be achieved with zero new dependencies. |
-| Interactive rune hover effects on glow points | Hovering over a glow spot reveals the rune name/meaning as a tooltip. Makes the hero "interactive." | The hero image is a photograph with runes rendered into it -- the glow positions are approximate overlays, not precise clickable regions. Touch targets would be ambiguous. Adding hover state to decorative elements creates false affordance (users expect clicking does something). Also conflicts with the scrim overlay's `pointer-events-none`. | If rune interactivity is desired, build it as a separate "rune explorer" component on the /about page where runes can be properly displayed as distinct interactive elements with the existing `rune-config.ts` data. |
-| Scroll-triggered hero animation | Hero animation plays as you scroll down, with parallax layers moving at different rates. | The hero is above-the-fold, full viewport height. Scroll-triggered animation means the hero sits static on initial load (wasting the first impression) and only comes alive as the user scrolls away from it. For below-fold content, scroll-trigger is great (the site already has `ScrollReveal`). For the hero, on-load is correct. | Keep the reveal sequence triggered by image load, not scroll. The hero's job is to make an immediate impression. |
-| Dark mode / theme-variant glow colors | Supporting different glow palettes for light/dark mode. | The site explicitly has no dark mode -- the dusty rose / teal / black palette IS the brand. Building dark mode support for the glow system introduces conditional theming infrastructure for a single-theme site. The CLAUDE.md states this directly. | Single palette. The glow colors should be defined as CSS custom properties in `globals.css` alongside the existing theme tokens, but only one set of values. |
+| Real-time live updating view count | "Watch the number go up in real-time!" Feels dynamic and engaging. | Requires WebSocket or polling, adds significant client-side complexity, and is entirely pointless for a personal blog with single-digit concurrent readers. The count updating live in front of you has zero value when it changes once every few hours. Creates unnecessary Redis connections. | Fetch count once on page load (server-side). If a user visits twice in the same day, they'll see the count changed. That's sufficient. |
+| "Like" or "clap" button alongside view count | Medium-style engagement. Lets readers express appreciation beyond just visiting. | Introduces identity/session management complexity (how many likes per user?), creates a moderation surface (bot likes), and dilutes the clean metadata line. Josh Comeau does this well, but it's a feature unto itself -- not a v1.4 scope item. | Defer entirely. If engagement features are desired later, build as a separate milestone with proper session management. |
+| Full analytics dashboard | "Show me traffic over time, referrers, geographic distribution." A private admin panel with charts. | This is reinventing Vercel Analytics or Plausible. The view counter's purpose is social proof for readers, not analytics for the author. Building a dashboard is a multi-sprint effort that duplicates existing free tools. | Use Vercel Analytics (free tier) for author-facing metrics. The public view counter serves a different purpose: reader-facing social proof. |
+| Google Analytics or third-party tracking pixel | "Just add GA4, it does everything." Comprehensive analytics with zero custom code. | Privacy concerns, GDPR compliance burden, cookie banners, performance impact (GA4 script is ~28KB), and it doesn't solve the public display problem -- GA4 data isn't exposed to readers. Fundamentally different goal than a public view counter. | Upstash Redis counter for public display. If author wants private analytics, Vercel Analytics (first-party, no cookie banner needed) or Plausible (privacy-focused). |
+| Unique visitor counting (fingerprinting) | "Show unique visitors, not just page views." More accurate representation of audience size. | Browser fingerprinting is ethically questionable and technically unreliable. Canvas fingerprinting, WebGL hashing, and similar techniques are being actively blocked by browsers. IP hashing with TTL provides "good enough" deduplication without crossing ethical lines. | IP-hash deduplication with 24h TTL. Not unique visitors, but "deduplicated views per 24h period." Close enough for social proof purposes without fingerprinting. |
+| View count for draft/unpublished posts | "Track views even during preview." | Draft posts should not be publicly accessible. If they are accessed via direct URL during development, those views are noise -- not real reader engagement. Incrementing counts during development pollutes the data. | Only increment for published (non-draft) posts. The API route should validate the slug exists in the published post list before incrementing. Or simply: only call the increment endpoint from the production post page component. |
+| Client-side only view counter (localStorage/cookies) | "No backend needed! Just count in the browser." | Data is per-device, not aggregated. Different visitors can't see each other's contributions. Clearing cookies resets the count. This isn't a view counter -- it's a visit tracker for a single user. Completely fails the social proof goal. | Server-side counter with Redis. The entire point is aggregated, shared, persistent data. |
 
 ## Feature Dependencies
 
 ```
-[Image load sync (fix bug)]
-    +-- triggers --> [Text fadeInUp animation]
-                        +-- triggers --> [Staggered glow pulse sequence]
-                                             +-- enhances --> [Ambient drift animation (infinite loop)]
+[Upstash Redis setup + API route]
+    +-- required by --> [View count increment on visit]
+    +-- required by --> [View count display on post page]
+                            +-- enhances --> [View count display on blog listing]
+                            +-- enhances --> [Suspense streaming fallback]
 
-[prefers-reduced-motion support]
-    +-- constrains --> [All animation features above]
+[View count display on post page]
+    +-- enhances --> [View count in OG metadata]
 
-[Rune position mapping]
-    +-- required by --> [Staggered glow pulse]
-    +-- required by --> [Glow color by aett]
-    +-- enhances --> [Parallax on glow layer]
+[Reading time on post cards]  <-- ALREADY DONE
+[Reading time on post page]   <-- ALREADY DONE
 
-[Organic stagger timing]
-    +-- enhances --> [Staggered glow pulse]
-    +-- enhances --> [Ambient drift animation]
+[Number formatting utility]
+    +-- enhances --> [View count display on post page]
+    +-- enhances --> [View count display on blog listing]
+
+[IP deduplication]
+    +-- enhances --> [View count increment on visit]
 ```
 
 ### Dependency Notes
 
-- **Image load sync is the foundation:** Every other animation feature depends on knowing when the image is ready. This is also the bug fix. Must be implemented first.
-- **Text animation requires image load sync:** The current text animation fires immediately on mount. Converting to onLoad-gated requires the sync mechanism to exist.
-- **Glow pulse requires rune position mapping:** Glow spots need x/y coordinates mapped to where runes appear in the hero image. This is a data authoring step (examining the image, noting rune positions, encoding as CSS or config).
-- **Aett-based glow color requires rune position mapping:** Each glow point must be associated with a specific rune to know its aett. The existing `rune-config.ts` has the aett data; the position mapping connects it to the hero image.
-- **Parallax is fully independent and optional:** It enhances the glow layer but does not depend on or block anything else. Can be added or removed without affecting the core animation sequence.
-- **`prefers-reduced-motion` constrains everything:** Every animation feature must degrade gracefully. This is not a "later" concern -- it must be built into each feature from the start.
+- **Reading time is fully complete:** Both the blog listing PostCard and individual post page already show `{post.readingTime} min read`. Velite's `s.metadata()` computes word count and reading time at build time. This feature requires ZERO new work.
+- **Upstash Redis is the foundation:** The API route, view count display, and deduplication all depend on a working Redis connection. This is the first thing to set up and verify.
+- **API route must exist before display:** You can't show what you can't fetch. The POST route for incrementing and the GET route (or direct server-side fetch) for reading must both work before any UI displays counts.
+- **Blog listing display depends on post page display:** Get it working on one page first, then extend to the listing. The listing page has additional complexity (fetching counts for multiple posts vs. one).
+- **Suspense streaming enhances but doesn't block:** The view count can initially render synchronously (making the page dynamic). Suspense streaming is an optimization that preserves static shell performance -- worth doing but not blocking for launch.
+- **IP deduplication enhances accuracy but doesn't block functionality:** The counter works without deduplication. Add it in the same API route implementation, but if it proves complex, ship without it first and add it immediately after.
 
 ## MVP Definition
 
-### Launch With (v1)
+### Launch With (v1.4.0)
 
-Minimum viable implementation -- fixes the bug and delivers the core visual impact.
+Minimum viable blog stats -- public view counts appear on blog posts.
 
-- [ ] **Image-load-synced text animation** -- Fixes the reported bug. Convert hero.tsx to client component, use onLoad to gate animation.
-- [ ] **Coordinated reveal sequence** -- Image resolves, short pause, text fades up. Two-beat entrance using animation-delay.
-- [ ] **`prefers-reduced-motion` for all new animations** -- Extend existing media query block. Non-negotiable accessibility baseline.
+- [ ] **Upstash Redis connection** -- Create Upstash database via Vercel Marketplace, configure environment variables, verify connection from a route handler.
+- [ ] **API route for view count increment** -- `POST /api/views/[slug]` calls `redis.incr(`views:${slug}`)`. Returns the new count. Basic IP-hash deduplication with 24h TTL.
+- [ ] **View count display on post page** -- Inline with existing metadata (date, reading time, updated date). Server component fetches count directly from Redis. Wrapped in Suspense with a `-- views` fallback to preserve static shell performance.
+- [ ] **Client-side increment trigger** -- Small `'use client'` component that calls `POST /api/views/[slug]` via `useEffect` on mount. Fire-and-forget (don't block rendering on the response).
+- [ ] **View count display on blog listing** -- Each `PostCard` shows the view count alongside reading time. Fetch all counts in the listing page server component with `redis.mget()` or a pipeline.
 
-### Add After Validation (v1.x)
+### Add After Validation (v1.4.x)
 
-Features to add once the sync mechanism is proven stable.
+Features to add once the core view counting pipeline is proven.
 
-- [ ] **Staggered rune-position glow pulse** -- Core visual enhancement. Requires identifying rune positions in the hero image and placing CSS glow overlays. Add when the onLoad sequencing is solid.
-- [ ] **Organic stagger timing** -- Tune delay curve once glow points are placed and visible. Quick iteration on timing values.
-- [ ] **Glow color variation by aett** -- Wire up rune-config.ts aett data to glow colors. Small addition once glow points exist.
-- [ ] **Slow ambient drift animation** -- Add infinite breathing cycle after pulse-in sequence works. Last animation layer.
+- [ ] **Number formatting utility** -- Add `formatViews(n)` once any post exceeds 1,000 views. Low priority until then.
+- [ ] **View count in OG metadata** -- Append to `generateMetadata()` description once counts are meaningful enough to serve as social proof in link previews.
+- [ ] **Sort by popularity toggle** -- Add once there are 10+ published posts. Currently 3 posts makes sorting pointless.
 
 ### Future Consideration (v2+)
 
-Features to defer until the animation system is mature.
+Features to defer until the blog has scale.
 
-- [ ] **Subtle parallax on glow layer** -- Mouse/tilt-driven depth effect. Requires careful performance testing on mobile. Defer until core animations are finalized.
-- [ ] **Responsive rune position mapping** -- Glow positions may need to shift at different breakpoints if the background image crops differently. Investigate after initial desktop implementation.
+- [ ] **Engagement features (likes/reactions)** -- Requires session/identity management. Different milestone entirely.
+- [ ] **Admin view of analytics** -- Use Vercel Analytics. Don't rebuild what exists.
+- [ ] **Historical view trends** -- Redis `INCR` loses temporal data. Would need a time-series approach (daily buckets) if ever needed. Almost certainly unnecessary for a personal blog.
 
 ## Feature Prioritization Matrix
 
 | Feature | User Value | Implementation Cost | Priority |
 |---------|------------|---------------------|----------|
-| Image load sync (bug fix) | HIGH | MEDIUM | P1 |
-| Coordinated reveal sequence | HIGH | LOW | P1 |
-| `prefers-reduced-motion` support | HIGH | LOW | P1 |
-| No layout shift | HIGH | LOW | P1 |
-| Animation plays once | MEDIUM | LOW | P1 |
-| Staggered rune glow pulse | HIGH | MEDIUM | P2 |
-| Organic stagger timing | MEDIUM | LOW | P2 |
-| Glow color by aett | MEDIUM | LOW | P2 |
-| Ambient drift animation | MEDIUM | LOW | P2 |
-| Parallax on glow layer | LOW | MEDIUM | P3 |
-| Responsive rune positions | LOW | MEDIUM | P3 |
+| Reading time (post card) | HIGH | ZERO (done) | DONE |
+| Reading time (post page) | HIGH | ZERO (done) | DONE |
+| Upstash Redis setup | HIGH (blocker) | LOW | P1 |
+| API route for increment | HIGH (blocker) | LOW | P1 |
+| View count on post page | HIGH | LOW | P1 |
+| Client increment trigger | HIGH | LOW | P1 |
+| IP deduplication | MEDIUM | LOW | P1 |
+| View count on blog listing | MEDIUM | MEDIUM | P1 |
+| Suspense streaming fallback | MEDIUM | LOW | P1 |
+| Number formatting | LOW | LOW | P2 |
+| OG metadata integration | LOW | LOW | P2 |
+| Sort by popularity | LOW | MEDIUM | P3 |
 
 **Priority key:**
-- P1: Must have for launch -- fixes the bug, establishes the animation foundation
-- P2: Should have -- delivers the ambient glow visual identity
-- P3: Nice to have -- polish effects to add after core is stable
+- DONE: Already implemented -- no work needed
+- P1: Must have for v1.4 launch -- the core view counting feature
+- P2: Should have -- polish once core is working
+- P3: Nice to have -- defer until blog has enough content/traffic
 
 ## Competitor Feature Analysis
 
-| Feature | Award-winning portfolio sites (Awwwards) | Dev portfolio norm | keech.dev approach |
-|---------|------------------------------------------|--------------------|--------------------|
-| Hero image reveal | Cinematic sequences with GSAP/Framer. Multi-second choreography. | Basic fade-in or no animation. | Lightweight CSS-only two-beat reveal (image then text). Achieves the "intentional" feel without library weight. |
-| Ambient background effects | Canvas particle systems, WebGL shaders, video loops. | Static image or gradient. | CSS glow overlays. Matches the rune theme without over-engineering. Unique because the glow is thematically motivated (rune energy), not generic. |
-| Scroll-driven hero | Parallax layers, scroll-triggered timeline. | Fixed background, content scrolls over. | No scroll dependency. Hero makes its impression on load. Scroll-reveal exists for below-fold content already. |
-| Motion accessibility | Often missing entirely. | Rarely implemented. | First-class `prefers-reduced-motion` support on all animations. Differentiator by being responsible. |
+| Feature | Lee Robinson (leerob.com) | Josh Comeau (joshwcomeau.com) | Dan Abramov (overreacted.io) | keech.dev approach |
+|---------|--------------------------|-------------------------------|------------------------------|-------------------|
+| View counter | Yes, Firebase-backed, displayed on post pages and listing. One of the original Next.js blog view counter implementations. | Yes, MongoDB-backed, 90s-style hit counter aesthetic. Also has a "like" heart button. | No view counter. Minimalist blog, no engagement metrics. | Upstash Redis. Displayed inline with date/reading time in existing metadata row. Neobrutalist styling -- bold but not retro. |
+| Reading time | Yes | Yes | No | Already done. Velite computes at build time via `s.metadata()`. |
+| Deduplication | Unknown (Firebase may handle) | Unknown | N/A | IP-hash with 24h TTL in Redis. Prevents same-visitor inflation without fingerprinting. |
+| Loading state | SSR with revalidation | Client-side fetch with loading state | N/A | Suspense streaming. Static shell serves instantly, view count streams in. Best of both worlds. |
+| Counter display format | "X views" plain text | Stylized retro counter (flip-clock aesthetic) | N/A | "{count} views" in `text-muted` matching existing metadata style. Locale-formatted numbers. |
+| Counter on listing | Yes, shown on each post card | Yes, shown alongside post metadata | N/A | Yes, fetched via Redis pipeline for all posts. Shown in PostCard metadata line. |
+
+## Key Finding: Reading Time Is Already Complete
+
+The PROJECT.md lists "Reading time estimates calculated at build time" as a target feature, but **this is already fully implemented:**
+
+1. `velite.config.ts` uses `s.metadata()` which computes `readingTime` from word count
+2. The schema transform maps it: `readingTime: data.metadata.readingTime`
+3. `PostCard` displays it: `{post.readingTime} min read`
+4. Post page displays it: `{post.readingTime} min read`
+
+The v1.4 milestone's actual new work is entirely about **view counts** -- the first backend integration, the first API route, and the first runtime data fetching in what has been a fully static site.
 
 ## Sources
 
-- [Next.js Image Component API (onLoad callback)](https://nextjs.org/docs/app/api-reference/components/image) -- HIGH confidence, official docs
-- [Animating box-shadow with smooth performance (pseudo-element opacity technique)](https://tobiasahlin.com/blog/how-to-animate-box-shadow/) -- HIGH confidence, verified technique
-- [Staggered animations with CSS custom properties (Cloud Four)](https://cloudfour.com/thinks/staggered-animations-with-css-custom-properties/) -- HIGH confidence, verified technique
-- [Recreating YouTube's ambient mode glow effect (Smashing Magazine)](https://www.smashingmagazine.com/2023/07/recreating-youtube-ambient-mode-glow-effect/) -- HIGH confidence, used to justify anti-feature decision
-- [prefers-reduced-motion (MDN)](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/At-rules/@media/prefers-reduced-motion) -- HIGH confidence, official reference
-- [CSS GPU animation best practices (Smashing Magazine)](https://www.smashingmagazine.com/2016/12/gpu-animation-doing-it-right/) -- MEDIUM confidence, older but principles still valid
-- [next/image onLoad double-fire issue (GitHub Discussion #24757)](https://github.com/vercel/next.js/discussions/24757) -- MEDIUM confidence, community discussion with verified workaround
-- [Hero section animation best practices (various)](https://freefrontend.com/css-hero-sections/) -- LOW confidence, aggregator without primary sources
-- [CSS glow effects compilation (TestMu AI)](https://www.testmu.ai/blog/glowing-effects-in-css/) -- LOW confidence, used for pattern survey only
+- [Upstash: Adding a View Counter to your Next.js Blog](https://upstash.com/blog/nextjs13-approuter-view-counter) -- HIGH confidence, official Upstash tutorial with full implementation
+- [Vercel: Next.js Portfolio Pageview Counter Template](https://vercel.com/templates/next.js/nextjs-portfolio-pageview-counter) -- HIGH confidence, official Vercel template
+- [Scastiel: View counter with React Server Components](https://scastiel.dev/view-counter-react-server-components) -- MEDIUM confidence, demonstrates async server component pattern for view display
+- [Upstash: App Router Quickstart](https://upstash.com/docs/redis/quickstarts/nextjs-app-router) -- HIGH confidence, official SDK documentation
+- [Vercel Changelog: Upstash joins the Vercel Marketplace](https://vercel.com/changelog/upstash-joins-the-vercel-marketplace) -- HIGH confidence, confirms Vercel KV sunset and Upstash as replacement
+- [Vercel Community: Switching from Vercel KV to Upstash KV](https://community.vercel.com/t/switching-from-vercel-kv-to-upstash-kv-questions/2660) -- MEDIUM confidence, community confirmation of migration path
+- [Josh Comeau: How I Built My Blog](https://www.joshwcomeau.com/blog/how-i-built-my-blog/) -- MEDIUM confidence, describes hit counter and like button implementation with MongoDB
+- [Lee Robinson: Real-Time Blog Post Views](https://leerob.com/blog/real-time-post-views) -- MEDIUM confidence, original Next.js view counter pattern (now redirects to GitHub repo)
+- Codebase analysis: `velite.config.ts`, `src/app/blog/[slug]/page.tsx`, `src/app/blog/page.tsx`, `src/components/blog/post-card.tsx` -- HIGH confidence, direct source code inspection
 
 ---
-*Feature research for: Hero animation sync and ambient CSS glow effects (keech.dev)*
-*Researched: 2026-02-08*
+*Feature research for: Blog stats -- view counts and reading time (keech.dev v1.4)*
+*Researched: 2026-02-21*
