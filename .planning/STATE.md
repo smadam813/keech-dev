@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-21)
 ## Current Position
 
 Phase: 3 of 5 (Infrastructure & API)
-Plan: 1/1 complete
+Plan: 2/2 complete
 Status: Phase 3 complete — ready for Phase 4
-Last activity: 2026-02-21 — Completed 03-01 View Count API
+Last activity: 2026-02-21 — Completed 03-02 Dedup Gap Closure
 
 Progress: [█████████████░░░░░░░] 67% (milestone phases 1/3)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 11
+- Total plans completed: 12
 - Average duration: ~10 min
-- Total execution time: ~1h 10min
+- Total execution time: ~1h 11min
 
 **By Phase:**
 
@@ -29,7 +29,7 @@ Progress: [█████████████░░░░░░░] 67% (mi
 |-------|-------|-------|----------|
 | 01-animation-sync-reveal | 1 | ~15min | ~15min |
 | 02-rune-glow-effects | 1 | ~45min | ~45min |
-| 03-infrastructure-api | 1 | ~2min | ~2min |
+| 03-infrastructure-api | 2 | ~3min | ~1.5min |
 | quick-1 through quick-8 | 8 | ~14min | ~2min |
 
 *Updated after each plan completion*
@@ -44,7 +44,8 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - Use `@upstash/redis` (not deprecated `@vercel/kv`) with `Redis.fromEnv()`
 - IP deduplication uses SHA-256 hashing with 24h TTL — never store raw IPs
 - View count fires from client component `useEffect` to avoid static-to-dynamic regression
-- Pipeline (not transaction) for dedup+increment -- negligible race risk, simpler code
+- Replaced pipeline with two-step SET NX + conditional INCR for correctness over ~1-2ms latency
+- Dedup enforced at API layer -- repeat POSTs skip INCR entirely instead of always incrementing
 - POST returns `{ slug, views, deduplicated }` so Phase 4 client knows repeat visits
 - No slug validation against published posts -- harmless orphan keys
 - Redis key prefixes: `views:` for counters, `dedup:` for IP dedup keys
@@ -73,5 +74,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-21
-Stopped at: Completed 03-01-PLAN.md (View Count API)
+Stopped at: Completed 03-02-PLAN.md (Dedup Gap Closure)
 Resume file: None — next step is /gsd:plan-phase 4
