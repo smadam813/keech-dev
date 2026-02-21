@@ -52,10 +52,11 @@ Plans:
   2. Visiting a blog post increments its view count (visible on reload)
   3. Blog post pages are still listed in the Next.js build output as static (no dynamic regression)
   4. A placeholder element is always present in the HTML before the view count loads, preventing layout shift
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 04-01: TBD
+- [ ] 04-01-PLAN.md — ViewCounter component, shimmer animation, and POST_RUNES rune config
+- [ ] 04-02-PLAN.md — Wire ViewCounter into blog post page, replace separators with Jera rune
 
 ### Phase 5: Listing & Polish
 **Goal**: View counts appear on the blog listing page and the entire feature handles edge cases gracefully
@@ -80,5 +81,5 @@ Phases execute in numeric order: 3 -> 4 -> 5
 | 1. Animation Sync & Reveal | v1.3 | 1/1 | Complete | 2026-02-08 |
 | 2. Rune Glow Effects | v1.3 | 1/1 | Complete | 2026-02-08 |
 | 3. Infrastructure & API | v1.4 | 2/2 | Complete | 2026-02-21 |
-| 4. Post Page Integration | v1.4 | 0/? | Not started | - |
+| 4. Post Page Integration | v1.4 | 0/2 | Planned | - |
 | 5. Listing & Polish | v1.4 | 0/? | Not started | - |
