@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { formatViewCount } from '@/lib/views'
 
 interface ViewCounterProps {
   slug: string
@@ -54,7 +55,7 @@ export function ViewCounter({ slug }: ViewCounterProps) {
 
   return (
     <span className={views === null ? 'inline-block w-12' : undefined}>
-      {views !== null && `${views.toLocaleString()} ${views === 1 ? 'view' : 'views'}`}
+      {views !== null && formatViewCount(views)}
     </span>
   )
 }
