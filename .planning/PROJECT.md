@@ -2,7 +2,7 @@
 
 ## What This Is
 
-Personal portfolio/blog at keech.dev built with Next.js 16, React 19, Tailwind CSS v4, and Velite for MDX content. Features a neobrutalist visual identity with Norse-themed hero section including load-gated reveal animation and ambient rune glow effects.
+Personal portfolio/blog at keech.dev built with Next.js 16, React 19, Tailwind CSS v4, and Velite for MDX content. Features a neobrutalist visual identity with Norse-themed hero section including load-gated reveal animation and ambient rune glow effects. Blog posts display public view counts backed by Upstash Redis.
 
 ## Core Value
 
@@ -23,22 +23,14 @@ A polished, intentional developer portfolio — fast, visually distinctive, and 
 - ✓ Rune hotspots pulse with staggered timing (ember-like glow) — v1.3
 - ✓ Rune glow effect respects prefers-reduced-motion — v1.3
 - ✓ No layout shift or flash of unstyled content during navigation — v1.3
-
-## Current Milestone: v1.4 Blog Stats
-
-**Goal:** Add public view counts and reading time to blog posts — the site's first backend integration.
-
-**Target features:**
-- Public view counts on blog posts (backed by Vercel KV)
-- Reading time estimates calculated at build time
-- API route for view count tracking
+- ✓ Public view counts displayed on blog post pages and blog listing — v1.4
+- ✓ View count persistence via Upstash Redis with IP dedup — v1.4
+- ✓ API routes for incrementing and batch-fetching view counts — v1.4
+- ✓ Graceful degradation when API unreachable — v1.4
 
 ### Active
 
-- [ ] Public view counts displayed on blog post pages and blog listing
-- [ ] View count persistence via Vercel KV (Upstash Redis)
-- [ ] API route for incrementing and fetching view counts
-- [ ] Reading time estimates on blog post pages and blog listing
+(None — define in next milestone)
 
 ### Out of Scope
 
@@ -49,12 +41,17 @@ A polished, intentional developer portfolio — fast, visually distinctive, and 
 - Canvas-based ambient glow — over-engineered for static image
 - Particle system / floating runes — clashes with neobrutalist identity
 - Framer Motion or GSAP — zero-library codebase precedent
+- Admin analytics dashboard — use Vercel Analytics instead
+- Engagement features (likes/reactions) — separate milestone requiring session management
+- Real-time view counter (WebSocket) — over-engineered for personal blog
 
 ## Context
 
-Shipped v1.3 Hero Polish with 691 LOC across 3 source files (TypeScript + CSS).
-Tech stack: Next.js 16, React 19, Tailwind CSS v4, Velite, MDX.
-Hero section now has load-gated two-beat reveal and 14 ambient rune glows.
+Shipped v1.4 Blog Stats with 291 LOC across 11 source files (TypeScript).
+Tech stack: Next.js 16, React 19, Tailwind CSS v4, Velite, MDX, Upstash Redis.
+Hero section has load-gated two-beat reveal and 14 ambient rune glows.
+Blog posts display public view counts backed by Upstash Redis with IP deduplication.
+Blog listing page batch-fetches counts via redis.mget() with localStorage caching.
 Site is statically generated and deployed via git-push to Vercel.
 
 ## Key Decisions
@@ -71,6 +68,12 @@ Site is statically generated and deployed via git-push to Vercel.
 | Color distribution 6 teal / 4 amber / 4 gold | Adjusted from strict aett grouping for visual balance | ✓ Good — balanced across image |
 | Manual position calibration | Research estimates were off 5-15% in both axes | ✓ Good — pixel-precise alignment |
 | No mix-blend-mode | Preserves GPU-composited opacity animation | ✓ Good — smooth performance |
+| @upstash/redis over deprecated @vercel/kv | @vercel/kv deprecated Dec 2024, @upstash/redis is the direct replacement | ✓ Good — future-proof, same underlying service |
+| Two-step SET NX + conditional INCR | Correctness over ~1-2ms latency for dedup enforcement | ✓ Good — repeat POSTs never inflate count |
+| localStorage view cache over shimmer | Shimmer felt jarring; cached count provides instant display on return visits | ✓ Good — flicker-free UX |
+| Render-prop pattern for listing view counts | Keeps PostCard server-renderable while ListingViewCounts owns client boundary | ✓ Good — clean server/client split |
+| Batch redis.mget() for listing page | Single round-trip retrieval vs N individual fetches | ✓ Good — efficient at any post count |
+| No slug validation against published posts | Orphan Redis keys are harmless, zero-cost simplification | ✓ Good — simpler API |
 
 ## Constraints
 
@@ -81,4 +84,4 @@ Site is statically generated and deployed via git-push to Vercel.
 - **Theme**: Single theme only (no dark mode) — the palette is the brand
 
 ---
-*Last updated: 2026-02-21 after v1.4 milestone start*
+*Last updated: 2026-02-22 after v1.4 milestone*

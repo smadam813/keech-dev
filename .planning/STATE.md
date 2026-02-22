@@ -2,26 +2,23 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-21)
+See: .planning/PROJECT.md (updated 2026-02-22)
 
 **Core value:** A polished, intentional developer portfolio — fast, visually distinctive, and well-crafted in every detail.
-**Current focus:** Phase 3: Infrastructure & API
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Phase: 3 of 5 (Infrastructure & API)
-Plan: — (not yet planned)
-Status: Ready to plan
-Last activity: 2026-02-21 — Roadmap created for v1.4 Blog Stats
-
-Progress: [██████████░░░░░░░░░░] 50% (milestone phases 0/3)
+Phase: Milestone v1.4 complete
+Status: Between milestones
+Last activity: 2026-02-22 — Completed v1.4 Blog Stats milestone
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 10
-- Average duration: ~11 min
-- Total execution time: ~1h 8min
+- Total plans completed: 16
+- Average duration: ~5 min
+- Total execution time: ~1h 21min
 
 **By Phase:**
 
@@ -29,20 +26,16 @@ Progress: [██████████░░░░░░░░░░] 50% (mi
 |-------|-------|-------|----------|
 | 01-animation-sync-reveal | 1 | ~15min | ~15min |
 | 02-rune-glow-effects | 1 | ~45min | ~45min |
+| 03-infrastructure-api | 2 | ~3min | ~1.5min |
+| 04-post-page-integration | 2 | ~6min | ~3min |
+| 05-listing-polish | 2 | ~4min | ~2min |
 | quick-1 through quick-8 | 8 | ~14min | ~2min |
-
-*Updated after each plan completion*
 
 ## Accumulated Context
 
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
-
-- Reading time is already implemented via Velite `s.metadata()` — zero new work required
-- Use `@upstash/redis` (not deprecated `@vercel/kv`) with `Redis.fromEnv()`
-- IP deduplication uses SHA-256 hashing with 24h TTL — never store raw IPs
-- View count fires from client component `useEffect` to avoid static-to-dynamic regression
 
 ### Pending Todos
 
@@ -67,6 +60,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-02-21
-Stopped at: Roadmap created for v1.4 Blog Stats milestone
-Resume file: None — next step is /gsd:plan-phase 3
+Last session: 2026-02-22
+Stopped at: Milestone v1.4 Blog Stats completed and archived
+Resume file: N/A — start next milestone with /gsd:new-milestone

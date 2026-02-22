@@ -18,3 +18,23 @@
 
 ---
 
+
+## v1.4 Blog Stats (Shipped: 2026-02-22)
+
+**Phases completed:** 3 phases, 6 plans, 13 tasks
+**Timeline:** 2 days (2026-02-21 → 2026-02-22)
+**Git range:** `e44cfc9`..`215a4a1`
+**Files modified:** 11 source files, +291/-10 lines (TypeScript)
+
+**Delivered:** Public view counts on blog posts — the site's first backend integration, backed by Upstash Redis with IP deduplication and graceful degradation.
+
+**Key accomplishments:**
+- Redis-backed view count API with GET/POST handlers and IP dedup via SHA-256 hashing (24h TTL)
+- Server-enforced dedup: two-step SET NX + conditional INCR prevents count inflation from repeat visits
+- ViewCounter client component with localStorage caching for flicker-free display on return visits
+- Jera rune separators replacing middle-dot separators across all blog post metadata
+- Batch view count endpoint with redis.mget() for single round-trip listing page retrieval
+- Blog listing view counts with render-prop pattern preserving static generation and graceful degradation
+
+---
+

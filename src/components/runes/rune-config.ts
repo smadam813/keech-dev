@@ -243,6 +243,11 @@ export const DIVIDER_RUNES = {
   default: ELDER_FUTHARK.dagaz, // New beginnings — transition between sections
 } as const
 
+/** Post metadata runes -- harvest/readership theme */
+export const POST_RUNES = {
+  separator: ELDER_FUTHARK.jera, // Harvest -- the cycle of writing and being read
+} as const
+
 /** Background texture runes */
 export const TEXTURE_RUNES = [
   ELDER_FUTHARK.raidho, // Journey

@@ -21,6 +21,7 @@
 
   /* Animations */
   --animate-fade-in-up: fadeInUp 0.5s ease-out forwards;
+
 }
 
 @theme inline {
@@ -216,6 +217,7 @@
       opacity: 0 !important;
       will-change: auto !important;
     }
+
   }
 }
 

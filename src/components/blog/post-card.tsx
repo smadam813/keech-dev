@@ -1,5 +1,7 @@
 import Link from 'next/link'
 import { TagChip } from './tag-chip'
+import { POST_RUNES } from '@/components/runes/rune-config'
+import { PostCardViewCount } from './listing-view-counts'
 
 interface PostCardProps {
   post: {
@@ -37,8 +39,11 @@ export function PostCard({ post }: PostCardProps) {
           </h2>
           <div className="text-sm text-muted mt-2 flex items-center gap-2">
             <time dateTime={post.date}>{formattedDate}</time>
-            <span aria-hidden="true">·</span>
+            <span aria-hidden="true" className="text-accent font-display font-bold">
+              {POST_RUNES.separator.char}
+            </span>
             <span>{post.readingTime} min read</span>
+            <PostCardViewCount slug={post.slug} />
           </div>
         </header>
 
