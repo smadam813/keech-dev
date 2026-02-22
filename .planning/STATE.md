@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-21)
 
 **Core value:** A polished, intentional developer portfolio — fast, visually distinctive, and well-crafted in every detail.
-**Current focus:** Phase 4: Post Page Integration
+**Current focus:** Phase 5: Listing Polish
 
 ## Current Position
 
-Phase: 4 of 5 (Post Page Integration)
-Plan: 2/2 complete
-Status: Phase 4 Complete
-Last activity: 2026-02-22 — Completed 04-02 Post Page Integration
+Phase: 5 of 5 (Listing Polish)
+Plan: 1/2 complete
+Status: Executing Phase 5
+Last activity: 2026-02-22 — Completed 05-01 Batch View Count API
 
-Progress: [█████████████████░░░] 85% (milestone phases 2/3)
+Progress: [██████████████████░░] 90% (milestone phases 2.5/3)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 14
-- Average duration: ~6 min
-- Total execution time: ~1h 17min
+- Total plans completed: 15
+- Average duration: ~5 min
+- Total execution time: ~1h 18min
 
 **By Phase:**
 
@@ -31,9 +31,11 @@ Progress: [█████████████████░░░] 85% (mi
 | 02-rune-glow-effects | 1 | ~45min | ~45min |
 | 03-infrastructure-api | 2 | ~3min | ~1.5min |
 | 04-post-page-integration | 2 | ~6min | ~3min |
+| 05-listing-polish | 1 | ~1min | ~1min |
 | quick-1 through quick-8 | 8 | ~14min | ~2min |
 
 *Updated after each plan completion*
+| Phase 05 P01 | 1min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -55,6 +57,8 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - Silent error handling on view count fetch failure; shimmer stays visible
 - [Phase 04]: Replaced shimmer placeholder with localStorage caching for flicker-free view count display
 - [Phase 04]: useLayoutEffect reads cached count before paint to prevent hydration mismatch
+- [Phase 05]: Extracted formatViewCount() to src/lib/views.ts for shared use between ViewCounter and listing cards
+- [Phase 05]: Batch endpoint uses redis.mget() for single round-trip retrieval of all view counts
 
 ### Pending Todos
 
@@ -80,5 +84,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-22
-Stopped at: Completed 04-02-PLAN.md (Post Page Integration) -- Phase 4 complete
-Resume file: .planning/phases/05-listing-polish/05-01-PLAN.md
+Stopped at: Completed 05-01-PLAN.md (Batch View Count API)
+Resume file: .planning/phases/05-listing-polish/05-02-PLAN.md
