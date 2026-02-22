@@ -1,14 +1,37 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 interface ViewCounterProps {
   slug: string
 }
 
+function getCachedViews(slug: string): number | null {
+  try {
+    const raw = localStorage.getItem(`views:${slug}`)
+    return raw !== null ? Number(raw) : null
+  } catch {
+    return null
+  }
+}
+
+function setCachedViews(slug: string, count: number) {
+  try {
+    localStorage.setItem(`views:${slug}`, String(count))
+  } catch {
+    // Storage full or unavailable — non-critical
+  }
+}
+
 export function ViewCounter({ slug }: ViewCounterProps) {
   const [views, setViews] = useState<number | null>(null)
   const hasFired = useRef(false)
+
+  // Read cached count before paint — prevents flash on repeat visits
+  useLayoutEffect(() => {
+    const cached = getCachedViews(slug)
+    if (cached !== null) setViews(cached)
+  }, [slug])
 
   useEffect(() => {
     if (hasFired.current) return
@@ -21,21 +44,15 @@ export function ViewCounter({ slug }: ViewCounterProps) {
       })
       .then((data) => {
         setViews(data.views)
+        setCachedViews(slug, data.views)
       })
       .catch(() => {
         // View count is non-critical UI — fail silently.
-        // Shimmer stays visible; full degradation is Phase 5 scope.
+        // Cached value (if any) remains displayed.
       })
   }, [slug])
 
-  if (views === null) {
-    return (
-      <span
-        className="inline-block w-16 h-5 rounded-sm bg-muted/20 animate-shimmer"
-        aria-hidden="true"
-      />
-    )
-  }
+  if (views === null) return null
 
   return (
     <span>
