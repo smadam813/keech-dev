@@ -52,11 +52,9 @@ export function ViewCounter({ slug }: ViewCounterProps) {
       })
   }, [slug])
 
-  if (views === null) return null
-
   return (
-    <span>
-      {views.toLocaleString()} {views === 1 ? 'view' : 'views'}
+    <span className={views === null ? 'inline-block w-12' : undefined}>
+      {views !== null && `${views.toLocaleString()} ${views === 1 ? 'view' : 'views'}`}
     </span>
   )
 }

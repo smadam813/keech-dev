@@ -21,7 +21,7 @@
 
   /* Animations */
   --animate-fade-in-up: fadeInUp 0.5s ease-out forwards;
-  --animate-shimmer: shimmer 1.5s ease-in-out infinite;
+
 }
 
 @theme inline {
@@ -81,11 +81,6 @@
     opacity: calc(var(--glow-opacity, 0.6) * 0.5);
     transform: translate(-50%, -50%) scale(0.92);
   }
-}
-
-@keyframes shimmer {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 0.6; }
 }
 
 @layer base {
@@ -223,10 +218,6 @@
       will-change: auto !important;
     }
 
-    .animate-shimmer {
-      animation: none !important;
-      opacity: 0.4 !important;
-    }
   }
 }
 
