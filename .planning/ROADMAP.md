@@ -83,4 +83,4 @@ Phases execute in numeric order: 3 -> 4 -> 5
 | 2. Rune Glow Effects | v1.3 | 1/1 | Complete | 2026-02-08 |
 | 3. Infrastructure & API | v1.4 | 2/2 | Complete | 2026-02-21 |
 | 4. Post Page Integration | v1.4 | 2/2 | Complete | 2026-02-22 |
-| 5. Listing & Polish | v1.4 | 2/2 | Complete | 2026-02-22 |
+| 5. Listing & Polish | v1.4 | Complete    | 2026-02-22 | 2026-02-22 |
