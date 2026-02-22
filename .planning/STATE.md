@@ -2,19 +2,16 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-21)
+See: .planning/PROJECT.md (updated 2026-02-22)
 
 **Core value:** A polished, intentional developer portfolio — fast, visually distinctive, and well-crafted in every detail.
-**Current focus:** Phase 5: Listing Polish
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Phase: 5 of 5 (Listing Polish)
-Plan: 2/2 complete
-Status: Phase 5 Complete -- All milestone phases done
-Last activity: 2026-02-22 — Completed 05-02 Blog Listing View Counts
-
-Progress: [████████████████████] 100% (milestone phases 3/3)
+Phase: Milestone v1.4 complete
+Status: Between milestones
+Last activity: 2026-02-22 — Completed v1.4 Blog Stats milestone
 
 ## Performance Metrics
 
@@ -34,34 +31,11 @@ Progress: [████████████████████] 100% (m
 | 05-listing-polish | 2 | ~4min | ~2min |
 | quick-1 through quick-8 | 8 | ~14min | ~2min |
 
-*Updated after each plan completion*
-| Phase 05 P01 | 1min | 2 tasks | 3 files |
-| Phase 05 P02 | 3min | 3 tasks | 3 files |
-
 ## Accumulated Context
 
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
-
-- Reading time is already implemented via Velite `s.metadata()` — zero new work required
-- Use `@upstash/redis` (not deprecated `@vercel/kv`) with `Redis.fromEnv()`
-- IP deduplication uses SHA-256 hashing with 24h TTL — never store raw IPs
-- View count fires from client component `useEffect` to avoid static-to-dynamic regression
-- Replaced pipeline with two-step SET NX + conditional INCR for correctness over ~1-2ms latency
-- Dedup enforced at API layer -- repeat POSTs skip INCR entirely instead of always incrementing
-- POST returns `{ slug, views, deduplicated }` so Phase 4 client knows repeat visits
-- No slug validation against published posts -- harmless orphan keys
-- Redis key prefixes: `views:` for counters, `dedup:` for IP dedup keys
-- Shimmer uses opacity pulse (not gradient sweep) matching neobrutalist hard-edge aesthetic
-- ViewCounter uses useRef guard for StrictMode double-mount protection
-- Silent error handling on view count fetch failure; shimmer stays visible
-- [Phase 04]: Replaced shimmer placeholder with localStorage caching for flicker-free view count display
-- [Phase 04]: useLayoutEffect reads cached count before paint to prevent hydration mismatch
-- [Phase 05]: Extracted formatViewCount() to src/lib/views.ts for shared use between ViewCounter and listing cards
-- [Phase 05]: Batch endpoint uses redis.mget() for single round-trip retrieval of all view counts
-- [Phase 05]: Render-prop pattern keeps PostCard server-renderable while ListingViewCounts owns client boundary
-- [Phase 05]: useLayoutEffect reads localStorage cache before paint for instant listing view count display
 
 ### Pending Todos
 
@@ -87,5 +61,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-22
-Stopped at: Completed 05-02-PLAN.md (Blog Listing View Counts) -- Phase 5 complete, all milestone phases done
-Resume file: N/A -- all plans complete
+Stopped at: Milestone v1.4 Blog Stats completed and archived
+Resume file: N/A — start next milestone with /gsd:new-milestone
