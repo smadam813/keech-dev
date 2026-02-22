@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-21)
 
 **Core value:** A polished, intentional developer portfolio — fast, visually distinctive, and well-crafted in every detail.
-**Current focus:** Phase 3: Infrastructure & API
+**Current focus:** Phase 4: Post Page Integration
 
 ## Current Position
 
-Phase: 3 of 5 (Infrastructure & API)
-Plan: 2/2 complete
-Status: Phase 3 complete — ready for Phase 4
-Last activity: 2026-02-21 — Completed 03-02 Dedup Gap Closure
+Phase: 4 of 5 (Post Page Integration)
+Plan: 1/2 complete
+Status: Executing Phase 4
+Last activity: 2026-02-22 — Completed 04-01 ViewCounter Component
 
-Progress: [█████████████░░░░░░░] 67% (milestone phases 1/3)
+Progress: [███████████████░░░░░] 75% (milestone phases 1/3)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 12
-- Average duration: ~10 min
-- Total execution time: ~1h 11min
+- Total plans completed: 13
+- Average duration: ~6 min
+- Total execution time: ~1h 12min
 
 **By Phase:**
 
@@ -30,6 +30,7 @@ Progress: [█████████████░░░░░░░] 67% (mi
 | 01-animation-sync-reveal | 1 | ~15min | ~15min |
 | 02-rune-glow-effects | 1 | ~45min | ~45min |
 | 03-infrastructure-api | 2 | ~3min | ~1.5min |
+| 04-post-page-integration | 1 | ~1min | ~1min |
 | quick-1 through quick-8 | 8 | ~14min | ~2min |
 
 *Updated after each plan completion*
@@ -49,6 +50,9 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - POST returns `{ slug, views, deduplicated }` so Phase 4 client knows repeat visits
 - No slug validation against published posts -- harmless orphan keys
 - Redis key prefixes: `views:` for counters, `dedup:` for IP dedup keys
+- Shimmer uses opacity pulse (not gradient sweep) matching neobrutalist hard-edge aesthetic
+- ViewCounter uses useRef guard for StrictMode double-mount protection
+- Silent error handling on view count fetch failure; shimmer stays visible
 
 ### Pending Todos
 
@@ -73,6 +77,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-02-21
-Stopped at: Completed 03-02-PLAN.md (Dedup Gap Closure)
-Resume file: None — next step is /gsd:plan-phase 4
+Last session: 2026-02-22
+Stopped at: Completed 04-01-PLAN.md (ViewCounter Component)
+Resume file: .planning/phases/04-post-page-integration/04-02-PLAN.md

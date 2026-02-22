@@ -18,14 +18,14 @@ Requirements for Blog Stats milestone. Each maps to roadmap phases.
 ### View Display
 
 - [ ] **VIEW-01**: View count displayed on individual blog post page alongside date and reading time
-- [ ] **VIEW-02**: View count increments on post page visit via client component (fires after hydration)
+- [x] **VIEW-02**: View count increments on post page visit via client component (fires after hydration)
 - [ ] **VIEW-03**: View count displayed on blog listing post cards (GET-only, no increment)
 - [ ] **VIEW-04**: Blog post pages remain statically generated (no static-to-dynamic regression)
 
 ### Polish
 
 - [ ] **UX-01**: View count formatted with locale-aware number separators
-- [ ] **UX-02**: Placeholder element always rendered to prevent CLS when count loads
+- [x] **UX-02**: Placeholder element always rendered to prevent CLS when count loads
 - [ ] **UX-03**: Graceful degradation when API is unreachable (page renders without count, no error)
 
 ## Future Requirements
@@ -60,11 +60,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INFRA-04 | Phase 3 | Complete |
 | INFRA-05 | Phase 3 | Complete |
 | VIEW-01 | Phase 4 | Pending |
-| VIEW-02 | Phase 4 | Pending |
+| VIEW-02 | Phase 4 | Complete |
 | VIEW-03 | Phase 5 | Pending |
 | VIEW-04 | Phase 4 | Pending |
 | UX-01 | Phase 5 | Pending |
-| UX-02 | Phase 4 | Pending |
+| UX-02 | Phase 4 | Complete |
 | UX-03 | Phase 5 | Pending |
 
 **Coverage:**
