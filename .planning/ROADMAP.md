@@ -66,10 +66,11 @@ Plans:
   1. Each post card on the /blog listing page shows its view count without incrementing it
   2. View counts display with locale-aware formatting (e.g., "1,234" not "1234")
   3. If the API is unreachable (network error, Redis down), blog pages still render fully without errors — the view count simply does not appear
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 05-01: TBD
+- [ ] 05-01-PLAN.md — Batch view count API endpoint, shared formatting utility, ViewCounter refactor
+- [ ] 05-02-PLAN.md — ListingViewCounts client wrapper, PostCard views prop, blog listing integration
 
 ## Progress
 
@@ -82,4 +83,4 @@ Phases execute in numeric order: 3 -> 4 -> 5
 | 2. Rune Glow Effects | v1.3 | 1/1 | Complete | 2026-02-08 |
 | 3. Infrastructure & API | v1.4 | 2/2 | Complete | 2026-02-21 |
 | 4. Post Page Integration | v1.4 | 2/2 | Complete | 2026-02-22 |
-| 5. Listing & Polish | v1.4 | 0/? | Not started | - |
+| 5. Listing & Polish | v1.4 | 0/2 | Not started | - |
