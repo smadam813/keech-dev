@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation'
 import { MDXContent } from '@/components/blog/mdx-content'
 import { TableOfContents } from '@/components/blog/toc'
 import { TagChip } from '@/components/blog/tag-chip'
+import { ViewCounter } from '@/components/blog/view-counter'
+import { POST_RUNES } from '@/components/runes/rune-config'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import type { Metadata } from 'next'
@@ -84,11 +86,19 @@ export default async function PostPage({ params }: PostPageProps) {
             </h1>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-muted mb-4">
               <time dateTime={post.date}>{formattedDate}</time>
-              <span aria-hidden="true">·</span>
+              <span aria-hidden="true" className="text-accent font-display font-bold">
+                {POST_RUNES.separator.char}
+              </span>
               <span>{post.readingTime} min read</span>
+              <span aria-hidden="true" className="text-accent font-display font-bold">
+                {POST_RUNES.separator.char}
+              </span>
+              <ViewCounter slug={slug} />
               {formattedUpdated && (
                 <>
-                  <span aria-hidden="true">·</span>
+                  <span aria-hidden="true" className="text-accent font-display font-bold">
+                    {POST_RUNES.separator.char}
+                  </span>
                   <span>Updated {formattedUpdated}</span>
                 </>
               )}
