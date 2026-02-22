@@ -4,7 +4,7 @@ import { Download } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'About',
-  description: 'Learn about Adam Keech, a software developer passionate about building tools and exploring technology. Discover his background, interests, and the story behind keech.dev.',
+  description: 'Adam Keech builds for the web, leads engineering teams, and writes about AI tooling, developer experience, and what he learns along the way.',
 }
 
 export default function AboutPage() {
@@ -31,22 +31,22 @@ export default function AboutPage() {
 
           <div className="prose">
             <p>
-              Adam Keech is a software developer passionate about building tools that make
-              complex problems more approachable. With a focus on web technologies and
-              developer experience, he enjoys crafting solutions that are both functional
-              and thoughtfully designed.
+              I build things, tinker, and sometimes write about what I learn along the way.
             </p>
 
             <p>
-              He believes in the power of open source and continuous learning, constantly
-              exploring new technologies and approaches. When not coding, you might find
-              him diving into side projects, reading about Norse mythology, or tinkering
-              with hardware builds.
+              Right now that means leading engineering teams through the AI tooling
+              transition and trying to figure out what actually works versus what just
+              feels productive. I spend a lot of time with AI-assisted development, not
+              because I think it solves everything, but because I think we are still
+              figuring out where it fits. I want to write about my journey as we figure it out together.
             </p>
 
             <p>
-              This site serves as his digital home, a place to share projects, thoughts,
-              and experiments with the wider community.
+              Outside of work, I chase side projects, read about Norse
+              mythology, and play too many games. D&amp;D on the tabletop, Marvel
+              Rivals, and World of Warcraft. This site is where all of that lives, from projects and posts
+              to whatever I am currently exploring.
             </p>
           </div>
 
