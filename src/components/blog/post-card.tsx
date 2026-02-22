@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { TagChip } from './tag-chip'
 import { POST_RUNES } from '@/components/runes/rune-config'
+import { PostCardViewCount } from './listing-view-counts'
 
 interface PostCardProps {
   post: {
@@ -42,6 +43,7 @@ export function PostCard({ post }: PostCardProps) {
               {POST_RUNES.separator.char}
             </span>
             <span>{post.readingTime} min read</span>
+            <PostCardViewCount slug={post.slug} />
           </div>
         </header>
 
