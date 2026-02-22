@@ -3,7 +3,7 @@
 ## Milestones
 
 - ✅ **v1.3 Hero Polish** — Phases 1-2 (shipped 2026-02-09)
-- 🚧 **v1.4 Blog Stats** — Phases 3-5 (in progress)
+- ✅ **v1.4 Blog Stats** — Phases 3-5 (shipped 2026-02-22)
 
 ## Phases
 
@@ -17,13 +17,13 @@ See: `.planning/milestones/v1.3-ROADMAP.md` for full details.
 
 </details>
 
-### 🚧 v1.4 Blog Stats (In Progress)
+### ✅ v1.4 Blog Stats (Shipped 2026-02-22)
 
 **Milestone Goal:** Add public view counts to blog posts — the site's first backend integration.
 
 - [x] **Phase 3: Infrastructure & API** - Redis client, route handlers, and IP deduplication
 - [x] **Phase 4: Post Page Integration** - View counter on individual blog posts with static generation preserved
-- [ ] **Phase 5: Listing & Polish** - View counts on blog listing, number formatting, and graceful degradation
+- [x] **Phase 5: Listing & Polish** - View counts on blog listing, number formatting, and graceful degradation
 
 ## Phase Details
 
@@ -69,8 +69,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 05-01-PLAN.md — Batch view count API endpoint, shared formatting utility, ViewCounter refactor
-- [ ] 05-02-PLAN.md — ListingViewCounts client wrapper, PostCard views prop, blog listing integration
+- [x] 05-01-PLAN.md — Batch view count API endpoint, shared formatting utility, ViewCounter refactor
+- [x] 05-02-PLAN.md — ListingViewCounts client wrapper, PostCard views prop, blog listing integration
 
 ## Progress
 
@@ -83,4 +83,4 @@ Phases execute in numeric order: 3 -> 4 -> 5
 | 2. Rune Glow Effects | v1.3 | 1/1 | Complete | 2026-02-08 |
 | 3. Infrastructure & API | v1.4 | 2/2 | Complete | 2026-02-21 |
 | 4. Post Page Integration | v1.4 | 2/2 | Complete | 2026-02-22 |
-| 5. Listing & Polish | v1.4 | 0/2 | Not started | - |
+| 5. Listing & Polish | v1.4 | 2/2 | Complete | 2026-02-22 |

@@ -26,7 +26,7 @@ Requirements for Blog Stats milestone. Each maps to roadmap phases.
 
 - [x] **UX-01**: View count formatted with locale-aware number separators
 - [x] **UX-02**: Placeholder element always rendered to prevent CLS when count loads
-- [ ] **UX-03**: Graceful degradation when API is unreachable (page renders without count, no error)
+- [x] **UX-03**: Graceful degradation when API is unreachable (page renders without count, no error)
 
 ## Future Requirements
 
@@ -65,7 +65,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | VIEW-04 | Phase 4 | Complete |
 | UX-01 | Phase 5 | Complete |
 | UX-02 | Phase 4 | Complete |
-| UX-03 | Phase 5 | Pending |
+| UX-03 | Phase 5 | Complete |
 
 **Coverage:**
 - v1.4 requirements: 12 total

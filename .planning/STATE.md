@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-21)
 ## Current Position
 
 Phase: 5 of 5 (Listing Polish)
-Plan: 1/2 complete
-Status: Executing Phase 5
-Last activity: 2026-02-22 — Completed 05-01 Batch View Count API
+Plan: 2/2 complete
+Status: Phase 5 Complete -- All milestone phases done
+Last activity: 2026-02-22 — Completed 05-02 Blog Listing View Counts
 
-Progress: [██████████████████░░] 90% (milestone phases 2.5/3)
+Progress: [████████████████████] 100% (milestone phases 3/3)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 15
+- Total plans completed: 16
 - Average duration: ~5 min
-- Total execution time: ~1h 18min
+- Total execution time: ~1h 21min
 
 **By Phase:**
 
@@ -31,11 +31,12 @@ Progress: [██████████████████░░] 90% (mi
 | 02-rune-glow-effects | 1 | ~45min | ~45min |
 | 03-infrastructure-api | 2 | ~3min | ~1.5min |
 | 04-post-page-integration | 2 | ~6min | ~3min |
-| 05-listing-polish | 1 | ~1min | ~1min |
+| 05-listing-polish | 2 | ~4min | ~2min |
 | quick-1 through quick-8 | 8 | ~14min | ~2min |
 
 *Updated after each plan completion*
 | Phase 05 P01 | 1min | 2 tasks | 3 files |
+| Phase 05 P02 | 3min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -59,6 +60,8 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - [Phase 04]: useLayoutEffect reads cached count before paint to prevent hydration mismatch
 - [Phase 05]: Extracted formatViewCount() to src/lib/views.ts for shared use between ViewCounter and listing cards
 - [Phase 05]: Batch endpoint uses redis.mget() for single round-trip retrieval of all view counts
+- [Phase 05]: Render-prop pattern keeps PostCard server-renderable while ListingViewCounts owns client boundary
+- [Phase 05]: useLayoutEffect reads localStorage cache before paint for instant listing view count display
 
 ### Pending Todos
 
@@ -84,5 +87,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-22
-Stopped at: Completed 05-01-PLAN.md (Batch View Count API)
-Resume file: .planning/phases/05-listing-polish/05-02-PLAN.md
+Stopped at: Completed 05-02-PLAN.md (Blog Listing View Counts) -- Phase 5 complete, all milestone phases done
+Resume file: N/A -- all plans complete
