@@ -275,13 +275,13 @@
   /* Individual lines */
   [data-line] {
     @apply px-4;
-    border-left: 2px solid transparent;
+    border-left: 0px solid transparent;
   }
 
   /* Highlighted lines */
   [data-highlighted-line] {
     background-color: rgba(45, 139, 139, 0.15);
-    border-left-color: var(--color-accent);
+    border-left: 2px solid var(--color-accent);
   }
 
   /* Inline code (not in code blocks) */
