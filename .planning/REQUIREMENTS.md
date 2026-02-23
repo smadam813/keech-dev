@@ -63,25 +63,25 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BLOG-01 | — | Pending |
-| BLOG-02 | — | Pending |
-| BLOG-03 | — | Pending |
-| BLOG-04 | — | Pending |
-| PROJ-01 | — | Pending |
-| PROJ-02 | — | Pending |
-| PROJ-03 | — | Pending |
-| UX-01 | — | Pending |
-| UX-02 | — | Pending |
-| UX-03 | — | Pending |
-| UX-04 | — | Pending |
-| UX-05 | — | Pending |
-| UX-06 | — | Pending |
+| BLOG-01 | Phase 7 | Pending |
+| BLOG-02 | Phase 7 | Pending |
+| BLOG-03 | Phase 8 | Pending |
+| BLOG-04 | Phase 8 | Pending |
+| PROJ-01 | Phase 7 | Pending |
+| PROJ-02 | Phase 7 | Pending |
+| PROJ-03 | Phase 8 | Pending |
+| UX-01 | Phase 6 | Pending |
+| UX-02 | Phase 7 | Pending |
+| UX-03 | Phase 7 | Pending |
+| UX-04 | Phase 8 | Pending |
+| UX-05 | Phase 6 | Pending |
+| UX-06 | Phase 7 | Pending |
 
 **Coverage:**
 - v1.5 requirements: 13 total
-- Mapped to phases: 0
-- Unmapped: 13
+- Mapped to phases: 13
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-22*
-*Last updated: 2026-02-22 after initial definition*
+*Last updated: 2026-02-22 after roadmap creation*

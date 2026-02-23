@@ -5,14 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-22)
 
 **Core value:** A polished, intentional developer portfolio — fast, visually distinctive, and well-crafted in every detail.
-**Current focus:** Planning next milestone
+**Current focus:** Phase 6 — Filter Components
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-02-22 — Milestone v1.5 started
+Phase: 6 of 8 (Filter Components)
+Plan: 0 of TBD in current phase
+Status: Ready to plan
+Last activity: 2026-02-22 — Roadmap created for v1.5 Tag Filtering
+
+Progress: [█████████░] 62% (5/8 phases complete across all milestones)
 
 ## Performance Metrics
 
@@ -44,7 +46,7 @@ None.
 
 ### Blockers/Concerns
 
-None.
+- UX-06 requires URL search params (`?tags=ai,agile`). Research recommended `useState` for simplicity, but the requirement explicitly specifies URL persistence. Phase 7 must use `useSearchParams` with a Suspense boundary to preserve static generation.
 
 ### Quick Tasks Completed
 
@@ -62,5 +64,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-22
-Stopped at: Milestone v1.4 Blog Stats completed and archived
-Resume file: N/A — start next milestone with /gsd:new-milestone
+Stopped at: v1.5 roadmap created, ready to plan Phase 6
+Resume file: None
