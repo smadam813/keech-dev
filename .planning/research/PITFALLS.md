@@ -1,151 +1,201 @@
 # Pitfalls Research
 
-**Domain:** Blog view counts (Upstash Redis) and reading time for a statically-generated Next.js 16 blog
-**Researched:** 2026-02-21
-**Confidence:** HIGH (verified against Next.js official docs, Upstash official docs, Vercel blog, and community implementations)
+**Domain:** Multi-select tag/stack filtering on listing pages (Next.js 16 App Router, statically-generated site)
+**Researched:** 2026-02-22
+**Confidence:** HIGH (verified against Next.js official docs, WAI-ARIA APG patterns, and codebase-specific analysis)
 
 ## Critical Pitfalls
 
-### Pitfall 1: Accidentally Opting the Entire Blog Post Page Out of Static Generation
+### Pitfall 1: useSearchParams Without Suspense Deopts the Entire Page Into Client-Side Rendering
 
 **What goes wrong:**
-The blog post page (`/blog/[slug]/page.tsx`) is currently fully static via `generateStaticParams()`. Adding a server-side `fetch()` or direct Redis call to retrieve view counts inside the page component causes Next.js to detect dynamic data access and either error ("cannot use dynamic API in a statically generated page") or silently switch the entire page to dynamic rendering. Build times increase, TTFB degrades, and you lose the performance characteristics that make the site fast.
+If filter state is synced to URL search params via `useSearchParams()` and the component using it is not wrapped in a `<Suspense>` boundary, Next.js deopts everything up to the closest Suspense boundary (or the entire page) into client-side rendering. The blog and projects pages, currently fully static server components, would ship blank HTML shells that render entirely on the client. This destroys the performance advantage of static generation and causes a visible flash of empty content on every page load.
 
 **Why it happens:**
-Developers naturally think "I need view counts on this page, so I'll fetch them in the page component." In the App Router, any uncached async data access inside a page or layout marks the route as dynamic. This is especially confusing because `generateStaticParams()` is still present -- it looks like the page should be static, but the runtime fetch overrides it. The Vercel blog explicitly calls this out as a [common mistake](https://vercel.com/blog/common-mistakes-with-the-next-js-app-router-and-how-to-fix-them).
+During static rendering, search params are unknown (they only exist at request time). When `useSearchParams()` is called without a Suspense boundary, Next.js has no way to partially static-render the page, so it bails out entirely. The build either fails with the error "Missing Suspense boundary with useSearchParams" (Next.js 15+) or silently deopts the whole page to CSR. Developers test in dev mode (which is always dynamic) and never see the problem until production build.
 
 **How to avoid:**
-Keep the page component fully static. Fetch view counts from a **client component** that calls the API route after mount. The page renders instantly from the static shell, and the view count fills in asynchronously. This is the pattern used by the [Upstash official view counter tutorial](https://upstash.com/blog/nextjs13-approuter-view-counter): a `ReportView` client component that fires a POST on mount, and the view count is displayed from a separate client-side fetch.
+1. Keep the listing pages (`/blog/page.tsx`, `/projects/page.tsx`) as server components that render the full post/project grid statically
+2. Extract the filter bar into a dedicated client component (e.g., `FilterBar`)
+3. Wrap `FilterBar` in `<Suspense fallback={<FilterBarSkeleton />}>` at the page level
+4. The `useSearchParams()` call lives only inside the Suspense-wrapped client component
+5. The grid of cards is rendered by the server and passed down; filtering is done client-side within the client boundary
+
+The key insight: the Suspense boundary must be as small as possible. Only the filter bar and the filtered list need to be in the client boundary -- the page heading, metadata export, and SEO content stay server-side.
 
 **Warning signs:**
-- `next build` output shows the blog post route as `lambda` or `server` instead of `static`
-- Build logs mention "Dynamic server usage" for blog routes
-- TTFB on blog posts increases from ~50ms to ~200ms+
+- `next build` output shows `/blog` or `/projects` as `lambda` (server-rendered) instead of `static` (circle icon)
+- Build error: "Missing Suspense boundary with useSearchParams"
+- Build error: "Entire page deopted into client-side rendering"
+- Blank page flash on production load before JavaScript executes
 
 **Phase to address:**
-Phase 1 (API route + client component architecture). Get the boundary between static page and dynamic view count right from the start.
+Phase 1 (component architecture). The boundary between server and client components must be designed before any code is written.
 
 ---
 
-### Pitfall 2: GET Route Handler Caching Returns Stale View Counts
+### Pitfall 2: Flash of Unfiltered Content (FOUC) on Page Load With URL Params
 
 **What goes wrong:**
-A `GET` Route Handler in the App Router is **cached by default** and prerendered at build time. If you create `GET /api/views/[slug]` to return view counts, it gets cached during `next build` with a count of 0 and never updates. Every visitor sees "0 views" (or whatever count existed at build time) until the next deploy.
+A user bookmarks or shares a URL like `/blog?tags=ai,fintech`. The server renders the static HTML with ALL posts visible (because static generation does not know about search params). When the client hydrates, the filter component reads the URL params and hides non-matching posts. For 200-500ms on a fast connection (longer on slow), the user sees all posts, then the list abruptly shrinks. This is the filtering equivalent of a dark-mode flash.
 
 **Why it happens:**
-This is a Next.js App Router behavior that surprises developers coming from Pages Router API routes (which were always dynamic). The [official docs](https://nextjs.org/docs/app/getting-started/route-handlers) state: "Route Handlers are not cached by default. You can, however, opt into caching for GET methods." But the nuance is that GET handlers **without** dynamic functions like `cookies()`, `headers()`, or a `dynamic` export are treated as static during build. Developers create a GET handler, test it in dev (where it works because dev mode is always dynamic), then deploy and find it frozen.
+Static generation produces HTML at build time with no knowledge of runtime URL parameters. The server-rendered HTML always shows the unfiltered state. Client components only activate after JavaScript loads and hydrates. The gap between initial HTML paint and client-side filtering is the FOUC window. This is inherent to the static generation + client-side filtering architecture, not a bug.
 
 **How to avoid:**
-Two options, depending on architecture:
+Two viable strategies for this specific codebase:
 
-1. **Use `export const dynamic = 'force-dynamic'`** on the GET route handler so it always runs at request time
-2. **Skip the GET handler entirely** -- have the POST handler (which increments the view) also return the current count, and fetch the initial count client-side from the same POST endpoint with a `read-only` flag, or use a single POST that both increments and returns
+**Strategy A (Recommended): Accept the FOUC and make it invisible.** Use CSS to start the card grid as `opacity: 0` and transition to `opacity: 1` after the client component mounts and applies filters. This is a ~50ms delay on fast connections and completely eliminates the visual flash. The `ScrollReveal` wrapper already does something similar (cards start at `opacity: 0`), so this piggybacks on an existing pattern.
 
-Option 1 is simpler and more conventional. The route is lightweight (single Redis GET), so dynamic rendering adds negligible latency.
+**Strategy B: Do not use URL params at all.** Use `useState` for filter state. No URL sync means no shared/bookmarkable filter state, but also zero FOUC. The filtered view resets on page refresh. For a personal blog with <50 posts, this is a perfectly valid tradeoff.
+
+If URL params are used, do NOT use Strategy C ("show a loading skeleton until filters apply") because the unfiltered content is already server-rendered and correct -- replacing real content with a skeleton is a worse UX than a brief filter application.
 
 **Warning signs:**
-- View counts never change after deploy
-- View counts work in `npm run dev` but not in production
-- Build output shows the API route as "static" (circle icon)
+- Navigate to `/blog?tags=ai` and see all posts for a split second before filtering
+- More visible on throttled connections (Slow 3G in DevTools)
+- Particularly noticeable when the number of filtered results is much smaller than total posts
 
 **Phase to address:**
-Phase 1 (API route creation). Must be configured correctly on day one.
+Phase 1 (architecture decision on URL sync vs. state-only). Phase 2 (implementation of chosen FOUC mitigation).
 
 ---
 
-### Pitfall 3: Link Prefetching Inflates View Counts
+### Pitfall 3: ScrollReveal Animations Re-triggering or Breaking When Cards Are Filtered
 
 **What goes wrong:**
-Next.js `<Link>` prefetches routes when they enter the viewport. The blog listing page (`/blog`) shows multiple post cards, each with a `<Link>` to the post. If the view count increment happens server-side (via the page component or middleware), prefetching silently triggers the increment for every visible post card -- even posts the user never clicks. A single visit to `/blog` inflates counts for 3-10 posts simultaneously.
+The current listing pages wrap each card in `<ScrollReveal>`, which uses IntersectionObserver with `triggerOnce` semantics (once visible, stop observing). When filtering hides and then re-shows cards, one of two things happens:
+1. Cards that were already revealed and are then re-shown after filtering appear instantly (no animation) because the observer already fired and disconnected -- this is actually fine.
+2. If the filter implementation unmounts and remounts card components (instead of hiding them), React creates new component instances. New ScrollReveal wrappers start in `opacity: 0` state and wait for intersection -- but if they are already in the viewport, the observer fires immediately and triggers the animation. This creates a distracting "fade in" effect every time the user changes filters.
 
 **Why it happens:**
-Prefetching is enabled by default on `<Link>`. In production, Next.js prefetches the page data for linked routes. If the view increment logic runs as part of the server-rendered page (or in middleware that matches the route), the prefetch request triggers it. The [Upstash blog](https://upstash.com/blog/nextjs13-approuter-view-counter) does not warn about this because their implementation uses a client-side `ReportView` component that only fires when the page actually mounts -- but if you deviate from that pattern, prefetch inflation is a trap.
+The existing `ScrollReveal` component (`src/components/ui/scroll-reveal.tsx`) uses a single-fire IntersectionObserver pattern. It was designed for initial page load, not for dynamic content that appears and disappears. When React's reconciler unmounts and remounts components due to list changes, the observer state resets.
 
 **How to avoid:**
-**Never increment view counts server-side in the page component or in middleware.** Use a dedicated client component (`ViewCounter`) that calls the API route via `useEffect` after mount. Prefetch loads the static HTML shell but does not execute client-side `useEffect` hooks, so the counter only fires when a user actually navigates to the page.
+- Use a CSS `display: none` or `hidden` approach to hide filtered-out cards rather than removing them from the React tree. This preserves component instances and their already-revealed state.
+- Alternatively, if unmount/remount is preferred (simpler code), skip the ScrollReveal wrapper entirely on the filtered listing and show all filtered cards immediately. The scroll-reveal animation is a nice touch for the initial page load but becomes annoying when applied on every filter change.
+- A third option: use React `key` props based on the post slug (already done) and accept that re-mounted cards will animate. But add a "is filtering active" flag that disables the animation when the user is actively filtering.
+
+The recommended approach: when any filter is active, bypass ScrollReveal and show filtered cards immediately. When no filters are active (initial page load), use ScrollReveal normally.
 
 **Warning signs:**
-- View counts are suspiciously high relative to actual traffic
-- Posts on the first screen of `/blog` have disproportionately higher counts
-- View count for a post increases when you only visit `/blog` without clicking the post
+- Cards flicker or fade in every time a filter tag is toggled
+- Already-visible cards animate again when a filter is removed
+- Cards that should be visible start as invisible (`opacity: 0`) after a filter change
 
 **Phase to address:**
-Phase 1 (architecture). The increment trigger location is a foundational decision.
+Phase 2 (UI implementation). Must be considered when building the filtered card list.
 
 ---
 
-### Pitfall 4: Exposing Redis Credentials to the Client
+### Pitfall 4: Layout Shift (CLS) When Filter Bar Appears or Card Count Changes
 
 **What goes wrong:**
-Developers prefix Upstash Redis environment variables with `NEXT_PUBLIC_` (e.g., `NEXT_PUBLIC_UPSTASH_REDIS_REST_TOKEN`) so they can use them in client components, inadvertently exposing the Redis token in the browser. Anyone can view source, extract the token, and read/write/delete arbitrary keys in your Redis database.
+Two distinct CLS problems occur:
+
+**CLS Problem A: Filter bar insertion.** If the filter bar is rendered conditionally or loads after hydration (inside a Suspense boundary with a fallback), the content below it shifts down when the filter bar appears. On the current blog page, the `<h1>Blog</h1>` is immediately followed by the card grid. Inserting a filter bar between them post-hydration pushes the grid down.
+
+**CLS Problem B: Grid reflow on filtering.** The blog listing uses a 3-column grid (`md:grid-cols-2 lg:grid-cols-3`). If 9 cards become 2 after filtering, the grid collapses dramatically. The vertical height change is jarring and the user loses spatial orientation.
 
 **Why it happens:**
-The view counter client component needs to talk to Redis. The instinct is "I need the Redis URL in my client component." But the whole point of the API route is to be the intermediary. Client components should call `/api/views`, which calls Redis server-side. The [Next.js docs on data security](https://nextjs.org/docs/app/guides/data-security) explicitly warn about this pattern.
+Problem A: The Suspense fallback for the filter bar has a different height than the actual filter bar, or no fallback is provided (defaults to nothing). Problem B: CSS Grid naturally reflows when items are removed. There is no mechanism to maintain grid height during transitions.
 
 **How to avoid:**
-- Redis credentials (`UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`) must **never** have the `NEXT_PUBLIC_` prefix
-- Initialize Redis only in server-side code (`lib/redis.ts` imported only by route handlers)
-- Client components call the API route (`/api/views/[slug]`), never Redis directly
-- Add a `.env.example` file documenting correct variable names without the `NEXT_PUBLIC_` prefix
+**For CLS Problem A:**
+- Render the filter bar in the static HTML with a fixed-height placeholder. The server can compute the available tags from the content collection (since Velite data is available at build time) and render the tag list statically. Only the active/inactive state needs to be client-side.
+- Make the filter bar a server component that renders the tag chips, wrapped in a client component that handles click state. The chips are always present in the HTML; the client just toggles their `aria-pressed` state and visual styling.
+
+**For CLS Problem B:**
+- Use `min-height` on the grid container based on the initial card count to prevent collapse
+- Animate the transition: when cards are filtered out, fade them to `opacity: 0` and then set `display: none` after the transition, rather than immediately removing them from the flow
+- Accept the reflow as natural -- for a blog with <20 posts, the grid change is small and users expect it when they click a filter
 
 **Warning signs:**
-- `NEXT_PUBLIC_UPSTASH` appearing in any `.env` file
-- Redis import appearing in any file with `'use client'`
-- Browser network tab showing direct requests to `*.upstash.io`
+- Lighthouse CLS score increases above 0.1 on listing pages
+- Visible jump when filter bar hydrates
+- Grid "snapping" to smaller size on filter toggle
 
 **Phase to address:**
-Phase 1 (environment setup). Verify in code review before first deploy.
+Phase 1 (determine if filter bar can be rendered statically). Phase 2 (CSS transition strategy for filtered cards).
 
 ---
 
-### Pitfall 5: No View Deduplication -- Refresh Spam Inflates Counts
+### Pitfall 5: Breaking the ListingViewCounts Context When Restructuring the Blog Page
 
 **What goes wrong:**
-A naive `INCR pageviews:slug` on every API call means refreshing the page 50 times adds 50 views. A single curious user (or a bot) can make a post appear viral. Counts become meaningless as a signal.
+The current blog page wraps the entire card grid in `<ListingViewCounts slugs={slugs}>`, which provides a React Context for batch-fetched view counts. If the filter implementation changes the component tree (e.g., moves the grid inside a new client component), the `PostCardViewCount` components inside `PostCard` lose access to the context. View counts silently stop displaying -- no error, just missing data.
 
 **Why it happens:**
-`INCR` is the simplest Redis pattern and appears in many tutorials. It is atomic and fast, which makes it feel correct. But it counts *page loads*, not *unique visitors*. The distinction matters for any metric displayed publicly.
+React Context requires consumers to be descendants of the provider in the component tree. The current architecture has `ListingViewCounts` (client component) wrapping the grid, with `PostCard` (server component) containing `PostCardViewCount` (client component) that reads the context. If a new `FilteredPostList` client component is inserted that re-renders the cards, the context provider must wrap (or be inside) the new component. Getting the nesting wrong is easy and produces no runtime errors.
 
 **How to avoid:**
-Use the Upstash-recommended deduplication pattern:
-
-1. Hash the visitor's IP with SHA-256 for privacy
-2. Use `SET dedupe:{hash}:{slug} 1 NX EX 86400` (set only if not exists, expire after 24 hours)
-3. Only call `INCR pageviews:{slug}` if the SET succeeded (meaning this is a new visitor for this slug in the last 24h)
-
-This uses 2 Redis commands per view instead of 1, but provides meaningful counts. The 24-hour window is a reasonable balance -- the same person reading a post twice in a day counts once, but a return visit the next day counts again.
+- Keep `ListingViewCounts` as the outermost client boundary that wraps both the filter bar and the card grid
+- The filter state and view count state can coexist in the same client boundary
+- Pass `publishedPosts` from the server component page into the client boundary; let the client component handle both filtering and view count context
+- Verify by checking: does `PostCardViewCount` still display counts after adding filters?
 
 **Warning signs:**
-- View counts spike when you test by refreshing
-- Single IP addresses generating dozens of views per post
-- View counts seem disproportionately high vs. site analytics
+- View counts disappear after adding the filter bar
+- `useViewCount(slug)` returns `null` for all slugs
+- No error in console (context returns the default empty object silently)
 
 **Phase to address:**
-Phase 1 (API route implementation). Deduplication must be in the first implementation, not bolted on later.
+Phase 1 (component architecture). The client boundary must be designed to encompass both filter state and view count context.
 
 ---
 
-### Pitfall 6: Layout Shift (CLS) When View Count Loads Asynchronously
+### Pitfall 6: Tag Normalization -- "AI" vs "ai" vs "Ai" Creates Ghost Filters
 
 **What goes wrong:**
-The view count loads after the page renders (client-side fetch). If the count element has no reserved space, the number appearing pushes surrounding content down, causing a visible layout shift. On the blog listing page, multiple counts loading at different times creates a "popcorn" effect where cards jump around.
+Blog posts use freeform string tags in frontmatter (e.g., `tags: [ai, fintech, change-management]`). Projects use freeform stack strings (e.g., `stack: [Next.js 16, React 19, Tailwind CSS v4]`). If the filter bar displays unique tags collected from all posts, inconsistent casing or naming across posts creates duplicate filter options: "AI", "ai", "Ai" appear as three separate tags. Selecting one does not match posts using the other spellings.
 
 **Why it happens:**
-The statically-rendered page ships with the reading time, date, and tags. The view count is the one piece of dynamic data that appears later. Developers add a `{views && <span>{views} views</span>}` conditional that creates/removes a DOM element, shifting layout. This is especially visible on this site because the post metadata line uses flexbox with `gap` -- adding an element changes the row's width and potentially wraps.
+MDX frontmatter tags are plain strings with no schema validation beyond "array of strings." Authors (especially a single author) may use different capitalizations across posts written months apart. The Velite schema (`s.array(s.string()).default([])`) does not enforce normalization. The problem is invisible until a filter UI makes all tags visible side by side.
 
 **How to avoid:**
-- Always render the view count container in the static HTML, even before data loads
-- Use a fixed-width placeholder or skeleton (e.g., `---` or a small pulsing bar) that matches the final element size
-- On the blog listing page, consider **not** showing view counts at all (only on the detail page) to avoid N concurrent fetches on load
-- If showing counts on the listing, use a single batch API call (`/api/views` returning all slugs) instead of N individual calls
+- Normalize tags at display time: `tag.toLowerCase()` for comparison, display the most common casing
+- Better: normalize at the Velite config level using a `.transform()` on the tags array, so the data is clean before it reaches any component
+- For project stacks, maintain exact casing (e.g., "Next.js" not "next.js") because these are proper nouns, but still use case-insensitive comparison for filtering
+- Create a canonical tag list in a shared config file if the tag set should be curated
+- Currently there are only 3 posts with tags `[ai, fintech, change-management, development-process, agile, spec-driven-development, software-engineering]` -- no conflicts yet, but this will happen as content grows
 
 **Warning signs:**
-- CLS score increases after adding view counts (check with Lighthouse)
-- Text shifting visible on page load, especially on slower connections
-- Conditional rendering (`{views && ...}`) instead of always-present containers
+- Filter bar shows near-duplicate tags (e.g., "React" and "react")
+- Clicking a tag filter returns 0 results when posts with that tag exist
+- Tag count in the filter bar does not match expected post count
 
 **Phase to address:**
-Phase 2 (UI integration). After the API route works, the display strategy needs careful layout treatment.
+Phase 1 (data normalization layer). Establish the normalization rule before building the filter UI.
+
+---
+
+### Pitfall 7: Accessibility -- Filter Toggles Missing ARIA State and Keyboard Support
+
+**What goes wrong:**
+Tag filter chips are built as `<span>` or `<div>` elements with click handlers but no ARIA role, no `aria-pressed` state, no keyboard support, and no focus styling. Screen reader users cannot discover or operate the filters. Keyboard users cannot tab to or activate filter chips. The filter bar becomes a visual-only feature that excludes a significant portion of users.
+
+**Why it happens:**
+The existing `TagChip` component (`src/components/blog/tag-chip.tsx`) renders as either a `<Link>` or a `<span>`. When repurposed as a toggle filter, developers style it to look pressable but forget that a `<span>` has no interactive semantics. The neobrutalist design with its bold borders and shadows makes chips look like buttons, but the DOM does not agree.
+
+**How to avoid:**
+Use `<button>` elements for filter chips with:
+- `aria-pressed="true|false"` to communicate toggle state
+- `type="button"` to prevent form submission
+- Visible focus ring (the site already has neobrutalist borders that can double as focus indicators)
+- Group the filter buttons in a container with `role="group"` and `aria-label="Filter by tag"` (or `aria-label="Filter by technology"` for projects)
+- Announce the result count change with an `aria-live="polite"` region: "Showing 3 of 9 posts" after filter change
+- The WAI-ARIA APG "Button" pattern specifies: toggle buttons use `aria-pressed`, not `aria-checked` (checkboxes) or `aria-selected`
+
+Do NOT use a `<fieldset>` with checkboxes unless you want the visual appearance of a form. For a tag filter bar, toggle buttons with `aria-pressed` is the correct pattern per WAI-ARIA APG.
+
+**Warning signs:**
+- Filter chips are not focusable via Tab key
+- Screen reader does not announce "pressed" or "not pressed" state
+- No focus ring visible when keyboard-navigating through filters
+- Screen reader does not announce how many results are showing
+
+**Phase to address:**
+Phase 2 (UI implementation). Accessibility must be built into the filter chip component from the start, not bolted on.
 
 ---
 
@@ -153,100 +203,104 @@ Phase 2 (UI integration). After the API route works, the display strategy needs 
 
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
-| Skip deduplication, use raw INCR | Simpler API route (1 Redis command) | Meaningless counts, easy to game | Never for public-facing counts |
-| Fetch views inside server component | No client component needed | Entire page becomes dynamic, TTFB degrades, loses SSG | Never for this site's architecture |
-| Individual fetch per post on listing page | Simple per-card component | N API calls on `/blog` load, slow, hits Redis quota | Acceptable with <5 posts, problematic at 10+ |
-| Hardcode reading time WPM | No configuration needed | Can't tune for different content types (code-heavy vs. prose) | Acceptable if Velite's default (200 WPM) is sufficient |
-| Skip IP hashing, store raw IPs | Simpler dedup logic | Privacy concern, potential GDPR issue, unnecessary PII storage | Never |
+| useState for filter state (no URL sync) | No Suspense complexity, no FOUC, simpler code | Filters reset on refresh, cannot share filtered views via URL, no deep linking | Acceptable for a personal blog with <50 posts -- recommended starting point |
+| Hiding cards with CSS display:none instead of removing from DOM | Preserves ScrollReveal state, no remount cost | All card HTML is always in the page even when hidden, slightly larger document size | Acceptable with <100 cards; negligible size impact for <50 posts |
+| Computing unique tags at render time instead of build-time constants | No extra build step or config file | Recalculated on every page render (though cheap) | Always acceptable for <100 posts; the Velite collection is already in memory |
+| No debounce on rapid filter toggling | Simpler event handling | Rapid toggles cause many re-renders; on mobile, this could feel sluggish | Acceptable because the filtering is client-side array filtering, not API calls; <50 items filter in <1ms |
+| Single filter logic for both blog and projects | One component, one pattern | Blog uses "tags" (lower-case, conceptual) and projects use "stack" (proper nouns, tech names) -- same UI but different normalization needs | Acceptable if abstracted with a prop for the data key and normalization function |
 
 ## Integration Gotchas
 
 | Integration | Common Mistake | Correct Approach |
 |-------------|----------------|------------------|
-| Upstash Redis | Using `@vercel/kv` (deprecated for new projects) | Use `@upstash/redis` directly -- Vercel KV is no longer available for new projects, Upstash is the recommended path |
-| Upstash Redis | Calling Redis from client components | Only call Redis from route handlers or server actions; client components call the API route |
-| Upstash Redis | Not using `Redis.fromEnv()` | Use `Redis.fromEnv()` which auto-reads `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` |
-| Vercel deployment | Forgetting to add env vars to Vercel project settings | Redis works in dev with `.env.local` but fails in production without Vercel env var configuration |
-| Velite readingTime | Re-implementing reading time instead of using built-in | Velite's `s.metadata()` already computes `readingTime` -- the codebase already uses it in the transform step and displays it |
+| ListingViewCounts + FilterBar | Placing FilterBar outside the ViewCounts context boundary, breaking context access for filtered cards | Ensure the client boundary wraps both the filter bar and the card grid; or restructure to have a single parent client component that owns both filter state and view count context |
+| ScrollReveal + filtering | Leaving ScrollReveal wrappers on filtered cards, causing re-animation on every filter toggle | Disable or bypass ScrollReveal when filters are active; re-enable only on initial page load |
+| Velite data + client components | Trying to import `posts` from `@/.velite` inside a client component (fails: Velite generates server-side data) | Import Velite data in the server component page, serialize and pass it as props to the client component |
+| URL search params + static export | Using `searchParams` page prop instead of `useSearchParams` client hook, which forces the route to dynamic rendering | Use `useSearchParams()` in a client component wrapped in Suspense; never access `searchParams` prop in the page server component for filtering |
+| TagChip reuse | Using the existing `TagChip` component (which is a `<span>` or `<Link>`) as-is for filter toggles, losing all button semantics | Create a new `FilterChip` component using `<button>` with `aria-pressed`; keep `TagChip` for display-only use in post cards |
 
 ## Performance Traps
 
 | Trap | Symptoms | Prevention | When It Breaks |
 |------|----------|------------|----------------|
-| N+1 API calls on blog listing | Slow listing page, N concurrent requests to `/api/views/[slug]` | Batch endpoint: `GET /api/views` returns `{ [slug]: count }` for all posts | At 10+ posts, noticeable at 20+ |
-| No Redis connection reuse | Cold start latency on every API call | `@upstash/redis` uses HTTP (REST), not TCP -- no connection pool needed, but avoid creating new `Redis()` instances per request; use a module-level singleton | Not a bottleneck with REST-based Upstash, but bad habit |
-| Fetching views on every page navigation | Excessive API calls, quota consumption | Cache view counts client-side with SWR or simple state; don't re-fetch on back navigation | At scale with many users navigating between posts |
-| Upstash free tier quota exhaustion | API returns errors, view counts stop updating | Free tier: 500K commands/month (~16K/day). At 2 commands per view (dedup + incr), supports ~8K views/day. For a personal blog, this is more than sufficient. Monitor via Upstash dashboard | At ~250K monthly page views |
+| Re-rendering entire card grid on every filter toggle | Visible jank when toggling filters, especially on mobile | Use `React.memo` on card components, or filter with CSS visibility instead of conditional rendering | At 50+ cards with complex card components |
+| Recomputing derived data (unique tags, filtered posts) on every render | Unnecessary CPU work, stale closure bugs | Use `useMemo` for the filtered post list and the unique tag set, keyed on filter state + post array | Not a real bottleneck at <100 posts, but good practice |
+| Animating card removal/addition with CSS transitions on many items | Janky transitions on low-end mobile devices | Keep transitions simple (opacity only, no transform). Or skip animation entirely for filtering -- instant show/hide is fine for a filter interaction | At 30+ cards with complex transitions |
+| useSearchParams triggering re-renders on unrelated URL changes | Filter component re-renders when other URL state changes | Use nuqs library or manual comparison of only the relevant param keys | Only relevant if other features also use URL params |
 
 ## Security Mistakes
 
-| Mistake | Risk | Prevention |
-|---------|------|------------|
-| `NEXT_PUBLIC_` prefix on Redis credentials | Full Redis access from any browser, data deletion, injection | Never prefix Redis vars with `NEXT_PUBLIC_`; only access in server code |
-| No rate limiting on the POST endpoint | Bot can spam millions of increments, exhaust Redis quota | Add basic rate limiting: IP-based cooldown (the dedup pattern partially handles this) |
-| Trusting `x-forwarded-for` header without validation | IP spoofing to bypass deduplication | On Vercel, use the request's IP from `request.headers.get('x-forwarded-for')` which Vercel sets reliably; don't accept arbitrary header values in other environments |
-| Storing raw IP addresses | GDPR/privacy violation, unnecessary PII | Hash IPs with SHA-256 before storing as dedup keys; the hash is sufficient for deduplication |
+Not applicable for this milestone. Tag filtering is entirely client-side using build-time data. No user input is sent to a server, no API calls are made for filtering, and no data is persisted. The existing view count API routes from v1.4 are unaffected.
 
 ## UX Pitfalls
 
 | Pitfall | User Impact | Better Approach |
 |---------|-------------|-----------------|
-| Showing "0 views" while loading | Feels broken, misleading count | Show a subtle placeholder (e.g., `--` or a small skeleton pulse) until the real count loads |
-| Showing exact low numbers ("2 views") | Draws attention to low engagement, looks sad on new posts | Consider a minimum threshold (e.g., only show counts above 10) or show all counts honestly -- for a personal blog, authenticity is fine |
-| View count flashing from 0 to N | Jarring visual update, draws unnecessary attention | Fade in the count or use a number transition; or simply render the count element as invisible until data arrives, then fade to visible |
-| Reading time showing "0 min read" | Broken for very short posts or posts with only code | Velite's `s.metadata()` returns `readingTime` in minutes; clamp to minimum 1 with `Math.max(1, readingTime)` |
-| Inconsistent metadata between listing and detail | Listing shows views but detail doesn't (or vice versa) | Decide: views on both pages or detail-only. Recommendation: views on detail page only (avoids batch fetch complexity) |
+| Filter bar taking full width on mobile with wrapping tags | Filter chips overflow and push card grid far below the fold; on small screens with 8+ tags, the filter bar becomes the majority of visible content | Cap visible tags on mobile (show first 5-6 with a "+N more" toggle), or use a horizontally scrollable container for the tag row |
+| No "clear all" button | User selects 3 tags, gets 0 results, cannot easily reset without clicking each tag individually | Add a "Clear" or "All" button that appears when any filter is active |
+| AND logic with no results feedback | User selects "ai" + "fintech" and gets results, then adds "agile" and gets 0 results with no explanation | Show "No posts match all selected tags" with a suggestion to remove the last-added tag. Currently with 3 posts, many 2-tag AND combos will yield 0 results |
+| Filter state persisting unexpectedly | User filters on blog page, navigates to a post, hits back, and sees filtered state via URL params -- this may be desired but can also confuse | If using URL params, this is correct behavior (the URL is the state). If using useState, filters correctly reset. Document the chosen behavior. |
+| No visual distinction between "active filter" and "available filter" | User cannot tell which tags are selected vs. available | Use strong visual contrast: active filters get filled background with inverted text; inactive filters stay outlined. The neobrutalist palette provides good options (filled teal for active, outlined for inactive) |
+| Showing filter bar when there are 0 or 1 unique tags | Filter UI with one option is confusing, suggests more should exist | Only render the filter bar if there are 2+ unique tags. With the current 3 posts this is fine, but handle the edge case. |
 
 ## "Looks Done But Isn't" Checklist
 
-- [ ] **View counter:** Works after deploy, not just in dev -- verify `next build && next start` locally before deploying
-- [ ] **View counter:** Handles missing/undefined slug gracefully -- API route returns 400, not a Redis error
-- [ ] **View counter:** Deduplication actually works -- test by refreshing; count should increment only once per 24h window
-- [ ] **View counter:** Bot/crawler traffic filtered -- check that Googlebot visits don't inflate counts
-- [ ] **View counter:** Works with ad blockers -- some ad blockers block requests to `/api/` paths; ensure the page renders correctly even if the view count fetch fails
-- [ ] **Reading time:** Already works -- Velite `s.metadata().readingTime` is already computed and displayed in `post-card.tsx` and `[slug]/page.tsx`. The existing `readingTime: data.metadata.readingTime` transform in `velite.config.ts` handles this. No new work needed unless changing the display format.
-- [ ] **Environment variables:** Configured in Vercel project settings, not just in `.env.local`
-- [ ] **Error handling:** API route returns graceful error (not 500) if Redis is unreachable; page renders without view count rather than crashing
-- [ ] **Layout stability:** View count placeholder reserves space; no CLS when count loads
+- [ ] **Accessibility:** Filter chips are focusable via Tab and activatable via Space/Enter -- test without a mouse
+- [ ] **Accessibility:** Screen reader announces `aria-pressed` state change on filter toggle
+- [ ] **Accessibility:** An `aria-live="polite"` region announces the filtered result count (e.g., "Showing 2 of 9 posts")
+- [ ] **Accessibility:** Filter group has `aria-label` describing its purpose
+- [ ] **Static generation:** `next build` output still shows `/blog` and `/projects` as static (circle icon), not lambda/server
+- [ ] **View counts:** `PostCardViewCount` still displays after filter bar is added -- view count context is not broken
+- [ ] **FOUC:** Navigate to `/blog?tags=ai` on a throttled connection -- no visible flash of all posts before filtering applies (if URL params are used)
+- [ ] **Mobile:** Filter bar does not push card grid below the fold on 375px-wide screens
+- [ ] **Empty state:** Select tags that match 0 posts -- verify a helpful empty state message appears
+- [ ] **Back navigation:** Navigate from filtered blog list to a post, hit browser back -- filter state is preserved (if URL params) or gracefully reset (if useState)
+- [ ] **Keyboard:** Tab through filter bar, toggle a chip with Space, verify visual and ARIA state change
+- [ ] **ScrollReveal:** Toggle a filter on and off -- cards should not re-animate on reappearance
 
 ## Recovery Strategies
 
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| Static page became dynamic | LOW | Move Redis call out of page component into client component; no data migration needed |
-| Redis credentials exposed | MEDIUM | Rotate tokens immediately in Upstash console, update Vercel env vars, redeploy. Check Redis for unauthorized writes. |
-| Inflated view counts (no dedup) | LOW | Add dedup logic, optionally reset counters. For a personal blog, slightly inflated historical counts are harmless. |
-| GET handler cached at build time | LOW | Add `export const dynamic = 'force-dynamic'` to the route handler, redeploy |
-| CLS from view count loading | LOW | Add fixed-width placeholder element, CSS-only fix, no architecture change |
-| Free tier quota exhausted | LOW | Upstash pauses writes but data persists. Upgrade to pay-as-you-go ($0.20/100K requests) or optimize command usage. |
+| Page deopted to CSR (no Suspense) | LOW | Add `<Suspense>` wrapper around the client component using `useSearchParams()`. No data or architecture change needed. |
+| View count context broken | LOW | Move `<ListingViewCounts>` wrapper to encompass both filter bar and card grid. No API changes. |
+| Flash of unfiltered content | LOW | Add CSS `opacity: 0` initial state on the card container, transition to `opacity: 1` after client mount. Pure CSS fix. |
+| ScrollReveal re-animating on filter | LOW | Conditionally disable ScrollReveal when filters are active. Small prop change, no architecture rework. |
+| Tag normalization issues | LOW | Add `.map(t => t.toLowerCase())` to the Velite transform or at the filter computation layer. One-line fix. |
+| Layout shift from filter bar | LOW | Set explicit `min-height` on the filter bar container matching its rendered height. CSS-only fix. |
+| Accessibility missing on filter chips | MEDIUM | Replace `<span>` with `<button aria-pressed>`, add `role="group"`, add `aria-live` region. Requires component changes but no architecture rework. |
+| AND logic yielding too many empty states | LOW | Consider switching to OR logic, or displaying a count badge on each tag showing how many posts match. UX decision, not a code fix. |
 
 ## Pitfall-to-Phase Mapping
 
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
-| Static-to-dynamic page regression | Phase 1: API + Architecture | `next build` output shows blog routes as static (circle icon) |
-| GET handler caching stale counts | Phase 1: API route creation | Test in production: increment count, verify GET returns updated value |
-| Link prefetch inflating counts | Phase 1: Client component design | Visit `/blog` listing, verify no POST calls fire for visible post links |
-| Redis credential exposure | Phase 1: Environment setup | Search codebase for `NEXT_PUBLIC_UPSTASH`; inspect browser network tab |
-| No deduplication | Phase 1: API implementation | Refresh a post 10 times; verify count increments only once |
-| Layout shift on count load | Phase 2: UI integration | Run Lighthouse on blog post page; CLS should remain < 0.1 |
-| Reading time edge cases | Phase 1: Velite integration check | Verify `readingTime` already works (it does); only add `Math.max(1, ...)` clamping if needed |
-| Batch fetch for listing page | Phase 2: Blog listing integration | If showing counts on listing, verify single API call fetches all counts |
-| Ad blocker resilience | Phase 2: Error handling | Test with uBlock Origin enabled; page should render normally without view count |
-| Bot traffic inflation | Phase 2: Hardening | Check user-agent filtering in API route; verify Googlebot doesn't increment |
+| CSR bailout from useSearchParams | Phase 1: Component architecture | `next build` shows `/blog` and `/projects` as static |
+| FOUC on filtered URL load | Phase 1: URL strategy decision; Phase 2: CSS mitigation | Throttled navigation to `/blog?tags=ai` shows no content flash |
+| ScrollReveal interaction | Phase 2: UI implementation | Toggle filters; cards do not re-animate |
+| CLS from filter bar insertion | Phase 1: Server-renderable filter bar design | Lighthouse CLS < 0.1 on listing pages |
+| ViewCounts context breakage | Phase 1: Component boundary design | View counts display on blog listing after adding filters |
+| Tag normalization | Phase 1: Data normalization | No duplicate tags appear in filter bar across all content |
+| Accessibility of filter controls | Phase 2: Component implementation | axe-core audit passes on listing pages; keyboard-only testing succeeds |
+| Mobile UX of filter bar | Phase 2: Responsive design | Filter bar is usable on 375px screen without pushing grid below fold |
+| Empty state handling | Phase 2: Edge case UI | Selecting impossible tag combinations shows helpful message |
+| AND logic with sparse content | Phase 1: Filtering logic decision | With 3 posts, verify that useful filter combinations exist before committing to AND logic |
 
 ## Sources
 
-- [Upstash: Adding a View Counter to your Next.js Blog](https://upstash.com/blog/nextjs13-approuter-view-counter) -- official implementation guide with dedup pattern
-- [Vercel: Common Mistakes with the Next.js App Router](https://vercel.com/blog/common-mistakes-with-the-next-js-app-router-and-how-to-fix-them) -- GET handler caching, unnecessary route handlers, revalidation
-- [Next.js: Route Handlers](https://nextjs.org/docs/app/getting-started/route-handlers) -- caching behavior, dynamic config
-- [Next.js: Data Security](https://nextjs.org/docs/app/guides/data-security) -- environment variable exposure warnings
-- [Next.js: Prefetching](https://nextjs.org/docs/app/guides/prefetching) -- Link prefetch behavior
-- [Upstash: Pricing & Limits](https://upstash.com/docs/redis/overall/pricing) -- free tier: 500K commands/month, 256MB storage
-- [Vercel Community: KV Daily Request Limit](https://community.vercel.com/t/kv-daily-request-limit/1512) -- quota exhaustion patterns
-- [Vercel Community: Switching from Vercel KV to Upstash](https://community.vercel.com/t/switching-from-vercel-kv-to-upstash-kv-questions/2660) -- @vercel/kv deprecated for new projects
-- [Next.js: Resolving Static to Dynamic Error](https://nextjs.org/docs/messages/app-static-to-dynamic-error) -- why uncached fetches break SSG
+- [Next.js: Missing Suspense boundary with useSearchParams](https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout) -- official docs on the CSR bailout error and all solution options
+- [Next.js: Entire page deopted into client-side rendering](https://nextjs.org/docs/messages/deopted-into-client-rendering) -- official docs on how useSearchParams without Suspense breaks static generation
+- [Next.js: useSearchParams API reference](https://nextjs.org/docs/app/api-reference/functions/use-search-params) -- static rendering behavior, Suspense requirement
+- [Next.js Issue #48335: useSearchParams breaks static page rendering](https://github.com/vercel/next.js/issues/48335) -- community reports of static generation breaking from useSearchParams
+- [WAI-ARIA APG: Button Pattern](https://www.w3.org/WAI/ARIA/apg/patterns/button/) -- toggle button semantics with aria-pressed
+- [WAI-ARIA APG: Checkbox Pattern](https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/) -- why checkboxes are wrong for tag filter toggles (use buttons instead)
+- [W3C: ARIA22 Using role=status for status messages](https://www.w3.org/WAI/WCAG22/Techniques/aria/ARIA22.html) -- aria-live region for announcing filtered result counts
+- [web.dev: Building a multi-select component](https://web.dev/articles/building/a-multi-select-component) -- accessible fieldset/checkbox patterns (reference, not recommended for this use case)
+- [Scott O'Hara: Considering dynamic search results and content](https://www.scottohara.me/blog/2022/02/05/dynamic-results.html) -- screen reader behavior with dynamically updated result lists
+- [nuqs: Type-safe search params state management](https://nuqs.dev/) -- library for URL state management in Next.js App Router (considered but not recommended due to zero-dependency codebase constraint)
+- [Next.js Discussion #48110: Shallow routing in App Router](https://github.com/vercel/next.js/discussions/48110) -- window.history.pushState for shallow URL updates without server re-render
+- [TestParty: Accessible toggle buttons guide](https://testparty.ai/blog/accessible-toggle-buttons-modern-web-apps-complete-guide) -- WCAG contrast requirements for toggle button states
 
 ---
-*Pitfalls research for: Blog view counts + reading time (keech.dev v1.4)*
-*Researched: 2026-02-21*
+*Pitfalls research for: Multi-select tag/stack filtering on listing pages (keech.dev v1.5)*
+*Researched: 2026-02-22*

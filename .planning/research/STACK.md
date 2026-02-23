@@ -1,233 +1,254 @@
 # Stack Research
 
-**Domain:** Blog stats -- view count tracking and reading time display for Next.js portfolio blog
-**Researched:** 2026-02-21
+**Domain:** Multi-select tag/stack filtering on listing pages for a statically generated Next.js portfolio
+**Researched:** 2026-02-22
 **Confidence:** HIGH
 
 ## Executive Summary
 
-This milestone requires exactly **one new dependency**: `@upstash/redis` for view count persistence. Reading time is already computed by Velite's `s.metadata()` and already displayed in the UI -- no stack changes needed for that feature. The site's first API route (Next.js Route Handler) will be added for view count increment/fetch, but that requires no new packages since Route Handlers are built into Next.js App Router.
+This milestone requires **zero new dependencies**. The filtering feature is entirely achievable with React 19 built-in hooks (`useState`, `useTransition`), Next.js `useSearchParams`, and CSS transitions already available in the codebase.
 
-**Critical context:** Vercel KV (`@vercel/kv`) has been **sunset**. It was a whitelabeled Upstash Redis product. The replacement is direct Upstash Redis integration via the Vercel Marketplace, using `@upstash/redis`. Do not use `@vercel/kv` for new projects.
+The key architectural decision is **URL-based filtering with `useSearchParams`** rather than ephemeral `useState`. This preserves shareability, browser back/forward navigation, and is the established Next.js pattern for filter state. The listing pages remain statically generated at build time -- all filtering happens client-side by narrowing the full content array that is already embedded in the page HTML. No server round-trips, no dynamic rendering.
+
+**Why no new libraries:** The codebase has a deliberate zero-animation-library constraint (Framer Motion and GSAP are explicitly out of scope). nuqs (the popular URL state management library) was evaluated and rejected -- it adds 6 kB for what amounts to 15 lines of `useSearchParams` + `URLSearchParams` logic in this use case. The site has 3 blog posts and 1 project; the filtering surface is trivially small.
 
 ## Recommended Stack
 
 ### New Dependencies
 
-| Technology | Version | Purpose | Why Recommended |
-|------------|---------|---------|-----------------|
-| `@upstash/redis` | ^1.36.2 | HTTP-based Redis client for view count storage | The only connectionless (HTTP/REST) Redis client designed for serverless. No TCP connections to manage. Works in Vercel serverless functions and Edge Runtime. Uses `fetch()` under the hood. Upstash is Vercel's recommended Redis provider (Vercel Marketplace integration). Free tier covers 500K commands/month -- more than sufficient for a personal blog. **Confidence: HIGH** -- verified via Upstash official docs, npm registry, and Vercel docs. |
+None.
 
 ### Existing Stack (No Changes Needed)
 
-| Technology | Version | Role in This Milestone | Notes |
-|------------|---------|----------------------|-------|
-| Next.js App Router | 16.1.6 | Route Handlers for `/api/views` endpoint | Route Handlers (`route.ts` in `app/api/`) use Web standard Request/Response APIs. Already built into Next.js. No new package needed. |
-| Velite `s.metadata()` | 0.3.1 | Reading time calculation at build time | Already configured in `velite.config.ts`. Returns `{ readingTime: number, wordCount: number }`. Already transformed to `post.readingTime` and displayed as `"{n} min read"` in both `post-card.tsx` and `[slug]/page.tsx`. **Reading time is done. No work needed.** |
-| React 19 | 19.2.4 | Client component for view count reporter | A small `'use client'` component will fire a POST to the view count API on mount. Standard `useEffect` pattern. |
+| Technology | Current Version | Role in This Milestone | Notes |
+|------------|----------------|----------------------|-------|
+| React 19 | 19.2.4 | `useState` for selected tags, `useTransition` for non-blocking filter updates | Built-in hooks. No state management library needed for a tag selection array. |
+| Next.js 16 `useSearchParams` | 16.1.6 | Read filter state from URL query string | Requires `Suspense` boundary to preserve static generation. The blog page stays SSG; the filter bar is client-rendered within the boundary. |
+| Next.js 16 `useRouter` | 16.1.6 | Push updated `?tags=a,b` params to URL without page reload | `router.replace()` with `{ scroll: false }` keeps position. Shallow navigation -- no server fetch. |
+| Tailwind CSS v4 | 4.1.18 | Filter bar styling, active/inactive tag chip states, grid item show/hide transitions | CSS-first config in `globals.css`. Transitions via `transition-all`, `opacity-0`, `scale-95`. |
+| Velite | 0.3.1 | Provides `posts[].tags` and `projects[].stack` arrays at build time | Already defined in `velite.config.ts` with `s.array(s.string()).default([])`. No schema changes needed. |
+| `clsx` + `tailwind-merge` (via `cn()`) | clsx 2.1.1, tailwind-merge 3.4.0 | Conditional class composition for active/inactive chip states | Already used throughout all components. |
 
 ### Supporting Libraries
 
 | Library | Version | Purpose | When to Use |
 |---------|---------|---------|-------------|
-| None needed | -- | -- | This milestone requires only `@upstash/redis`. No rate limiting library, no analytics library, no additional utilities. |
+| None needed | -- | -- | This milestone uses only existing dependencies. The filtering logic is ~50 lines of React + URL params. |
 
 ### Development Tools
 
 | Tool | Purpose | Notes |
 |------|---------|-------|
-| Upstash Console | Inspect Redis keys, monitor usage | Free at console.upstash.com. See stored view counts, debug key patterns. |
-| `.env.local` | Local development credentials | Store `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` for local dev. Add `.env*.local` to `.gitignore` (Next.js default). |
+| None new | -- | Existing `npm run dev` (Velite --watch + Next.js Turbopack) is sufficient. |
 
 ## Key Technical Decisions
 
-### 1. Upstash Redis via `@upstash/redis` (not `@vercel/kv`, not `ioredis`)
+### 1. URL-Based Filtering via `useSearchParams` (not ephemeral `useState`)
 
-**Use `@upstash/redis` directly.**
+**Use `useSearchParams` to store selected tags in the URL query string.**
 
-- `@vercel/kv` is **sunset**. Vercel removed its docs, stopped offering Vercel KV for new projects, and recommends Upstash Redis via the Vercel Marketplace instead. Using `@vercel/kv` for a new project would be building on a deprecated foundation.
-- `@upstash/redis` is HTTP/REST-based (uses `fetch()`), meaning zero connection management. No connection pooling, no connection timeouts, no cold-start connection overhead. Each Redis command is a single HTTP request.
-- `ioredis` requires a persistent TCP connection, which is incompatible with serverless functions that spin up/down. It also requires `REDIS_URL` with a TCP connection string, not available from Upstash's REST API.
-
-**Client initialization pattern:**
-
-```typescript
-// src/lib/redis.ts
-import { Redis } from '@upstash/redis'
-
-export const redis = Redis.fromEnv()
-// Reads UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN
-// from process.env automatically
-```
-
-**Confidence: HIGH** -- verified via Upstash official docs, Vercel storage deprecation notices, and npm registry.
-
-### 2. Environment Variables: `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN`
-
-The Vercel Marketplace Upstash integration auto-provisions these two env vars when you install it:
-
-| Variable | Source | Scope |
-|----------|--------|-------|
-| `UPSTASH_REDIS_REST_URL` | Auto-set by Vercel Marketplace integration | All Vercel environments |
-| `UPSTASH_REDIS_REST_TOKEN` | Auto-set by Vercel Marketplace integration | All Vercel environments |
-
-For local development, copy these from the Upstash Console or Vercel dashboard into `.env.local`.
-
-`Redis.fromEnv()` reads exactly these variable names. No custom configuration needed.
-
-**Confidence: HIGH** -- verified via Upstash Vercel integration docs.
-
-### 3. Route Handler for View Counts (not Server Action)
-
-**Use a Next.js Route Handler (`app/api/views/[slug]/route.ts`), not a Server Action.**
+Pattern: `/blog?tags=ai,fintech` and `/projects?stack=Next.js+16,React+19`
 
 Rationale:
-- View count increment is a fire-and-forget POST from a client component. It does not need form binding or React transition integration.
-- A Route Handler gives explicit HTTP method control (GET for fetching count, POST for incrementing).
-- The view count API could potentially be called from outside the React tree (e.g., og:image generators, external tools) -- Route Handlers are standard HTTP endpoints.
-- Server Actions are better suited for mutations triggered from React forms/components that need built-in optimistic updates. A view counter is not a form.
+- **Shareability**: Filter states become bookmarkable and shareable links
+- **Browser navigation**: Back/forward buttons navigate filter history naturally
+- **Established pattern**: Next.js official docs recommend URL state for filters
+- **Zero dependencies**: Built into React 19 and Next.js 16. No library needed
+- **SSG-compatible**: Using `useSearchParams` inside a client component wrapped in `<Suspense>` keeps the rest of the page statically generated
 
-**Confidence: HIGH** -- Route Handlers are the established pattern for this use case across Next.js community.
+The filter bar component reads from `useSearchParams()` and writes via `router.replace(url, { scroll: false })`.
 
-### 4. Reading Time: Already Done
+**Confidence: HIGH** -- verified via Next.js official docs on `useSearchParams`, static generation compatibility, and Suspense boundary requirements.
 
-The Velite config already has this pipeline fully working:
+### 2. Suspense Boundary to Preserve Static Generation
+
+**Critical constraint**: Calling `useSearchParams()` without a `<Suspense>` boundary causes the entire page to deopt into client-side rendering. The page must wrap the filter bar client component in `<Suspense>`.
+
+Pattern:
+```typescript
+// blog/page.tsx (server component)
+export default function BlogPage() {
+  const publishedPosts = posts.filter(p => !p.draft).sort(...)
+  return (
+    <section>
+      <h1>Blog</h1>
+      <Suspense fallback={null}>
+        <FilteredBlogList posts={publishedPosts} />
+      </Suspense>
+    </section>
+  )
+}
+```
+
+The `FilteredBlogList` is a `'use client'` component that:
+1. Reads `useSearchParams()` to get active tags
+2. Filters the `posts` array client-side
+3. Renders PostCard components for matching posts
+4. Contains the filter bar UI
+
+This keeps the `<h1>`, page metadata, and SEO content server-rendered while the dynamic filter UI is client-rendered within the Suspense boundary.
+
+**Confidence: HIGH** -- verified via Next.js docs "Missing Suspense boundary with useSearchParams" and "Entire page deopted into client-side rendering" error documentation.
+
+### 3. Client-Side Array Filtering (not Server-Side)
+
+**Filter entirely client-side by narrowing the full content array.**
+
+The listing pages already embed all content at build time via `import { posts } from '@/.velite'`. With 3 posts and 1 project, sending the full array to the client and filtering with `Array.filter()` is the correct approach. There is no backend query, no API route, and no dynamic rendering.
 
 ```typescript
-// velite.config.ts (existing)
-metadata: s.metadata(),  // Computes { readingTime: number, wordCount: number }
-// ...
-.transform(data => ({
-  ...data,
-  readingTime: data.metadata.readingTime  // Surfaces it as top-level field
-}))
+const filtered = posts.filter(post =>
+  activeTags.every(tag => post.tags.includes(tag))
+)
 ```
 
-Both `src/app/blog/[slug]/page.tsx` (line 88) and `src/components/blog/post-card.tsx` (line 41) already display `{post.readingTime} min read`. This feature is complete. The milestone work for reading time is limited to verifying the display looks correct in context with view counts alongside it.
+This is AND logic: selecting tags `[ai, fintech]` shows only posts that have BOTH tags.
 
-**Confidence: HIGH** -- verified by reading the codebase directly.
+**Confidence: HIGH** -- standard pattern for small content sets. No performance concern until hundreds of items.
 
-### 5. Redis Key Pattern: `pageviews:posts:{slug}`
+### 4. CSS Transitions for Filter Animation (not Framer Motion, not GSAP)
 
-Use a namespaced key pattern for view counts:
+**Use CSS `transition` and `opacity`/`scale` for show/hide effects on filter results.**
 
-```
-pageviews:posts:{slug}
-```
+The codebase already has a `transition-all duration-150` pattern on card hover states and a `fadeInUp` animation. Filter transitions should use the same vocabulary:
 
-Redis commands needed:
-- `INCR pageviews:posts:{slug}` -- atomically increment on page view
-- `GET pageviews:posts:{slug}` -- fetch count for display
-- `MGET pageviews:posts:slug1 pageviews:posts:slug2 ...` -- batch fetch for blog listing page
+- Items leaving: `opacity-0 scale-95` with `transition-all duration-200`
+- Items entering: `opacity-100 scale-100` with `transition-all duration-200`
+- No grid position animation (items don't slide to fill gaps -- they just appear/disappear in place)
 
-All three are single Redis commands (one HTTP request each). `MGET` is important for the blog listing page to avoid N+1 requests.
+For grid reflow (items shifting position when others hide), CSS Grid cannot natively animate position changes. The View Transitions API could handle this, but it is unnecessary for this scale. Hidden items simply collapse out of the grid flow (via conditional rendering or `hidden` attribute), and remaining items reflow instantly.
 
-**Confidence: HIGH** -- standard Redis pattern for counters.
+**Why not animate grid reflow:**
+- The View Transitions API is Baseline Newly Available (Safari 18+, Firefox 133+) but adds complexity for minimal visual benefit on a 3-6 item grid
+- Framer Motion / GSAP are explicitly out of scope per PROJECT.md constraints
+- The `animate-css-grid` library is unmaintained (last commit 2020)
+- Instant reflow on a small grid looks fine. Users won't notice the lack of position animation with only 3-6 cards.
 
-### 6. View Count Deduplication: IP Hash with TTL (Optional)
+**Confidence: HIGH** -- this matches the existing animation vocabulary and zero-library constraint.
 
-The Upstash blog tutorial demonstrates deduplication via hashed IP + NX + EX:
+### 5. `useTransition` for Non-Blocking URL Updates (not `startTransition` from router)
+
+**Wrap `router.replace()` calls in `useTransition` to keep the filter bar responsive during URL updates.**
 
 ```typescript
-const ip = request.headers.get('x-forwarded-for') ?? 'unknown'
-const hash = await sha256(ip)
-const dedupKey = `deduplicate:${hash}:${slug}`
+const [isPending, startTransition] = useTransition()
 
-const isNew = await redis.set(dedupKey, true, { nx: true, ex: 86400 })
-if (!isNew) return NextResponse.json({ counted: false }, { status: 202 })
-
-await redis.incr(`pageviews:posts:${slug}`)
+function toggleTag(tag: string) {
+  startTransition(() => {
+    const params = new URLSearchParams(searchParams.toString())
+    // ... update tags param
+    router.replace(`?${params.toString()}`, { scroll: false })
+  })
+}
 ```
 
-This prevents the same visitor from inflating counts within 24 hours. For a personal blog, this is a nice-to-have, not a requirement. A simpler v1 without deduplication is viable.
+`isPending` can optionally dim the results list during transition, though with client-side filtering the update is effectively instant. This is a forward-compatible pattern if the content set grows.
 
-**Confidence: MEDIUM** -- pattern is well-documented but adds complexity. Recommend implementing in the same phase since it is only a few extra lines.
+**Confidence: HIGH** -- React 19 `useTransition` is the official pattern for non-urgent state updates.
+
+### 6. TagChip and TechBadge Reuse with Interactive States
+
+**Extend existing `TagChip` and `TechBadge` components with `active`/`onClick` props rather than creating new filter chip components.**
+
+Current `TagChip` already supports an optional `href` prop for link behavior. Adding `onClick` + `active` props for filter behavior keeps the design language unified:
+
+```typescript
+interface TagChipProps {
+  tag: string
+  href?: string
+  active?: boolean
+  onClick?: () => void
+  className?: string
+}
+```
+
+Active state styling: filled background (`bg-accent text-white`) vs. the current subtle (`bg-accent/10`). This uses the existing neobrutalist design tokens.
+
+**Confidence: HIGH** -- component extension, not replacement.
+
+### 7. Integration with ListingViewCounts (Blog Page Only)
+
+The blog listing page currently wraps the card grid in `<ListingViewCounts>` which provides view count context. The filtered blog list component must remain inside this provider, or the provider must move to wrap both the filter bar and the filtered results.
+
+Pattern:
+```typescript
+<Suspense fallback={null}>
+  <FilteredBlogList posts={publishedPosts} slugs={slugs} />
+</Suspense>
+
+// Inside FilteredBlogList (client component):
+// - Reads useSearchParams for active tags
+// - Filters posts
+// - Wraps filtered grid in ListingViewCounts with filtered slugs
+```
+
+Filtering changes which slugs need view counts fetched. The `ListingViewCounts` component should receive the filtered slug list so it only fetches counts for visible posts.
+
+**Confidence: HIGH** -- existing pattern understood from codebase review.
 
 ## Installation
 
 ```bash
-# Single new dependency
-npm install @upstash/redis
-```
-
-```bash
-# Vercel Marketplace setup (one-time, in Vercel dashboard)
-# 1. Go to vercel.com/marketplace/upstash
-# 2. Install integration
-# 3. Create a Redis database (free tier)
-# 4. Env vars auto-provisioned: UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN
-```
-
-```bash
-# Local development
-# Create .env.local with credentials from Upstash Console
-echo "UPSTASH_REDIS_REST_URL=https://your-db.upstash.io" >> .env.local
-echo "UPSTASH_REDIS_REST_TOKEN=your-token-here" >> .env.local
+# No installation needed. Zero new dependencies.
 ```
 
 ## Alternatives Considered
 
 | Recommended | Alternative | When to Use Alternative |
 |-------------|-------------|-------------------------|
-| `@upstash/redis` (REST/HTTP) | `ioredis` (TCP) | When running in a long-lived server (not serverless). Offers full Redis protocol, Lua scripting, pub/sub. Not compatible with Vercel serverless or Edge Runtime. |
-| `@upstash/redis` | `@vercel/kv` | **Never for new projects.** Vercel KV is sunset. `@vercel/kv` was a thin wrapper around `@upstash/redis` anyway. |
-| `@upstash/redis` | Vercel Postgres / Supabase | When you need relational data, joins, or complex queries. Massive overkill for a single counter per blog post. Adds connection pooling complexity. |
-| `@upstash/redis` | Local JSON file / filesystem | Never in serverless. Serverless functions have ephemeral filesystems. Data would be lost on every cold start. |
-| `@upstash/redis` | Third-party analytics (Plausible, Umami) | When you want full analytics (referrers, geography, sessions). Heavier integration, often requires a separate service/self-host. For just a public view counter, Redis is simpler and cheaper. |
-| Route Handler | Server Action | When the mutation is tightly coupled to a React form with optimistic UI. View counters are fire-and-forget, not form-driven. |
-| Route Handler | Edge Middleware | When you need to run on every request before routing. Middleware is for auth, redirects, rewrites -- not for counting page views. |
+| `useSearchParams` (built-in) | `nuqs` (6 kB) | When you have complex multi-key URL state with type parsing, throttling, debouncing, or server component cache integration. For a single `tags` query param with comma-separated strings, `useSearchParams` + `URLSearchParams` is 15 lines of code. nuqs also has a reported adapter detection issue with Next.js 16 (GitHub issue #1263). |
+| `useSearchParams` (URL state) | `useState` (ephemeral) | When filter state is purely ephemeral and you explicitly do NOT want it in the URL. For a portfolio site, shareable filter URLs are a free usability win. |
+| CSS transitions | Framer Motion | When you need physics-based spring animations, layout animations (AnimatePresence), or complex orchestrated sequences. Explicitly out of scope per PROJECT.md. Adds 32+ kB. |
+| CSS transitions | GSAP | When you need timeline-based animation sequences, ScrollTrigger, or complex motion paths. Explicitly out of scope per PROJECT.md. |
+| CSS transitions | View Transitions API | When grid items need animated position changes during reflow. Baseline Newly Available as of late 2025 (Safari 18+, Firefox 133+). Consider for a future enhancement if the content set grows beyond ~10 items and the visual polish warrants the additional code. |
+| Client-side filtering | Server-side filtering via searchParams page prop | When content is fetched from a database/CMS at request time. Here, all content is compiled into the bundle at build time by Velite. Server-side filtering would force the page into dynamic rendering for no benefit. |
+| `router.replace()` | `router.push()` | When each filter change should be a separate history entry. For rapid tag toggling, `replace` avoids polluting browser history. Consider `push` if users report wanting back-button per filter change. |
 
 ## What NOT to Use
 
 | Avoid | Why | Use Instead |
 |-------|-----|-------------|
-| `@vercel/kv` | **Sunset.** Vercel removed docs, stopped new provisioning. Building on deprecated infrastructure. | `@upstash/redis` directly |
-| `ioredis` / `redis` (node-redis) | TCP-based. Incompatible with serverless cold starts. Connection management overhead. Not Edge Runtime compatible. | `@upstash/redis` (HTTP/REST, connectionless) |
-| `reading-time` npm package | Unnecessary. Velite's `s.metadata()` already computes `readingTime` at build time. Adding another package duplicates existing functionality. | Velite `s.metadata().readingTime` (already in use) |
-| `@upstash/ratelimit` | Over-engineered for a personal blog view counter. Adds another dependency for a problem that barely exists at this traffic level. If needed later, simple IP dedup with `SET NX EX` covers it. | Manual `SET key NX EX 86400` pattern |
-| Framer Motion / any animation lib for count display | The codebase has a zero-animation-library constraint. A view count number does not need entrance animations. | Static render or CSS transition if counter updates |
-| Database (Postgres, MongoDB, etc.) | Massive overkill. A view counter is a single integer per slug. Redis `INCR` is purpose-built for atomic counters. A database adds connection pooling, migrations, ORM, and 10x complexity for a simpler problem. | Redis `INCR` via `@upstash/redis` |
+| `nuqs` | Adds 6 kB dependency for trivial URL state. Known adapter detection issue with Next.js 16 (issue #1263). This site has one URL param (`tags` or `stack`) per listing page. | `useSearchParams` + `URLSearchParams` (built-in, ~15 lines) |
+| Framer Motion | Explicitly out of scope per PROJECT.md. 32+ kB bundle addition. Zero-animation-library codebase precedent. | CSS `transition-all` + `opacity` + `scale` |
+| GSAP | Explicitly out of scope per PROJECT.md. Heavy runtime. | CSS transitions |
+| `animate-css-grid` | Unmaintained (last commit 2020). Adds JS dependency for grid position animation that is not needed at this content scale. | No grid position animation; instant reflow is acceptable for 3-6 items |
+| Zustand / Jotai / Redux | Global state management is wildly over-engineered for a tag selection array. URL state via `useSearchParams` is the correct primitive. | `useSearchParams` for persistence, `useState` within component for immediate UI |
+| Server Actions for filtering | Server Actions are for mutations. Filtering is a read operation. Using Server Actions would force server round-trips for what should be instant client-side array narrowing. | Client-side `Array.filter()` on build-time Velite data |
+| Dynamic rendering (`export const dynamic = 'force-dynamic'`) | Listing pages are currently fully static. Adding `searchParams` as a page prop would force dynamic rendering. Keep pages static; handle filtering entirely client-side. | `useSearchParams` in a client component within `<Suspense>` boundary |
 
 ## Stack Patterns by Variant
 
-**For the blog post page (individual post):**
-- Server component fetches view count via `redis.get()` at request time
-- A tiny `'use client'` component fires `POST /api/views/[slug]` on mount to increment
-- `revalidate` or `dynamic = 'force-dynamic'` on the page to ensure fresh counts (or use ISR with short revalidation)
+**For the blog listing page (`/blog`):**
+- Server component renders `<h1>`, metadata, passes `posts` array down
+- `<Suspense>` boundary wraps `FilteredBlogList` client component
+- Client component reads `?tags=ai,fintech` from URL, filters posts, renders grid
+- `ListingViewCounts` wraps the filtered grid with filtered slugs
+- Tags extracted from all posts for the filter bar: `[...new Set(posts.flatMap(p => p.tags))]`
 
-**For the blog listing page (all posts):**
-- Use `redis.mget()` to batch-fetch all view counts in a single Redis command
-- This avoids N+1 requests (one per post)
-- The listing page needs to become dynamic (or use ISR) to show current counts
+**For the projects listing page (`/projects`):**
+- Same pattern, but uses `?stack=Next.js+16,React+19` query param
+- No view count integration (projects don't have view counts)
+- Stack items extracted from all projects: `[...new Set(projects.flatMap(p => p.stack))]`
 
-**For static generation compatibility:**
-- The site currently uses `generateStaticParams()` for full static generation
-- Adding view counts means post pages must fetch data at request time
-- Use `export const dynamic = 'force-dynamic'` or `export const revalidate = 60` (ISR) on the blog post page
-- The blog listing page similarly needs ISR or dynamic rendering
+**For the filter bar component (shared):**
+- Generic `FilterBar` component that accepts `items: string[]`, `activeItems: string[]`, `onToggle: (item: string) => void`
+- Renders `TagChip` or `TechBadge` with `active` prop styling
+- "Clear all" button when any filters are active
+- Accessible: chips are `<button>` elements with `aria-pressed` state
 
-**For local development without Redis:**
-- Guard Redis calls with a fallback: if env vars are missing, return 0 for view count
-- This keeps `npm run dev` working without Redis credentials
+**For reduced motion:**
+- When `prefers-reduced-motion: reduce`, filter transitions happen instantly (no opacity/scale animation)
+- The existing CSS `@media (prefers-reduced-motion: reduce)` block in `globals.css` should cover new transition classes
 
 ## Version Compatibility
 
 | Package | Compatible With | Notes |
 |---------|-----------------|-------|
-| `@upstash/redis@^1.36.2` | Next.js 16.1.6 | Uses standard `fetch()`. Works in Node.js runtime and Edge Runtime. No Next.js version constraints. |
-| `@upstash/redis@^1.36.2` | Vercel Serverless + Edge | Designed specifically for these environments. HTTP-based, no TCP. |
-| `@upstash/redis@^1.36.2` | TypeScript 5.9.3 | Full TypeScript support. All Redis commands are typed. |
-| Next.js Route Handlers | Next.js 13+ (App Router) | Stable since Next.js 13. Uses Web standard `Request`/`Response`. `app/api/views/[slug]/route.ts` pattern. |
-| Velite `s.metadata()` | Velite 0.3.1 | Already configured and working. Returns `{ readingTime: number, wordCount: number }`. |
-
-## Upstash Free Tier Limits
-
-| Resource | Free Tier Limit | Adequate? |
-|----------|----------------|-----------|
-| Commands/month | 500,000 | YES -- a personal blog with even 1,000 daily visitors would use ~60K commands/month (view + increment per visit, plus listing page fetches) |
-| Data size | 256 MB | YES -- view counts are integers. Even 10,000 blog posts would use < 1 MB |
-| Databases | 10 | YES -- only 1 needed |
-| Regions | 1 (single region) | YES -- sufficient for a personal blog. Multi-region available on paid plans. |
+| React 19.2.4 `useTransition` | Next.js 16.1.6 | Stable API. Works with `router.replace()` for non-blocking URL updates. |
+| Next.js 16.1.6 `useSearchParams` | React 19.2.4 | Requires `<Suspense>` boundary for static generation. Returns `ReadonlyURLSearchParams`. |
+| Next.js 16.1.6 `useRouter` | React 19.2.4 | `router.replace(url, { scroll: false })` for shallow URL updates without scroll reset. |
+| Tailwind CSS v4 `transition-*` | All browsers | CSS transitions on `opacity`, `transform`, `scale` are universally supported. |
+| `cn()` (clsx + tailwind-merge) | Tailwind CSS v4 | Already used throughout. Handles conditional active/inactive class merging. |
 
 ## Integration Points
 
@@ -235,41 +256,41 @@ echo "UPSTASH_REDIS_REST_TOKEN=your-token-here" >> .env.local
 
 | File | Purpose |
 |------|---------|
-| `src/lib/redis.ts` | Redis client singleton. `Redis.fromEnv()` with graceful fallback if env vars missing. |
-| `src/app/api/views/[slug]/route.ts` | Route Handler. GET returns count, POST increments count. |
-| `src/components/blog/view-counter.tsx` | `'use client'` component. Fires POST on mount, optionally displays count. |
-| `.env.local` | Local dev credentials (gitignored by Next.js default). |
+| `src/components/ui/filter-bar.tsx` | `'use client'` component. Generic multi-select filter bar with tag chips. Reads/writes URL search params. |
+| `src/components/blog/filtered-blog-list.tsx` | `'use client'` component. Wraps filter bar + filtered PostCard grid + ListingViewCounts for blog page. |
+| `src/components/projects/filtered-project-list.tsx` | `'use client'` component. Wraps filter bar + filtered ProjectCard grid for projects page. |
 
 ### Existing Files to Modify
 
 | File | Change |
 |------|--------|
-| `src/app/blog/[slug]/page.tsx` | Add view count display in header metadata. Add `ViewCounter` client component. May need `dynamic` or `revalidate` export. |
-| `src/app/blog/page.tsx` | Batch-fetch view counts with `redis.mget()`. Display on post cards. May need `dynamic` or `revalidate` export. |
-| `src/components/blog/post-card.tsx` | Add optional `views` prop to display count. |
-| `.gitignore` | Verify `.env*.local` is already gitignored (Next.js default -- likely already present). |
+| `src/app/blog/page.tsx` | Move card grid into `FilteredBlogList` client component wrapped in `<Suspense>`. Pass `posts` array as prop. |
+| `src/app/projects/page.tsx` | Move card grid into `FilteredProjectList` client component wrapped in `<Suspense>`. Pass `projects` array as prop. |
+| `src/components/blog/tag-chip.tsx` | Add `active?: boolean` and `onClick?: () => void` props. Add active state styling (`bg-accent text-white border-accent`). Render as `<button>` when `onClick` is provided. |
+| `src/components/projects/tech-badge.tsx` | Add `active?: boolean` and `onClick?: () => void` props. Same pattern as TagChip. |
+| `src/app/globals.css` | Possibly add filter transition utility classes if not covered by Tailwind defaults. |
 
 ### No Changes Needed
 
 | File | Why |
 |------|-----|
-| `velite.config.ts` | Reading time already configured and working |
-| `next.config.ts` | No config changes needed for Route Handlers or Upstash |
-| `package.json` scripts | No script changes. `npm run build` still works (Velite then Next.js). |
-| `globals.css` | View counts are text, not animations. Standard Tailwind classes suffice. |
+| `velite.config.ts` | `tags` and `stack` arrays already defined with `s.array(s.string()).default([])` |
+| `next.config.ts` | No config changes needed |
+| `package.json` | No new dependencies |
+| `src/lib/redis.ts` | View counting is unrelated to filtering |
+| `src/app/api/**` | No API routes needed for client-side filtering |
 
 ## Sources
 
-- [Upstash Redis TypeScript SDK -- Get Started](https://upstash.com/docs/redis/sdks/ts/getstarted) -- verified `Redis.fromEnv()`, env var names, installation. **HIGH confidence.**
-- [Upstash Vercel Integration docs](https://upstash.com/docs/redis/howto/vercelintegration) -- verified auto-provisioned env vars, setup flow. **HIGH confidence.**
-- [Upstash Blog: Adding a View Counter to Next.js](https://upstash.com/blog/nextjs13-approuter-view-counter) -- verified IP dedup pattern with SET NX EX, INCR pattern, client component reporter. **HIGH confidence.**
-- [Vercel Storage docs -- Redis on Vercel](https://vercel.com/docs/redis) -- confirmed Vercel KV sunset, Upstash Marketplace replacement. **HIGH confidence.**
-- [Vercel Storage GitHub Issue #829](https://github.com/vercel/storage/issues/829) -- confirmed Vercel KV documentation removal and deprecation. **HIGH confidence.**
-- [npm: @upstash/redis](https://www.npmjs.com/package/@upstash/redis) -- verified latest version 1.36.2 (published Feb 2026). **HIGH confidence.**
-- [Next.js Route Handlers docs](https://nextjs.org/docs/app/getting-started/route-handlers) -- verified Web standard Request/Response API, supported methods. **HIGH confidence.**
-- [Velite Schemas docs](https://velite.js.org/guide/velite-schemas) -- verified `s.metadata()` returns `{ readingTime: number, wordCount: number }`. **HIGH confidence.**
-- [Upstash Pricing](https://upstash.com/docs/redis/overall/pricing) -- verified free tier: 500K commands/month, 256MB, 10 databases. **HIGH confidence.**
+- [Next.js `useSearchParams` docs](https://nextjs.org/docs/app/api-reference/functions/use-search-params) -- verified Suspense boundary requirement, static generation compatibility, `ReadonlyURLSearchParams` return type. **HIGH confidence.**
+- [Next.js "Missing Suspense boundary" error docs](https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout) -- verified that `useSearchParams` without Suspense causes full page client-side rendering deopt. **HIGH confidence.**
+- [Next.js "Entire page deopted into client-side rendering" docs](https://nextjs.org/docs/messages/deopted-into-client-rendering) -- verified the Suspense boundary pattern for preserving static generation. **HIGH confidence.**
+- [React 19 `useTransition` docs](https://react.dev/reference/react/useTransition) -- verified non-blocking state update pattern with `isPending` for responsive filter UI. **HIGH confidence.**
+- [nuqs GitHub issue #1263](https://github.com/47ng/nuqs/issues/1263) -- confirmed adapter detection issue with Next.js 16. Not a blocker (workarounds exist), but reinforces the decision to avoid the dependency. **MEDIUM confidence** (issue may be resolved in nuqs 2.8.8).
+- [View Transitions API browser support (caniuse.com)](https://caniuse.com/view-transitions) -- verified Baseline Newly Available status: Chrome 111+, Safari 18+, Firefox 133+. **HIGH confidence.**
+- [Next.js App Router search/filter tutorial](https://nextjs.org/learn/dashboard-app/adding-search-and-pagination) -- verified `useSearchParams` + `router.replace()` as official recommended pattern. **HIGH confidence.**
+- Codebase review of `velite.config.ts`, `blog/page.tsx`, `projects/page.tsx`, `tag-chip.tsx`, `tech-badge.tsx`, `listing-view-counts.tsx`, `scroll-reveal.tsx`, `globals.css` -- verified existing data structures, component patterns, and animation vocabulary. **HIGH confidence.**
 
 ---
-*Stack research for: Blog stats -- view count tracking and reading time for keech.dev*
-*Researched: 2026-02-21*
+*Stack research for: Multi-select tag/stack filtering on keech.dev listing pages*
+*Researched: 2026-02-22*

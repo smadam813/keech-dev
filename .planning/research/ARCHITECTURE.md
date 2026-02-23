@@ -1,436 +1,519 @@
 # Architecture Research
 
-**Domain:** Blog view counts (Upstash Redis) and reading time display in a statically-generated Next.js 16 site
-**Researched:** 2026-02-21
+**Domain:** Multi-select tag/stack filtering on listing pages in a statically-generated Next.js 16 site
+**Researched:** 2026-02-22
 **Confidence:** HIGH
 
 ## System Overview
 
-The site is currently 100% static -- no API routes, no database, no server-side data fetching. Adding view counts introduces the site's first dynamic data path. The architecture must keep the static foundation intact while layering a thin dynamic path on top.
+The site currently has fully static listing pages (`/blog`, `/projects`) with a thin client-side layer for view counts. Adding multi-select filtering introduces a second client-side concern: filtering state. The core architectural question is where filtering state lives and how to keep the listing pages statically generated while adding client interactivity.
+
+The answer is pure client-side filtering with no URL state synchronization. All content is already available at build time (Velite compiles everything into static JSON). The data set is small (currently 3 posts, 1 project) and will remain small for years (this is a personal blog). There is no server-side filtering to do -- every item is already on the page. Filtering is a DOM visibility concern, not a data-fetching concern.
 
 ```
-CURRENT (v1.3) — Fully Static
-===============================
+v1.5 -- Static Pages + Client-Side Filtering
+===============================================
 
   Build Time                              Request Time
   +-----------------+                     +-------------------+
-  | Velite compiles |  .velite/*.json     | CDN serves static |
-  | MDX content     | ----------------->  | HTML/JS/CSS       |
-  +-----------------+                     +-------------------+
-        |
-        v
-  +------------------+
-  | Next.js builds   |
-  | static pages via |
-  | generateStatic   |
-  | Params()         |
-  +------------------+
-
-
-v1.4 — Static Pages + Dynamic View Counts
-===========================================
-
-  Build Time                              Request Time
-  +-----------------+                     +-------------------+
-  | Velite compiles |  readingTime is     | CDN serves static |
-  | MDX + metadata  |  computed here      | HTML (with        |
-  | (readingTime    | ----------------->  | readingTime       |
-  |  already works) |                     | baked in)         |
-  +-----------------+                     +--------+----------+
+  | Velite compiles |  all posts/         | CDN serves static |
+  | MDX content     |  projects with      | HTML with ALL     |
+  | with tags/stack |  full tag/stack     | cards rendered     |
+  +-----------------+  arrays             +--------+----------+
                                                    |
-                                          Client hydrates,
-                                          fires view tracking
+                                          React hydrates
                                                    |
-                                          +--------v----------+
-                                          | <ViewCounter>     |
-                                          | 'use client'      |
-                                          | POST /api/views   |
-                                          | then GET count    |
-                                          +--------+----------+
+                                          +--------v-----------+
+                                          | <FilterBar>        |
+                                          | 'use client'       |
+                                          | reads tags/stack   |
+                                          | from props (static)|
+                                          | manages selected   |
+                                          | set via useState   |
+                                          +--------+-----------+
                                                    |
-                                          +--------v----------+
-                                          | Route Handler     |
-                                          | app/api/views/    |
-                                          |   [slug]/route.ts |
-                                          | (dynamic, never   |
-                                          |  cached)          |
-                                          +--------+----------+
-                                                   |
-                                          +--------v----------+
-                                          | Upstash Redis     |
-                                          | @upstash/redis    |
-                                          | INCR / GET        |
-                                          | (serverless REST) |
-                                          +-------------------+
+                                          +--------v-----------+
+                                          | <FilteredListing>  |
+                                          | 'use client'       |
+                                          | receives items[]   |
+                                          | + activeTags[]     |
+                                          | filters in-memory  |
+                                          | renders cards      |
+                                          +--------------------+
 ```
 
 ### Component Responsibilities
 
 | Component | Responsibility | New/Modified | Render Mode |
 |-----------|----------------|--------------|-------------|
-| `velite.config.ts` | Compiles MDX, computes `readingTime` via `s.metadata()` | **Existing (no changes)** | Build time |
-| `app/blog/[slug]/page.tsx` | Renders post page with reading time + view counter slot | **Modified** — add `<ViewCounter>` | Server (static) |
-| `app/blog/page.tsx` | Blog listing with reading time + view counts per card | **Modified** — add view counts to cards | Server (static) |
-| `components/blog/post-card.tsx` | Individual post card in listing | **Modified** — add view count display | Server (renders client child) |
-| `components/blog/view-counter.tsx` | Tracks and displays view count | **New** — `'use client'` | Client |
-| `app/api/views/[slug]/route.ts` | Increment + return view count | **New** — Route Handler | Server (dynamic) |
-| `lib/redis.ts` | Upstash Redis client singleton | **New** | Server only |
+| `app/blog/page.tsx` | Blog listing -- extracts tags, passes data to filterable wrapper | **Modified** | Server (static) |
+| `app/projects/page.tsx` | Projects listing -- extracts stack items, passes data to filterable wrapper | **Modified** | Server (static) |
+| `components/blog/filter-bar.tsx` | Multi-select tag filter UI for blog | **New** -- `'use client'` | Client |
+| `components/projects/filter-bar.tsx` | Multi-select stack filter UI for projects | **New** -- `'use client'` | Client |
+| `components/blog/filtered-post-list.tsx` | Wraps PostCards with filtering + view counts | **New** -- `'use client'` | Client |
+| `components/projects/filtered-project-list.tsx` | Wraps ProjectCards with filtering | **New** -- `'use client'` | Client |
+| `components/blog/post-card.tsx` | Individual post card | **Unchanged** | Server |
+| `components/projects/project-card.tsx` | Individual project card | **Unchanged** | Server |
+| `components/blog/tag-chip.tsx` | Tag display chip -- add interactive variant | **Modified** | Server (+ clickable client variant) |
+| `components/projects/tech-badge.tsx` | Stack badge -- add interactive variant | **Modified** | Server (+ clickable client variant) |
+| `components/blog/listing-view-counts.tsx` | Batch view count context | **Unchanged** | Client |
 
 ## Recommended Project Structure
 
 ```
 src/
   app/
-    api/
-      views/
-        [slug]/
-          route.ts          # NEW — Route Handler for view count CRUD
     blog/
-      page.tsx              # MODIFIED — pass view counts to post cards
+      page.tsx              # MODIFIED -- extract tags, render FilteredPostList
       [slug]/
-        page.tsx            # MODIFIED — render <ViewCounter>
+        page.tsx            # UNCHANGED
+    projects/
+      page.tsx              # MODIFIED -- extract stack, render FilteredProjectList
+      [slug]/
+        page.tsx            # UNCHANGED
   components/
     blog/
-      view-counter.tsx      # NEW — 'use client' component
-      post-card.tsx         # MODIFIED — accept optional viewCount prop
-      mdx-content.tsx       # UNCHANGED
-      code-block.tsx        # UNCHANGED
-      toc.tsx               # UNCHANGED
-      copy-button.tsx       # UNCHANGED
-      tag-chip.tsx          # UNCHANGED
-  lib/
-    redis.ts                # NEW — Upstash Redis client
-    utils.ts                # UNCHANGED
-    fonts.ts                # UNCHANGED
+      filter-bar.tsx        # NEW -- 'use client', multi-select tag pills
+      filtered-post-list.tsx # NEW -- 'use client', filtering + card rendering
+      post-card.tsx         # UNCHANGED
+      tag-chip.tsx          # MODIFIED -- add interactive/toggle variant
+      listing-view-counts.tsx # UNCHANGED
+    projects/
+      filter-bar.tsx        # NEW -- 'use client', multi-select stack pills
+      filtered-project-list.tsx # NEW -- 'use client', filtering + card rendering
+      project-card.tsx      # UNCHANGED
+      tech-badge.tsx        # MODIFIED -- add interactive/toggle variant
+    ui/
+      scroll-reveal.tsx     # UNCHANGED
 ```
 
 ### Structure Rationale
 
-- **`app/api/views/[slug]/route.ts`:** The dynamic `[slug]` segment matches the blog post slug convention already used in `app/blog/[slug]/page.tsx`. Placing it under `api/views/` is conventional and self-documenting. A single route handler handles both GET (fetch count) and POST (increment + return count), keeping the API surface minimal.
-- **`lib/redis.ts`:** Isolates the Upstash client construction so both the route handler and any future server-side usage share one configuration. Keeps `@upstash/redis` out of component files.
-- **`components/blog/view-counter.tsx`:** This is the 7th `'use client'` component in the project. It needs client-side rendering because: (1) the POST to increment must fire after hydration (not during SSG build), and (2) view count is dynamic data that must be fetched after page load, not baked into static HTML.
+- **Separate filter bars per domain:** Blog filters by `tags` (strings), projects filter by `stack` (strings). The data shape is identical but the visual context differs (tag-chip vs tech-badge styling). Keeping them separate avoids premature abstraction while allowing each to evolve independently.
+- **Filtered list wrappers:** These are the new client boundary. They receive all items as props (serialized by Next.js from the server component parent), own the filter state, and render the filtered subset. This is the same "render-prop/wrapper" pattern already used by `ListingViewCounts`.
+- **Cards remain server components:** `PostCard` and `ProjectCard` do not need `'use client'`. They receive data via props and render static HTML. The client boundary is their parent (`FilteredPostList` / `FilteredProjectList`), which is fine -- server components can be rendered as children of client components when passed as props or children.
 
 ## Architectural Patterns
 
-### Pattern 1: Static Shell with Client-Side Dynamic Islands
+### Pattern 1: Client Wrapper with Server Component Children
 
-**What:** Pages remain statically generated via `generateStaticParams()`. Dynamic data (view counts) is fetched and rendered by a small client component that mounts into a slot in the static HTML. The static page loads instantly; the view count appears a moment later.
+**What:** The listing page (server component) renders all items and passes them as props to a client wrapper. The client wrapper manages filter state and conditionally renders the items. The card components themselves remain server components passed as `children` or rendered from serialized data.
 
-**When to use:** When 95% of page content is static but one piece of data must be live.
+**When to use:** When filtering is purely client-side (no data fetching needed) and the full data set is small enough to ship to the client.
 
 **Trade-offs:**
-- Pro: No change to build pipeline, no ISR complexity, no revalidation config
-- Pro: Static pages remain fully cacheable on CDN
-- Pro: View count is always current (fetched on every page load)
-- Con: Brief flash where view count is not yet loaded (use skeleton or hidden until ready)
-- Con: Every page view makes an API call (mitigated by Vercel's edge network + Upstash edge latency)
+- Pro: Static generation is fully preserved -- the page HTML includes all cards
+- Pro: No API calls for filtering, instant response
+- Pro: SEO gets all content in the initial HTML (all cards are in the static page)
+- Con: All items are shipped to the client even if filtered out (irrelevant at this scale)
+- Con: Cards rendered inside a client component lose their server-component-only optimizations (but they have none -- no async, no server-only imports)
+
+**Why not keep PostCard as a true server component:** When a server component is a child of a client component, it is rendered on the server and its output is serialized to the client. However, for dynamic filtering where the client component decides which cards to show/hide, the cards must be renderable by the client. The simplest approach is to pass the data array to the client wrapper and let it render the cards. Since `PostCard` and `ProjectCard` have no server-only logic (no `async`, no direct database calls, no `'use server'` imports), they work identically whether rendered in a server or client context. They do not need `'use client'` directives themselves.
 
 **Example:**
 ```typescript
-// app/blog/[slug]/page.tsx — Server component (static)
-export default async function PostPage({ params }: PostPageProps) {
-  const { slug } = await params
-  const post = posts.find(p => p.slug === slug)
-  if (!post) notFound()
+// app/blog/page.tsx -- Server component (static)
+import { posts } from '@/.velite'
+import { FilteredPostList } from '@/components/blog/filtered-post-list'
+
+export default function BlogPage() {
+  const publishedPosts = posts
+    .filter(post => !post.draft)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+
+  // Extract all unique tags across published posts
+  const allTags = [...new Set(publishedPosts.flatMap(p => p.tags))].sort()
 
   return (
-    <article>
-      <header>
-        <h1>{post.title}</h1>
-        <div className="flex items-center gap-3 text-muted">
-          <time>{formattedDate}</time>
-          <span aria-hidden="true">·</span>
-          <span>{post.readingTime} min read</span>
-          <span aria-hidden="true">·</span>
-          {/* Client island — fetches + increments view count */}
-          <ViewCounter slug={post.slug} />
-        </div>
-      </header>
-      {/* ... rest of static content */}
-    </article>
+    <section className="w-full mx-auto max-w-7xl px-6 pt-12 pb-16">
+      <h1 className="font-display text-4xl md:text-5xl font-bold mb-10">Blog</h1>
+      <FilteredPostList posts={publishedPosts} allTags={allTags} />
+    </section>
   )
 }
 ```
 
-### Pattern 2: Single Route Handler for GET + POST
+### Pattern 2: useState for Filter State (No URL Sync)
 
-**What:** One route file handles both reading and incrementing the view count. POST increments the count and returns the new value. GET returns the current value without incrementing. This enables the blog listing page to batch-fetch counts without inflating them.
+**What:** Filter selections live in React `useState`. Toggling a tag updates state, which triggers a re-render that filters the items list. No URL parameters, no `useSearchParams`, no `useRouter`.
 
-**When to use:** When a resource has both read and write operations but the API surface is simple enough that a single endpoint suffices.
+**When to use:** When filters are ephemeral (user does not need to bookmark or share a filtered view), the data set is small, and simplicity is paramount.
 
 **Trade-offs:**
-- Pro: One file, one URL, simple mental model
-- Pro: POST returns the new count, so the client component gets the value in a single round trip (no POST then GET)
-- Con: Cannot use `force-static` caching on the GET (dynamic by default in Next.js 15+, which is what we want)
+- Pro: Zero complexity -- no URL serialization, no Suspense boundaries, no shallow routing edge cases
+- Pro: Static generation is guaranteed preserved (no `useSearchParams` that could bust it)
+- Pro: No flash of unfiltered content on page load (filters start empty, all items shown)
+- Pro: Instant toggle response (no router navigation, no re-render from URL change)
+- Con: Filter state is lost on page refresh or back-button navigation
+- Con: Users cannot share a filtered view via URL
+
+**Why this is the right call for keech.dev:** This is a personal portfolio with 3 blog posts and 1 project. Nobody is bookmarking `/blog?tags=ai,agile` or sharing filtered views. URL state adds `useSearchParams` (requires Suspense boundary, can affect static generation), `useRouter.replace` (with `scroll: false`), URL serialization/deserialization logic, and edge cases around browser history. That is significant complexity for zero practical value at this scale. If URL state becomes needed later, it is a straightforward refactor to lift state from `useState` to `useSearchParams`.
 
 **Example:**
 ```typescript
-// app/api/views/[slug]/route.ts
-import { redis } from '@/lib/redis'
-
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ slug: string }> }
-) {
-  const { slug } = await params
-  const views = await redis.incr(`views:${slug}`)
-  return Response.json({ views })
-}
-
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ slug: string }> }
-) {
-  const { slug } = await params
-  const views = (await redis.get<number>(`views:${slug}`)) ?? 0
-  return Response.json({ views })
-}
-```
-
-### Pattern 3: Fire-and-Forget View Tracking
-
-**What:** The client component fires a POST request on mount (via `useEffect`) without awaiting the result for the increment, then separately fetches the count. Alternatively, the POST returns the new count so both happen in one round trip.
-
-**When to use:** When tracking should never block rendering and a failed increment is acceptable (the page still works without view counts).
-
-**Trade-offs:**
-- Pro: View tracking never degrades page performance
-- Pro: If Upstash is down, the page renders normally with no count
-- Con: Slight possibility of showing stale count if POST takes longer than expected
-
-**Recommended approach:** POST returns the new count (single round trip).
-
-```typescript
-// components/blog/view-counter.tsx
+// components/blog/filtered-post-list.tsx
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { PostCard } from './post-card'
+import { FilterBar } from './filter-bar'
+import { ListingViewCounts } from './listing-view-counts'
+import { ScrollReveal } from '@/components/ui/scroll-reveal'
 
-export function ViewCounter({ slug }: { slug: string }) {
-  const [views, setViews] = useState<number | null>(null)
+interface FilteredPostListProps {
+  posts: Array<{
+    title: string
+    slug: string
+    date: string
+    description?: string
+    excerpt: string
+    tags: string[]
+    readingTime: number
+  }>
+  allTags: string[]
+}
 
-  useEffect(() => {
-    // POST increments and returns new count in one trip
-    fetch(`/api/views/${slug}`, { method: 'POST' })
-      .then(res => res.json())
-      .then(data => setViews(data.views))
-      .catch(() => {}) // Graceful degradation — no count shown
-  }, [slug])
+export function FilteredPostList({ posts, allTags }: FilteredPostListProps) {
+  const [activeTags, setActiveTags] = useState<Set<string>>(new Set())
 
-  if (views === null) return null // Or a skeleton/placeholder
+  const filteredPosts = activeTags.size === 0
+    ? posts
+    : posts.filter(post => {
+        // AND logic: post must have ALL selected tags
+        for (const tag of activeTags) {
+          if (!post.tags.includes(tag)) return false
+        }
+        return true
+      })
 
-  return <span>{views.toLocaleString()} views</span>
+  const slugs = filteredPosts.map(p => p.slug)
+
+  const handleToggle = (tag: string) => {
+    setActiveTags(prev => {
+      const next = new Set(prev)
+      if (next.has(tag)) next.delete(tag)
+      else next.add(tag)
+      return next
+    })
+  }
+
+  return (
+    <>
+      <FilterBar
+        tags={allTags}
+        activeTags={activeTags}
+        onToggle={handleToggle}
+      />
+      {filteredPosts.length > 0 ? (
+        <ListingViewCounts slugs={slugs}>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {filteredPosts.map(post => (
+              <ScrollReveal key={post.slug}>
+                <PostCard post={post} />
+              </ScrollReveal>
+            ))}
+          </div>
+        </ListingViewCounts>
+      ) : (
+        <p className="text-muted">No posts match the selected tags.</p>
+      )}
+    </>
+  )
 }
 ```
 
-### Pattern 4: Reading Time as Build-Time Static Data (Already Implemented)
+### Pattern 3: AND Logic for Multi-Select Filtering
 
-**What:** Velite's `s.metadata()` schema computes `readingTime` (minutes) and `wordCount` from MDX content at build time. The `velite.config.ts` transform hoists `readingTime` to the top-level post object.
+**What:** When multiple tags are selected, a post must have ALL selected tags to appear (intersection/AND). This is the natural behavior for narrowing results.
 
-**When to use:** Always for reading time. It is derived from content, so it belongs at build time.
+**When to use:** For tag filtering where users are drilling down to a specific topic intersection (e.g., "show me posts about both AI and agile").
 
-**Current implementation (no changes needed):**
+**Trade-offs:**
+- Pro: Intuitive "narrow down" behavior -- each additional tag reduces results
+- Pro: Simple to implement -- check that every active tag exists in the item's tags
+- Con: With many tags selected, results can quickly reach zero
+- Con: OR logic ("show me posts about AI or agile") is sometimes expected in other domains
+
+**Why AND over OR:** The PROJECT.md explicitly specifies AND logic. It also matches the UX expectation for a small content site where users are narrowing, not broadening.
+
+### Pattern 4: Filter-Aware View Count Integration
+
+**What:** The existing `ListingViewCounts` component takes a `slugs` array and provides view counts via context. When filtering changes, the slugs array changes, and `ListingViewCounts` should refetch counts for the new visible set.
+
+**When to use:** Already implemented for v1.4. The key for v1.5 is that `ListingViewCounts` must wrap the filtered output, not the unfiltered output.
+
+**Trade-offs:**
+- Pro: Only fetches view counts for visible posts (efficient)
+- Con: Filtering causes a new batch fetch (but this is fast and non-blocking)
+- Alternative: Fetch all counts once and let the context provide them regardless of filtering. This avoids refetching but means fetching counts for posts that may never be shown. At current scale (3 posts), the difference is negligible.
+
+**Recommended approach:** Pass all slugs to `ListingViewCounts` once (not just filtered slugs), so that toggling filters does not trigger refetches. The context provides counts for all posts; the filtered cards simply access the counts they need.
+
 ```typescript
-// velite.config.ts — already implemented
-.transform(data => ({
-  ...data,
-  permalink: `/blog/${data.slug}`,
-  readingTime: data.metadata.readingTime  // Already exposed
-}))
-```
+// Better: fetch all counts once, filter does not re-trigger fetch
+export function FilteredPostList({ posts, allTags }: FilteredPostListProps) {
+  const [activeTags, setActiveTags] = useState<Set<string>>(new Set())
+  const allSlugs = posts.map(p => p.slug) // stable reference
 
-Reading time is already displayed in both `post-card.tsx` (line 41: `{post.readingTime} min read`) and `app/blog/[slug]/page.tsx` (line 88: `{post.readingTime} min read`). No changes are needed for reading time display -- it is fully implemented.
+  const filteredPosts = activeTags.size === 0
+    ? posts
+    : posts.filter(post => [...activeTags].every(tag => post.tags.includes(tag)))
+
+  return (
+    <ListingViewCounts slugs={allSlugs}>
+      <FilterBar tags={allTags} activeTags={activeTags} onToggle={handleToggle} />
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {filteredPosts.map(post => (
+          <ScrollReveal key={post.slug}>
+            <PostCard post={post} />
+          </ScrollReveal>
+        ))}
+      </div>
+    </ListingViewCounts>
+  )
+}
+```
 
 ## Data Flow
 
-### View Count Tracking (Post Page)
+### Filter Interaction Flow
 
 ```
-[User visits /blog/some-post]
+[User clicks tag "ai" in FilterBar]
     |
     v
-[CDN serves static HTML]  ← readingTime is baked in, view count slot is empty
+[handleToggle("ai") fires]
     |
     v
-[React hydrates on client]
+[setActiveTags: Set{} -> Set{"ai"}]
     |
     v
-[<ViewCounter slug="some-post" /> mounts]
+[React re-renders FilteredPostList]
     |
     v
-[useEffect fires POST /api/views/some-post]
+[filteredPosts = posts.filter(post => post.tags includes all of {"ai"})]
     |
     v
-[Route Handler: redis.incr('views:some-post')]
-    |                                           |
-    v                                           v
-[Returns { views: 42 }]              [Upstash Redis stores
-    |                                  views:some-post = 42]
+[Grid re-renders with filtered subset]
+    |
     v
-[setViews(42) → renders "42 views"]
+[User clicks tag "agile"]
+    |
+    v
+[setActiveTags: Set{"ai"} -> Set{"ai", "agile"}]
+    |
+    v
+[filteredPosts = posts with BOTH "ai" AND "agile" tags]
+    |
+    v
+[Grid shows narrower results (or empty state)]
 ```
 
-### View Count Display (Blog Listing)
+### Tag Extraction Flow (Build-Time)
 
 ```
-[User visits /blog]
+[Velite compiles MDX frontmatter]
     |
     v
-[CDN serves static HTML]  ← post cards render without view counts
+[posts array contains tags: string[] per post]
     |
     v
-[React hydrates on client]
+[BlogPage (server) computes allTags = unique sorted tags across all posts]
     |
     v
-[Each <PostCard> contains <ViewCounter slug={post.slug} />]
+[allTags passed as prop to FilteredPostList (client)]
     |
     v
-[Multiple GET /api/views/[slug] requests fire]
-    |  (or single batch endpoint — see Scaling section)
-    v
-[Each card populates its view count]
+[FilterBar renders one pill per tag]
 ```
 
-**Important distinction:** On the listing page, view counters should use GET (read-only), not POST (which increments). Only the individual post page should increment. This prevents the listing page from inflating view counts.
+### Integration with Existing View Counts
+
+```
+[FilteredPostList renders]
+    |
+    v
+[ListingViewCounts wraps entire grid with slugs=ALL posts]
+    |
+    v
+[View counts fetched once for all slugs]
+    |
+    v
+[PostCard renders PostCardViewCount which reads from context]
+    |
+    v
+[When filter changes: cards appear/disappear but NO refetch needed]
+[PostCardViewCount already has the count in context]
+```
 
 ### Key Data Flows
 
-1. **Reading time (build-time, static):** Velite compiles MDX -> `s.metadata()` computes word count and reading time -> `transform` hoists to post object -> consumed in `PostCard` and `PostPage` at build time. No runtime data fetching. Already fully implemented.
+1. **Tag/stack data (build-time, static):** Velite compiles MDX frontmatter -> `tags: string[]` and `stack: string[]` arrays are available on post/project objects -> listing page extracts unique values and passes to client wrapper -> FilterBar renders interactive pills.
 
-2. **View count (runtime, dynamic):** Client component mounts -> `fetch()` to Route Handler -> Upstash Redis INCR/GET -> JSON response -> React state update -> DOM render. Entirely client-initiated after hydration.
+2. **Filter state (runtime, client-only):** User clicks tag pill -> `useState<Set<string>>` toggles the tag -> array filter produces subset -> React re-renders grid with subset. No network calls. No URL changes. Purely in-memory.
 
-3. **Redis key schema:** `views:{slug}` where slug matches the Velite-generated slug (e.g., `views:bmad-method-rewriting-epic-story-breakdown`). Simple string keys with INCR for atomic increments.
-
-## Scaling Considerations
-
-| Scale | Architecture Adjustments |
-|-------|--------------------------|
-| 1-50 posts (current) | Individual GET per card on listing page is fine. ~2-5 parallel fetches. Upstash free tier handles this easily. |
-| 50-200 posts | Consider a batch endpoint (`GET /api/views` with `?slugs=a,b,c`) using Redis MGET to fetch all counts in one round trip. Reduces listing page from N requests to 1. |
-| Bot/refresh abuse | Add IP-based deduplication: `SET dedupe:{hash(ip)}:{slug} 1 NX EX 86400` (24h window). Only INCR if SET succeeds. |
-
-### Scaling Priorities
-
-1. **First bottleneck:** N+1 API calls on the blog listing page. Fix with a batch endpoint or by fetching all counts in a single API call using Redis `MGET`. Not needed at current scale (2 posts) but worth designing the key schema to support it.
-2. **Second bottleneck:** View count inflation from bots and refresh-spamming. Fix with IP-based deduplication in the route handler. Not needed for MVP but the route handler should be structured to add this later without refactoring.
+3. **View counts (runtime, unchanged from v1.4):** `ListingViewCounts` fetches batch counts from `/api/views?slugs=...` on mount. Counts are available via context. Filtering does not affect this -- counts are fetched once for all posts.
 
 ## Anti-Patterns
 
-### Anti-Pattern 1: Server-Side View Count Fetching in Static Pages
+### Anti-Pattern 1: Using searchParams to Make the Page Dynamic
 
-**What people do:** Fetch view counts in the page server component using `fetch()` or direct Redis calls, making the page dynamic (no longer statically generated).
+**What people do:** Accept `searchParams` in the page component and use it to filter on the server, turning the listing page from static to dynamic.
 
-**Why it's wrong:** This forces the page from static to dynamic rendering. Every page request now hits the server instead of CDN. The entire point of `generateStaticParams()` is lost. Page load times increase from ~50ms (CDN) to 200-500ms (server render).
+**Why it is wrong:** The moment a page component accesses `searchParams`, Next.js marks the route as dynamic. Every request hits the server instead of CDN. For a personal blog where all content is available at build time, this destroys the primary performance advantage (50ms CDN vs 200-500ms server render) for zero benefit.
 
-**Do this instead:** Keep the page static. Render view counts via a client component that fetches after hydration. The 95% of the page that is static content loads instantly; the view count appears a moment later.
+**Do this instead:** Keep the page component a static server component. Pass all data to a client wrapper that handles filtering via `useState`.
 
-### Anti-Pattern 2: Using `revalidate` / ISR for View Counts
+### Anti-Pattern 2: Using useSearchParams Without a Suspense Boundary
 
-**What people do:** Add `export const revalidate = 60` to the post page, making Next.js re-render the page every 60 seconds with fresh view counts baked into the HTML.
+**What people do:** Call `useSearchParams()` in a client component without wrapping it in `<Suspense>`. The production build fails with "Missing Suspense boundary with useSearchParams" or, worse, the entire route is silently opted out of static rendering.
 
-**Why it's wrong:** ISR adds significant complexity (stale-while-revalidate behavior, cache invalidation edge cases, CDN purging). It also means view counts are up to 60 seconds stale, which is worse than the client-fetch approach where counts are always current. For a personal blog with low traffic, the engineering cost of ISR is not justified by the benefit.
+**Why it is wrong:** `useSearchParams` causes the client component tree up to the nearest `Suspense` boundary to be client-side rendered. Without an explicit boundary, this can bubble up and affect the entire page.
 
-**Do this instead:** Client-side fetch. Always current, no ISR complexity, no impact on static page generation.
+**Do this instead:** For this project, avoid `useSearchParams` entirely. Use `useState` for filter state. If URL sync is ever needed, wrap the `useSearchParams` consumer in `<Suspense fallback={<FilterBarSkeleton />}>`.
 
-### Anti-Pattern 3: Using `@vercel/kv` Instead of `@upstash/redis`
+### Anti-Pattern 3: Lifting Card Components to 'use client'
 
-**What people do:** Install `@vercel/kv` because older tutorials and Vercel's own blog posts reference it.
+**What people do:** Add `'use client'` to `PostCard` and `ProjectCard` so they can "participate" in the filtering logic.
 
-**Why it's wrong:** Vercel KV is deprecated for new projects as of December 2024. Vercel now directs users to install Upstash Redis directly through the Vercel Marketplace. `@vercel/kv` was always a thin wrapper around `@upstash/redis` anyway.
+**Why it is wrong:** Cards do not need client-side interactivity. They receive data via props and render static HTML. Adding `'use client'` to them would increase the client bundle and is conceptually incorrect -- the card does not own or react to filter state.
 
-**Do this instead:** Install `@upstash/redis` directly. Use `Redis.fromEnv()` or `new Redis({ url, token })` with `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` environment variables. The Vercel Marketplace Upstash integration sets these automatically.
+**Do this instead:** Keep cards as regular components (no `'use client'` directive). Render them inside the client wrapper that owns filter state. Components without `'use client'` can be rendered by client components -- they just run as regular functions in the client bundle.
 
-### Anti-Pattern 4: Incrementing Views on the Blog Listing Page
+### Anti-Pattern 4: Creating a Shared Generic FilterableList Component
 
-**What people do:** Use the same POST-on-mount `<ViewCounter>` component in the listing page, accidentally incrementing every post's view count when a user browses the blog index.
+**What people do:** Abstract blog and project filtering into a single generic `<FilterableList>` component parameterized by item type, filter key, and card component.
 
-**Why it's wrong:** Inflates view counts massively. A single visit to `/blog` would increment counts for all displayed posts.
+**Why it is wrong:** Premature abstraction. Blog and projects have different card components, different filter labels ("Tags" vs "Stack"), different data shapes (posts have `readingTime` and view counts, projects have `image` and `github`), and different grid layouts (`lg:grid-cols-3` vs `md:grid-cols-2`). A generic component would need so many parameters and slots that it would be harder to understand than two simple, explicit components.
 
-**Do this instead:** Create two modes for the view counter component: `track` mode (POST, used on individual post pages) and `display` mode (GET, used on listing page). Or use two separate components -- one that tracks and one that only displays.
+**Do this instead:** Write `FilteredPostList` and `FilteredProjectList` as separate, focused components. If a shared pattern emerges after both are implemented, extract it then -- not before.
+
+### Anti-Pattern 5: Filtering by Hiding with CSS Instead of Filtering the Array
+
+**What people do:** Render all cards and toggle `display: none` / `hidden` based on filter state.
+
+**Why it is wrong:** All cards remain in the DOM, which means screen readers read hidden cards, `ScrollReveal` IntersectionObservers fire for invisible elements, and the "no results" empty state is harder to implement. The DOM is also larger than necessary (minor at this scale, but wrong in principle).
+
+**Do this instead:** Filter the data array and render only matching items. Use a `key` prop on each card so React efficiently reuses DOM nodes.
 
 ## Integration Points
-
-### External Services
-
-| Service | Integration Pattern | Notes |
-|---------|---------------------|-------|
-| Upstash Redis | `@upstash/redis` SDK via REST API | Serverless-friendly, no persistent connections. Free tier: 10,000 commands/day. Environment variables auto-set by Vercel Marketplace integration. |
-| Vercel (deployment) | Git push triggers build + deploy | No changes to deploy pipeline. New env vars (`UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`) must be added to Vercel project settings. |
 
 ### Internal Boundaries
 
 | Boundary | Communication | Notes |
 |----------|---------------|-------|
-| `page.tsx` (server) -> `ViewCounter` (client) | Props: `slug` string, `track` boolean | Server component passes static data down to client island. No state lifting. |
-| `ViewCounter` (client) -> Route Handler | HTTP `fetch()` to `/api/views/[slug]` | Standard browser fetch. No shared types needed (response is `{ views: number }`). |
-| Route Handler -> `lib/redis.ts` | Direct import of redis client | Redis client constructed once, reused across invocations (Vercel serverless warm starts). |
-| `lib/redis.ts` -> Upstash | HTTPS REST API (not TCP Redis protocol) | Serverless-compatible. No connection pooling needed. Works in both Node.js and Edge runtimes. |
+| `page.tsx` (server) -> `FilteredPostList` (client) | Props: `posts` array, `allTags` string array | Server serializes Velite data to client. Props must be JSON-serializable (they already are -- no functions, no dates as Date objects). |
+| `FilteredPostList` (client) -> `FilterBar` (client) | Props: `tags`, `activeTags` (Set), `onToggle` callback | Both are client components, so functions can be passed as props. |
+| `FilteredPostList` (client) -> `ListingViewCounts` (client) | Props: `slugs` array, `children` | Already established pattern from v1.4. `FilteredPostList` becomes the new parent that wraps `ListingViewCounts`. |
+| `FilteredPostList` (client) -> `PostCard` (no directive) | Props: post data object | PostCard renders as a regular function inside the client boundary. No change to PostCard needed. |
+| `FilterBar` (client) -> `TagChip` / `TechBadge` (modified) | Props: `tag`/`tech`, `active` boolean, `onClick` callback | Existing display-only components gain an interactive variant. Use `button` element instead of `span` when interactive. |
 
 ### What Does NOT Change
 
 | Component | Why Unchanged |
 |-----------|---------------|
-| `velite.config.ts` | Reading time is already computed and exposed. No modifications needed. |
-| `MDXContent` | Content rendering is unrelated to view counts. |
-| `CodeBlock`, `CopyButton` | Code block functionality is orthogonal. |
-| `TableOfContents` | TOC generation is a build-time Velite feature. |
-| `TagChip` | Tag display is purely static. |
-| `globals.css` | No new animations or design tokens needed for view counts (uses existing `text-muted` color). |
-| `next.config.ts` | No config changes needed. Route handlers work out of the box. |
-| Build pipeline | `velite && next build` remains the same. Route handlers are compiled by Next.js automatically. |
+| `velite.config.ts` | Tags and stack arrays are already in the schema. No new fields needed. |
+| `app/api/views/` | View count API is orthogonal to filtering. |
+| `lib/redis.ts` | No new data layer needed. Filtering is client-side only. |
+| `components/blog/view-counter.tsx` | Single-post view counter is unrelated. |
+| `components/blog/listing-view-counts.tsx` | Works as-is. The slugs prop changes if filtering triggers a re-render, but the recommended approach passes all slugs once. |
+| `components/blog/mdx-content.tsx` | Content rendering is unrelated. |
+| `globals.css` | May add active/toggle state styles, but these can use existing Tailwind utilities. |
+| `next.config.ts` | No configuration changes needed. |
+| Build pipeline | `velite && next build` remains the same. No new build steps. |
 
 ## Build Order (Dependencies)
 
 ```
-Phase 1: Infrastructure (no visible changes)
-  |  1a. Add @upstash/redis to package.json
-  |  1b. Create lib/redis.ts (client singleton)
-  |  1c. Set up Upstash Redis via Vercel Marketplace
-  |  1d. Add UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN
-  |      to .env.local for development
-  |  --> Testable: import redis client, run redis.ping() in a scratch route
+Phase 1: Interactive Tag/Badge Components (no page changes)
+  |  1a. Modify TagChip to support interactive variant
+  |      - Add optional `active` boolean and `onClick` callback props
+  |      - Render as <button> when onClick is provided, <span> otherwise
+  |      - Active state styling (filled background, visual toggle)
+  |  1b. Modify TechBadge with same interactive variant
+  |  --> Testable: render both variants in isolation, verify click handlers fire
   |
-Phase 2: API Route (backend, no frontend changes)
-  |  2a. Create app/api/views/[slug]/route.ts
-  |  2b. Implement POST (increment + return count)
-  |  2c. Implement GET (return count without incrementing)
-  |  --> Testable: curl POST and GET against localhost
+Phase 2: FilterBar Components (new, isolated)
+  |  2a. Create components/blog/filter-bar.tsx ('use client')
+  |      - Renders row of TagChip buttons from allTags prop
+  |      - Calls onToggle(tag) when clicked
+  |      - Shows active state for selected tags
+  |      - Optional "Clear all" button when any tags active
+  |  2b. Create components/projects/filter-bar.tsx ('use client')
+  |      - Same pattern but with TechBadge
+  |  --> Testable: render with mock data, verify toggle behavior
   |
-Phase 3: View Counter Component (new client component)
-  |  3a. Create components/blog/view-counter.tsx
-  |  3b. Two modes: track (POST on mount) and display (GET on mount)
-  |  3c. Graceful degradation when API unavailable
-  |  --> Testable: render component in isolation, verify network calls
+Phase 3: Filtered List Wrappers (new, depends on Phase 1-2)
+  |  3a. Create components/blog/filtered-post-list.tsx ('use client')
+  |      - useState<Set<string>> for active tags
+  |      - AND-logic filter on posts array
+  |      - Renders FilterBar + ListingViewCounts + PostCard grid
+  |      - Empty state when no posts match
+  |  3b. Create components/projects/filtered-project-list.tsx ('use client')
+  |      - Same pattern with stack filtering
+  |      - No view counts wrapper (projects do not track views)
+  |  --> Testable: render with real Velite data, verify filtering works
   |
-Phase 4: Integration (wire into existing pages)
-  |  4a. Add <ViewCounter slug={post.slug} track /> to post page header
-  |  4b. Add <ViewCounter slug={post.slug} /> to post cards on listing page
-  |  4c. Verify readingTime display still works (should be untouched)
-  |  --> Testable: full page loads, verify counts appear and increment
+Phase 4: Page Integration (modifies existing pages)
+  |  4a. Modify app/blog/page.tsx
+  |      - Extract allTags from published posts
+  |      - Replace current grid with <FilteredPostList>
+  |      - Remove direct PostCard/ListingViewCounts/ScrollReveal imports
+  |  4b. Modify app/projects/page.tsx
+  |      - Extract allStack from projects
+  |      - Replace current grid with <FilteredProjectList>
+  |      - Remove direct ProjectCard/ScrollReveal imports
+  |  --> Testable: full page loads, filtering works end-to-end
   |
-Phase 5: Polish
-     5a. Loading state / skeleton for view count
-     5b. Number formatting (toLocaleString for commas)
-     5c. Verify no layout shift from count appearing
-     5d. Confirm static generation is preserved (check build output)
+Phase 5: Polish and Edge Cases
+     5a. Verify static generation preserved (check `next build` output)
+     5b. Confirm view counts still work with filtering
+     5c. Empty state messaging and styling
+     5d. Keyboard accessibility (tag buttons are focusable, Enter/Space toggle)
+     5e. Reduced motion: ScrollReveal still respects prefers-reduced-motion
+     5f. Screen reader: announce filter results count with aria-live region
 ```
 
 **Why this order:**
-- Phase 1 is pure infrastructure with no risk to existing functionality
-- Phase 2 depends on Phase 1 (needs redis client) but has no frontend impact
-- Phase 3 depends on Phase 2 (needs API endpoint to call) but is isolated
-- Phase 4 is the only phase that modifies existing files, and by this point the new pieces are individually tested
+- Phase 1 modifies existing components in a backward-compatible way (new optional props)
+- Phase 2 creates new components that depend on Phase 1 but have no page impact
+- Phase 3 creates wrappers that compose Phase 1 + 2 components but are not yet wired in
+- Phase 4 is the only phase that modifies page files, and by this point all pieces are tested
 - Phase 5 is polish that requires the full pipeline to be functional
+
+**Key dependency:** `FilteredPostList` must wrap `ListingViewCounts` (not the other way around) because the filtered list decides which slugs to show. This means `FilteredPostList` is the outermost client boundary on the blog listing page.
+
+## Decision: Why Not URL State
+
+This decision deserves explicit documentation because URL state is the "obvious" choice in most Next.js filtering tutorials. Here is the analysis:
+
+**Arguments for URL state (searchParams):**
+- Shareable/bookmarkable filtered views
+- Browser back/forward preserves filter state
+- Standard web pattern
+
+**Arguments against URL state (for this project):**
+- Requires `useSearchParams` hook, which mandates a `<Suspense>` boundary in production or risks busting static generation
+- Requires `useRouter.replace()` with `{ scroll: false }` for every filter toggle
+- URL serialization/deserialization of multi-select arrays (encoding `?tags=ai,agile` or `?tags=ai&tags=agile`)
+- Edge cases: stale searchParams in layouts, initial render flash, hydration mismatch
+- Nobody is bookmarking or sharing filtered views on a personal blog with 3 posts
+- Adds ~30-50 lines of URL management code for zero user-facing value
+
+**Decision:** Use `useState`. Revisit if the site grows to 20+ posts and users request shareable filters.
+
+**Migration path if needed later:** Replace `useState<Set<string>>` with `useSearchParams` + a `parseTagsFromURL` / `serializeTagsToURL` helper pair. The rest of the component structure (FilterBar, FilteredPostList, PostCard) remains identical.
 
 ## Sources
 
-- [Next.js Route Handlers documentation (v16.1.6)](https://nextjs.org/docs/app/building-your-application/routing/route-handlers) -- file conventions, HTTP methods, caching behavior, dynamic segments with `params: Promise` (HIGH confidence, official docs dated 2026-02-20)
-- [Upstash Redis Vercel Integration](https://upstash.com/docs/redis/howto/vercelintegration) -- setup steps, environment variables, `Redis.fromEnv()` pattern (HIGH confidence, official docs)
-- [Upstash blog: Next.js App Router View Counter](https://upstash.com/blog/nextjs13-approuter-view-counter) -- IP deduplication pattern, INCR/SET NX pattern, client component tracking (MEDIUM confidence, official blog but written for Next.js 13 era)
-- [Next.js 15 caching changes](https://nextjs.org/blog/next-15) -- GET route handlers no longer cached by default (HIGH confidence, official blog)
-- [Vercel KV deprecation](https://vercel.com/docs/storage/vercel-kv/kv-reference) -- `@vercel/kv` sunset, migration to Upstash (HIGH confidence, confirmed by Vercel Marketplace redirect)
-- Existing codebase analysis: `velite.config.ts`, `app/blog/[slug]/page.tsx`, `app/blog/page.tsx`, `components/blog/post-card.tsx`, `package.json` (HIGH confidence, direct inspection)
+- [Next.js useSearchParams documentation (v16.1.6)](https://nextjs.org/docs/app/api-reference/functions/use-search-params) -- Suspense boundary requirements, static rendering behavior, `scroll: false` option (HIGH confidence, official docs dated 2026-02-20)
+- [Next.js useRouter documentation (v16.1.6)](https://nextjs.org/docs/app/api-reference/functions/use-router) -- `router.replace(href, { scroll: false })` API (HIGH confidence, official docs dated 2026-02-20)
+- [Next.js page.js conventions](https://nextjs.org/docs/app/api-reference/file-conventions/page) -- `searchParams` prop is a Promise in Next.js 15+/16, accessing it opts route out of static generation (HIGH confidence, official docs)
+- [Missing Suspense boundary with useSearchParams](https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout) -- build failure behavior without Suspense (HIGH confidence, official docs)
+- [searchParams breaks static generation discussion](https://github.com/vercel/next.js/discussions/58884) -- community confirmation that searchParams opts out of SSG (MEDIUM confidence, GitHub discussion)
+- [Aurora Scharff: Managing Advanced Search Param Filtering](https://aurorascharff.no/posts/managing-advanced-search-param-filtering-next-app-router/) -- patterns for URL state filtering with nuqs and native hooks (MEDIUM confidence, practitioner blog)
+- Existing codebase analysis: `app/blog/page.tsx`, `app/projects/page.tsx`, `components/blog/post-card.tsx`, `components/projects/project-card.tsx`, `components/blog/listing-view-counts.tsx`, `components/blog/tag-chip.tsx`, `components/projects/tech-badge.tsx`, `velite.config.ts`, content frontmatter (HIGH confidence, direct inspection)
 
 ---
-*Architecture research for: Blog view counts and reading time integration with static Next.js 16 site*
-*Researched: 2026-02-21*
+*Architecture research for: Multi-select tag/stack filtering on listing pages*
+*Researched: 2026-02-22*
