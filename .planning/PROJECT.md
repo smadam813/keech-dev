@@ -30,7 +30,14 @@ A polished, intentional developer portfolio — fast, visually distinctive, and 
 
 ### Active
 
-(None — define in next milestone)
+## Current Milestone: v1.5 Tag Filtering
+
+**Goal:** Add multi-select filtering to blog and project listing pages using existing tags and stack data.
+
+**Target features:**
+- Blog listing filter bar with multi-tag selection (AND logic)
+- Projects listing filter bar with multi-stack selection (AND logic)
+- In-place filtering without page navigation
 
 ### Out of Scope
 
@@ -84,4 +91,4 @@ Site is statically generated and deployed via git-push to Vercel.
 - **Theme**: Single theme only (no dark mode) — the palette is the brand
 
 ---
-*Last updated: 2026-02-22 after v1.4 milestone*
+*Last updated: 2026-02-22 after v1.5 milestone started*

@@ -9,9 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-22)
 
 ## Current Position
 
-Phase: Milestone v1.4 complete
-Status: Between milestones
-Last activity: 2026-02-22 — Completed v1.4 Blog Stats milestone
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-22 — Milestone v1.5 started
 
 ## Performance Metrics
 
