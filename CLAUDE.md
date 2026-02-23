@@ -39,7 +39,7 @@ Compiled MDX is executed at runtime via `new Function()` in `MDXContent` — the
 
 ### Component Model
 
-Server components by default. Only 6 components use `'use client'` — each for a specific browser API need (state, IntersectionObserver, clipboard, keyboard events). The `inert` attribute is used for focus management in the mobile menu instead of JavaScript focus traps.
+Server components by default. Client components (`'use client'`) are used only where browser APIs are needed (state, IntersectionObserver, clipboard, localStorage, keyboard events). The `inert` attribute is used for focus management in the mobile menu instead of JavaScript focus traps.
 
 ### Styling
 
@@ -66,9 +66,20 @@ Elder Futhark runes are used as a thematic design element throughout the site �
 - **Scroll reveal**: `ScrollReveal` component wraps elements with single-fire IntersectionObserver (threshold 0.1)
 - **Scroll lock**: Uses `position: fixed` approach (iOS Safari safe, unlike `overflow: hidden`)
 
-### Static Generation
+### View Counting
 
-All content pages use `generateStaticParams()` for full static generation. No API routes, no database, no server-side data fetching. SEO handled by `sitemap.ts` and `robots.ts` in app root.
+Blog post views are tracked via Upstash Redis with two API routes:
+
+- `GET /api/views?slugs=a,b` — batch fetch counts for listing pages
+- `GET/POST /api/views/[slug]` — single post fetch/increment with IP-based deduplication (SHA-256 hashed, 24h TTL)
+
+Client components use localStorage as a read-through cache to prevent flash on repeat visits. `ListingViewCounts` provides a React context for batch counts on listing pages; `ViewCounter` handles single-post pages. View counts are non-critical UI — all fetches fail silently.
+
+Environment variables required: `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` (used by `Redis.fromEnv()` in `src/lib/redis.ts`).
+
+### Static Generation & SEO
+
+Content pages use `generateStaticParams()` for full static generation. SEO handled by `sitemap.ts` and `robots.ts` in app root. Vercel Web Analytics is included in the root layout.
 
 ### Utilities
 
@@ -76,7 +87,7 @@ All content pages use `generateStaticParams()` for full static generation. No AP
 
 ### Fonts
 
-Space Grotesk (headings) and Inter (body) configured in `src/lib/fonts.ts`, plus Norse custom WOFF2 fonts in `public/fonts/`. Font CSS variables: `--font-display` (Norse), `--font-body` (Inter).
+Norse custom WOFF2 (headings/display) and Inter (body) configured in `src/lib/fonts.ts`. Font CSS variables: `--font-display` (Norse), `--font-body` (Inter).
 
 ## Blog Writing Skill
 
