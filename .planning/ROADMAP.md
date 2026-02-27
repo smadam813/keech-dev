@@ -48,11 +48,10 @@ See: `.planning/milestones/v1.4-ROADMAP.md` for full details.
   2. User can visually distinguish active (selected) chips from inactive chips at a glance — filled accent background vs outlined
   3. Chips depress on click with neobrutalist animation (translate + shadow reduction) matching the site's visual identity
   4. A reusable filter bar component renders a row of interactive chips with a "Clear all" button that only appears when at least one chip is selected
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 06-01: TBD
-- [ ] 06-02: TBD
+- [ ] 06-01-PLAN.md — Evolve TagChip/TechBadge with toggle variants and create FilterBar component
 
 ### Phase 7: Filtered Listing Integration
 **Goal**: Users can filter blog posts by tags and projects by stack on the listing pages, with selections reflected in the URL for sharing
@@ -96,6 +95,6 @@ Phases execute in numeric order: 6 -> 7 -> 8
 | 3. Infrastructure & API | v1.4 | 2/2 | Complete | 2026-02-21 |
 | 4. Post Page Integration | v1.4 | 2/2 | Complete | 2026-02-22 |
 | 5. Listing & Polish | v1.4 | 2/2 | Complete | 2026-02-22 |
-| 6. Filter Components | v1.5 | 0/0 | Not started | - |
+| 6. Filter Components | v1.5 | 0/1 | In progress | - |
 | 7. Filtered Listing Integration | v1.5 | 0/0 | Not started | - |
 | 8. Counts and Transitions | v1.5 | 0/0 | Not started | - |
