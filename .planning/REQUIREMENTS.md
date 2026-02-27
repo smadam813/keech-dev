@@ -22,11 +22,11 @@ Requirements for multi-select tag/stack filtering on listing pages. Each maps to
 
 ### Filter UX
 
-- [ ] **UX-01**: User can see clear visual distinction between active (selected) and inactive filter chips
+- [x] **UX-01**: User can see clear visual distinction between active (selected) and inactive filter chips
 - [ ] **UX-02**: User can click "Clear filters" to reset all selected filters (button only visible when filters active)
 - [ ] **UX-03**: User sees an empty state message with a "clear filters" action when no items match selected filters
 - [ ] **UX-04**: User sees a result count ("Showing 2 of 3 posts") when filters are active
-- [ ] **UX-05**: User can see filter chips press down on click with neobrutalist animation (translate + shadow reduction)
+- [x] **UX-05**: User can see filter chips press down on click with neobrutalist animation (translate + shadow reduction)
 - [ ] **UX-06**: User's selected filters persist in the URL as search params (e.g., `?tags=ai,agile`) for sharing and bookmarking
 
 ## Future Requirements
@@ -70,11 +70,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PROJ-01 | Phase 7 | Pending |
 | PROJ-02 | Phase 7 | Pending |
 | PROJ-03 | Phase 8 | Pending |
-| UX-01 | Phase 6 | Pending |
+| UX-01 | Phase 6 | Complete |
 | UX-02 | Phase 7 | Pending |
 | UX-03 | Phase 7 | Pending |
 | UX-04 | Phase 8 | Pending |
-| UX-05 | Phase 6 | Pending |
+| UX-05 | Phase 6 | Complete |
 | UX-06 | Phase 7 | Pending |
 
 **Coverage:**

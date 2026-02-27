@@ -51,7 +51,7 @@ See: `.planning/milestones/v1.4-ROADMAP.md` for full details.
 **Plans**: 1 plan
 
 Plans:
-- [ ] 06-01-PLAN.md — Evolve TagChip/TechBadge with toggle variants and create FilterBar component
+- [x] 06-01-PLAN.md — Evolve TagChip/TechBadge with toggle variants and create FilterBar component
 
 ### Phase 7: Filtered Listing Integration
 **Goal**: Users can filter blog posts by tags and projects by stack on the listing pages, with selections reflected in the URL for sharing
@@ -95,6 +95,6 @@ Phases execute in numeric order: 6 -> 7 -> 8
 | 3. Infrastructure & API | v1.4 | 2/2 | Complete | 2026-02-21 |
 | 4. Post Page Integration | v1.4 | 2/2 | Complete | 2026-02-22 |
 | 5. Listing & Polish | v1.4 | 2/2 | Complete | 2026-02-22 |
-| 6. Filter Components | v1.5 | 0/1 | In progress | - |
+| 6. Filter Components | v1.5 | 1/1 | Complete | 2026-02-27 |
 | 7. Filtered Listing Integration | v1.5 | 0/0 | Not started | - |
 | 8. Counts and Transitions | v1.5 | 0/0 | Not started | - |
