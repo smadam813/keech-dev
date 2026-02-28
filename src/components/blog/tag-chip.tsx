@@ -24,7 +24,7 @@ export function TagChip({ tag, href, active, onToggle, className }: TagChipProps
           'transition-all duration-150 cursor-pointer',
           active
             ? 'bg-accent text-white shadow-brutal-hover translate-x-[2px] translate-y-[2px]'
-            : 'bg-accent/10 shadow-brutal hover:bg-accent/20',
+            : 'bg-accent/10 shadow-brutal hover:bg-accent/20 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-brutal-hover',
           className
         )}
       >
