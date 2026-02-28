@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Tag Filtering
-status: unknown
-last_updated: "2026-02-28T00:01:13.662Z"
+status: in-progress
+last_updated: "2026-02-28T02:55:18Z"
 progress:
-  total_phases: 1
-  completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
+  total_phases: 2
+  completed_phases: 2
+  total_plans: 3
+  completed_plans: 3
 ---
 
 # Project State
@@ -18,23 +18,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-22)
 
 **Core value:** A polished, intentional developer portfolio — fast, visually distinctive, and well-crafted in every detail.
-**Current focus:** Phase 6 — Filter Components
+**Current focus:** Phase 7 — Filtered Listing Integration
 
 ## Current Position
 
-Phase: 6 of 8 (Filter Components)
-Plan: 1 of 1 complete in current phase
-Status: Phase 6 complete, ready for Phase 7
-Last activity: 2026-02-27 — Completed 06-01 Filter Components plan
+Phase: 7 of 8 (Filtered Listing Integration)
+Plan: 2 of 2 complete in current phase
+Status: Phase 7 complete, ready for Phase 8
+Last activity: 2026-02-28 — Completed 07-02 Filtered Project Listing plan
 
-Progress: [██████████░] 75% (6/8 phases complete across all milestones)
+Progress: [███████████░] 88% (7/8 phases in progress across all milestones)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 17
+- Total plans completed: 19
 - Average duration: ~5 min
-- Total execution time: ~1h 25min
+- Total execution time: ~1h 27min
 
 **By Phase:**
 
@@ -46,6 +46,7 @@ Progress: [██████████░] 75% (6/8 phases complete across al
 | 04-post-page-integration | 2 | ~6min | ~3min |
 | 05-listing-polish | 2 | ~4min | ~2min |
 | 06-filter-components | 1 | ~4min | ~4min |
+| 07-filtered-listing-integration | 2/2 | ~2min | ~1min |
 | quick-1 through quick-8 | 8 | ~14min | ~2min |
 
 ## Accumulated Context
@@ -59,13 +60,18 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - renderChip prop delegation keeps FilterBar generic (no imports of TagChip/TechBadge)
 - No 'use client' on TagChip/TechBadge; client boundary lives in FilterBar and Phase 7 page components
 
+**Phase 7:**
+- window.history.replaceState for URL updates instead of router.replace to avoid re-renders
+- React fragment root for projects (no ListingViewCounts wrapper needed unlike blog)
+- Suspense boundary pattern: server page computes data, wraps client filter component in Suspense
+
 ### Pending Todos
 
 None.
 
 ### Blockers/Concerns
 
-- UX-06 requires URL search params (`?tags=ai,agile`). Research recommended `useState` for simplicity, but the requirement explicitly specifies URL persistence. Phase 7 must use `useSearchParams` with a Suspense boundary to preserve static generation.
+None. (UX-06 URL persistence resolved in Phase 7 using useSearchParams + Suspense boundary pattern.)
 
 ### Quick Tasks Completed
 
@@ -82,6 +88,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-02-27
-Stopped at: Completed 06-01-PLAN.md (Phase 6 complete)
+Last session: 2026-02-28
+Stopped at: Completed 07-02-PLAN.md (Phase 7 complete)
 Resume file: None

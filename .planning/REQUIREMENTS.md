@@ -9,8 +9,8 @@ Requirements for multi-select tag/stack filtering on listing pages. Each maps to
 
 ### Blog Filtering
 
-- [ ] **BLOG-01**: User can see a filter bar with all unique tags displayed as chips above the blog post grid
-- [ ] **BLOG-02**: User can toggle multiple tag chips to filter posts (AND logic — only posts with all selected tags appear)
+- [x] **BLOG-01**: User can see a filter bar with all unique tags displayed as chips above the blog post grid
+- [x] **BLOG-02**: User can toggle multiple tag chips to filter posts (AND logic — only posts with all selected tags appear)
 - [ ] **BLOG-03**: User can see count badges on each tag chip showing how many posts match that tag
 - [ ] **BLOG-04**: User can see posts fade in/out smoothly when filters change (CSS opacity, respects reduced-motion)
 
@@ -23,11 +23,11 @@ Requirements for multi-select tag/stack filtering on listing pages. Each maps to
 ### Filter UX
 
 - [x] **UX-01**: User can see clear visual distinction between active (selected) and inactive filter chips
-- [ ] **UX-02**: User can click "Clear filters" to reset all selected filters (button only visible when filters active)
-- [ ] **UX-03**: User sees an empty state message with a "clear filters" action when no items match selected filters
+- [x] **UX-02**: User can click "Clear filters" to reset all selected filters (button only visible when filters active)
+- [x] **UX-03**: User sees an empty state message with a "clear filters" action when no items match selected filters
 - [ ] **UX-04**: User sees a result count ("Showing 2 of 3 posts") when filters are active
 - [x] **UX-05**: User can see filter chips press down on click with neobrutalist animation (translate + shadow reduction)
-- [ ] **UX-06**: User's selected filters persist in the URL as search params (e.g., `?tags=ai,agile`) for sharing and bookmarking
+- [x] **UX-06**: User's selected filters persist in the URL as search params (e.g., `?tags=ai,agile`) for sharing and bookmarking
 
 ## Future Requirements
 
@@ -63,19 +63,19 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BLOG-01 | Phase 7 | Pending |
-| BLOG-02 | Phase 7 | Pending |
+| BLOG-01 | Phase 7 | Complete |
+| BLOG-02 | Phase 7 | Complete |
 | BLOG-03 | Phase 8 | Pending |
 | BLOG-04 | Phase 8 | Pending |
 | PROJ-01 | Phase 7 | Pending |
 | PROJ-02 | Phase 7 | Pending |
 | PROJ-03 | Phase 8 | Pending |
 | UX-01 | Phase 6 | Complete |
-| UX-02 | Phase 7 | Pending |
-| UX-03 | Phase 7 | Pending |
+| UX-02 | Phase 7 | Complete |
+| UX-03 | Phase 7 | Complete |
 | UX-04 | Phase 8 | Pending |
 | UX-05 | Phase 6 | Complete |
-| UX-06 | Phase 7 | Pending |
+| UX-06 | Phase 7 | Complete |
 
 **Coverage:**
 - v1.5 requirements: 13 total

@@ -66,8 +66,8 @@ Plans:
 **Plans**: TBD
 
 Plans:
-- [ ] 07-01: TBD
-- [ ] 07-02: TBD
+- [x] 07-01: Filtered blog listing with tag filtering, URL persistence, and Suspense boundary
+- [x] 07-02: Filtered project listing with stack filtering, URL persistence, and Suspense boundary
 
 ### Phase 8: Counts and Transitions
 **Goal**: Users get quantitative feedback on filter state and smooth visual transitions when filtering changes the visible content
