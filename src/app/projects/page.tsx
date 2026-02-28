@@ -1,6 +1,6 @@
+import { Suspense } from 'react'
 import { projects } from '@/.velite'
-import { ProjectCard } from '@/components/projects/project-card'
-import { ScrollReveal } from '@/components/ui/scroll-reveal'
+import { FilteredProjectList } from '@/components/projects/filtered-project-list'
 
 import type { Metadata } from 'next'
 
@@ -17,21 +17,14 @@ export default function ProjectsPage() {
     return new Date(b.date).getTime() - new Date(a.date).getTime()
   })
 
+  const allStack = [...new Set(sortedProjects.flatMap(p => p.stack))].sort()
+
   return (
     <section className="w-full mx-auto max-w-7xl px-6 pt-12 pb-16">
       <h1 className="font-display text-4xl md:text-5xl font-bold mb-10">Projects</h1>
-
-      {sortedProjects.length > 0 ? (
-        <div className="grid gap-6 md:grid-cols-2">
-          {sortedProjects.map(project => (
-            <ScrollReveal key={project.slug}>
-              <ProjectCard project={project} />
-            </ScrollReveal>
-          ))}
-        </div>
-      ) : (
-        <p className="text-muted">No projects yet. Check back soon!</p>
-      )}
+      <Suspense>
+        <FilteredProjectList projects={sortedProjects} allStack={allStack} />
+      </Suspense>
     </section>
   )
 }
