@@ -16,8 +16,8 @@ Requirements for multi-select tag/stack filtering on listing pages. Each maps to
 
 ### Project Filtering
 
-- [ ] **PROJ-01**: User can see a filter bar with all unique stack items displayed as chips above the project grid
-- [ ] **PROJ-02**: User can toggle multiple stack chips to filter projects (AND logic — only projects with all selected stack items appear)
+- [x] **PROJ-01**: User can see a filter bar with all unique stack items displayed as chips above the project grid
+- [x] **PROJ-02**: User can toggle multiple stack chips to filter projects (AND logic — only projects with all selected stack items appear)
 - [ ] **PROJ-03**: User can see count badges on each stack chip showing how many projects match that stack item
 
 ### Filter UX
@@ -67,8 +67,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BLOG-02 | Phase 7 | Complete |
 | BLOG-03 | Phase 8 | Pending |
 | BLOG-04 | Phase 8 | Pending |
-| PROJ-01 | Phase 7 | Pending |
-| PROJ-02 | Phase 7 | Pending |
+| PROJ-01 | Phase 7 | Complete |
+| PROJ-02 | Phase 7 | Complete |
 | PROJ-03 | Phase 8 | Pending |
 | UX-01 | Phase 6 | Complete |
 | UX-02 | Phase 7 | Complete |
