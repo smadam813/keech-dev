@@ -1,7 +1,6 @@
+import { Suspense } from 'react'
 import { posts } from '@/.velite'
-import { PostCard } from '@/components/blog/post-card'
-import { ListingViewCounts } from '@/components/blog/listing-view-counts'
-import { ScrollReveal } from '@/components/ui/scroll-reveal'
+import { FilteredPostList } from '@/components/blog/filtered-post-list'
 
 import type { Metadata } from 'next'
 
@@ -16,25 +15,14 @@ export default function BlogPage() {
     .filter(post => !post.draft)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
-  const slugs = publishedPosts.map(p => p.slug)
+  const allTags = [...new Set(publishedPosts.flatMap(p => p.tags))].sort()
 
   return (
     <section className="w-full mx-auto max-w-7xl px-6 pt-12 pb-16">
       <h1 className="font-display text-4xl md:text-5xl font-bold mb-10">Blog</h1>
-
-      {publishedPosts.length > 0 ? (
-        <ListingViewCounts slugs={slugs}>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {publishedPosts.map(post => (
-              <ScrollReveal key={post.slug}>
-                <PostCard post={post} />
-              </ScrollReveal>
-            ))}
-          </div>
-        </ListingViewCounts>
-      ) : (
-        <p className="text-muted">No posts yet. Check back soon!</p>
-      )}
+      <Suspense>
+        <FilteredPostList posts={publishedPosts} allTags={allTags} />
+      </Suspense>
     </section>
   )
 }
