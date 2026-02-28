@@ -35,7 +35,7 @@ export function FilterBar({
           <button
             type="button"
             onClick={onClear}
-            className="px-2 py-0.5 text-xs font-mono font-bold text-accent hover:text-accent-hover transition-colors underline underline-offset-2"
+            className="px-2 py-0.5 text-xs font-mono font-bold border-2 border-black bg-white shadow-brutal hover:shadow-brutal-hover hover:translate-x-[1px] hover:translate-y-[1px] transition-all duration-150"
           >
             Clear all
           </button>

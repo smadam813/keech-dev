@@ -104,7 +104,7 @@ export function FilteredPostList({ posts, allTags }: FilteredPostListProps) {
           <button
             type="button"
             onClick={handleClear}
-            className="text-accent hover:text-accent-hover font-mono font-bold underline underline-offset-2 transition-colors"
+            className="px-3 py-1 text-sm font-mono font-bold border-2 border-black bg-white shadow-brutal hover:shadow-brutal-hover hover:translate-x-[1px] hover:translate-y-[1px] transition-all duration-150"
           >
             Clear filters
           </button>
