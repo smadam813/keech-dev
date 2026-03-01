@@ -2,7 +2,7 @@
 
 ## What This Is
 
-Personal portfolio/blog at keech.dev built with Next.js 16, React 19, Tailwind CSS v4, and Velite for MDX content. Features a neobrutalist visual identity with Norse-themed hero section including load-gated reveal animation and ambient rune glow effects. Blog posts display public view counts backed by Upstash Redis.
+Personal portfolio/blog at keech.dev built with Next.js 16, React 19, Tailwind CSS v4, and Velite for MDX content. Features a neobrutalist visual identity with Norse-themed hero section, load-gated reveal animation, ambient rune glow effects, Redis-backed blog view counts, and multi-select tag/stack filtering on listing pages.
 
 ## Core Value
 
@@ -27,17 +27,22 @@ A polished, intentional developer portfolio — fast, visually distinctive, and 
 - ✓ View count persistence via Upstash Redis with IP dedup — v1.4
 - ✓ API routes for incrementing and batch-fetching view counts — v1.4
 - ✓ Graceful degradation when API unreachable — v1.4
+- ✓ Filter bar with unique tags above blog grid — v1.5
+- ✓ Multi-tag AND logic filtering on blog listing — v1.5
+- ✓ Count badges on tag/stack filter chips — v1.5
+- ✓ Fade transitions on filter content changes — v1.5
+- ✓ Filter bar with unique stack above project grid — v1.5
+- ✓ Multi-stack AND logic filtering on project listing — v1.5
+- ✓ Clear visual distinction for active/inactive filter chips — v1.5
+- ✓ "Clear filters" resets all selections — v1.5
+- ✓ Empty state with "clear filters" action — v1.5
+- ✓ "Showing X of Y" result count when filters active — v1.5
+- ✓ Neobrutalist press animation on filter chips — v1.5
+- ✓ Filter state persists in URL search params — v1.5
 
 ### Active
 
-## Current Milestone: v1.5 Tag Filtering
-
-**Goal:** Add multi-select filtering to blog and project listing pages using existing tags and stack data.
-
-**Target features:**
-- Blog listing filter bar with multi-tag selection (AND logic)
-- Projects listing filter bar with multi-stack selection (AND logic)
-- In-place filtering without page navigation
+(None — planning next milestone)
 
 ### Out of Scope
 
@@ -51,14 +56,19 @@ A polished, intentional developer portfolio — fast, visually distinctive, and 
 - Admin analytics dashboard — use Vercel Analytics instead
 - Engagement features (likes/reactions) — separate milestone requiring session management
 - Real-time view counter (WebSocket) — over-engineered for personal blog
+- Full-text search — over-engineered for small post count; tag filtering covers primary use case
+- OR logic filtering — AND is the correct default for narrowing
+- Server-side filtering via route segments — explodes static generation matrix
+- Sidebar filter panel — single-dimension filtering doesn't need a sidebar
+- Persistent filter state in localStorage — URL search params are the persistence mechanism
 
 ## Context
 
-Shipped v1.4 Blog Stats with 291 LOC across 11 source files (TypeScript).
+Shipped v1.5 Tag Filtering with 2,360 LOC across TypeScript + CSS.
 Tech stack: Next.js 16, React 19, Tailwind CSS v4, Velite, MDX, Upstash Redis.
 Hero section has load-gated two-beat reveal and 14 ambient rune glows.
 Blog posts display public view counts backed by Upstash Redis with IP deduplication.
-Blog listing page batch-fetches counts via redis.mget() with localStorage caching.
+Blog and project listing pages support multi-select filtering with AND logic, count badges, URL persistence, and fade transitions.
 Site is statically generated and deployed via git-push to Vercel.
 
 ## Key Decisions
@@ -81,6 +91,14 @@ Site is statically generated and deployed via git-push to Vercel.
 | Render-prop pattern for listing view counts | Keeps PostCard server-renderable while ListingViewCounts owns client boundary | ✓ Good — clean server/client split |
 | Batch redis.mget() for listing page | Single round-trip retrieval vs N individual fetches | ✓ Good — efficient at any post count |
 | No slug validation against published posts | Orphan Redis keys are harmless, zero-cost simplification | ✓ Good — simpler API |
+| Polymorphic chip components (display/link/toggle) | Single component serves all contexts without code duplication | ✓ Good — zero regression on existing usage sites |
+| renderChip prop delegation on FilterBar | FilterBar never imports specific chip components; parent controls appearance | ✓ Good — reusable across blog and projects |
+| Mutually exclusive class pattern for toggle states | Avoids tailwind-merge conflicts with custom shadow tokens | ✓ Good — deterministic styling |
+| window.history.replaceState for URL filter updates | Avoids router.replace re-renders while Next.js syncs with useSearchParams | ✓ Good — lightweight URL updates |
+| Suspense boundary for useSearchParams | Isolates client island in static page; preserves static generation | ✓ Good — /blog and /projects remain static routes |
+| Static counts (total per tag/stack) | Simpler than contextual counts; more useful for small content sets | ✓ Good — shows content distribution at a glance |
+| Grid fades as a unit (not individual cards) | Cleaner visual for small card counts | ✓ Good — consistent transition |
+| useRef initial-render guard for fade | Prevents flash-of-invisible-content on page load with URL-preloaded filters | ✓ Good — no FOIC |
 
 ## Constraints
 
@@ -91,4 +109,4 @@ Site is statically generated and deployed via git-push to Vercel.
 - **Theme**: Single theme only (no dark mode) — the palette is the brand
 
 ---
-*Last updated: 2026-02-22 after v1.5 milestone started*
+*Last updated: 2026-03-01 after v1.5 milestone*

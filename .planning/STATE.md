@@ -2,8 +2,8 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Tag Filtering
-status: unknown
-last_updated: "2026-03-01T19:25:28.869Z"
+status: complete
+last_updated: "2026-03-01"
 progress:
   total_phases: 3
   completed_phases: 3
@@ -15,17 +15,17 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-22)
+See: .planning/PROJECT.md (updated 2026-03-01)
 
 **Core value:** A polished, intentional developer portfolio — fast, visually distinctive, and well-crafted in every detail.
-**Current focus:** Phase 8 — Counts and Transitions (complete)
+**Current focus:** Planning next milestone
 
 ## Current Position
 
 Phase: 8 of 8 (Counts and Transitions)
 Plan: 1 of 1 complete in current phase
-Status: Phase 8 complete, v1.5 Tag Filtering milestone complete
-Last activity: 2026-03-01 — Completed 08-01 Counts and Transitions plan
+Status: v1.5 Tag Filtering milestone shipped
+Last activity: 2026-03-01 — Milestone v1.5 archived
 
 Progress: [████████████] 100% (8/8 phases complete across all milestones)
 
@@ -46,8 +46,8 @@ Progress: [████████████] 100% (8/8 phases complete acros
 | 04-post-page-integration | 2 | ~6min | ~3min |
 | 05-listing-polish | 2 | ~4min | ~2min |
 | 06-filter-components | 1 | ~4min | ~4min |
-| 07-filtered-listing-integration | 2/2 | ~2min | ~1min |
-| 08-counts-and-transitions | 1/1 | ~2min | ~2min |
+| 07-filtered-listing-integration | 2 | ~2min | ~1min |
+| 08-counts-and-transitions | 1 | ~2min | ~2min |
 | quick-1 through quick-8 | 8 | ~14min | ~2min |
 
 ## Accumulated Context
@@ -56,28 +56,13 @@ Progress: [████████████] 100% (8/8 phases complete acros
 
 Decisions are logged in PROJECT.md Key Decisions table.
 
-**Phase 6:**
-- Mutually exclusive class pattern for toggle states instead of relying on tailwind-merge to resolve custom shadow tokens
-- renderChip prop delegation keeps FilterBar generic (no imports of TagChip/TechBadge)
-- No 'use client' on TagChip/TechBadge; client boundary lives in FilterBar and Phase 7 page components
-
-**Phase 7:**
-- window.history.replaceState for URL updates instead of router.replace to avoid re-renders
-- React fragment root for projects (no ListingViewCounts wrapper needed unlike blog)
-- Suspense boundary pattern: server page computes data, wraps client filter component in Suspense
-
-**Phase 8:**
-- Static counts (total per tag/stack, not contextual to active filters) for simplicity with small content sets
-- Grid fades as a unit (not individual cards) for visual consistency
-- Initial render skip via useRef prevents flash-of-invisible-content on page load
-
 ### Pending Todos
 
 None.
 
 ### Blockers/Concerns
 
-None. (UX-06 URL persistence resolved in Phase 7 using useSearchParams + Suspense boundary pattern.)
+None.
 
 ### Quick Tasks Completed
 
@@ -95,5 +80,5 @@ None. (UX-06 URL persistence resolved in Phase 7 using useSearchParams + Suspens
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Completed 08-01-PLAN.md (Phase 8 complete, v1.5 milestone complete)
+Stopped at: v1.5 milestone archived
 Resume file: None

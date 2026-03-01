@@ -1,5 +1,24 @@
 # Milestones
 
+## v1.5 Tag Filtering (Shipped: 2026-03-01)
+
+**Phases completed:** 3 phases, 4 plans, 9 tasks
+**Timeline:** 3 days (2026-02-27 → 2026-03-01)
+**Git range:** `41406ac`..`0b91f34`
+**Files modified:** 8 source files, +443/-49 lines (TypeScript + CSS)
+
+**Delivered:** Multi-select tag and stack filtering on blog and project listing pages with AND logic, URL persistence, count badges, and smooth fade transitions.
+
+**Key accomplishments:**
+- Polymorphic TagChip and TechBadge components with display, link, and toggle modes — zero regression on existing usage sites
+- Reusable FilterBar with renderChip delegation pattern, "Clear all" action, and count badge threading
+- Blog tag filtering and project stack filtering with AND logic, empty states, and Suspense-isolated static generation
+- URL-persisted filter state via useSearchParams + window.history.replaceState (shareable/bookmarkable)
+- Per-tag/stack count badges on filter chips and "Showing X of Y" result counts when filters active
+- CSS opacity fade transitions on grid content changes with prefers-reduced-motion support
+
+---
+
 ## v1.3 Hero Polish (Shipped: 2026-02-09)
 
 **Phases completed:** 2 phases, 2 plans, 6 tasks
