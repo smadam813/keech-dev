@@ -11,21 +11,21 @@ Requirements for multi-select tag/stack filtering on listing pages. Each maps to
 
 - [x] **BLOG-01**: User can see a filter bar with all unique tags displayed as chips above the blog post grid
 - [x] **BLOG-02**: User can toggle multiple tag chips to filter posts (AND logic — only posts with all selected tags appear)
-- [ ] **BLOG-03**: User can see count badges on each tag chip showing how many posts match that tag
-- [ ] **BLOG-04**: User can see posts fade in/out smoothly when filters change (CSS opacity, respects reduced-motion)
+- [x] **BLOG-03**: User can see count badges on each tag chip showing how many posts match that tag
+- [x] **BLOG-04**: User can see posts fade in/out smoothly when filters change (CSS opacity, respects reduced-motion)
 
 ### Project Filtering
 
 - [x] **PROJ-01**: User can see a filter bar with all unique stack items displayed as chips above the project grid
 - [x] **PROJ-02**: User can toggle multiple stack chips to filter projects (AND logic — only projects with all selected stack items appear)
-- [ ] **PROJ-03**: User can see count badges on each stack chip showing how many projects match that stack item
+- [x] **PROJ-03**: User can see count badges on each stack chip showing how many projects match that stack item
 
 ### Filter UX
 
 - [x] **UX-01**: User can see clear visual distinction between active (selected) and inactive filter chips
 - [x] **UX-02**: User can click "Clear filters" to reset all selected filters (button only visible when filters active)
 - [x] **UX-03**: User sees an empty state message with a "clear filters" action when no items match selected filters
-- [ ] **UX-04**: User sees a result count ("Showing 2 of 3 posts") when filters are active
+- [x] **UX-04**: User sees a result count ("Showing 2 of 3 posts") when filters are active
 - [x] **UX-05**: User can see filter chips press down on click with neobrutalist animation (translate + shadow reduction)
 - [x] **UX-06**: User's selected filters persist in the URL as search params (e.g., `?tags=ai,agile`) for sharing and bookmarking
 
@@ -65,15 +65,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | BLOG-01 | Phase 7 | Complete |
 | BLOG-02 | Phase 7 | Complete |
-| BLOG-03 | Phase 8 | Pending |
-| BLOG-04 | Phase 8 | Pending |
+| BLOG-03 | Phase 8 | Complete |
+| BLOG-04 | Phase 8 | Complete |
 | PROJ-01 | Phase 7 | Complete |
 | PROJ-02 | Phase 7 | Complete |
-| PROJ-03 | Phase 8 | Pending |
+| PROJ-03 | Phase 8 | Complete |
 | UX-01 | Phase 6 | Complete |
 | UX-02 | Phase 7 | Complete |
 | UX-03 | Phase 7 | Complete |
-| UX-04 | Phase 8 | Pending |
+| UX-04 | Phase 8 | Complete |
 | UX-05 | Phase 6 | Complete |
 | UX-06 | Phase 7 | Complete |
 

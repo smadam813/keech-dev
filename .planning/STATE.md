@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Tag Filtering
-status: unknown
-last_updated: "2026-02-28T03:09:51.706Z"
+status: complete
+last_updated: "2026-03-01T19:14:34Z"
 progress:
   total_phases: 2
   completed_phases: 2
-  total_plans: 3
-  completed_plans: 3
+  total_plans: 4
+  completed_plans: 4
 ---
 
 # Project State
@@ -18,23 +18,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-22)
 
 **Core value:** A polished, intentional developer portfolio — fast, visually distinctive, and well-crafted in every detail.
-**Current focus:** Phase 7 — Filtered Listing Integration
+**Current focus:** Phase 8 — Counts and Transitions (complete)
 
 ## Current Position
 
-Phase: 7 of 8 (Filtered Listing Integration)
-Plan: 2 of 2 complete in current phase
-Status: Phase 7 complete, ready for Phase 8
-Last activity: 2026-02-28 — Completed 07-02 Filtered Project Listing plan
+Phase: 8 of 8 (Counts and Transitions)
+Plan: 1 of 1 complete in current phase
+Status: Phase 8 complete, v1.5 Tag Filtering milestone complete
+Last activity: 2026-03-01 — Completed 08-01 Counts and Transitions plan
 
-Progress: [███████████░] 88% (7/8 phases in progress across all milestones)
+Progress: [████████████] 100% (8/8 phases complete across all milestones)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 19
+- Total plans completed: 20
 - Average duration: ~5 min
-- Total execution time: ~1h 27min
+- Total execution time: ~1h 29min
 
 **By Phase:**
 
@@ -47,6 +47,7 @@ Progress: [███████████░] 88% (7/8 phases in progress acr
 | 05-listing-polish | 2 | ~4min | ~2min |
 | 06-filter-components | 1 | ~4min | ~4min |
 | 07-filtered-listing-integration | 2/2 | ~2min | ~1min |
+| 08-counts-and-transitions | 1/1 | ~2min | ~2min |
 | quick-1 through quick-8 | 8 | ~14min | ~2min |
 
 ## Accumulated Context
@@ -64,6 +65,11 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - window.history.replaceState for URL updates instead of router.replace to avoid re-renders
 - React fragment root for projects (no ListingViewCounts wrapper needed unlike blog)
 - Suspense boundary pattern: server page computes data, wraps client filter component in Suspense
+
+**Phase 8:**
+- Static counts (total per tag/stack, not contextual to active filters) for simplicity with small content sets
+- Grid fades as a unit (not individual cards) for visual consistency
+- Initial render skip via useRef prevents flash-of-invisible-content on page load
 
 ### Pending Todos
 
@@ -88,6 +94,6 @@ None. (UX-06 URL persistence resolved in Phase 7 using useSearchParams + Suspens
 
 ## Session Continuity
 
-Last session: 2026-02-28
-Stopped at: Completed 07-02-PLAN.md (Phase 7 complete)
+Last session: 2026-03-01
+Stopped at: Completed 08-01-PLAN.md (Phase 8 complete, v1.5 milestone complete)
 Resume file: None
