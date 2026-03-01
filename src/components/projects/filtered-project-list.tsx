@@ -1,11 +1,12 @@
 'use client'
 
 import { useSearchParams, usePathname } from 'next/navigation'
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FilterBar } from '@/components/ui/filter-bar'
 import { TechBadge } from '@/components/projects/tech-badge'
 import { ProjectCard } from './project-card'
 import { ScrollReveal } from '@/components/ui/scroll-reveal'
+import { cn } from '@/lib/utils'
 
 interface FilteredProjectListProps {
   projects: Array<{
@@ -39,6 +40,30 @@ export function FilteredProjectList({ projects, allStack }: FilteredProjectListP
       : projects.filter((project) =>
           [...activeStack].every((tech) => project.stack.includes(tech))
         )
+
+  // Static counts: total projects per stack item (not contextual to active filters)
+  const stackCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    for (const tech of allStack) {
+      counts[tech] = projects.filter((p) => p.stack.includes(tech)).length
+    }
+    return counts
+  }, [projects, allStack])
+
+  const [isTransitioning, setIsTransitioning] = useState(false)
+  const isInitialRender = useRef(true)
+  const filteredKey = filteredProjects.map((p) => p.slug).join(',')
+
+  useEffect(() => {
+    if (isInitialRender.current) {
+      isInitialRender.current = false
+      return
+    }
+    if (!isFiltering) return
+    setIsTransitioning(true)
+    const timer = setTimeout(() => setIsTransitioning(false), 150)
+    return () => clearTimeout(timer)
+  }, [filteredKey, isFiltering])
 
   // Write updated stack set to URL via replaceState (no navigation)
   const updateURL = useCallback(
@@ -79,13 +104,23 @@ export function FilteredProjectList({ projects, allStack }: FilteredProjectListP
         activeItems={activeStack}
         onToggle={handleToggle}
         onClear={handleClear}
-        renderChip={({ item, active, onToggle }) => (
-          <TechBadge key={item} tech={item} active={active} onToggle={onToggle} />
+        counts={stackCounts}
+        renderChip={({ item, active, onToggle, count }) => (
+          <TechBadge key={item} tech={item} active={active} onToggle={onToggle} count={count} />
         )}
         label="Filter by technology"
       />
+      {isFiltering && (
+        <p className="text-sm font-mono text-muted mb-4">
+          Showing {filteredProjects.length} of {projects.length} projects
+        </p>
+      )}
       {filteredProjects.length > 0 ? (
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className={cn(
+          'grid gap-6 md:grid-cols-2',
+          'transition-opacity duration-200 filter-grid-fade',
+          isTransitioning ? 'opacity-0' : 'opacity-100'
+        )}>
           {filteredProjects.map((project) =>
             isFiltering ? (
               <ProjectCard key={project.slug} project={project} />

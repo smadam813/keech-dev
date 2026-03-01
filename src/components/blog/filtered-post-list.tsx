@@ -1,12 +1,13 @@
 'use client'
 
 import { useSearchParams, usePathname } from 'next/navigation'
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FilterBar } from '@/components/ui/filter-bar'
 import { TagChip } from '@/components/blog/tag-chip'
 import { PostCard } from './post-card'
 import { ListingViewCounts } from './listing-view-counts'
 import { ScrollReveal } from '@/components/ui/scroll-reveal'
+import { cn } from '@/lib/utils'
 
 interface FilteredPostListProps {
   posts: Array<{
@@ -41,6 +42,34 @@ export function FilteredPostList({ posts, allTags }: FilteredPostListProps) {
       : posts.filter((post) => [...activeTags].every((tag) => post.tags.includes(tag)))
 
   const isFiltering = activeTags.size > 0
+
+  // Static counts: total posts per tag (not contextual to active filters)
+  const tagCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    for (const tag of allTags) {
+      counts[tag] = posts.filter((p) => p.tags.includes(tag)).length
+    }
+    return counts
+  }, [posts, allTags])
+
+  const [isTransitioning, setIsTransitioning] = useState(false)
+  const isInitialRender = useRef(true)
+
+  // Derive a stable key from filtered post slugs to detect content changes
+  const filteredKey = filteredPosts.map((p) => p.slug).join(',')
+
+  useEffect(() => {
+    // Skip fade on initial render (including URL-preloaded filters)
+    if (isInitialRender.current) {
+      isInitialRender.current = false
+      return
+    }
+    // Only fade when filters are active and content changes
+    if (!isFiltering) return
+    setIsTransitioning(true)
+    const timer = setTimeout(() => setIsTransitioning(false), 150)
+    return () => clearTimeout(timer)
+  }, [filteredKey, isFiltering])
 
   // Write new tag set to URL via replaceState (no server re-render)
   const updateURL = useCallback(
@@ -81,13 +110,23 @@ export function FilteredPostList({ posts, allTags }: FilteredPostListProps) {
         activeItems={activeTags}
         onToggle={handleToggle}
         onClear={handleClear}
-        renderChip={({ item, active, onToggle }) => (
-          <TagChip key={item} tag={item} active={active} onToggle={onToggle} />
+        counts={tagCounts}
+        renderChip={({ item, active, onToggle, count }) => (
+          <TagChip key={item} tag={item} active={active} onToggle={onToggle} count={count} />
         )}
         label="Filter by tag"
       />
+      {isFiltering && (
+        <p className="text-sm font-mono text-muted mb-4">
+          Showing {filteredPosts.length} of {posts.length} posts
+        </p>
+      )}
       {filteredPosts.length > 0 ? (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className={cn(
+          'grid gap-6 md:grid-cols-2 lg:grid-cols-3',
+          'transition-opacity duration-200 filter-grid-fade',
+          isTransitioning ? 'opacity-0' : 'opacity-100'
+        )}>
           {filteredPosts.map((post) =>
             isFiltering ? (
               <PostCard key={post.slug} post={post} />
