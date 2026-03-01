@@ -78,10 +78,10 @@ Plans:
   2. Each stack chip on the projects filter bar shows a count badge indicating how many projects match that stack item
   3. User sees a result count ("Showing X of Y posts/projects") between the filter bar and the grid when filters are active
   4. Posts and projects fade in/out smoothly when filters change (CSS opacity transition, respects prefers-reduced-motion)
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 08-01: TBD
+- [ ] 08-01: Count badges on chips, result count display, and grid fade transitions with reduced-motion support
 
 ## Progress
 
