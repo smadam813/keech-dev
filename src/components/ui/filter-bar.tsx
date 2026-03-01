@@ -7,7 +7,8 @@ interface FilterBarProps {
   activeItems: Set<string>
   onToggle: (item: string) => void
   onClear: () => void
-  renderChip: (props: { item: string; active: boolean; onToggle: () => void }) => ReactNode
+  renderChip: (props: { item: string; active: boolean; onToggle: () => void; count?: number }) => ReactNode
+  counts?: Record<string, number>
   label?: string
 }
 
@@ -17,6 +18,7 @@ export function FilterBar({
   onToggle,
   onClear,
   renderChip,
+  counts,
   label = 'Filters',
 }: FilterBarProps) {
   const hasActive = activeItems.size > 0
@@ -29,6 +31,7 @@ export function FilterBar({
             item,
             active: activeItems.has(item),
             onToggle: () => onToggle(item),
+            count: counts?.[item],
           })
         )}
         {hasActive && (

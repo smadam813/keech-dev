@@ -4,10 +4,11 @@ interface TechBadgeProps {
   tech: string
   active?: boolean
   onToggle?: () => void
+  count?: number
   className?: string
 }
 
-export function TechBadge({ tech, active, onToggle, className }: TechBadgeProps) {
+export function TechBadge({ tech, active, onToggle, count, className }: TechBadgeProps) {
   const baseClasses = 'inline-block px-2 py-0.5 text-xs font-mono font-bold border-2 border-black'
 
   // Toggle button mode (for filter bar)
@@ -27,6 +28,9 @@ export function TechBadge({ tech, active, onToggle, className }: TechBadgeProps)
         )}
       >
         {tech}
+        {count !== undefined && (
+          <span className="ml-1 opacity-60">({count})</span>
+        )}
       </button>
     )
   }
