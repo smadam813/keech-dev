@@ -4,7 +4,7 @@
 
 - ✅ **v1.3 Hero Polish** — Phases 1-2 (shipped 2026-02-09)
 - ✅ **v1.4 Blog Stats** — Phases 3-5 (shipped 2026-02-22)
-- 🚧 **v1.5 Tag Filtering** — Phases 6-8 (in progress)
+- ✅ **v1.5 Tag Filtering** — Phases 6-8 (shipped 2026-03-01)
 
 ## Phases
 
@@ -29,13 +29,13 @@ See: `.planning/milestones/v1.4-ROADMAP.md` for full details.
 
 </details>
 
-### 🚧 v1.5 Tag Filtering (In Progress)
+### ✅ v1.5 Tag Filtering (Shipped 2026-03-01)
 
 **Milestone Goal:** Add multi-select filtering to blog and project listing pages using existing tags and stack data, enabling users to narrow content by selecting multiple filter chips with AND logic.
 
-- [ ] **Phase 6: Filter Components** — Interactive chip variants and reusable filter bar UI
-- [ ] **Phase 7: Filtered Listing Integration** — Wire filter state to blog and project pages with AND logic, URL persistence, and empty states
-- [ ] **Phase 8: Counts and Transitions** — Count badges on chips, result count display, and fade transitions on filter changes
+- [x] **Phase 6: Filter Components** — Interactive chip variants and reusable filter bar UI
+- [x] **Phase 7: Filtered Listing Integration** — Wire filter state to blog and project pages with AND logic, URL persistence, and empty states
+- [x] **Phase 8: Counts and Transitions** — Count badges on chips, result count display, and fade transitions on filter changes
 
 ## Phase Details
 
@@ -81,7 +81,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 08-01: Count badges on chips, result count display, and grid fade transitions with reduced-motion support
+- [x] 08-01: Count badges on chips, result count display, and grid fade transitions with reduced-motion support
 
 ## Progress
 
@@ -97,4 +97,4 @@ Phases execute in numeric order: 6 -> 7 -> 8
 | 5. Listing & Polish | v1.4 | 2/2 | Complete | 2026-02-22 |
 | 6. Filter Components | v1.5 | 1/1 | Complete | 2026-02-27 |
 | 7. Filtered Listing Integration | v1.5 | 2/2 | Complete | 2026-02-28 |
-| 8. Counts and Transitions | v1.5 | 0/0 | Not started | - |
+| 8. Counts and Transitions | v1.5 | 1/1 | Complete | 2026-03-01 |
