@@ -21,7 +21,7 @@ I am not the first person to notice that Jira feels increasingly heavy for devel
 
 [Apache Maven](https://issues.apache.org/jira/browse/INFRA-25861) migrated 83 repositories from Jira to GitHub Issues across 2024-2025. Their stated motivation: "issues and source code are closer together." [Infinispan](https://infinispan.org/blog/2024/11/06/migration-to-github-issues), backed by Red Hat, made the same move in November 2024.
 
-The numbers back them up. **[Linear](https://linear.app/) is used by 66% of Forbes Top 50 AI companies.** [Plane](https://plane.so/), the open-source alternative, has pulled 46,000+ GitHub stars and 500,000+ Docker pulls. The pattern is consistent: developer-focused teams are choosing tools that stay closer to their existing workflow rather than forcing them into a separate system.
+The numbers back them up. **[Linear](https://linear.app/) is used by 66% of Forbes Top 50 AI companies.** [Plane](https://plane.so/), the open-source alternative, has pulled 46,000+ GitHub stars and 500,000+ Docker pulls. The pattern is consistent: developer-focused teams are choosing tools that stay closer to their existing workflow rather than forcing them into a separate system. To be clear, Linear and Plane are still structured tools with GUIs. Markdown-in-repos is a further step down that spectrum. But the direction of movement is what matters: toward code, away from heavyweight process.
 
 But I want to be honest about the scale of what we are talking about. **Jira still controls 42% of the project management market** with 125,000+ customers and $5.2 billion in annual revenue growing nearly 20% year over year. Over 500 customers spend more than $1 million annually on Atlassian products. The companies leaving Jira are overwhelmingly developer-focused teams. The ones staying are enterprises with cross-functional needs. This is a bifurcation, not a replacement.
 
@@ -52,7 +52,7 @@ And Jira's own AI integration story is not encouraging. **Atlassian's official M
 
 ### What this looks like in practice
 
-This site is the proof point. The `.planning/` directory contains 20 completed plans across 8 phases, executed in roughly 1 hour 29 minutes total (about 5 minutes per plan on average). Each plan is a markdown file. Each plan is version-controlled. Each plan was readable by the AI agent that executed it.
+This site is the proof point. The `.planning/` directory contains 20 completed plans across 8 phases, executed in roughly one working day (about 25 minutes per plan on average). Each plan is a markdown file. Each plan is version-controlled. Each plan was readable by the AI agent that executed it. This is a greenfield solo project, and those numbers should be read accordingly. The workflow scales differently when you add legacy code, shared state, and production constraints. But the structure (plan in repo, agent reads repo, code ships with plan) holds regardless of the throughput.
 
 Here is what a typical planning artifact looks like:
 
@@ -114,7 +114,7 @@ I would be dishonest if I pitched this as a universal solution. The research and
 
 ### Compliance and audit trails
 
-This is where I expected the argument to fall apart, but the reality is more nuanced. SOC2's change management requirements (CC8) can largely be satisfied by git-based workflows: commit history provides tamper-resistant change records, PR reviews document segregation of duties, and branch protection rules enforce authorization chains. Frameworks like [BMAD](https://github.com/bmad-code-org/BMAD-METHOD) explicitly maintain a compliance ledger in git-versioned markdown artifacts that maps to SOC2 and HIPAA controls. In fintech, where I work, SOC2 is the primary compliance standard, and the documentation trail that a well-structured markdown workflow produces is arguably more auditable than a Jira board.
+This is where I expected the argument to fall apart, but the reality is more nuanced. SOC2's change management requirements (CC8) can largely be satisfied by git-based workflows: commit history provides tamper-resistant change records, PR reviews document segregation of duties, and branch protection rules enforce authorization chains. Frameworks like [BMAD](https://github.com/bmad-code-org/BMAD-METHOD) explicitly maintain a compliance ledger in git-versioned markdown artifacts that maps to SOC2 and HIPAA controls. In fintech, where I work, SOC2 is the primary compliance standard, and the documentation trail that a well-structured markdown workflow produces is arguably more auditable than a Jira board. That said, auditors expect dashboards, exportable reports, and access control matrices. You can build those from git history, but you are effectively rebuilding the reporting layer that tools like Jira already provide out of the box.
 
 SOX and PCI-DSS are a different story. They require stricter controls, longer retention periods, and specialized reporting that git alone cannot provide. But most engineering teams are not operating under those frameworks directly. Their compliance obligations are SOC2, and git handles that better than many assume.
 
