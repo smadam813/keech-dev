@@ -122,7 +122,8 @@ RUN npx get-shit-done-cc@latest --claude --global \
 # Copy and set up firewall script
 COPY init-firewall.sh /usr/local/bin/
 USER root
-RUN chmod +x /usr/local/bin/init-firewall.sh && \
+RUN sed -i 's/\r$//' /usr/local/bin/init-firewall.sh && \
+    chmod +x /usr/local/bin/init-firewall.sh && \
   echo "$USERNAME ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" > /etc/sudoers.d/$USERNAME-firewall && \
   chmod 0440 /etc/sudoers.d/$USERNAME-firewall
 USER $USERNAME
