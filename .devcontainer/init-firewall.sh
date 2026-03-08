@@ -75,6 +75,8 @@ for domain in \
     "get.volta.sh" \
     "nodejs.org" \
     "api.nuget.org" \
+    "fonts.googleapis.com" \
+    "fonts.gstatic.com" \
     "generativelanguage.googleapis.com" \
     "oauth2.googleapis.com" \
     "accounts.google.com" \
