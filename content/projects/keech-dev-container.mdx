@@ -2,7 +2,7 @@
 title: "keech-dev-container"
 slug: keech-dev-container
 description: "A security-sandboxed VS Code Dev Container for .NET development with an iptables firewall that blocks all traffic by default, AI coding tools (Claude Code, Gemini CLI), and Docker-in-Docker support."
-date: 2026-03-07
+date: 2026-03-08
 featured: true
 stack:
   - Docker
@@ -105,6 +105,17 @@ RUN npx get-shit-done-cc@latest --all --global
 Rebuilding the container does not wipe your Claude Code configuration or force you to re-authenticate. The volumes are scoped to the dev container ID, so different projects get isolated configurations.
 
 GSD (Get Shit Done) is also pre-installed as a workflow layer on top of Claude Code and Gemini CLI. It provides structured project planning, phase execution, and verification patterns for AI-assisted development. Having it baked into the image means the full AI toolchain is ready the moment the container starts.
+
+**The repo also ships custom Claude Code commands in `.claude/commands/`.** The first is a local-only code review command that orchestrates multiple AI agents in parallel to review pull requests:
+
+1. A Haiku agent checks whether the PR should be skipped (closed, draft, or trivial)
+2. A second Haiku agent discovers all relevant CLAUDE.md files in the repo
+3. A Sonnet agent summarizes the changes
+4. Four agents run in parallel: two Sonnet agents audit CLAUDE.md compliance while two Opus agents scan for bugs and logic errors
+5. Flagged issues go through a validation pass to eliminate false positives
+6. Only high-signal findings make it to the terminal output with suggested fixes
+
+The command is scoped to `gh` CLI tools only and outputs findings to the terminal rather than posting comments on the PR. This keeps code review local and private, which matters when you are iterating on a PR before it is ready for human review. The constraint list is deliberate: no nitpicks, no style concerns, no linter-catchable problems. Only syntax errors, type errors, clear logic failures, and unambiguous CLAUDE.md violations get flagged.
 
 ## Developer Experience
 
