@@ -65,8 +65,8 @@ ENV DEVCONTAINER=true
 # Create workspace and config directories and set permissions
 # Note: only pre-creating directories needed for volume mounts and tool installs.
 # GSD and other CLI tools will create their own config dirs at install/runtime.
-RUN mkdir -p /workspace /home/$USERNAME/.claude /home/$USERNAME/.local/bin /home/$USERNAME/.volta && \
-  chown -R $USERNAME:$USERNAME /workspace /home/$USERNAME/.claude /home/$USERNAME/.local /home/$USERNAME/.volta
+RUN mkdir -p /workspace /home/$USERNAME/.claude /home/$USERNAME/.gemini /home/$USERNAME/.local/bin /home/$USERNAME/.volta && \
+  chown -R $USERNAME:$USERNAME /workspace /home/$USERNAME/.claude /home/$USERNAME/.gemini /home/$USERNAME/.local /home/$USERNAME/.volta
 
 WORKDIR /workspace
 
@@ -124,7 +124,7 @@ RUN npx get-shit-done-cc@latest --all --global
 COPY init-firewall.sh /usr/local/bin/
 USER root
 RUN sed -i 's/\r$//' /usr/local/bin/init-firewall.sh && \
-    chmod +x /usr/local/bin/init-firewall.sh && \
+  chmod +x /usr/local/bin/init-firewall.sh && \
   echo "$USERNAME ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" > /etc/sudoers.d/$USERNAME-firewall && \
   chmod 0440 /etc/sudoers.d/$USERNAME-firewall
 USER $USERNAME
