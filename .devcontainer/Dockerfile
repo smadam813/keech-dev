@@ -63,8 +63,10 @@ RUN mkdir /commandhistory \
 ENV DEVCONTAINER=true
 
 # Create workspace and config directories and set permissions
-RUN mkdir -p /workspace /home/$USERNAME/.claude /home/$USERNAME/.gemini /home/$USERNAME/.local/bin /home/$USERNAME/.volta && \
-  chown -R $USERNAME:$USERNAME /workspace /home/$USERNAME/.claude /home/$USERNAME/.gemini /home/$USERNAME/.local /home/$USERNAME/.volta
+# Note: only pre-creating directories needed for volume mounts and tool installs.
+# GSD and other CLI tools will create their own config dirs at install/runtime.
+RUN mkdir -p /workspace /home/$USERNAME/.claude /home/$USERNAME/.local/bin /home/$USERNAME/.volta && \
+  chown -R $USERNAME:$USERNAME /workspace /home/$USERNAME/.claude /home/$USERNAME/.local /home/$USERNAME/.volta
 
 WORKDIR /workspace
 
@@ -116,8 +118,7 @@ RUN curl -fsSL https://claude.ai/install.sh | bash
 # Install GSD (Get Shit Done) for Claude Code and Gemini CLI
 # Uses non-interactive flags for Docker; CLAUDE_CONFIG_DIR must be set
 # at build time so the installer uses absolute paths instead of ~
-RUN npx get-shit-done-cc@latest --claude --global \
-  && npx get-shit-done-cc@latest --gemini --global
+RUN npx get-shit-done-cc@latest --all --global
 
 # Copy and set up firewall script
 COPY init-firewall.sh /usr/local/bin/
