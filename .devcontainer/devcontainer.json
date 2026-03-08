@@ -12,13 +12,16 @@
     "--cap-add=NET_ADMIN",
     "--cap-add=NET_RAW"
   ],
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
   "customizations": {
     "vscode": {
       "extensions": [
         "ms-dotnettools.vscode-dotnet-runtime",
         "ms-dotnettools.csharp",
         "ms-dotnettools.csdevkit",
-        "Anthropic.claude-code",
+        "anthropic.claude-code",
         "ms-azuretools.vscode-containers",
         "eamodio.gitlens"
       ],
