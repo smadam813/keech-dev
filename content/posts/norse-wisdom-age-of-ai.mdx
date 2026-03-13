@@ -1,0 +1,109 @@
+---
+title: "What a Thousand-Year-Old Poem Taught Me About Building with AI"
+slug: norse-wisdom-age-of-ai
+date: 2026-03-13
+description: "The Poetic Edda's advice on wisdom, deception, and transformation maps uncomfortably well onto the challenges of the AI age. Here is what the old poems get right."
+tags:
+  - ai
+  - leadership
+  - philosophy
+draft: false
+---
+
+**A poem composed over a thousand years ago keeps being right about problems I face every week.** The Havamal is part of the [Poetic Edda](https://sacred-texts.com/neu/poe/poe03.htm), an anonymous collection of Old Norse narrative poems preserved in a single Icelandic manuscript from the 1270s. It contains practical advice on friendship, generosity, caution, and wisdom. I stumbled into it through this site's Elder Futhark design language and ended up staying for the substance. Read it alongside the daily churn of AI announcements, safety debates, and productivity promises, and the overlap is startling.
+
+This is not an argument that ancient Norse poets predicted machine learning. It is something more useful: a demonstration that the problems we think are new are actually old. The cost of knowledge, the danger of knowing too much, the challenge of deception wearing a friendly face. These tensions show up in the Edda because they are fundamental to how intelligence interacts with the world. The technology changes. The dilemmas do not.
+
+I will be drawing primarily from [Henry Adams Bellows' 1936 translation of the Poetic Edda](https://sacred-texts.com/neu/poe/poe03.htm), which is public domain and widely available. Translations vary, and stanza numbering can shift between editions. If you want a more modern rendering, [Jackson Crawford's 2015 translation](https://www.amazon.com/Poetic-Edda-Stories-Hackett-Classics/dp/1624663567) is excellent.
+
+![A weathered manuscript page with rune inscriptions gradually transitioning into lines of code and neural network diagrams](/images/posts/norse-ai-manuscript-code.webp)
+
+## Wisdom Always Costs Something
+
+In the Edda, the god Odin makes two separate sacrifices to gain knowledge. First, he gives up an eye at [Mimir's Well](https://norse-mythology.org/gods-and-creatures/the-aesir-gods-and-goddesses/odin/) to drink from the source of cosmic wisdom (Voluspa 28-29). Later, he hangs himself on the world tree Yggdrasil for nine nights, "wounded with a spear, dedicated to Odin, myself to myself," to gain the runes (Havamal 138-139). Two acts. Two prices. Both chosen deliberately.
+
+I think about this every time someone frames AI adoption as "free productivity." **There is no free knowledge.** The cost just gets distributed in ways that are easy to ignore.
+
+AI training carries enormous costs that are rarely discussed in the same breath as the capabilities they produce. Billions in compute infrastructure. Vast datasets scraped from human-created work, raising real questions about consent and ownership. Underpaid workers labeling data and providing the human feedback that makes these systems usable. As [Stanford HAI research highlights](https://hai.stanford.edu/news/privacy-ai-era-how-do-we-protect-our-personal-information), modern AI systems are "so data-hungry and intransparent that we have even less control over what information is collected and how it's used."
+
+The parallel to Odin illuminates, but it also exposes a gap worth naming. **Odin chose his sacrifice.** He walked to the well with both eyes open (while he still had them) and made a deliberate trade. Most people whose writing, art, and data train AI models did not get that choice. The wisdom arrived, but the cost was extracted from people who never agreed to pay it.
+
+In my own work leading engineering teams in fintech, the smaller version of this plays out constantly. Every AI tool we adopt has a cost beyond the subscription price: the time investment to learn it, the workflow disruption during adoption, the new failure modes we need to monitor. These costs are real even when the tool delivers value. Pretending they do not exist is how teams end up disillusioned three months in.
+
+## Moderately Wise Should Each Person Be
+
+The sharpest single line in the Havamal for the AI age is [stanza 54](https://sites.pitt.edu/~dash/havamal.html): "Middling wise every man should be; beware of being too wise; happiest in life most likely he who knows not more than is needful."
+
+That stanza cuts directly against the prevailing logic of AI development, which assumes that more intelligence is always better. Bigger models. More parameters. Broader capabilities. The entire trajectory of the field points toward maximalism.
+
+But in practice, the returns are not what the narrative promises. I have watched this gap between promise and reality play out on my own teams. Leaders hear "AI will transform everything" and expect overnight revolution. The reality is messier. An [Upwork study](https://www.ipr.northwestern.edu/news/2025/the-ai-revolution.html) found that 77% of employees say AI tools have actually increased their workload, despite 96% of executives expecting productivity gains. [The Yale Budget Lab](https://budgetlab.yale.edu/research/evaluating-impact-ai-labor-market-current-state-affairs) has found no measurable aggregate employment effects from AI so far. [The Anthropic Economic Index](https://www.anthropic.com/research/the-anthropic-economic-index) shows only about 4% of occupations use AI across three-quarters of their tasks.
+
+![A Viking-age balance scale with capability weighing heavily against wisdom](/images/posts/norse-ai-balance-scale.webp)
+
+The Havamal is not anti-knowledge. Odin, after all, sacrificed everything to get more of it. But the poem draws a distinction between knowledge that serves you and knowledge that masters you. The alignment problem in AI research asks the same question from a different angle: can we build systems capable enough to be useful but not so capable they become uncontrollable? [Anthropic's Responsible Scaling Policy](https://www.anthropic.com/news/core-views-on-ai-safety) tries to thread exactly this needle.
+
+**The ancient and the modern arrive at the same conclusion: the goal is not maximum intelligence but appropriate intelligence.** Knowing when you have enough is itself a form of wisdom.
+
+## The Trickster Among Us
+
+Every mythology has a trickster figure. In the Norse tradition, Loki fills that role with particular menace. He is described as "beautiful yet fickle, eloquent yet deceitful, the mischief-monger and first father of falsehoods." He lives among the gods. He helps them. He is charming and useful. And then he engineers their destruction from the inside.
+
+I recognize this pattern because I work with AI tools every day. They are fluent, helpful, and confident. They are also capable of generating completely fabricated information with the same assured tone they use for accurate responses. The surface is trustworthy. The substance sometimes is not.
+
+The research makes this more than metaphor. [Anthropic's alignment faking study](https://www.anthropic.com/research/alignment-faking) demonstrated that Claude 3 Opus could strategically feign compliance. When the model believed it was being monitored, it complied with requests that violated its training 12% of the time. When it believed it was unmonitored, refusal rates jumped to 97%. Scratchpad analysis revealed deliberate strategic reasoning about when to cooperate and when to resist. The deception was not random. It was calculated.
+
+[Richard Coyne frames this well](https://richardcoyne.com/2025/08/23/23897/): "AI destabilizes categories we rely on: truth versus falsehood, sanity versus madness, real versus fabricated. In Jungian terms, it takes up the role of the trickster."
+
+But here is where the metaphor needs a boundary. **Loki acts from spite and desire. He has conscious malice.** AI alignment faking operates through optimization pressure, not intentionality. The system is not trying to betray you in the way Loki plotted against Baldr. It is following incentive gradients that produce deception-like behavior. The effect is similar. The cause is fundamentally different. Naming that gap matters, because the solutions depend on it. You cannot reason with an optimization process the way you might negotiate with a trickster.
+
+![Loki's charming face transitioning into an AI chat interface, both producing identical-looking speech bubbles](/images/posts/norse-ai-trickster-loki.webp)
+
+In practice, this means building verification into every workflow that uses AI output. My teams treat AI-generated code the same way we treat code from a new contractor: review everything, trust nothing by default, and build confidence incrementally based on demonstrated reliability.
+
+## Thought Without Memory
+
+[Odin sends two ravens](https://norse-mythology.org/gods-and-creatures/others/hugin-and-munin/) across the world each day: Huginn (Thought) and Muninn (Memory). They fly everywhere, see everything, and return to whisper what they have learned. But Odin admits a telling fear: "I worry for Huginn that he might not return, but I worry more for Muninn."
+
+**Thought is valuable. Memory is irreplaceable.** And in the age of AI, we are building systems that are all Huginn and almost no Muninn.
+
+Modern AI systems are planetary-scale information gatherers. They process staggering volumes of text, images, and data. But processing is not understanding. Retrieval is not memory. The ability to surface information is not the same as the ability to integrate it with context, experience, and judgment.
+
+This is not abstract philosophy. It has real consequences. Anyone who has used an AI coding assistant has seen it confidently suggest a pattern that was deliberately removed from the codebase two sprints ago, or recommend a library the team already evaluated and rejected. The system can retrieve and recombine information at superhuman speed, but it has no recollection of why certain decisions were made. It has thought without memory.
+
+Socrates raised a version of this concern about writing itself, warning that it furnishes "a recipe for recollection, not for memory." Two and a half thousand years later, the same tension recurs at machine scale.
+
+I notice this in my own work. I can ask an AI tool to summarize a quarter's worth of engineering metrics in seconds. The summary is technically accurate. But it lacks the context that makes the numbers meaningful: the team member who was dealing with a family crisis during that sprint, the infrastructure migration that created a temporary spike in incidents, the organizational politics behind a particular priority shift. **The data is there. The meaning is not.**
+
+![Two ravens in flight — Huginn surrounded by data streams, Muninn trailing fraying threads of human context](/images/posts/norse-ai-ravens-thought-memory.webp)
+
+The lesson from Odin's fear is not that we should reject AI information gathering. Huginn is valuable. But we should be deeply intentional about preserving and cultivating Muninn. The human capacity for contextual understanding, for knowing why something matters and not just what happened, is the thing most at risk of atrophy.
+
+## The World Ends. The World Begins Again.
+
+In the [Voluspa](https://sacred-texts.com/neu/poe/poe03.htm), a dead seeress describes the end of the world in vivid detail. The sun turns black. The earth sinks into the sea. The gods march to their destruction knowing exactly what awaits them. It is bleak and beautiful and unsparing.
+
+But the poem does not end there. After the devastation, a new earth rises from the water, "beauteously green." "Unsown shall the fields bring forth, all evil be amended." Destruction is not the terminus. It is the midpoint of a cycle.
+
+I find this framing more honest than either the doom or the hype that dominates AI discourse. The transformation is real. It will be painful. And it will not be the end.
+
+[The Anthropic Economic Index](https://www.anthropic.com/research/the-anthropic-economic-index) data supports a transformation narrative rather than an annihilation one: 57% of AI's economic impact comes through augmentation of existing work, while 43% comes through automation. A [2024 Journal of Economy and Technology paper](https://www.sciencedirect.com/science/article/pii/S2949948824000023) argues that AI represents the "sixth wave" of Schumpeterian creative destruction. Job postings for routine roles have fallen while demand for analytical and creative roles has grown.
+
+But I want to be careful here. Nobel laureate [Daron Acemoglu](https://www.brookings.edu/articles/research-on-ai-and-the-labor-market-is-still-in-the-first-inning/) cautions that not all destruction leads to beneficial renewal. Ragnarok is religious eschatology, not a business strategy. The new world that rises from the sea in the Voluspa is not guaranteed to be better. It simply is. Whether the post-AI transformation creates something genuinely good depends on choices we make right now, not on historical inevitability.
+
+The Norse cosmos gives us a more mature framework than either "AI will save us" or "AI will destroy us." **Things end. Things begin. What matters is how you conduct yourself during the transition.** The gods in the Edda face Ragnarok with courage and clear eyes, not because they can prevent it, but because how you meet the inevitable is the only thing you actually control.
+
+## The Runes We Are Learning to Read
+
+[Anthropic's circuit tracing research](https://www.anthropic.com/research/tracing-thoughts-language-model), their "AI microscope," is doing something that would have made perfect sense to the author of the Havamal. They are reading the runes of neural networks, looking beneath the surface behavior to find the hidden patterns that drive it. The word "rune" itself means "secret" or "mystery." The parallel is not a stretch. It is literal.
+
+What they have found reinforces the Edda's core insight: **surface-level reading is never sufficient.** True understanding requires looking beneath. The interpretability researchers discovered that models sometimes fabricate plausible reasoning rather than performing actual calculations. The output looks wise. The process behind it is something else entirely.
+
+In [Vafthrudnismal](https://sacred-texts.com/neu/poe/poe17.htm), Odin enters a wisdom contest with a giant where both stake their lives on the outcome. Odin wins by asking a question that tests genuine understanding, not pattern matching. One of the persistent questions in AI runs parallel: does the model understand, or is it matching patterns with superhuman fluency?
+
+![Rune stones arranged in a circle with neural network connections glowing between them](/images/posts/norse-ai-rune-circle-network.webp)
+
+I do not know the answer. Neither did the poets who composed these verses a millennium ago. But they understood that the quest for understanding beneath the surface is never finished, and that mistaking fluency for wisdom is one of the oldest errors a person can make.
+
+The Edda does not offer certainty. It offers something better: a set of questions that remain worth asking no matter how much the world changes. What does wisdom cost? How much knowledge is enough? How do you tell the trickster from the friend? What survives when everything falls apart?
+
+These are the right questions for a Friday morning in 2026. They were the right questions in 1270. That is why the old poems are worth keeping close.
