@@ -12,17 +12,8 @@ else
 fi
 
 echo ""
-echo "=== Updating Gemini CLI ==="
-if npm install -g @google/gemini-cli@latest; then
-    echo "Gemini CLI updated successfully"
-else
-    echo "Gemini CLI update failed"
-    ((errors++))
-fi
-
-echo ""
 echo "=== Updating GSD ==="
-if npx --yes get-shit-done-cc@latest --all --global; then
+if npx --yes get-shit-done-cc@latest --claude --global; then
     echo "GSD updated successfully"
 else
     echo "GSD update failed"

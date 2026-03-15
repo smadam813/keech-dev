@@ -27,7 +27,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   curl \
   wget \
   ca-certificates \
+  locales \
+  && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen \
+  && locale-gen \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+ENV LANG=en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
 
 # Create the vscode user (devcontainer convention)
 # The .NET 10 SDK image (Ubuntu 24.04) may already have a user/group at UID/GID 1000,
@@ -65,8 +71,8 @@ ENV DEVCONTAINER=true
 # Create workspace and config directories and set permissions
 # Note: only pre-creating directories needed for volume mounts and tool installs.
 # GSD and other CLI tools will create their own config dirs at install/runtime.
-RUN mkdir -p /workspace /home/$USERNAME/.claude /home/$USERNAME/.gemini /home/$USERNAME/.local/bin /home/$USERNAME/.volta && \
-  chown -R $USERNAME:$USERNAME /workspace /home/$USERNAME/.claude /home/$USERNAME/.gemini /home/$USERNAME/.local /home/$USERNAME/.volta
+RUN mkdir -p /workspace /home/$USERNAME/.claude /home/$USERNAME/.local/bin /home/$USERNAME/.volta && \
+  chown -R $USERNAME:$USERNAME /workspace /home/$USERNAME/.claude /home/$USERNAME/.local /home/$USERNAME/.volta
 
 WORKDIR /workspace
 
@@ -110,16 +116,13 @@ RUN curl https://get.volta.sh | bash -s -- --skip-setup
 # Install Node.js via Volta (provides npm for global tool installs)
 RUN volta install node
 
-# Install Gemini CLI globally via npm (managed by Volta)
-RUN npm install -g @google/gemini-cli
-
 # Install Claude Code using the native installer (npm method is deprecated)
 RUN curl -fsSL https://claude.ai/install.sh | bash
 
-# Install GSD (Get Shit Done) for Claude Code and Gemini CLI
+# Install GSD (Get Shit Done) for Claude Code
 # CLAUDE_CONFIG_DIR must be set at build time so the installer uses absolute paths instead of ~
 ENV CLAUDE_CONFIG_DIR="/home/$USERNAME/.claude"
-RUN npx get-shit-done-cc@latest --all --global
+RUN npx get-shit-done-cc@latest --claude --global
 
 # Copy and set up firewall script
 COPY init-firewall.sh /usr/local/bin/

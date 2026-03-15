@@ -63,24 +63,6 @@ while read -r cidr; do
     ipset add allowed-domains "$cidr" -exist
 done < <(echo "$gh_ranges" | jq -r '(.web + .api + .git)[]' | aggregate -q)
 
-# Fetch Google IP ranges (covers all *.googleapis.com and *.google.com)
-echo "Fetching Google IP ranges..."
-google_ranges=$(curl -s https://www.gstatic.com/ipranges/goog.json)
-if [ -z "$google_ranges" ]; then
-    echo "ERROR: Failed to fetch Google IP ranges"
-    exit 1
-fi
-
-echo "Processing Google IPs..."
-while read -r cidr; do
-    if [[ ! "$cidr" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/[0-9]{1,2}$ ]]; then
-        echo "ERROR: Invalid CIDR range from Google: $cidr"
-        exit 1
-    fi
-    echo "Adding Google range $cidr"
-    ipset add allowed-domains "$cidr" -exist
-done < <(echo "$google_ranges" | jq -r '.prefixes[].ipv4Prefix // empty' | aggregate -q)
-
 # Resolve and add other allowed domains
 for domain in \
     "registry.npmjs.org" \
@@ -161,10 +143,3 @@ else
     echo "Firewall verification passed - able to reach https://api.github.com as expected"
 fi
 
-# Verify Google API access
-if ! curl --connect-timeout 5 https://generativelanguage.googleapis.com/ >/dev/null 2>&1; then
-    echo "ERROR: Firewall verification failed - unable to reach Google APIs"
-    exit 1
-else
-    echo "Firewall verification passed - able to reach Google APIs as expected"
-fi

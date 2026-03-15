@@ -1,7 +1,7 @@
 ---
 title: "keech-dev-container"
 slug: keech-dev-container
-description: "A security-sandboxed VS Code Dev Container for .NET development with an iptables firewall that blocks all traffic by default, AI coding tools (Claude Code, Gemini CLI), and Docker-in-Docker support."
+description: "A security-sandboxed VS Code Dev Container for .NET development with an iptables firewall that blocks all traffic by default, AI coding tools (Claude Code), and Docker-in-Docker support."
 date: 2026-03-08
 updated: 2026-03-14
 featured: true
@@ -11,22 +11,21 @@ stack:
   - iptables
   - .NET 10
   - Claude Code
-  - Gemini CLI
   - Zsh
   - Powerlevel10k
 github: https://github.com/smadam813/keech-dev-container
 category: open-source
 ---
 
-**Most dev containers trust the network by default. This one does not.** Every outbound connection is blocked unless it is explicitly allowed. The firewall drops traffic to the entire internet, then punches narrow holes for exactly the services a .NET developer needs: GitHub, NuGet, npm, Anthropic, Google, and VS Code marketplace. Nothing else gets through.
+**Most dev containers trust the network by default. This one does not.** Every outbound connection is blocked unless it is explicitly allowed. The firewall drops traffic to the entire internet, then punches narrow holes for exactly the services a .NET developer needs: GitHub, NuGet, npm, Anthropic, Google Fonts, and VS Code marketplace. Nothing else gets through.
 
-I built this because AI coding tools change the threat model of a development environment. Claude Code and Gemini CLI can execute arbitrary shell commands, install packages, and make network requests. That is what makes them powerful. It is also what makes an unrestricted container a liability. This dev container gives AI tools full autonomy inside a network sandbox, so they can do their job without having access to anything they should not.
+I built this because AI coding tools change the threat model of a development environment. Claude Code can execute arbitrary shell commands, install packages, and make network requests. That is what makes it powerful. It is also what makes an unrestricted container a liability. This dev container gives AI tools full autonomy inside a network sandbox, so they can do their job without having access to anything they should not.
 
 ## The Firewall Sandbox
 
 The standout feature is an iptables firewall that runs on every container start. The default policy is DROP on all chains: INPUT, FORWARD, and OUTPUT. If a destination is not on the allowlist, the connection is rejected immediately.
 
-The allowlist is not a static list of IPs. **GitHub and Google publish their IP ranges through APIs**, and the firewall fetches them dynamically at startup:
+The allowlist is not a static list of IPs. **GitHub publishes its IP ranges through an API**, and the firewall fetches them dynamically at startup:
 
 ```bash
 # Fetch GitHub meta information and aggregate + add their IP ranges
@@ -34,15 +33,9 @@ gh_ranges=$(curl -s https://api.github.com/meta)
 while read -r cidr; do
     ipset add allowed-domains "$cidr" -exist
 done < <(echo "$gh_ranges" | jq -r '(.web + .api + .git)[]' | aggregate -q)
-
-# Fetch Google IP ranges (covers all *.googleapis.com and *.google.com)
-google_ranges=$(curl -s https://www.gstatic.com/ipranges/goog.json)
-while read -r cidr; do
-    ipset add allowed-domains "$cidr" -exist
-done < <(echo "$google_ranges" | jq -r '.prefixes[].ipv4Prefix // empty' | aggregate -q)
 ```
 
-GitHub's `/meta` endpoint returns CIDR ranges for their web, API, and git services. Google publishes their ranges in a JSON file at gstatic.com. Both get piped through `aggregate` to consolidate overlapping ranges, then loaded into an `ipset` with `hash:net` for efficient CIDR matching. This is faster than individual iptables rules because the kernel does a single hash lookup instead of walking a rule chain.
+GitHub's `/meta` endpoint returns CIDR ranges for their web, API, and git services. These get piped through `aggregate` to consolidate overlapping ranges, then loaded into an `ipset` with `hash:net` for efficient CIDR matching. This is faster than individual iptables rules because the kernel does a single hash lookup instead of walking a rule chain. Other services (npm, Anthropic, Google Fonts, VS Code marketplace, etc.) are resolved via DNS individually at startup.
 
 **For services that do not publish IP ranges**, the script resolves domains to IPs at startup using DNS:
 
@@ -63,7 +56,7 @@ done
 
 Every IP and CIDR range is validated before being added. If a range does not match the expected format, the script exits with an error rather than silently misconfiguring the firewall.
 
-**The script verifies itself on every run.** After all rules are applied, it tests that `example.com` is unreachable (confirming the DROP policy works) and that both `api.github.com` and `generativelanguage.googleapis.com` are reachable (confirming the allowlist works for git operations and AI tool API access). If any check fails, the container startup fails:
+**The script verifies itself on every run.** After all rules are applied, it tests that `example.com` is unreachable (confirming the DROP policy works) and that `api.github.com` is reachable (confirming the allowlist works). If any check fails, the container startup fails:
 
 ```bash
 if curl --connect-timeout 5 https://example.com >/dev/null 2>&1; then
@@ -75,45 +68,36 @@ if ! curl --connect-timeout 5 https://api.github.com/zen >/dev/null 2>&1; then
     echo "ERROR: Firewall verification failed - unable to reach https://api.github.com"
     exit 1
 fi
-
-if ! curl --connect-timeout 5 https://generativelanguage.googleapis.com/ >/dev/null 2>&1; then
-    echo "ERROR: Firewall verification failed - unable to reach Google AI APIs"
-    exit 1
-fi
 ```
 
 The container will not start if the firewall is misconfigured. That is a deliberate design choice. A broken sandbox is worse than no sandbox because it creates a false sense of security.
 
 ## AI Tools as First-Class Citizens
 
-Claude Code and Gemini CLI are installed at the system level during the Docker build, not left for the user to configure after the container starts. Claude Code uses the native installer, and Gemini CLI is installed globally via npm:
+Claude Code is installed at the system level during the Docker build, not left for the user to configure after the container starts:
 
 ```dockerfile
-# Install Gemini CLI globally via npm (managed by Volta)
-RUN npm install -g @google/gemini-cli
-
 # Set Claude config directory for reliable installation paths
 ENV CLAUDE_CONFIG_DIR="/home/vscode/.claude"
 
 # Install Claude Code using the native installer (npm method is deprecated)
 RUN curl -fsSL https://claude.ai/install.sh | bash
 
-# Install GSD (Get Shit Done) for Claude Code and Gemini CLI
-RUN npx get-shit-done-cc@latest --all --global
+# Install GSD (Get Shit Done) for Claude Code
+RUN npx get-shit-done-cc@latest --claude --global
 ```
 
-**The configuration directories for both tools are mounted as named Docker volumes.** This means API keys, settings, and conversation history survive container rebuilds:
+**The Claude Code configuration directory is mounted as a named Docker volume.** This means API keys, settings, and conversation history survive container rebuilds:
 
 ```json
 "mounts": [
-    "source=claude-code-config-${devcontainerId},target=/home/vscode/.claude,type=volume",
-    "source=gemini-cli-config-${devcontainerId},target=/home/vscode/.gemini,type=volume"
+    "source=claude-code-config-${devcontainerId},target=/home/vscode/.claude,type=volume"
 ]
 ```
 
 Rebuilding the container does not wipe your Claude Code configuration or force you to re-authenticate. The volumes are scoped to the dev container ID, so different projects get isolated configurations.
 
-GSD (Get Shit Done) is also pre-installed as a workflow layer on top of Claude Code and Gemini CLI. It provides structured project planning, phase execution, and verification patterns for AI-assisted development. Having it baked into the image means the full AI toolchain is ready the moment the container starts.
+GSD (Get Shit Done) is also pre-installed as a workflow layer on top of Claude Code. It provides structured project planning, phase execution, and verification patterns for AI-assisted development. Having it baked into the image means the full AI toolchain is ready the moment the container starts.
 
 ### Claude Code Permission Allow List
 
