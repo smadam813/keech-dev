@@ -3,6 +3,7 @@ title: "keech-dev-container"
 slug: keech-dev-container
 description: "A security-sandboxed VS Code Dev Container for .NET development with an iptables firewall that blocks all traffic by default, AI coding tools (Claude Code, Gemini CLI), and Docker-in-Docker support."
 date: 2026-03-08
+updated: 2026-03-14
 featured: true
 stack:
   - Docker
@@ -62,7 +63,7 @@ done
 
 Every IP and CIDR range is validated before being added. If a range does not match the expected format, the script exits with an error rather than silently misconfiguring the firewall.
 
-**The script verifies itself on every run.** After all rules are applied, it tests that `example.com` is unreachable (confirming the DROP policy works) and that `api.github.com` is reachable (confirming the allowlist works). If either check fails, the container startup fails:
+**The script verifies itself on every run.** After all rules are applied, it tests that `example.com` is unreachable (confirming the DROP policy works) and that both `api.github.com` and `generativelanguage.googleapis.com` are reachable (confirming the allowlist works for git operations and AI tool API access). If any check fails, the container startup fails:
 
 ```bash
 if curl --connect-timeout 5 https://example.com >/dev/null 2>&1; then
@@ -72,6 +73,11 @@ fi
 
 if ! curl --connect-timeout 5 https://api.github.com/zen >/dev/null 2>&1; then
     echo "ERROR: Firewall verification failed - unable to reach https://api.github.com"
+    exit 1
+fi
+
+if ! curl --connect-timeout 5 https://generativelanguage.googleapis.com/ >/dev/null 2>&1; then
+    echo "ERROR: Firewall verification failed - unable to reach Google AI APIs"
     exit 1
 fi
 ```
@@ -85,6 +91,9 @@ Claude Code and Gemini CLI are installed at the system level during the Docker b
 ```dockerfile
 # Install Gemini CLI globally via npm (managed by Volta)
 RUN npm install -g @google/gemini-cli
+
+# Set Claude config directory for reliable installation paths
+ENV CLAUDE_CONFIG_DIR="/home/vscode/.claude"
 
 # Install Claude Code using the native installer (npm method is deprecated)
 RUN curl -fsSL https://claude.ai/install.sh | bash
@@ -106,14 +115,28 @@ Rebuilding the container does not wipe your Claude Code configuration or force y
 
 GSD (Get Shit Done) is also pre-installed as a workflow layer on top of Claude Code and Gemini CLI. It provides structured project planning, phase execution, and verification patterns for AI-assisted development. Having it baked into the image means the full AI toolchain is ready the moment the container starts.
 
-**The repo also ships custom Claude Code commands in `.claude/commands/`.** The first is a local-only code review command that orchestrates multiple AI agents in parallel to review pull requests:
+### Claude Code Permission Allow List
+
+The container ships a `settings.json` that controls what Claude Code can do without prompting for approval. Around 100 commands are auto-approved across several categories: shell utilities (`cat`, `ls`, `grep`, `find`, `jq`, etc.), the full .NET CLI (`dotnet build`, `test`, `restore`, `run`, `format`, etc.), common git operations, GitHub CLI commands for PR and issue workflows, Docker build/images/ps/logs, and npm.
+
+Six deny patterns block Claude Code from ever reading sensitive files: `.env`, `.env.*`, `**/secrets/*`, `**/*credential*`, `*.pem`, and `*.key`.
+
+A follow-up security pass removed `curl`, `gh api`, `docker run`, and `docker exec` from the auto-approval list. These are exfiltration and privilege escalation vectors. `curl` and `gh api` can transmit data to arbitrary endpoints. `docker run` and `docker exec` can spawn processes outside the container's restrictions. Claude Code can still use all four commands, but it has to ask first.
+
+**This creates a layered security model.** The iptables firewall controls *where* network traffic can go. The permission allow list controls *what commands* AI tools can run autonomously. Even if a command is auto-approved, it still cannot reach a destination outside the firewall allowlist. And even if a destination is allowed by the firewall, a sensitive command like `curl` still requires explicit approval.
+
+### Code Review Pipeline
+
+**The repo ships custom Claude Code commands in `.claude/commands/`.** The first is a local-only code review command that orchestrates multiple AI agents in parallel to review pull requests:
 
 1. A Haiku agent checks whether the PR should be skipped (closed, draft, or trivial)
-2. A second Haiku agent discovers all relevant CLAUDE.md files in the repo
-3. A Sonnet agent summarizes the changes
-4. Four agents run in parallel: two Sonnet agents audit CLAUDE.md compliance while two Opus agents scan for bugs and logic errors
-5. Flagged issues go through a validation pass to eliminate false positives
-6. Only high-signal findings make it to the terminal output with suggested fixes
+2. In parallel: a deterministic `find` command discovers all CLAUDE.md files in the repo while a Sonnet agent summarizes the changes
+3. Four agents run in parallel: two Sonnet agents audit CLAUDE.md compliance, one Opus agent scans for correctness issues (logic errors, off-by-one, wrong return values), and one Opus agent scans for security issues (injection, auth bypass, data leaks)
+4. A deduplication step merges findings that hit the same file, location, or root cause
+5. All flagged issues from every agent go through a validation pass that reads full file context to eliminate false positives
+6. Only high-signal findings make it to the terminal output with suggested fixes, prefixed by a scope line showing file count and line metrics
+
+CLAUDE.md discovery was originally handled by an LLM agent but was replaced with a deterministic `find` command. There is no reason to use an AI model for a file lookup. Similarly, bug detection was originally two general-purpose agents but splitting them into focused correctness and security passes produces sharper results with less overlap.
 
 The command is scoped to `gh` CLI tools only and outputs findings to the terminal rather than posting comments on the PR. This keeps code review local and private, which matters when you are iterating on a PR before it is ready for human review. The constraint list is deliberate: no nitpicks, no style concerns, no linter-catchable problems. Only syntax errors, type errors, clear logic failures, and unambiguous CLAUDE.md violations get flagged.
 
@@ -160,4 +183,4 @@ The base image is Microsoft's .NET 10 SDK on Ubuntu 24.04. The container require
 
 The `waitFor: "postStartCommand"` setting in `devcontainer.json` ensures the firewall is fully configured before the VS Code terminal becomes available. The editor will not connect until `init-firewall.sh` completes and passes its verification checks. You never work in a container that has not been properly locked down.
 
-Six VS Code extensions are pre-installed: the .NET runtime, C# language support, C# Dev Kit, Claude Code, Docker, and GitLens. These are declared in the container configuration rather than in a user profile, so every team member gets the same tooling without manual setup.
+Six VS Code extensions are pre-installed: the .NET runtime, C# language support, C# Dev Kit, Claude Code, Docker, and Markdown All in One. These are declared in the container configuration rather than in a user profile, so every team member gets the same tooling without manual setup.
