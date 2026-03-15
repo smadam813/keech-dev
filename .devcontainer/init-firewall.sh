@@ -160,3 +160,11 @@ if ! curl --connect-timeout 5 https://api.github.com/zen >/dev/null 2>&1; then
 else
     echo "Firewall verification passed - able to reach https://api.github.com as expected"
 fi
+
+# Verify Google API access
+if ! curl --connect-timeout 5 https://generativelanguage.googleapis.com/ >/dev/null 2>&1; then
+    echo "ERROR: Firewall verification failed - unable to reach Google APIs"
+    exit 1
+else
+    echo "Firewall verification passed - able to reach Google APIs as expected"
+fi

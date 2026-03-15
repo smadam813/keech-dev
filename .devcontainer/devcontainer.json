@@ -18,12 +18,12 @@
   "customizations": {
     "vscode": {
       "extensions": [
-        "ms-dotnettools.vscode-dotnet-runtime",
-        "ms-dotnettools.csharp",
-        "ms-dotnettools.csdevkit",
         "anthropic.claude-code",
         "ms-azuretools.vscode-containers",
-        "eamodio.gitlens"
+        "ms-dotnettools.csdevkit",
+        "ms-dotnettools.csharp",
+        "ms-dotnettools.vscode-dotnet-runtime",
+        "yzhang.markdown-all-in-one"
       ],
       "settings": {
         "editor.formatOnSave": true,
@@ -47,9 +47,9 @@
     "source=gemini-cli-config-${devcontainerId},target=/home/vscode/.gemini,type=volume"
   ],
   "containerEnv": {
+    "CLAUDE_CONFIG_DIR": "/home/vscode/.claude",
     "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
     "DOTNET_NOLOGO": "1",
-    "CLAUDE_CONFIG_DIR": "/home/vscode/.claude",
     "POWERLEVEL9K_DISABLE_GITSTATUS": "true"
   },
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=delegated",

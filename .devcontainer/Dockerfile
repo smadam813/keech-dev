@@ -98,6 +98,7 @@ RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/
   -a "export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhistory/.zsh_history" \
   -a 'export VOLTA_HOME="$HOME/.volta"' \
   -a 'export PATH="$VOLTA_HOME/bin:$PATH"' \
+  -a 'alias update-agents="update-ai-agents.sh"' \
   -x
 
 # Install Volta (JavaScript toolchain manager)
@@ -116,8 +117,8 @@ RUN npm install -g @google/gemini-cli
 RUN curl -fsSL https://claude.ai/install.sh | bash
 
 # Install GSD (Get Shit Done) for Claude Code and Gemini CLI
-# Uses non-interactive flags for Docker; CLAUDE_CONFIG_DIR must be set
-# at build time so the installer uses absolute paths instead of ~
+# CLAUDE_CONFIG_DIR must be set at build time so the installer uses absolute paths instead of ~
+ENV CLAUDE_CONFIG_DIR="/home/$USERNAME/.claude"
 RUN npx get-shit-done-cc@latest --all --global
 
 # Copy and set up firewall script
@@ -127,4 +128,7 @@ RUN sed -i 's/\r$//' /usr/local/bin/init-firewall.sh && \
   chmod +x /usr/local/bin/init-firewall.sh && \
   echo "$USERNAME ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" > /etc/sudoers.d/$USERNAME-firewall && \
   chmod 0440 /etc/sudoers.d/$USERNAME-firewall
+COPY update-ai-agents.sh /usr/local/bin/
+RUN sed -i 's/\r$//' /usr/local/bin/update-ai-agents.sh && \
+  chmod +x /usr/local/bin/update-ai-agents.sh
 USER $USERNAME
