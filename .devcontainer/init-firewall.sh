@@ -75,11 +75,16 @@ for domain in \
     "get.volta.sh" \
     "nodejs.org" \
     "api.nuget.org" \
-    "fonts.googleapis.com" \
-    "fonts.gstatic.com" \
+    "builds.dotnet.microsoft.com" \
+    "download.visualstudio.microsoft.com" \
+    "dotnet.microsoft.com" \
+    "dot.net" \
+    "aka.ms" \
     "marketplace.visualstudio.com" \
     "vscode.blob.core.windows.net" \
-    "update.code.visualstudio.com"; do
+    "update.code.visualstudio.com" \
+    "fonts.googleapis.com" \
+    "fonts.gstatic.com"; do
     echo "Resolving $domain..."
     ips=$(dig +noall +answer A "$domain" | awk '$4 == "A" {print $5}')
     if [ -z "$ips" ]; then
@@ -142,4 +147,3 @@ if ! curl --connect-timeout 5 https://api.github.com/zen >/dev/null 2>&1; then
 else
     echo "Firewall verification passed - able to reach https://api.github.com as expected"
 fi
-

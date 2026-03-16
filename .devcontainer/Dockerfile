@@ -28,9 +28,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   wget \
   ca-certificates \
   locales \
+  && apt-get clean && rm -rf /var/lib/apt/lists/* \
   && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen \
-  && locale-gen \
-  && apt-get clean && rm -rf /var/lib/apt/lists/*
+  && locale-gen
 
 ENV LANG=en_US.UTF-8
 ENV LC_ALL=en_US.UTF-8
@@ -58,12 +58,6 @@ RUN if getent group $USER_GID >/dev/null 2>&1; then \
   && chsh -s /bin/zsh $USERNAME \
   && echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/$USERNAME \
   && chmod 0440 /etc/sudoers.d/$USERNAME
-
-# Persist bash/zsh history
-RUN mkdir /commandhistory \
-  && touch /commandhistory/.bash_history \
-  && touch /commandhistory/.zsh_history \
-  && chown -R $USERNAME /commandhistory
 
 # Set `DEVCONTAINER` environment variable to help with orientation
 ENV DEVCONTAINER=true
@@ -101,7 +95,7 @@ ARG ZSH_IN_DOCKER_VERSION=1.2.0
 RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/v${ZSH_IN_DOCKER_VERSION}/zsh-in-docker.sh)" -- \
   -p git \
   -p dotnet \
-  -a "export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhistory/.zsh_history" \
+  -a "export PROMPT_COMMAND='history -a' && export HISTFILE=~/.zsh_history" \
   -a 'export VOLTA_HOME="$HOME/.volta"' \
   -a 'export PATH="$VOLTA_HOME/bin:$PATH"' \
   -a 'alias update-agents="update-ai-agents.sh"' \
@@ -120,9 +114,7 @@ RUN volta install node
 RUN curl -fsSL https://claude.ai/install.sh | bash
 
 # Install GSD (Get Shit Done) for Claude Code
-# CLAUDE_CONFIG_DIR must be set at build time so the installer uses absolute paths instead of ~
-ENV CLAUDE_CONFIG_DIR="/home/$USERNAME/.claude"
-RUN npx get-shit-done-cc@latest --claude --global
+RUN CLAUDE_CONFIG_DIR="/home/$USERNAME/.claude" npx get-shit-done-cc@latest --claude --global
 
 # Copy and set up firewall script
 COPY init-firewall.sh /usr/local/bin/
