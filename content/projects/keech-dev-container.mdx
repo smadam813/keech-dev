@@ -1,16 +1,17 @@
 ---
 title: "keech-dev-container"
 slug: keech-dev-container
-description: "A security-sandboxed VS Code Dev Container for .NET development with an iptables firewall that blocks all traffic by default, AI coding tools (Claude Code), and Docker-in-Docker support."
+description: "A multi-container VS Code dev environment for .NET development with a default-DROP network firewall, Claude Code sandboxing, PostgreSQL 17, and Grafana 11.5."
 date: 2026-03-08
-updated: 2026-03-14
+updated: 2026-03-22
 featured: true
 stack:
-  - Docker
+  - Docker Compose
   - VS Code Dev Containers
-  - iptables
   - .NET 10
   - Claude Code
+  - PostgreSQL
+  - Grafana
   - Zsh
   - Powerlevel10k
 github: https://github.com/smadam813/keech-dev-container
@@ -19,110 +20,99 @@ category: open-source
 
 **Most dev containers trust the network by default. This one does not.** Every outbound connection is blocked unless it is explicitly allowed. The firewall drops traffic to the entire internet, then punches narrow holes for exactly the services a .NET developer needs: GitHub, NuGet, npm, Anthropic, Google Fonts, and VS Code marketplace. Nothing else gets through.
 
-I built this because AI coding tools change the threat model of a development environment. Claude Code can execute arbitrary shell commands, install packages, and make network requests. That is what makes it powerful. It is also what makes an unrestricted container a liability. This dev container gives AI tools full autonomy inside a network sandbox, so they can do their job without having access to anything they should not.
+I built this because AI coding tools change the threat model of a development environment. Claude Code can execute arbitrary shell commands, install packages, and make network requests. That is what makes it powerful. It is also what makes an unrestricted container a liability. This dev container gives AI tools full autonomy inside a network sandbox, so they can do their job without having access to anything they should not. The current version pairs the sandboxed app container with PostgreSQL and Grafana via Docker Compose, so the full development stack runs inside the firewall boundary.
 
 ## The Firewall Sandbox
 
-The standout feature is an iptables firewall that runs on every container start. The default policy is DROP on all chains: INPUT, FORWARD, and OUTPUT. If a destination is not on the allowlist, the connection is rejected immediately.
+The firewall uses iptables with a default DROP policy on all chains: INPUT, FORWARD, and OUTPUT. If a destination is not on the allowlist, the connection is rejected. It uses `ipset` with `hash:net` for efficient CIDR matching, so the kernel does a single hash lookup against the allowlist instead of walking a rule chain.
 
-The allowlist is not a static list of IPs. **GitHub publishes its IP ranges through an API**, and the firewall fetches them dynamically at startup:
+**The firewall is configured declaratively as a devcontainer feature** rather than a custom shell script. The entire network policy lives in `devcontainer.json`:
 
-```bash
-# Fetch GitHub meta information and aggregate + add their IP ranges
-gh_ranges=$(curl -s https://api.github.com/meta)
-while read -r cidr; do
-    ipset add allowed-domains "$cidr" -exist
-done < <(echo "$gh_ranges" | jq -r '(.web + .api + .git)[]' | aggregate -q)
+```json
+"ghcr.io/w3cj/devcontainer-features/firewall:0": {
+  "verbose": true,
+  "githubIps": true,
+  "claudeCode": true,
+  "hosts": "volta.sh,get.volta.sh,nodejs.org,api.nuget.org,builds.dotnet.microsoft.com,download.visualstudio.microsoft.com,dotnet.microsoft.com,dot.net,aka.ms,vscode.blob.core.windows.net,update.code.visualstudio.com,fonts.googleapis.com,fonts.gstatic.com"
+}
 ```
 
-GitHub's `/meta` endpoint returns CIDR ranges for their web, API, and git services. These get piped through `aggregate` to consolidate overlapping ranges, then loaded into an `ipset` with `hash:net` for efficient CIDR matching. This is faster than individual iptables rules because the kernel does a single hash lookup instead of walking a rule chain. Other services (npm, Anthropic, Google Fonts, VS Code marketplace, etc.) are resolved via DNS individually at startup.
+**`githubIps`** fetches GitHub's published CIDR ranges from `api.github.com/meta` at every container start, pipes them through `aggregate` to consolidate overlapping ranges, and loads them into the ipset. **`claudeCode`** enables a curated set of domains for the AI toolchain: Anthropic's API and telemetry endpoints, Sentry, the npm registry, and the VS Code marketplace. **`hosts`** is the explicit allowlist for everything else, resolved via DNS at startup.
 
-**For services that do not publish IP ranges**, the script resolves domains to IPs at startup using DNS:
+An earlier version of this container used a custom `init-firewall.sh` script that did the same thing: ipset creation, GitHub IP aggregation, DNS resolution for individual domains, and self-verification. The community feature handles all of that with a config block instead of ~80 lines of bash. The feature provides the same default-DROP, allowlist-only approach with ipset-backed matching. What changed is that the iptables plumbing is no longer something I maintain.
 
-```bash
-for domain in \
-    "registry.npmjs.org" \
-    "api.anthropic.com" \
-    "claude.ai" \
-    "api.nuget.org" \
-    "volta.sh" \
-    "marketplace.visualstudio.com"; do
-    ips=$(dig +noall +answer A "$domain" | awk '$4 == "A" {print $5}')
-    while read -r ip; do
-        ipset add allowed-domains "$ip" -exist
-    done < <(echo "$ips")
-done
-```
+**The feature verifies itself on every startup.** After all rules are applied, it confirms that `example.com` is unreachable (the DROP policy works) and that `api.github.com` is reachable (the allowlist works). If either check fails, the container startup fails. A broken sandbox is worse than no sandbox because it creates a false sense of security.
 
-Every IP and CIDR range is validated before being added. If a range does not match the expected format, the script exits with an error rather than silently misconfiguring the firewall.
-
-**The script verifies itself on every run.** After all rules are applied, it tests that `example.com` is unreachable (confirming the DROP policy works) and that `api.github.com` is reachable (confirming the allowlist works). If any check fails, the container startup fails:
-
-```bash
-if curl --connect-timeout 5 https://example.com >/dev/null 2>&1; then
-    echo "ERROR: Firewall verification failed - was able to reach https://example.com"
-    exit 1
-fi
-
-if ! curl --connect-timeout 5 https://api.github.com/zen >/dev/null 2>&1; then
-    echo "ERROR: Firewall verification failed - unable to reach https://api.github.com"
-    exit 1
-fi
-```
-
-The container will not start if the firewall is misconfigured. That is a deliberate design choice. A broken sandbox is worse than no sandbox because it creates a false sense of security.
+**`verbose` mode surfaces blocked connections in the terminal.** The feature installs a NFLOG iptables rule and a background watcher that correlates blocked IPs with DNS queries. When a connection is rejected, a notification appears at the next shell prompt showing the blocked domain and destination. This makes it easy to diagnose missing allowlist entries without tailing log files.
 
 ## AI Tools as First-Class Citizens
 
 Claude Code is installed at the system level during the Docker build, not left for the user to configure after the container starts:
 
 ```dockerfile
-# Set Claude config directory for reliable installation paths
-ENV CLAUDE_CONFIG_DIR="/home/vscode/.claude"
-
 # Install Claude Code using the native installer (npm method is deprecated)
 RUN curl -fsSL https://claude.ai/install.sh | bash
 
 # Install GSD (Get Shit Done) for Claude Code
-RUN npx get-shit-done-cc@latest --claude --global
+RUN CLAUDE_CONFIG_DIR="/home/$USERNAME/.claude" npx get-shit-done-cc@latest --claude --global
 ```
 
-**The Claude Code configuration directory is mounted as a named Docker volume.** This means API keys, settings, and conversation history survive container rebuilds:
+**The entire home directory is persisted as a named Docker volume.** This means Claude Code config, API keys, shell history, Volta toolchain, Zsh configuration, and any other dotfiles survive container rebuilds:
 
-```json
-"mounts": [
-    "source=claude-code-config-${devcontainerId},target=/home/vscode/.claude,type=volume"
-]
+```yaml
+volumes:
+  - claude-code-home:/home/vscode
 ```
 
-Rebuilding the container does not wipe your Claude Code configuration or force you to re-authenticate. The volumes are scoped to the dev container ID, so different projects get isolated configurations.
+This is broader than the previous approach, which mounted only the `.claude` directory. Persisting the whole home directory eliminates the need for separate volume mounts for shell history and tool configs. The volume is shared across rebuilds of the same project, so nothing resets when the container image changes.
 
 GSD (Get Shit Done) is also pre-installed as a workflow layer on top of Claude Code. It provides structured project planning, phase execution, and verification patterns for AI-assisted development. Having it baked into the image means the full AI toolchain is ready the moment the container starts.
 
 ### Claude Code Permission Allow List
 
-The container ships a `settings.json` that controls what Claude Code can do without prompting for approval. Around 100 commands are auto-approved across several categories: shell utilities (`cat`, `ls`, `grep`, `find`, `jq`, etc.), the full .NET CLI (`dotnet build`, `test`, `restore`, `run`, `format`, etc.), common git operations, GitHub CLI commands for PR and issue workflows, Docker build/images/ps/logs, and npm.
+The container ships a `settings.json` that controls what Claude Code can do without prompting for approval. 75 commands are auto-approved across several categories: shell utilities (`cat`, `ls`, `grep`, `find`, `jq`, etc.), core .NET CLI commands (`dotnet build`, `test`, `restore`, `clean`, `format`, `sln`), common git operations, GitHub CLI commands for PR and issue workflows, and Docker inspection and cleanup (`images`, `ps`, `logs`, `stop`, `rm`).
 
 Six deny patterns block Claude Code from ever reading sensitive files: `.env`, `.env.*`, `**/secrets/*`, `**/*credential*`, `*.pem`, and `*.key`.
 
-A follow-up security pass removed `curl`, `gh api`, `docker run`, and `docker exec` from the auto-approval list. These are exfiltration and privilege escalation vectors. `curl` and `gh api` can transmit data to arbitrary endpoints. `docker run` and `docker exec` can spawn processes outside the container's restrictions. Claude Code can still use all four commands, but it has to ask first.
+**The auto-approval list is deliberately conservative.** Commands that can exfiltrate data or escalate privileges require explicit approval: `curl` and `gh api` can transmit data to arbitrary endpoints, `docker run` and `docker exec` can spawn processes outside the container's restrictions, and `npm install` and `npm run` can execute arbitrary scripts from the registry. Claude Code can still use all of these, but it has to ask first.
 
 **This creates a layered security model.** The iptables firewall controls *where* network traffic can go. The permission allow list controls *what commands* AI tools can run autonomously. Even if a command is auto-approved, it still cannot reach a destination outside the firewall allowlist. And even if a destination is allowed by the firewall, a sensitive command like `curl` still requires explicit approval.
 
-### Code Review Pipeline
+## Multi-Container Architecture
 
-**The repo ships custom Claude Code commands in `.claude/commands/`.** The first is a local-only code review command that orchestrates multiple AI agents in parallel to review pull requests:
+The environment runs three services orchestrated by Docker Compose on a shared bridge network:
 
-1. A Haiku agent checks whether the PR should be skipped (closed, draft, or trivial)
-2. In parallel: a deterministic `find` command discovers all CLAUDE.md files in the repo while a Sonnet agent summarizes the changes
-3. Four agents run in parallel: two Sonnet agents audit CLAUDE.md compliance, one Opus agent scans for correctness issues (logic errors, off-by-one, wrong return values), and one Opus agent scans for security issues (injection, auth bypass, data leaks)
-4. A deduplication step merges findings that hit the same file, location, or root cause
-5. All flagged issues from every agent go through a validation pass that reads full file context to eliminate false positives
-6. Only high-signal findings make it to the terminal output with suggested fixes, prefixed by a scope line showing file count and line metrics
+```yaml
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    volumes:
+      - claude-code-home:/home/vscode
+    depends_on:
+      postgres:
+        condition: service_healthy
 
-CLAUDE.md discovery was originally handled by an LLM agent but was replaced with a deterministic `find` command. There is no reason to use an AI model for a file lookup. Similarly, bug detection was originally two general-purpose agents but splitting them into focused correctness and security passes produces sharper results with less overlap.
+  postgres:
+    image: postgres:17
 
-The command is scoped to `gh` CLI tools only and outputs findings to the terminal rather than posting comments on the PR. This keeps code review local and private, which matters when you are iterating on a PR before it is ready for human review. The constraint list is deliberate: no nitpicks, no style concerns, no linter-catchable problems. Only syntax errors, type errors, clear logic failures, and unambiguous CLAUDE.md violations get flagged.
+  grafana:
+    image: grafana/grafana:11.5
+```
+
+**The app container is the development environment**, built from the .NET 10 SDK on Ubuntu 24.04. `NET_ADMIN` and `NET_RAW` capabilities are required for the firewall feature to manipulate iptables and run its verification checks.
+
+**PostgreSQL 17** runs with a healthcheck (`pg_isready` every 5 seconds), and the app container will not start until Postgres is confirmed healthy. Connection variables (`PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE`) are pre-configured in the app container's environment, so `psql` connects to the `devdb` database with no arguments.
+
+**Grafana 11.5** runs on port 3030 (shifted from the default 3000 to avoid colliding with .NET's default development port). Both Postgres and Grafana ports are forwarded to the host through `devcontainer.json`. Default credentials are `postgres/postgres` and `admin/admin` respectively.
+
+Three named volumes persist state across rebuilds: `claude-code-home` for the entire home directory, `postgres-data` for the database, and `grafana-data` for dashboards and configuration.
+
+**Docker-in-Docker is enabled through the official dev containers feature**, so you can build and run Docker containers from inside the dev container. The firewall runs as a devcontainer feature during container creation, so the network sandbox is in place before any user code executes.
 
 ## Developer Experience
 
@@ -132,39 +122,18 @@ The terminal environment is opinionated. **Zsh with Powerlevel10k is the default
 RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/v${ZSH_IN_DOCKER_VERSION}/zsh-in-docker.sh)" -- \
   -p git \
   -p dotnet \
-  -a "export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhistory/.zsh_history" \
+  -a "export PROMPT_COMMAND='history -a' && export HISTFILE=~/.zsh_history" \
   -x
 ```
 
-Command history is persisted to a named volume at `/commandhistory`, so your shell history survives container rebuilds just like the AI tool configs. Git Delta is installed for readable, syntax-highlighted diffs. Volta manages the Node.js toolchain with pinned versions that stay consistent across rebuilds.
+Shell history persists across rebuilds because the entire home directory is a named volume. Git Delta is installed for readable, syntax-highlighted diffs. Volta manages the Node.js toolchain with pinned versions that stay consistent across rebuilds. The container also includes fzf for fuzzy file and history searching, postgresql-client for direct database access, and both nano and vim as available editors.
 
-**The vscode user has passwordless sudo.** This is intentional for a development container where the firewall script needs root privileges to manipulate iptables. The sudoers entry is scoped to both general use and the specific firewall script:
+**The locale is set to `en_US.UTF-8`** for consistent character encoding. The default editor is nano (`EDITOR=nano`, `VISUAL=nano`), and VS Code is configured with `formatOnSave` enabled and Zsh as the default terminal profile. .NET telemetry and the startup banner are suppressed via `DOTNET_CLI_TELEMETRY_OPTOUT` and `DOTNET_NOLOGO`. `POWERLEVEL9K_DISABLE_GITSTATUS` is set to prevent the Powerlevel10k prompt from running `gitstatus` queries, which avoids slow prompt rendering in large repositories.
+
+**The vscode user has passwordless sudo.** This is intentional for a development container where the firewall feature needs root privileges to manipulate iptables:
 
 ```dockerfile
 RUN echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/$USERNAME
 ```
 
-## Container Architecture
-
-The base image is Microsoft's .NET 10 SDK on Ubuntu 24.04. The container requires two Linux capabilities beyond the default set:
-
-```json
-"runArgs": [
-    "--cap-add=NET_ADMIN",
-    "--cap-add=NET_RAW"
-]
-```
-
-`NET_ADMIN` allows the container to modify iptables rules and create ipsets. `NET_RAW` allows raw socket operations needed by the firewall verification step. Without these capabilities, the iptables firewall would fail silently or crash on startup.
-
-**Docker-in-Docker is enabled through the official dev containers feature**, so you can build and run Docker containers from inside the dev container. This is useful for testing containerized .NET applications without leaving the sandbox.
-
-```json
-"features": {
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
-}
-```
-
-The `waitFor: "postStartCommand"` setting in `devcontainer.json` ensures the firewall is fully configured before the VS Code terminal becomes available. The editor will not connect until `init-firewall.sh` completes and passes its verification checks. You never work in a container that has not been properly locked down.
-
-Six VS Code extensions are pre-installed: the .NET runtime, C# language support, C# Dev Kit, Claude Code, Docker, and Markdown All in One. These are declared in the container configuration rather than in a user profile, so every team member gets the same tooling without manual setup.
+Seven VS Code extensions are pre-installed: Claude Code, C# Dev Kit, Docker, ESLint, Prettier, PostgreSQL, and Markdown All in One. These are declared in the container configuration rather than in a user profile, so every team member gets the same tooling without manual setup.
