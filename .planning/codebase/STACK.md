@@ -1,125 +1,157 @@
 # Technology Stack
 
-**Analysis Date:** 2026-02-08
+**Analysis Date:** 2026-03-22
 
 ## Languages
 
 **Primary:**
-- TypeScript 5.9.3 - All source code (`.ts`, `.tsx` files)
-- MDX - Content source for blog posts and projects
+- TypeScript 5.9.3 - All application code (`src/**/*.ts`, `src/**/*.tsx`)
+- MDX - Blog posts and project content (`content/posts/**/*.mdx`, `content/projects/**/*.mdx`)
 
 **Secondary:**
-- JavaScript (ES2022 target) - Config files and build scripts
+- CSS - Tailwind v4 CSS-first configuration and keyframe animations (`src/app/globals.css`)
 
 ## Runtime
 
 **Environment:**
-- Node.js (version not specified in `.nvmrc` - uses system default)
+- Node.js v24.14.0
+- Target: ES2022 (set in `tsconfig.json`)
 
 **Package Manager:**
-- npm (default Node.js package manager)
-- Lockfile: `package-lock.json` present
+- npm 11.9.0
+- Lockfile: `package-lock.json` (lockfileVersion 3, present and committed)
 
 ## Frameworks
 
 **Core:**
-- Next.js 16.1.6 - Full-stack React framework with App Router
-  - Uses Turbopack (next dev --turbopack) for fast local development
-  - Static generation via `generateStaticParams()` for all content pages
-
-**UI & Styling:**
-- React 19.2.4 - Component library
-- Tailwind CSS 4.1.18 - Utility-first CSS framework
-  - CSS-first configuration via `@theme` directive in `src/app/globals.css`
-  - No `tailwind.config.js` file (all tokens in globals.css)
-  - Neobrutalist design system with custom colors and shadow utilities
+- Next.js 16.1.6 - App Router, React Server Components, static generation
+  - Config: `next.config.ts`
+  - Turbopack used in dev mode (`next dev --turbopack`)
+- React 19.2.4 - UI rendering (server components by default, client components where browser APIs needed)
+- React DOM 19.2.4
 
 **Content:**
-- Velite 0.3.1 - Static site generation for MDX collections
-  - Runs as separate prebuild step (not webpack plugin - incompatible with Turbopack)
-  - Compiles MDX in `content/posts/` and `content/projects/` to `.velite/` output
-  - Zod schema validation for frontmatter metadata
+- Velite 0.3.1 - MDX content compiler (build-time prebuild step, not a webpack plugin)
+  - Config: `velite.config.ts`
+  - Output: `.velite/` (gitignored, regenerated every build)
+  - Import alias: `@/.velite` maps to `./.velite`
 
-**Code Syntax & Processing:**
-- rehype-slug 6.0.0 - Adds IDs to heading elements for table of contents
-- rehype-pretty-code 0.14.1 - Syntax highlighting via Shiki
-- Shiki 3.22.0 - Code syntax highlighter (github-dark-dimmed theme)
+**Styling:**
+- Tailwind CSS 4.1.18 - CSS-first configuration via `@theme` directive
+  - No `tailwind.config.js` -- all tokens defined in `src/app/globals.css`
+  - PostCSS integration via `@tailwindcss/postcss` in `postcss.config.mjs`
+- PostCSS 8.5.6 - CSS processing pipeline
 
-**UI Components & Icons:**
-- Lucide React 0.563.0 - Icon library (GitHub, LinkedIn, Check, Copy icons used)
+**Linting:**
+- ESLint 9.39.2 - Flat config format
+  - Config: `eslint.config.mjs`
+  - Extends: `next/core-web-vitals`, `next/typescript`
+  - Uses `@eslint/eslintrc` 3.3.3 FlatCompat adapter
 
-**Utilities:**
-- clsx 2.1.1 - Conditional CSS class utility
-- tailwind-merge 3.4.0 - Merge Tailwind CSS classes intelligently
+**Testing:**
+- None configured. No test framework, no test files, no CI pipeline.
 
 ## Key Dependencies
 
-**Critical:**
-- next 16.1.6 - Core framework; without it the app doesn't run
-- react 19.2.4 - Component runtime
-- velite 0.3.1 - Content pipeline; without it MDX won't compile
+**Critical (runtime):**
+- `@upstash/redis` 1.36.2 - Serverless Redis client for view counting (`src/lib/redis.ts`)
+- `@vercel/analytics` 1.6.1 - Web analytics, imported in root layout (`src/app/layout.tsx`)
+- `lucide-react` 0.563.0 - Icon library used throughout components
 
-**Infrastructure:**
-- @tailwindcss/postcss 4.1.18 - Tailwind CSS PostCSS plugin
-- postcss 8.5.6 - CSS transformation tool (required by Tailwind)
-- @types/node 25.1.0 - Node.js type definitions
-- @types/react 19.2.10 - React type definitions
-- @types/react-dom 19.2.3 - React DOM type definitions
+**Content Pipeline:**
+- `rehype-pretty-code` 0.14.1 - Syntax highlighting for MDX code blocks (theme: `github-dark-dimmed`)
+- `rehype-slug` 6.0.0 - Adds `id` attributes to heading elements for anchor links
+- `shiki` 3.22.0 - Underlying syntax highlighter for rehype-pretty-code
 
-## Build & Dev Tools
+**Utility:**
+- `clsx` 2.1.1 - Conditional CSS class string construction
+- `tailwind-merge` 3.4.0 - Merges Tailwind classes without conflicts
+- Combined in `cn()` utility at `src/lib/utils.ts`:
+  ```typescript
+  import { type ClassValue, clsx } from "clsx";
+  import { twMerge } from "tailwind-merge";
+  export function cn(...inputs: ClassValue[]) {
+    return twMerge(clsx(inputs));
+  }
+  ```
 
-**Build:**
-- `velite && next build` - Sequential build: Velite compiles content, then Next.js builds app
-
-**Development:**
-- `velite --watch & next dev --turbopack` - Parallel processes: Velite watches MDX files, Next.js dev server with Turbopack
-
-**Linting:**
-- ESLint 9.39.2 - JavaScript linter
-  - Config: `eslint.config.mjs` (flat config format)
-  - Extends: `next/core-web-vitals` + `next/typescript`
-- @eslint/eslintrc 3.3.3 - ESLint v9 compatibility layer for legacy configs
-
-**Development Dependencies:**
-- TypeScript 5.9.3 - Type checking
-- colorable 1.0.5 - Utility library (purpose not clear from imports)
+**Dev Dependencies:**
+- `typescript` 5.9.3 - Type checking
+- `@types/node` 25.1.0 - Node.js type definitions
+- `@types/react` 19.2.10 - React type definitions
+- `@types/react-dom` 19.2.3 - React DOM type definitions
+- `eslint-config-next` 16.1.6 - Next.js ESLint rules
 
 ## Configuration
 
+**TypeScript (`tsconfig.json`):**
+- Strict mode enabled
+- Module resolution: `bundler`
+- JSX: `react-jsx`
+- Incremental compilation enabled
+- Path aliases:
+  - `@/*` -> `./src/*`
+  - `@/.velite` -> `./.velite`
+
+**Next.js (`next.config.ts`):**
+- Minimal config -- only image quality settings (`qualities: [75, 80]`)
+- No custom webpack config (Turbopack does not support custom plugins)
+
+**PostCSS (`postcss.config.mjs`):**
+- Single plugin: `@tailwindcss/postcss` (Tailwind v4 integration)
+
 **Environment:**
-- No `.env` file required for local development
-- No environment variables referenced in source code
-- Vercel deployment configured via git push (automatic CI/CD)
+- `.env.local` present (contains Upstash Redis credentials -- never read contents)
+- Required vars: `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`
 
-**Build Configuration:**
-- `next.config.ts` - Next.js config (image quality settings: 75, 80)
-- `tsconfig.json` - TypeScript config
-  - Target: ES2022
-  - Module resolution: bundler
-  - Path aliases: `@/*` → `./src/*`, `@/.velite` → `./.velite`
-  - Strict mode enabled
-- `velite.config.ts` - Content compilation config
-- `postcss.config.mjs` - PostCSS config (Tailwind CSS plugin)
-- `eslint.config.mjs` - ESLint linting rules
+**Fonts (`src/lib/fonts.ts`):**
+- Norse (custom WOFF2, local): `public/fonts/Norse-Regular.woff2`, `public/fonts/Norse-Bold.woff2`
+  - CSS variable: `--font-display`
+  - Used for headings and display text
+- Inter (Google Font): weights 400, 500, 600, 700
+  - CSS variable: `--font-body`
+  - Used for body text
 
-**Fonts:**
-- Google Fonts: Inter (body, 400/500/600/700 weights)
-- Custom WOFF2: Norse (display font, 400/700 weights in `public/fonts/`)
-- Configured in `src/lib/fonts.ts` with `next/font/local` and `next/font/google`
+## Build Pipeline
+
+**Development (`npm run dev`):**
+```bash
+velite --watch & next dev --turbopack
+```
+Two parallel processes: Velite watches MDX content for changes, Next.js uses Turbopack for fast HMR.
+
+**Production Build (`npm run build`):**
+```bash
+velite && next build
+```
+Sequential: Velite must complete MDX compilation before Next.js build starts. Output goes to `.next/`.
+
+**Lint (`npm run lint`):**
+```bash
+next lint
+```
+Uses ESLint with `next/core-web-vitals` and `next/typescript` rule sets.
+
+**Content Only (`npm run velite`):**
+```bash
+velite
+```
+Run Velite content compilation alone. Useful for debugging MDX content issues.
 
 ## Platform Requirements
 
 **Development:**
-- Node.js runtime
-- npm package manager
-- No database required
-- No API server required
+- Node.js 24.x (no `.nvmrc` or `.node-version` file)
+- npm 11.x
+- `.env.local` with Upstash Redis credentials for view counting (feature degrades gracefully without them)
+- No Docker or containerization required for local dev
 
 **Production:**
-- Vercel hosting (automatic deployment on git push)
-- Edge functions supported but not currently used
-- Static generation only (no runtime API endpoints)
+- Deployed to Vercel (git-push deployment, no CI pipeline)
+- Vercel project ID in `.vercel/project.json`
+- Static site with two serverless API routes for view counting
+- Environment variables configured in Vercel dashboard
 
 ---
 
-*Stack analysis: 2026-02-08*
+*Stack analysis: 2026-03-22*

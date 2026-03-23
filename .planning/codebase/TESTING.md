@@ -1,148 +1,244 @@
 # Testing Patterns
 
-**Analysis Date:** 2026-02-08
+**Analysis Date:** 2026-03-22
 
 ## Test Framework
 
 **Runner:**
-- Not configured
-- No test framework installed (Jest, Vitest, or other)
+- No test framework is configured
+- No Jest, Vitest, or other test runner installed
+- No test-related dependencies in `package.json`
 
 **Assertion Library:**
-- Not applicable — no testing framework
+- Not applicable -- no testing framework
 
 **Run Commands:**
-- No test commands defined in `package.json`
-- Available commands: `npm run dev`, `npm run build`, `npm run lint`, `npm run start`, `npm run velite`
+```bash
+npm run lint      # ESLint (primary automated quality gate)
+npm run build     # TypeScript + Velite schema validation (build-time checks)
+npm run velite    # Velite content compilation alone (useful for debugging content)
+```
+
+No `test` script exists in `package.json`. Available scripts are: `dev`, `build`, `start`, `lint`, `velite`.
 
 ## Test File Organization
 
 **Location:**
-- No test files found in codebase
-- No `*.test.*` or `*.spec.*` files present
+- No test files exist in the codebase
+- No `*.test.*` or `*.spec.*` files found anywhere in `src/`
 
 **Naming:**
-- Not applicable — testing not configured
+- Not applicable -- no test files exist
 
 **Structure:**
-- Not applicable — testing not configured
+- `.gitignore` includes `/coverage` entry, suggesting test coverage was considered but not implemented
 
-## Test Structure
+## Quality Assurance Strategy
 
-**Suite Organization:**
-- Not applicable — no testing framework configured
+This project relies on a **multi-layer build-time validation** strategy instead of automated tests. Each layer catches different categories of errors.
 
-**Patterns:**
-- Not applicable — no test examples to reference
+### Layer 1: TypeScript Strict Mode
+
+**Config:** `tsconfig.json` with `"strict": true`
+
+**What it catches:**
+- Type mismatches in component props
+- Missing required properties
+- Null/undefined access without checks
+- Incorrect function signatures
+- Import path errors (via path aliases `@/*` and `@/.velite`)
+
+**Key settings in `tsconfig.json`:**
+- `target: "ES2022"` -- modern JS features
+- `strict: true` -- enables all strict checks
+- `noEmit: true` -- type checking only (Next.js handles compilation)
+- `moduleResolution: "bundler"` -- Next.js/Turbopack compatible
+
+### Layer 2: ESLint
+
+**Config:** `eslint.config.mjs` (ESLint v9 flat config)
+
+**What it catches:**
+- React hooks rule violations (deps arrays, conditional hooks)
+- Next.js-specific issues (Image component usage, Link usage, metadata patterns)
+- TypeScript-specific linting (unused variables, any types)
+- Accessibility issues via `jsx-a11y` (included in `next/core-web-vitals`)
+
+**Run:** `npm run lint` (calls `next lint`)
+
+**Extends:**
+- `next/core-web-vitals` -- React, React Hooks, jsx-a11y, Next.js best practices
+- `next/typescript` -- TypeScript-specific rules
+
+### Layer 3: Velite Content Schema Validation
+
+**Config:** `velite.config.ts` with Zod schemas
+
+**What it catches:**
+- Missing required frontmatter fields in MDX files
+- Invalid data types (e.g., non-ISO date strings)
+- String length violations (`title: s.string().max(99)`, `description: s.string().max(300)`)
+- Invalid enum values for `category` field
+- Invalid slug formats
+- Missing MDX body content
+
+**Run:** Automatically during `npm run build` (first step: `velite && next build`). Also runnable standalone via `npm run velite`.
+
+**Post frontmatter schema (required/optional):**
+- Required: `title`, `slug`, `date`
+- Optional: `updated`, `description`, `tags`, `draft`
+- Auto-generated: `toc`, `metadata` (reading time), `excerpt`, `body` (compiled MDX)
+
+**Project frontmatter schema (required/optional):**
+- Required: `title`, `slug`, `description`, `date`
+- Optional: `updated`, `featured`, `stack`, `github`, `demo`, `category`, `image`
+
+### Layer 4: Next.js Build
+
+**What it catches:**
+- Server/client component boundary violations
+- Invalid `generateStaticParams()` output
+- Invalid metadata exports
+- Import errors from generated `.velite/` content
+- Invalid `route.ts` handler signatures
+- Hydration mismatches (in dev mode)
+
+**Run:** Second step of `npm run build` (`next build`)
+
+### Layer 5: Validation Scripts
+
+**Script:** `scripts/validate-colors.mjs`
+
+**What it does:** Computes WCAG 2.1 contrast ratios for all palette color pairs and reports PASS/FAIL against the 4.5:1 AA threshold.
+
+**Run:** `node scripts/validate-colors.mjs` (manual, not part of build pipeline)
+
+**Covers:** The core palette from `src/app/globals.css`: background (#E8B4B8), foreground (#000000), accent (#2D8B8B), surface (#F5E6E8), muted (#666666)
+
+## Deployment Pipeline
+
+**No CI/CD configured:**
+- No `.github/workflows/` directory
+- No GitHub Actions, CircleCI, or other CI configuration
+- Deployment is git-push to Vercel
+
+**Vercel Build Process:**
+1. `npm run build` executes: `velite && next build`
+2. Velite compiles MDX content with schema validation
+3. Next.js builds with TypeScript checking
+4. If either step fails, deployment is blocked
+
+**This means:**
+- Velite schema validation runs on every deploy
+- TypeScript errors block deployment
+- ESLint is NOT automatically run during Vercel build (must be run manually or added to build script)
 
 ## Mocking
 
-**Framework:**
-- Not applicable — no mocking framework installed
-
-**Patterns:**
-- Not applicable — no tests to provide patterns
-
-**What to Mock:**
-- Not applicable
-
-**What NOT to Mock:**
-- Not applicable
+**Framework:** Not applicable -- no mocking framework installed
 
 ## Fixtures and Factories
 
-**Test Data:**
-- Not applicable — no testing framework
+**Test Data:** Not applicable -- no test files exist
 
-**Location:**
-- Not applicable
+**Content fixtures:** MDX files in `content/posts/` and `content/projects/` serve as implicit integration test fixtures -- if Velite can compile them, the schema is valid.
 
 ## Coverage
 
-**Requirements:**
-- Not enforced — no testing framework configured
-- No coverage threshold defined
-- No coverage tooling installed
+**Requirements:** Not enforced -- no testing framework configured
 
-**View Coverage:**
-- Not applicable — no test suite to measure
+**No coverage tooling installed.** The `.gitignore` includes `/coverage` which suggests coverage was anticipated but not yet implemented.
 
 ## Test Types
 
 **Unit Tests:**
 - Not configured
-- Utility functions (`cn()` in `src/lib/utils.ts`) could be candidates for unit testing if framework were added
-- Config constants (`ELDER_FUTHARK` in `src/components/runes/rune-config.ts`) could validate structure
+- Candidates if added:
+  - `src/lib/utils.ts` -- `cn()` class merging behavior
+  - `src/lib/views.ts` -- `formatViewCount()` pluralization
+  - `src/lib/rune-glows.ts` -- `computeGlowPositions()` math with various container dimensions
+  - `src/app/api/views/[slug]/route.ts` -- `hashIP()` function
 
 **Integration Tests:**
 - Not configured
-- Content pipeline (Velite → MDX compilation → runtime rendering) could benefit from integration tests:
-  - MDX compilation validates frontmatter/Zod schemas (build-time validation)
-  - Runtime MDX execution in `MDXContent` component uses `new Function()` — could test code execution safety
+- Candidates if added:
+  - API routes (`src/app/api/views/route.ts`, `src/app/api/views/[slug]/route.ts`) -- Redis interaction, deduplication logic
+  - MDX rendering pipeline -- `MDXContent` component with `new Function()` execution
+  - Content pipeline -- Velite compilation with edge-case frontmatter
 
 **E2E Tests:**
 - Not configured
-- No E2E testing framework installed (Playwright, Cypress, etc.)
-- Manual testing is current approach (GitHub push → Vercel deployment)
+- No Playwright, Cypress, or similar framework installed
+- Candidates if added:
+  - Blog post page rendering (content, metadata, TOC)
+  - Tag filtering with URL state persistence
+  - Mobile menu toggle, keyboard navigation, focus management
+  - View count display and increment
 
-## Current Testing Approach
+## What Is Validated vs. What Is Not
 
-**Build-Time Validation:**
-- TypeScript strict mode (`strict: true` in `tsconfig.json`) catches type errors
-- Velite schema validation during build: all MDX frontmatter must match Zod schema defined in `velite.config.ts`
-- ESLint enforces code quality rules during development and CI
+**Validated (build-time):**
+- All TypeScript types and interfaces
+- All MDX frontmatter against Zod schemas
+- Import paths and module resolution
+- React hooks rules and Next.js patterns (ESLint)
+- Accessibility attributes (jsx-a11y via ESLint)
 
-**Runtime Validation:**
-- No runtime assertions or validation logic in components
-- Components trust props are correctly typed and shaped
-- Next.js `notFound()` handles missing routes (defensive but not "tested")
-
-**No Error Boundary:**
-- No React error boundaries implemented
-- MDX compilation errors would surface as build failures, not runtime crashes
-
-## Recommendations for Testing Implementation
-
-If testing were to be added, this project would benefit from:
-
-1. **Unit Tests for Utilities:**
-   - `src/lib/utils.ts` → `cn()` function (Tailwind merge logic)
-   - Date formatting logic in `src/app/blog/[slug]/page.tsx` and `src/components/blog/post-card.tsx`
-
-2. **Integration Tests for Content Pipeline:**
-   - Velite MDX compilation with various frontmatter edge cases
-   - `MDXContent` component with different MDX code samples
-
-3. **Component Snapshot/Regression Tests:**
-   - Card components (`PostCard`, `ProjectCard`) with various data shapes
-   - Header navigation state transitions (open/close menu, active link detection)
-
-4. **E2E Tests for Key User Flows:**
-   - Navigation to blog post and rendering
-   - Mobile menu toggle and keyboard interactions
-   - Static generation verification (all pages should be pre-rendered)
-
-## Testing Gaps
-
-**No Tests For:**
+**NOT validated (no runtime tests):**
 - Component rendering correctness
-- Edge cases in date formatting and filtering logic
-- Menu accessibility features (focus trap, inert attribute, keyboard handlers)
-- Code block copy functionality (requires DOM interaction)
-- Scroll reveal intersection observer behavior
-- SEO metadata generation
-- Static site generation (`generateStaticParams()`)
-- Content draft filtering logic
+- Conditional rendering logic (draft filtering, tag filtering, empty states)
+- Browser API interactions (IntersectionObserver, ResizeObserver, localStorage, clipboard)
+- Animation sequencing and reduced-motion behavior
+- API route behavior (Redis operations, IP deduplication, error responses)
+- View count caching (localStorage read-through cache)
+- URL state management (search params for filters)
+- Focus management and keyboard navigation
+- Mobile menu scroll lock behavior
+- SEO metadata generation correctness (`generateMetadata()`)
+- Static params generation (`generateStaticParams()`)
+- Date formatting logic (repeated in multiple components)
+- `MDXContent` runtime code execution safety
 
-## Tooling Note
+## Common Patterns (for future test implementation)
 
-The project uses:
-- **TypeScript** for static type checking (primary form of validation)
-- **ESLint** for code quality (enforced during `npm run lint`)
-- **Velite** for build-time content validation (schema enforcement)
+**If a test framework were added, follow these patterns:**
 
-These provide guardrails, but no behavioral test coverage exists.
+**Utility function tests:**
+```typescript
+// Example structure for src/lib/utils.test.ts
+describe('cn', () => {
+  it('merges class names', () => {
+    expect(cn('px-2', 'py-1')).toBe('px-2 py-1')
+  })
+  it('resolves tailwind conflicts', () => {
+    expect(cn('px-2', 'px-4')).toBe('px-4')
+  })
+  it('handles conditional classes', () => {
+    expect(cn('base', false && 'hidden', 'end')).toBe('base end')
+  })
+})
+```
+
+**API route tests:**
+```typescript
+// Example structure for src/app/api/views/route.test.ts
+describe('GET /api/views', () => {
+  it('returns empty counts for no slugs', async () => {
+    const req = new Request('http://localhost/api/views?slugs=')
+    const res = await GET(req)
+    expect(await res.json()).toEqual({ counts: {} })
+  })
+  it('returns counts for valid slugs', async () => {
+    // Mock redis.mget
+    const req = new Request('http://localhost/api/views?slugs=post-1,post-2')
+    const res = await GET(req)
+    expect(res.status).toBe(200)
+  })
+})
+```
+
+**Recommended framework:** Vitest (aligns with Vite ecosystem, fast, TypeScript-native, compatible with Next.js via `@vitejs/plugin-react`)
 
 ---
 
-*Testing analysis: 2026-02-08*
+*Testing analysis: 2026-03-22*

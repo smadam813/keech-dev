@@ -1,197 +1,232 @@
 # Codebase Concerns
 
-**Analysis Date:** 2026-02-08
+**Analysis Date:** 2026-03-22
 
-## Fragile Areas
+## Critical Severity
 
-**MDX Runtime Compilation:**
-- Files: `src/components/blog/mdx-content.tsx`
-- Why fragile: The component uses `new Function(code)` to execute compiled MDX code at runtime. This executes arbitrary JavaScript without a sandbox and bypasses Next.js build-time safety checks. If MDX content sources become untrusted or a build step is compromised, this becomes an XSS vulnerability.
-- Safe modification: Avoid user-generated MDX content. Keep Velite-compiled content as the sole source. If MDX code handling changes, validate that content always originates from controlled `content/` directory.
-- Test coverage: No test coverage for MDX execution. No validation of code parameter origin.
+### Security: `new Function()` MDX Execution
 
-**Copy Button Error Handling:**
-- Files: `src/components/blog/copy-button.tsx`
-- Why fragile: The `handleCopy` function calls `navigator.clipboard.writeText()` without error handling. In older browsers, private browsing modes, or security-restricted contexts, this API may fail silently with a rejected promise. Users see no feedback when copy fails.
-- Safe modification: Wrap clipboard operation in try-catch. Provide fallback (e.g., select-and-copy or explicit error message).
-- Test coverage: No error cases tested. No fallback mechanism.
+- Issue: `new Function(code)` executes arbitrary JavaScript at runtime with no sandboxing, try-catch, or CSP consideration
+- Files: `src/components/blog/mdx-content.tsx` (line 13)
+- Impact: Any compromise of the Velite build output or `.velite/` directory results in arbitrary code execution in every visitor's browser. If content sourcing ever expands beyond the local `content/` directory, this is a direct XSS vector.
+- Current mitigation: Content is version-controlled and compiled by Velite at build time. The `.velite/` output directory is gitignored.
+- Fix approach:
+  1. Wrap the `new Function(code)` call in a try-catch with a fallback UI (prevents page crash on malformed MDX)
+  2. Add `Content-Security-Policy` headers via `next.config.ts` `headers()` -- at minimum restrict `script-src` and consider `unsafe-eval` implications
+  3. Long-term: evaluate `next-mdx-remote` or similar libraries that provide controlled MDX execution
 
-**Header Mobile Menu Accessibility:**
-- Files: `src/components/layout/header.tsx`
-- Why fragile: Focus management uses direct DOM manipulation with `.setAttribute('inert', '')`. The `inert` attribute support varies across browsers. On older browsers or when JS fails, users can still interact with main content while menu is open.
-- Safe modification: Test `inert` attribute browser support. Consider additional ARIA attributes as fallback (e.g., `aria-hidden` with tabindex management).
-- Test coverage: No accessibility testing. No graceful degradation tested.
+### Security: No Security Headers
 
-**Scroll Lock Implementation:**
-- Files: `src/components/layout/header.tsx` (lines 34-53)
-- Why fragile: Scroll lock uses `document.body.style.position = 'fixed'` with manual scroll restoration. This approach can conflict with other scroll libraries, doesn't account for viewport-relative positioning of fixed elements, and may cause layout shift on platforms with scrollbars.
-- Safe modification: Consider using overflow-hidden on body with margin-right adjustment for scrollbar width, or use a dedicated scroll-lock library.
-- Test coverage: No tests for scroll lock behavior on different devices/viewport sizes.
+- Issue: No Content-Security-Policy, X-Frame-Options, X-Content-Type-Options, or other security headers configured
+- Files: `next.config.ts` (no `headers()` function defined), no `src/middleware.ts` file exists
+- Impact: Site is vulnerable to clickjacking, MIME sniffing, and has no eval restrictions. The `new Function()` pattern makes CSP configuration particularly important.
+- Fix approach: Add a `headers()` function to `next.config.ts` with:
+  - `X-Frame-Options: DENY`
+  - `X-Content-Type-Options: nosniff`
+  - `Referrer-Policy: strict-origin-when-cross-origin`
+  - `Content-Security-Policy` with appropriate directives (will need `unsafe-eval` unless MDX execution is reworked)
 
-## Error Handling
+### Security: Dependency Vulnerabilities
 
-**Unhandled Promise Rejection:**
-- Problem: Copy button promise is not caught, only awaited
-- Files: `src/components/blog/copy-button.tsx` (line 18)
-- Risk: Clipboard API rejection (permission denied, unsupported) silently fails with no user feedback
-- Improvement path: Add try-catch block with user-facing error notification
+- Issue: `npm audit` reports 2 vulnerabilities (1 high in `flatted`, 1 moderate in `next`) including CSRF bypass, HTTP smuggling, and unbounded disk cache growth
+- Files: `package.json`, `package-lock.json`
+- Impact: The `next` vulnerabilities include null origin CSRF bypass for Server Actions and unbounded image disk cache growth. While current Server Actions usage is minimal, the CSRF bypass affects the views API.
+- Fix approach: Run `npm audit fix` to apply available patches. Update `next` from `16.1.6` to latest patch.
 
-**Missing Error Boundaries:**
-- Problem: No React error boundaries in layout or page components
-- Files: `src/app/layout.tsx`, all page components under `src/app/`
-- Risk: Client-side errors in children crash entire page instead of graceful degradation
-- Improvement path: Add error.tsx files per Next.js error boundary pattern, or wrap dynamic components with error boundary
+### Missing: No Test Coverage
 
-**MDX Execution Errors:**
-- Problem: `new Function(code)` execution in `MDXContent` has no try-catch
-- Files: `src/components/blog/mdx-content.tsx` (lines 12-14)
-- Risk: Malformed MDX code or rehype plugin failures crash the page
-- Improvement path: Wrap function execution in try-catch with fallback UI
+- Issue: Zero test files exist anywhere in the codebase. No test framework is configured.
+- Files: Every file under `src/` is untested
+- Impact: Refactoring, dependency upgrades, and bug fixes carry regression risk. The MDX execution path, view counting API, and date formatting logic are all untested.
+- Fix approach:
+  1. Install Vitest (aligns with Vite-compatible ecosystem)
+  2. Priority test targets: `src/lib/views.ts`, `src/lib/rune-glows.ts` (pure functions), API routes `src/app/api/views/`, MDX rendering path
+  3. Add Playwright for E2E coverage of mobile menu, copy button, scroll reveal
 
-## Security Considerations
+## Moderate Severity
 
-**Client-Side MDX Execution (XSS Risk):**
-- Risk: `new Function(code)` executes arbitrary JavaScript. While current content is trusted (committed to repo), the pattern is inherently risky.
-- Files: `src/components/blog/mdx-content.tsx`
-- Current mitigation: Velite pre-compiles MDX, content is version-controlled
-- Recommendations:
-  - Document this risk in codebase comments
-  - Add CSP headers if deployed (restrict eval via policy)
-  - Consider moving to `next-mdx-remote` or similar with built-in sandboxing for future flexibility
-  - If content ever becomes user-generated, this pattern is unsafe
+### Missing: No Error Boundaries
 
-**Clipboard API Permission Handling:**
-- Risk: `navigator.clipboard.writeText()` may fail due to permissions or browser restrictions
-- Files: `src/components/blog/copy-button.tsx`
-- Current mitigation: None
-- Recommendations: Add error handling and user feedback for denied/unavailable clipboard access
+- Issue: No `error.tsx` or `loading.tsx` files exist in any route segment. No React error boundaries wrap client components.
+- Files: All route segments under `src/app/` lack error/loading boundaries
+- Impact: Any client-side error (e.g., MDX execution failure, API fetch error in view counter) crashes the entire page with a white screen instead of graceful degradation
+- Fix approach: Add `error.tsx` at `src/app/error.tsx` (global) and `src/app/blog/[slug]/error.tsx` (MDX-specific). Add `loading.tsx` skeletons for route transitions.
 
-## Performance Bottlenecks
+### Missing: No Favicon or OG Images
 
-**Header Re-renders:**
-- Problem: Multiple useEffect hooks on header (5 separate effects) monitoring `isOpen` state
-- Files: `src/components/layout/header.tsx` (lines 30-90)
-- Cause: Each dependency triggers its own effect. Scroll lock, focus management, event listeners, and cleanup all separate.
-- Improvement path: Consider combining related effects or using custom hook to reduce re-render noise. Profile to confirm impact.
+- Issue: No favicon (`.ico`, `.svg`, `.png`), no apple-touch-icon, and no Open Graph images exist anywhere in the codebase
+- Files: `public/` directory has no icon files; `src/app/` has no `icon.tsx`, `opengraph-image.tsx`, or `apple-icon.tsx`
+- Impact: Browser tabs show a generic icon. Social media shares of blog posts and the site itself render without a preview image, significantly reducing click-through rates.
+- Fix approach:
+  1. Add favicon files to `public/` or use Next.js Metadata API `icon.tsx`
+  2. Create `opengraph-image.tsx` using Next.js Image Generation for dynamic OG images per blog post
+  3. Add default OG image reference in `src/app/layout.tsx` metadata
 
-**ProjectCard Image Loading:**
-- Problem: Images use `fill` layout with `object-cover`, but no explicit `sizes` prop on Image component
-- Files: `src/components/projects/project-card.tsx` (lines 32-37)
-- Cause: Without `sizes`, Next.js Image may serve suboptimal image widths, or generate excessive variants
-- Improvement path: Add `sizes` prop matching responsive breakpoints (e.g., `sizes="(max-width: 768px) 100vw, 50vw"`)
+### Code Duplication: localStorage Cache Helpers
 
-**Velite Build Step Dependency:**
-- Problem: Build process requires sequential execution: `velite && next build`
-- Files: `package.json` (line 8), `velite.config.ts`
-- Cause: Velite is a separate prebuild step (not webpack plugin due to Turbopack limitation)
-- Scaling limitation: As content grows, Velite rebuild time may become noticeable. No incremental builds observed.
-- Improvement path: Monitor build times. Investigate Velite's watch mode cache behavior. Consider content pagination if 100+ posts added.
+- Issue: `getCachedViews()` and `setCachedViews()` functions are copy-pasted identically in two files
+- Files: `src/components/blog/view-counter.tsx` (lines 10-25), `src/components/blog/listing-view-counts.tsx` (lines 19-34)
+- Impact: Bug fixes or behavior changes must be applied in two places. Easy to diverge.
+- Fix approach: Extract to `src/lib/views.ts` alongside the existing `formatViewCount()` function
 
-## Missing Critical Features
+### Code Duplication: Date Formatting
 
-**No Offline Support:**
-- Problem: No service worker or offline fallback
-- Blocks: App becomes non-functional without network (progressive enhancement not implemented)
-- Impact: Blog content is static, could benefit from offline caching
+- Issue: Identical `Intl.DateTimeFormat` construction with same options (`en-US`, `numeric` year, `long` month, `numeric` day, `UTC` timezone) repeated in three locations
+- Files: `src/app/blog/[slug]/page.tsx` (lines 53-58, 61-66), `src/components/blog/post-card.tsx` (lines 19-24)
+- Impact: Inconsistent formatting if one instance is modified without the others
+- Fix approach: Create `formatDate(isoString: string): string` in `src/lib/views.ts` or a new `src/lib/format.ts`
 
-**No Sitemap Auto-Update:**
-- Problem: `src/app/sitemap.ts` is hardcoded, doesn't reference Velite collections
-- Files: `src/app/sitemap.ts`
-- Impact: Adding new blog posts or projects requires manual sitemap update; easy to forget
+### Code Duplication: Filtered List Components
 
-**No RSS Feed:**
-- Problem: Blog posts have no RSS feed endpoint
-- Impact: Subscribers can't follow content updates via standard mechanisms
+- Issue: `FilteredPostList` and `FilteredProjectList` share nearly identical structure (~90% structural overlap): URL-based filter state, transition animation, `updateURL` via `replaceState`, clear handler, empty state UI
+- Files: `src/components/blog/filtered-post-list.tsx` (154 lines), `src/components/projects/filtered-project-list.tsx` (150 lines)
+- Impact: Any filter behavior fix or enhancement must be applied in both files. The URL management logic, transition state, and empty state pattern are identical.
+- Fix approach: Extract a generic `useFilteredList` hook or a `FilteredListLayout` wrapper component that accepts collection-specific rendering via render props
 
-**No Search:**
-- Problem: Blog and projects pages have no search/filter capability
-- Impact: Users must scroll through all content to find specific posts or projects
+### Code Duplication: TagChip and TechBadge
 
-## Test Coverage Gaps
+- Issue: `TagChip` and `TechBadge` share identical toggle button mode implementation (same class logic, same `aria-pressed`, same shadow/translate hover pattern)
+- Files: `src/components/blog/tag-chip.tsx` (lines 17-37), `src/components/projects/tech-badge.tsx` (lines 15-36)
+- Impact: Minor -- visual consistency could diverge if one is updated without the other
+- Fix approach: Extract shared toggle badge component, or keep separate if they intentionally diverge in future
 
-**No Unit Tests:**
-- What's not tested: Any component behavior, utility functions, formatting functions
-- Files: All files under `src/`
-- Risk: Refactoring is risky without tests. Bug fixes may introduce regressions.
-- Priority: High (even 20% coverage of critical paths would help)
+### Performance: Missing `sizes` on Project Card Images
 
-**No Integration Tests:**
-- What's not tested: Blog post rendering with actual MDX, static generation, dynamic routes
-- Files: `src/app/blog/[slug]/page.tsx`, `src/app/projects/[slug]/page.tsx`
-- Risk: Broken links, missing metadata, or malformed content only caught at runtime or manual testing
-- Priority: High
+- Issue: `<Image>` components in project cards use `fill` layout without a `sizes` prop
+- Files: `src/components/projects/project-card.tsx` (lines 32-37), `src/app/projects/[slug]/page.tsx` (lines 115-120)
+- Impact: Without `sizes`, Next.js Image generates default srcset but the browser cannot select the optimal image size, potentially downloading larger images than needed on mobile
+- Fix approach: Add `sizes="(max-width: 768px) 100vw, 50vw"` to project card images and `sizes="(max-width: 1024px) 100vw, 56rem"` to project detail images
 
-**No E2E Tests:**
-- What's not tested: Page navigation, mobile menu interactions, copy button, scroll reveal animations
-- Risk: UI regressions, accessibility issues, or mobile-specific bugs reach production
-- Priority: Medium (static content reduces risk, but mobile menu behavior should be tested)
+### API: No Rate Limiting on View Counter
 
-**No Accessibility Audit:**
-- What's not tested: Screen reader compatibility, keyboard navigation, color contrast, focus management
-- Files: `src/components/layout/header.tsx` (mobile menu), `src/components/blog/mdx-content.tsx` (code blocks)
-- Risk: Users with disabilities may encounter barriers. Rune decorations (esp. custom fonts) may not be properly labeled.
-- Priority: High (accessibility is correctness, not optional)
+- Issue: The POST endpoint at `/api/views/[slug]` has IP-based deduplication (24h TTL) but no rate limiting
+- Files: `src/app/api/views/[slug]/route.ts`
+- Impact: A bot or malicious actor can hammer the endpoint with requests from rotating IPs, inflating view counts and consuming Upstash Redis quota. Each unique IP creates a dedup key and an increment.
+- Fix approach: Add Upstash Ratelimit (`@upstash/ratelimit`) with a sliding window. Vercel's Edge middleware or Next.js middleware can enforce this before the route handler runs.
 
-## Dependencies at Risk
+### API: No Input Validation on Slug Parameters
 
-**Velite Pre-Release:**
-- Risk: `velite@0.3.1` is still pre-release (0.x.x), API may be unstable
-- Impact: Major version bump could require config rewrites
-- Migration plan: Lock version in package.json; monitor GitHub for stability updates before upgrading
+- Issue: Slug parameters from URL paths and query strings are used directly in Redis key construction without validation or sanitization
+- Files: `src/app/api/views/[slug]/route.ts` (line 14, 32: `views:${slug}`), `src/app/api/views/route.ts` (line 8: splits on comma, no validation)
+- Impact: Crafted slugs could create unexpected Redis keys. The batch endpoint accepts arbitrary comma-separated values with no length limit on the slugs array.
+- Fix approach: Validate slugs against `generateStaticParams()` output or enforce a regex pattern (e.g., `^[a-z0-9-]+$`). Limit batch size in the GET `/api/views` endpoint.
 
-**Shiki Code Highlighting:**
-- Risk: `shiki@3.22.0` is heavy (large bundle), used only for build-time code highlighting
-- Impact: No runtime code highlighting, but Shiki bundles languages and themes
-- Mitigation: Already handled at build time, not shipped to client. OK.
+### SEO: No OG Images for Blog Posts
 
-**Lucide React Icons:**
-- Risk: `lucide-react@0.563.0` is solid but each icon is imported as separate component
-- Impact: Tree-shaking works, but if many icons added, consider impact
-- Current state: Only 4 icons used (Menu, X, Copy, Check, Github, ExternalLink). Low concern.
+- Issue: Blog post metadata includes `openGraph` but no images. Project metadata conditionally includes images only when `project.image` exists. The root layout metadata has no images.
+- Files: `src/app/blog/[slug]/page.tsx` (lines 35-42), `src/app/layout.tsx` (lines 22-28)
+- Impact: Social media shares render without preview images. This significantly reduces engagement and click-through rates for shared content.
+- Fix approach: Use Next.js `opengraph-image.tsx` convention or add a default OG image to metadata
 
-## Technical Debt
+### Sitemap: Static Routes Use `new Date()`
 
-**No API Routes or Backend:**
-- Debt: Fully static site with no dynamic functionality
-- Impact: All interactivity is client-side (copy button, menu toggle, scroll animations). Content is immutable at runtime.
-- Payoff if addressed: Could enable comments, forms, analytics beyond Vercel analytics
-- Recommendation: Acceptable for a portfolio site. Only address if new features require it.
+- Issue: Static routes in the sitemap (`/`, `/about`, `/blog`, `/projects`) and project routes use `new Date()` for `lastModified`, meaning every build regenerates with the current date regardless of actual content changes
+- Files: `src/app/sitemap.ts` (lines 8-11, 21-25)
+- Impact: Search engines see constantly changing `lastModified` dates for unchanged pages, reducing crawl efficiency signals. Blog post dates correctly use `post.date`, but project routes do not use `project.date` or `project.updated`.
+- Fix approach: Use fixed dates for static routes (or the most recent content date). Use `project.updated ?? project.date` for project routes.
 
-**CSS-First Tailwind Config:**
-- Debt: All design tokens in `globals.css` via `@theme` directive instead of traditional `tailwind.config.js`
-- Impact: Non-standard setup. May confuse team members familiar with classic Tailwind. IDE autocomplete may not work.
-- Payoff if addressed: Simpler config, but trades familiarity for brevity
-- Recommendation: Document well. OK for solo developer, consider reverting if team grows.
+## Minor Severity
 
-**Rune Config as Hard-Coded Values:**
-- Debt: `src/components/runes/rune-config.ts` is 251 lines of static data
-- Impact: No database, hard to add new pages without modifying config
-- Payoff if addressed: Extract to JSON file or data layer for easier maintenance
-- Recommendation: OK for current scale. Only refactor if patterns change frequently.
+### Accessibility: Table of Contents Hidden on Mobile
 
-**Manual Date Formatting:**
-- Debt: `src/app/blog/[slug]/page.tsx` and `src/app/projects/[slug]/page.tsx` duplicate Intl.DateTimeFormat logic
-- Impact: Inconsistent formatting if one file is updated and the other isn't
-- Payoff if addressed: Create shared utility function
-- Recommendation: Extract to `src/lib/format-date.ts` for DRY principle
+- Issue: The `<aside>` containing the table of contents is `hidden lg:block`, completely removing it from the DOM on mobile/tablet
+- Files: `src/app/blog/[slug]/page.tsx` (line 121)
+- Impact: Mobile readers of long posts have no way to navigate between sections. On a 3000-word post, this is a significant UX gap.
+- Fix approach: Add a collapsible TOC component for mobile (e.g., sticky bottom bar or expandable section at top of article)
 
-## Scaling Limits
+### Accessibility: Copy Button Not Keyboard-Discoverable
 
-**Content Build Time:**
-- Current capacity: 2 MDX files (minimal test case)
-- Limit: Velite build time likely remains <100ms for 50-100 posts. Unknown beyond that.
-- Scaling path: Monitor build time as content grows. Profile Velite config if slowdown occurs. Consider splitting collections.
+- Issue: The copy button is `opacity-0 group-hover:opacity-100`, making it invisible until mouse hover. Keyboard-only users tabbing through code blocks cannot see the button they're about to activate.
+- Files: `src/components/blog/copy-button.tsx` (line 29)
+- Impact: Keyboard and screen reader users can still activate the button, but sighted keyboard users have no visual indication it exists
+- Fix approach: Add `focus-visible:opacity-100` alongside `group-hover:opacity-100`
 
-**Memory Usage:**
-- Current capacity: All collections loaded into memory at build time
-- Limit: With 1000+ posts, Velite memory usage may spike
-- Scaling path: Implement pagination or lazy-load collections. Use Velite's filtering early in transform pipeline.
+### Accessibility: Custom List Bullets May Affect VoiceOver
 
-**Client Bundle Size:**
-- Current capacity: Small (static site, minimal JS)
-- Limit: Adding many interactive features or large dependencies could impact perceived performance
-- Scaling path: Use next/dynamic for route-based code splitting. Audit bundle size regularly.
+- Issue: `list-style: none` on `.prose ul` with `::before` pseudo-element rune bullets. The code includes a comment acknowledging this Safari/VoiceOver concern.
+- Files: `src/app/globals.css` (lines 361-383)
+- Impact: Safari VoiceOver may not announce list semantics. The comment states this is considered acceptable because structural `<li>` children are retained.
+- Fix approach: Add `role="list"` to MDX `<ul>` elements via the MDX component overrides in `src/components/blog/mdx-content.tsx` if VoiceOver behavior is confirmed problematic
+
+### Accessibility: `useLayoutEffect` SSR Warning Potential
+
+- Issue: `useLayoutEffect` is used in two client components for localStorage reads. While these are client components (`'use client'`), `useLayoutEffect` generates React warnings during SSR if components are ever server-rendered.
+- Files: `src/components/blog/view-counter.tsx` (line 32), `src/components/blog/listing-view-counts.tsx` (line 40)
+- Impact: Currently safe because components are exclusively client-rendered. If rendering approach changes, this would produce console warnings.
+- Fix approach: No action needed unless these components need SSR. The pattern is intentional for preventing flash.
+
+### Performance: Hero Component Complexity
+
+- Issue: The Hero component manages 5 state variables, 5 `useEffect` hooks, a `ResizeObserver`, and a `setTimeout` chain for reveal orchestration
+- Files: `src/components/hero.tsx` (177 lines)
+- Impact: High cognitive complexity for a single component. The reveal sequence timing (350ms + 250ms pause + 500ms text + glow cascade) is spread across multiple effects with implicit ordering dependencies.
+- Fix approach: Consider extracting animation orchestration into a custom `useRevealSequence` hook. The `ResizeObserver` logic could be a separate `useGlowPositions` hook.
+
+### Performance: Unoptimized About Page Headshot
+
+- Issue: The about page headshot uses explicit `width={384}` and `height={512}` with `object-cover` but no `sizes` attribute
+- Files: `src/app/about/page.tsx` (lines 17-24)
+- Impact: Minor -- the image is small (76KB webp) and has `priority` set, but explicit sizing means Next.js generates a single variant rather than responsive srcset
+- Fix approach: Low priority. Image is already well-optimized at 76KB.
+
+### Missing: No RSS Feed
+
+- Issue: Blog has no RSS/Atom feed endpoint despite having structured post data with dates, descriptions, and content
+- Files: No feed endpoint exists
+- Impact: Content consumers who prefer RSS cannot subscribe to the blog. Reduces discoverability.
+- Fix approach: Create `src/app/feed.xml/route.ts` that generates RSS from the `posts` collection
+
+### Missing: Resume Placeholder
+
+- Issue: The About page has a disabled "Resume Coming Soon" button that is permanently non-functional
+- Files: `src/app/about/page.tsx` (lines 54-65)
+- Impact: Minor UX concern -- a disabled button with no timeline sets unclear expectations
+- Fix approach: Either add the resume PDF or remove the button until ready
+
+### Code Quality: `validate-colors.mjs` Palette Mismatch
+
+- Issue: The color validation script uses `muted: '#666666'` but `globals.css` defines `--color-muted: #4A4A4A`
+- Files: `scripts/validate-colors.mjs` (line 6), `src/app/globals.css` (line 11)
+- Impact: WCAG contrast validation results from the script do not reflect the actual palette. The script reports incorrect contrast ratios for any pair involving the muted color.
+- Fix approach: Update the script's palette to match `globals.css` values. Consider deriving the palette from CSS custom properties or a shared config.
+
+### Dependency: Velite Pre-Release
+
+- Issue: `velite@0.3.1` is pre-release (0.x.x semver). The API surface may change on minor version bumps.
+- Files: `package.json`, `velite.config.ts`
+- Impact: A Velite upgrade could require config file changes, schema API changes, or output format changes. The `.velite/` import alias and collection schemas are tightly coupled.
+- Fix approach: Pin the exact version in `package.json`. Test upgrades in a branch. Monitor the Velite GitHub repository for breaking change announcements.
+
+### Dependency: Outdated Packages
+
+- Issue: Several dependencies have available updates including Next.js (`16.1.6` -> `16.2.1`), Tailwind CSS (`4.1.18` -> `4.2.2`), `@vercel/analytics` (`1.6.1` -> `2.0.1` major), and Shiki (`3.22.0` -> `4.0.2` major)
+- Files: `package.json`
+- Impact: The Next.js update specifically addresses the `npm audit` vulnerabilities. The `@vercel/analytics` and Shiki major bumps may require import or API changes.
+- Fix approach: Update Next.js and Tailwind CSS (patch/minor). Evaluate `@vercel/analytics` v2 and Shiki v4 migration paths separately as major versions.
+
+### Browser Compatibility: `inert` Attribute
+
+- Issue: The `inert` HTML attribute is used for focus management on mobile menu open
+- Files: `src/components/layout/header.tsx` (lines 56-68)
+- Impact: `inert` has strong modern browser support (Chrome 102+, Safari 15.5+, Firefox 112+). Older browsers ignore it, meaning main content remains focusable while the mobile menu is open. This is a progressive enhancement concern, not a blocker.
+- Fix approach: Acceptable as-is. The attribute degrades gracefully. Add polyfill only if analytics show significant older browser traffic.
+
+## Scaling Considerations
+
+### Content Volume
+
+- Current state: 5 blog posts, 2 projects
+- Concern: All posts and projects are loaded into memory as full collections via Velite. At 500+ posts with full MDX body content, build memory usage could spike.
+- Files: `velite.config.ts`, all listing pages that import from `@/.velite`
+- Scaling path: Velite handles content at build time only. Monitor build duration and memory. If problematic, investigate Velite collection pagination or splitting.
+
+### Redis Key Growth
+
+- Current state: Each unique IP+slug combination creates a dedup key with 24h TTL. Each post slug creates a permanent view count key.
+- Concern: Dedup keys are self-cleaning (24h TTL), but view count keys grow without bound. At thousands of posts, the key count grows linearly.
+- Files: `src/app/api/views/[slug]/route.ts`
+- Scaling path: Upstash free tier allows 10K commands/day. Monitor usage. View counts are simple integers -- storage is minimal even at scale.
 
 ---
 
-*Concerns audit: 2026-02-08*
+*Concerns audit: 2026-03-22*
