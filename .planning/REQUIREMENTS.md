@@ -44,7 +44,7 @@ Requirements for v1.6 Address Concerns. Each maps to roadmap phases.
 
 - [ ] **A11Y-01**: Code block copy button visible on keyboard focus (`focus-visible:opacity-100`)
 - [ ] **A11Y-02**: MDX list elements include `role="list"` for Safari VoiceOver compatibility
-- [ ] **A11Y-03**: Mobile/tablet users can navigate blog post sections via collapsible table of contents
+- [x] **A11Y-03**: Mobile/tablet users can navigate blog post sections via collapsible table of contents
 
 ### Testing
 
@@ -113,7 +113,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SEO-06 | Phase 11 | Pending |
 | A11Y-01 | Phase 10 | Pending |
 | A11Y-02 | Phase 10 | Pending |
-| A11Y-03 | Phase 12 | Pending |
+| A11Y-03 | Phase 12 | Complete |
 | TEST-01 | Phase 12 | Pending |
 | TEST-02 | Phase 12 | Pending |
 | TEST-03 | Phase 12 | Pending |
