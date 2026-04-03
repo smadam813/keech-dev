@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { TagChip } from './tag-chip'
 import { POST_RUNES } from '@/components/runes/rune-config'
 import { PostCardViewCount } from './listing-view-counts'
+import { formatDate } from '@/lib/format'
 
 interface PostCardProps {
   post: {
@@ -16,12 +17,7 @@ interface PostCardProps {
 }
 
 export function PostCard({ post }: PostCardProps) {
-  const formattedDate = new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    timeZone: 'UTC'
-  }).format(new Date(post.date))
+  const formattedDate = formatDate(post.date)
 
   return (
     <Link
