@@ -45,7 +45,7 @@ See: `.planning/milestones/v1.5-ROADMAP.md` for full details.
 
 **Milestone Goal:** Resolve all security, quality, accessibility, and SEO concerns identified in the codebase audit — hardening the site across every severity level.
 
-- [ ] **Phase 9: Security & Patches** - Harden all attack surfaces and patch known vulnerabilities
+- [x] **Phase 9: Security & Patches** - Harden all attack surfaces and patch known vulnerabilities (completed 2026-04-03)
 - [x] **Phase 10: Resilience & Code Quality** - Error boundaries, loading states, and code deduplication (completed 2026-04-03)
 - [x] **Phase 11: SEO & Branding** - Favicon, OG images, RSS feed, and sitemap accuracy (completed 2026-04-03)
 - [x] **Phase 12: Testing Infrastructure** - Vitest and Playwright covering the final code shape (completed 2026-04-03)
@@ -65,8 +65,8 @@ See: `.planning/milestones/v1.5-ROADMAP.md` for full details.
 **Plans**: 2 plans
 
 Plans:
-- [ ] 09-01-PLAN.md — Patch dependencies, security headers, color script fix
-- [ ] 09-02-PLAN.md — API input validation, rate limiting, MDX error fallback
+- [x] 09-01-PLAN.md — Patch dependencies, security headers, color script fix
+- [x] 09-02-PLAN.md — API input validation, rate limiting, MDX error fallback
 
 ### Phase 10: Resilience & Code Quality
 **Goal**: Runtime errors are caught gracefully at every level, and duplicated code is consolidated into shared utilities and hooks
@@ -145,7 +145,7 @@ Phases execute in numeric order: 9 → 10 → 11 → 12
 | 6. Filter Components | v1.5 | 1/1 | Complete | 2026-02-27 |
 | 7. Filtered Listing Integration | v1.5 | 2/2 | Complete | 2026-02-28 |
 | 8. Counts and Transitions | v1.5 | 1/1 | Complete | 2026-03-01 |
-| 9. Security & Patches | v1.6 | 0/2 | Not started | - |
+| 9. Security & Patches | v1.6 | 2/2 | Complete    | 2026-04-03 |
 | 10. Resilience & Code Quality | v1.6 | 4/4 | Complete    | 2026-04-03 |
 | 11. SEO & Branding | v1.6 | 3/3 | Complete    | 2026-04-03 |
-| 12. Testing Infrastructure | v1.6 | 1/3 | Complete    | 2026-04-03 |
+| 12. Testing Infrastructure | v1.6 | 3/3 | Complete    | 2026-04-03 |

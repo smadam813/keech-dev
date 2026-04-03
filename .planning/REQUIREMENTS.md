@@ -9,12 +9,12 @@ Requirements for v1.6 Address Concerns. Each maps to roadmap phases.
 
 ### Security
 
-- [ ] **SEC-01**: Site serves Content-Security-Policy, X-Frame-Options, X-Content-Type-Options, and Referrer-Policy headers on all routes
-- [ ] **SEC-02**: MDX rendering wrapped in try-catch with user-friendly fallback UI instead of white screen
-- [ ] **SEC-03**: All npm audit vulnerabilities resolved (Next.js patched to latest)
-- [ ] **SEC-04**: View counter slug parameters validated against regex pattern (`^[a-z0-9-]+$`)
-- [ ] **SEC-05**: Batch view endpoint enforces maximum slug count limit
-- [ ] **SEC-06**: View counter POST endpoint rate-limited via @upstash/ratelimit sliding window
+- [x] **SEC-01**: Site serves Content-Security-Policy, X-Frame-Options, X-Content-Type-Options, and Referrer-Policy headers on all routes
+- [x] **SEC-02**: MDX rendering wrapped in try-catch with user-friendly fallback UI instead of white screen
+- [x] **SEC-03**: All npm audit vulnerabilities resolved (Next.js patched to latest)
+- [x] **SEC-04**: View counter slug parameters validated against regex pattern (`^[a-z0-9-]+$`)
+- [x] **SEC-05**: Batch view endpoint enforces maximum slug count limit
+- [x] **SEC-06**: View counter POST endpoint rate-limited via @upstash/ratelimit sliding window
 
 ### Error Resilience
 
@@ -55,9 +55,9 @@ Requirements for v1.6 Address Concerns. Each maps to roadmap phases.
 
 ### Cleanup
 
-- [ ] **CLN-01**: Dependencies updated to latest patch/minor versions (excluding major bumps)
+- [x] **CLN-01**: Dependencies updated to latest patch/minor versions (excluding major bumps)
 - [x] **CLN-02**: Resume placeholder button replaced with actionable alternative or removed
-- [ ] **CLN-03**: Color validation script palette matches actual `globals.css` values
+- [x] **CLN-03**: Color validation script palette matches actual `globals.css` values
 
 ## Future Requirements
 
@@ -90,12 +90,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SEC-01 | Phase 9 | Pending |
-| SEC-02 | Phase 9 | Pending |
-| SEC-03 | Phase 9 | Pending |
-| SEC-04 | Phase 9 | Pending |
-| SEC-05 | Phase 9 | Pending |
-| SEC-06 | Phase 9 | Pending |
+| SEC-01 | Phase 9 | Complete |
+| SEC-02 | Phase 9 | Complete |
+| SEC-03 | Phase 9 | Complete |
+| SEC-04 | Phase 9 | Complete |
+| SEC-05 | Phase 9 | Complete |
+| SEC-06 | Phase 9 | Complete |
 | ERR-01 | Phase 10 | Complete |
 | ERR-02 | Phase 10 | Complete |
 | ERR-03 | Phase 10 | Complete |
@@ -118,9 +118,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TEST-02 | Phase 12 | Complete |
 | TEST-03 | Phase 12 | Complete |
 | TEST-04 | Phase 12 | Complete |
-| CLN-01 | Phase 9 | Pending |
+| CLN-01 | Phase 9 | Complete |
 | CLN-02 | Phase 11 | Complete |
-| CLN-03 | Phase 9 | Pending |
+| CLN-03 | Phase 9 | Complete |
 
 **Coverage:**
 - v1.6 requirements: 31 total
