@@ -23,6 +23,7 @@
   "homepage": "https://github.com/smadam813/keech-dev#readme",
   "dependencies": {
     "@tailwindcss/postcss": "^4.1.18",
+    "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.36.2",
     "@vercel/analytics": "^1.6.1",
     "clsx": "^2.1.1",
