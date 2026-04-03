@@ -43,3 +43,9 @@ example-images/
 
 # velite generated files
 .velite
+
+# playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/

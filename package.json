@@ -8,7 +8,8 @@
     "build": "velite && next build",
     "start": "next start",
     "lint": "next lint",
-    "velite": "velite"
+    "velite": "velite",
+    "test:e2e": "playwright test"
   },
   "repository": {
     "type": "git",
@@ -40,6 +41,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.3",
+    "@playwright/test": "^1.59.1",
     "@types/node": "^25.1.0",
     "@types/react": "^19.2.10",
     "@types/react-dom": "^19.2.3",
