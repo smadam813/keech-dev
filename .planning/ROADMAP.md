@@ -110,12 +110,13 @@ Plans:
   1. `npx vitest run` passes with unit tests covering date formatting, view count helpers, and rune glow position calculations
   2. `npx playwright test` passes with E2E tests covering mobile menu toggle, code block copy button, and view count increment
   3. Mobile and tablet users can open a collapsible table of contents to navigate blog post sections
-**Plans**: 4 plans
+**Plans**: 3 plans
 **UI hint**: yes
 
 Plans:
-- [ ] 12-01: TBD
-- [ ] 12-02: TBD
+- [ ] 12-01-PLAN.md — Vitest configuration and unit tests for formatDate, view helpers, computeGlowPositions
+- [ ] 12-02-PLAN.md — Mobile TOC collapsible accordion component and blog post integration
+- [ ] 12-03-PLAN.md — Playwright configuration and E2E tests for mobile menu, code copy, view count, mobile TOC
 
 ## Progress
 
@@ -135,4 +136,4 @@ Phases execute in numeric order: 9 → 10 → 11 → 12
 | 9. Security & Patches | v1.6 | 0/2 | Not started | - |
 | 10. Resilience & Code Quality | v1.6 | 4/4 | Complete    | 2026-04-03 |
 | 11. SEO & Branding | v1.6 | 3/3 | Complete    | 2026-04-03 |
-| 12. Testing Infrastructure | v1.6 | 0/? | Not started | - |
+| 12. Testing Infrastructure | v1.6 | 0/3 | Not started | - |
