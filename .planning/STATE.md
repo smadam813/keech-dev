@@ -78,9 +78,10 @@ None.
 | 8 | Back-to-blog navigation link on blog post pages | 2026-02-16 | a9f1ed9 | [8-add-back-to-blog-navigation-link-on-blog](./quick/8-add-back-to-blog-navigation-link-on-blog/) |
 | 9 | Fix broken npm run lint (native flat config for Next.js 16) | 2026-04-03 | 6d53fea | [260403-h6t-broken-npm-run-lint-fixable-by-switching](./quick/260403-h6t-broken-npm-run-lint-fixable-by-switching/) |
 | 10 | Backport D-01 through D-07 to REQUIREMENTS.md traceability table | 2026-04-03 | 292732d | [260403-h8n-missing-d-xx-ids-in-requirements-md-trac](./quick/260403-h8n-missing-d-xx-ids-in-requirements-md-trac/) |
+| 11 | Replace hardcoded slug in code-copy E2E spec with dynamic listing navigation | 2026-04-03 | ed80b09 | [260403-h8h-hardcoded-slug-in-e2e-spec-swap-for-a-dy](./quick/260403-h8h-hardcoded-slug-in-e2e-spec-swap-for-a-dy/) |
 
 ## Session Continuity
 
 Last session: 2026-04-03
-Stopped at: Completed quick-260403-h8n
+Stopped at: Completed quick-260403-h8h
 Resume file: None
