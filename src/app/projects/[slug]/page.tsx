@@ -71,7 +71,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
         {project.stack.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-6">
             {project.stack.map((tech) => (
-              <FilterChip key={tech} label={tech} variant="tech" />
+              <FilterChip key={tech} label={tech} />
             ))}
           </div>
         )}

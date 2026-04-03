@@ -2,6 +2,7 @@ import { ImageResponse } from 'next/og'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { posts } from '@/.velite'
+import { formatDate } from '@/lib/format'
 
 export const alt = 'Blog post'
 export const size = { width: 1200, height: 630 }
@@ -16,9 +17,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
   )
 
   const title = post?.title ?? 'Blog Post'
-  const date = post?.date
-    ? new Date(post.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-    : ''
+  const date = post?.date ? formatDate(post.date) : ''
 
   return new ImageResponse(
     (

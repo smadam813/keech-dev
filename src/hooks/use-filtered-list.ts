@@ -25,6 +25,10 @@ export function useFilteredList<T>(options: UseFilteredListOptions<T>): UseFilte
   const searchParams = useSearchParams()
   const pathname = usePathname()
 
+  // Stabilize getItemValues so inline arrows don't defeat useMemo
+  const getItemValuesRef = useRef(getItemValues)
+  getItemValuesRef.current = getItemValues
+
   // Read filter state from URL
   const activeFilters = useMemo(
     () => new Set(searchParams.get(paramName)?.split(',').filter(Boolean) ?? []),
@@ -38,22 +42,21 @@ export function useFilteredList<T>(options: UseFilteredListOptions<T>): UseFilte
     activeFilters.size === 0
       ? items
       : items.filter((item) =>
-          [...activeFilters].every((v) => getItemValues(item).includes(v))
+          [...activeFilters].every((v) => getItemValuesRef.current(item).includes(v))
         )
 
   // Static counts: total items per filter value (not contextual to active filters)
   const filterCounts = useMemo(() => {
     const counts: Record<string, number> = {}
     for (const value of allFilterValues) {
-      counts[value] = items.filter((item) => getItemValues(item).includes(value)).length
+      counts[value] = items.filter((item) => getItemValuesRef.current(item).includes(value)).length
     }
     return counts
-  }, [items, allFilterValues, getItemValues])
+  }, [items, allFilterValues])
 
   const [isTransitioning, setIsTransitioning] = useState(false)
   const isInitialRender = useRef(true)
 
-  // Derive a stable key from filtered item identity to detect content changes
   // Derive a stable key from active filters to detect content changes
   const filteredKey = [...activeFilters].sort().join(',')
 

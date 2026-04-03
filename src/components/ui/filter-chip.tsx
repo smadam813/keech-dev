@@ -3,7 +3,6 @@ import { cn } from '@/lib/utils'
 
 interface FilterChipProps {
   label: string
-  variant?: 'tag' | 'tech'
   href?: string
   active?: boolean
   onToggle?: () => void

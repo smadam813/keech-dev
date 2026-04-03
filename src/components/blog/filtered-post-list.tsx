@@ -50,7 +50,7 @@ export function FilteredPostList({ posts, allTags }: FilteredPostListProps) {
         onClear={handleClear}
         counts={tagCounts}
         renderChip={({ item, active, onToggle, count }) => (
-          <FilterChip key={item} label={item} variant="tag" active={active} onToggle={onToggle} count={count} />
+          <FilterChip key={item} label={item} active={active} onToggle={onToggle} count={count} />
         )}
         label="Filter by tag"
       />

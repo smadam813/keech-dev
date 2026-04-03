@@ -55,7 +55,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
           {project.stack.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mb-4">
               {project.stack.slice(0, 4).map((tech) => (
-                <FilterChip key={tech} label={tech} variant="tech" />
+                <FilterChip key={tech} label={tech} />
               ))}
               {project.stack.length > 4 && (
                 <span className="text-xs text-muted self-center">

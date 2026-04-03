@@ -45,7 +45,7 @@ export function FilteredProjectList({ projects, allStack }: FilteredProjectListP
         onClear={handleClear}
         counts={stackCounts}
         renderChip={({ item, active, onToggle, count }) => (
-          <FilterChip key={item} label={item} variant="tech" active={active} onToggle={onToggle} count={count} />
+          <FilterChip key={item} label={item} active={active} onToggle={onToggle} count={count} />
         )}
         label="Filter by technology"
       />
