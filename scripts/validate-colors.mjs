@@ -3,7 +3,7 @@ const palette = {
   foreground: '#000000',
   accent: '#2D8B8B',
   surface: '#F5E6E8',
-  muted: '#666666',
+  muted: '#4A4A4A',
 };
 
 /**
