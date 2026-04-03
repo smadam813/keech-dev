@@ -118,6 +118,18 @@ Plans:
 - [x] 12-02-PLAN.md — Mobile TOC collapsible accordion component and blog post integration
 - [x] 12-03-PLAN.md — Playwright configuration and E2E tests for mobile menu, code copy, view count, mobile TOC
 
+## Backlog
+
+### Phase 999.1: Sticky/Pinned Mobile TOC (BACKLOG)
+
+**Goal:** [Captured for future planning]
+After scrolling to a heading via TOC link, user must scroll all the way back up to access TOC again. Pin the TOC or add a back-to-top affordance so navigation between sections is frictionless.
+**Requirements:** TBD
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (promote with /gsd:review-backlog when ready)
+
 ## Progress
 
 **Execution Order:**
