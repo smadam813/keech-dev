@@ -52,3 +52,4 @@ See: `.planning/milestones/v1.5-ROADMAP.md` for full details.
 | 6. Filter Components | v1.5 | 1/1 | Complete | 2026-02-27 |
 | 7. Filtered Listing Integration | v1.5 | 2/2 | Complete | 2026-02-28 |
 | 8. Counts and Transitions | v1.5 | 1/1 | Complete | 2026-03-01 |
+| 12. Testing Infrastructure | v1.6 | 1/3 | In Progress | - |
