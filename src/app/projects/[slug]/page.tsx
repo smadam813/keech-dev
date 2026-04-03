@@ -116,6 +116,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
             src={project.image.src}
             alt={`${project.title} screenshot`}
             fill
+            sizes="(max-width: 1200px) 100vw, 1200px"
             className="object-cover"
           />
         </div>
