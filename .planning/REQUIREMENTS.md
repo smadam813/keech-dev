@@ -18,10 +18,10 @@ Requirements for v1.6 Address Concerns. Each maps to roadmap phases.
 
 ### Error Resilience
 
-- [ ] **ERR-01**: Global error boundary (`error.tsx`) catches runtime errors with branded error page
-- [ ] **ERR-02**: Global error boundary (`global-error.tsx`) catches root layout errors with full HTML shell
-- [ ] **ERR-03**: Blog post error boundary (`blog/[slug]/error.tsx`) shows MDX-specific error message
-- [ ] **ERR-04**: Loading states (`loading.tsx`) provide skeleton UI during route transitions
+- [x] **ERR-01**: Global error boundary (`error.tsx`) catches runtime errors with branded error page
+- [x] **ERR-02**: Global error boundary (`global-error.tsx`) catches root layout errors with full HTML shell
+- [x] **ERR-03**: Blog post error boundary (`blog/[slug]/error.tsx`) shows MDX-specific error message
+- [x] **ERR-04**: Loading states (`loading.tsx`) provide skeleton UI during route transitions
 
 ### Code Quality
 
@@ -29,34 +29,34 @@ Requirements for v1.6 Address Concerns. Each maps to roadmap phases.
 - [x] **QUAL-02**: Date formatting extracted to shared `formatDate()` utility
 - [x] **QUAL-03**: Filtered list logic extracted to shared `useFilteredList` hook
 - [x] **QUAL-04**: TagChip and TechBadge toggle mode unified into shared component
-- [ ] **QUAL-05**: Hero component refactored — animation orchestration and glow positioning extracted to custom hooks
+- [x] **QUAL-05**: Hero component refactored — animation orchestration and glow positioning extracted to custom hooks
 
 ### SEO & Branding
 
-- [ ] **SEO-01**: Favicon (.ico + .svg) and apple-touch-icon present in browser tabs and mobile bookmarks
-- [ ] **SEO-02**: Default OG image renders branded card for site-level social shares
-- [ ] **SEO-03**: Per-post OG images render blog post title with neobrutalist branding
-- [ ] **SEO-04**: Sitemap uses actual content dates instead of `new Date()` for static and project routes
-- [ ] **SEO-05**: RSS feed available at `/feed.xml` with all published blog posts
-- [ ] **SEO-06**: Project card and detail images include `sizes` attribute for optimal responsive loading
+- [x] **SEO-01**: Favicon (.ico + .svg) and apple-touch-icon present in browser tabs and mobile bookmarks
+- [x] **SEO-02**: Default OG image renders branded card for site-level social shares
+- [x] **SEO-03**: Per-post OG images render blog post title with neobrutalist branding
+- [x] **SEO-04**: Sitemap uses actual content dates instead of `new Date()` for static and project routes
+- [x] **SEO-05**: RSS feed available at `/feed.xml` with all published blog posts
+- [x] **SEO-06**: Project card and detail images include `sizes` attribute for optimal responsive loading
 
 ### Accessibility
 
-- [ ] **A11Y-01**: Code block copy button visible on keyboard focus (`focus-visible:opacity-100`)
-- [ ] **A11Y-02**: MDX list elements include `role="list"` for Safari VoiceOver compatibility
+- [x] **A11Y-01**: Code block copy button visible on keyboard focus (`focus-visible:opacity-100`)
+- [x] **A11Y-02**: MDX list elements include `role="list"` for Safari VoiceOver compatibility
 - [x] **A11Y-03**: Mobile/tablet users can navigate blog post sections via collapsible table of contents
 
 ### Testing
 
-- [ ] **TEST-01**: Vitest configured with path aliases, jsdom, and React Testing Library
-- [ ] **TEST-02**: Unit tests cover date formatting, view count helpers, and rune glow position calculations
-- [ ] **TEST-03**: Playwright configured for E2E testing
-- [ ] **TEST-04**: E2E tests cover mobile menu toggle, code copy button, and view count increment
+- [x] **TEST-01**: Vitest configured with path aliases, jsdom, and React Testing Library
+- [x] **TEST-02**: Unit tests cover date formatting, view count helpers, and rune glow position calculations
+- [x] **TEST-03**: Playwright configured for E2E testing
+- [x] **TEST-04**: E2E tests cover mobile menu toggle, code copy button, and view count increment
 
 ### Cleanup
 
 - [ ] **CLN-01**: Dependencies updated to latest patch/minor versions (excluding major bumps)
-- [ ] **CLN-02**: Resume placeholder button replaced with actionable alternative or removed
+- [x] **CLN-02**: Resume placeholder button replaced with actionable alternative or removed
 - [ ] **CLN-03**: Color validation script palette matches actual `globals.css` values
 
 ## Future Requirements
@@ -96,30 +96,30 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SEC-04 | Phase 9 | Pending |
 | SEC-05 | Phase 9 | Pending |
 | SEC-06 | Phase 9 | Pending |
-| ERR-01 | Phase 10 | Pending |
-| ERR-02 | Phase 10 | Pending |
-| ERR-03 | Phase 10 | Pending |
-| ERR-04 | Phase 10 | Pending |
+| ERR-01 | Phase 10 | Complete |
+| ERR-02 | Phase 10 | Complete |
+| ERR-03 | Phase 10 | Complete |
+| ERR-04 | Phase 10 | Complete |
 | QUAL-01 | Phase 10 | Complete |
 | QUAL-02 | Phase 10 | Complete |
 | QUAL-03 | Phase 10 | Complete |
 | QUAL-04 | Phase 10 | Complete |
-| QUAL-05 | Phase 10 | Pending |
-| SEO-01 | Phase 11 | Pending |
-| SEO-02 | Phase 11 | Pending |
-| SEO-03 | Phase 11 | Pending |
-| SEO-04 | Phase 11 | Pending |
-| SEO-05 | Phase 11 | Pending |
-| SEO-06 | Phase 11 | Pending |
-| A11Y-01 | Phase 10 | Pending |
-| A11Y-02 | Phase 10 | Pending |
+| QUAL-05 | Phase 10 | Complete |
+| SEO-01 | Phase 11 | Complete |
+| SEO-02 | Phase 11 | Complete |
+| SEO-03 | Phase 11 | Complete |
+| SEO-04 | Phase 11 | Complete |
+| SEO-05 | Phase 11 | Complete |
+| SEO-06 | Phase 11 | Complete |
+| A11Y-01 | Phase 10 | Complete |
+| A11Y-02 | Phase 10 | Complete |
 | A11Y-03 | Phase 12 | Complete |
-| TEST-01 | Phase 12 | Pending |
-| TEST-02 | Phase 12 | Pending |
-| TEST-03 | Phase 12 | Pending |
-| TEST-04 | Phase 12 | Pending |
+| TEST-01 | Phase 12 | Complete |
+| TEST-02 | Phase 12 | Complete |
+| TEST-03 | Phase 12 | Complete |
+| TEST-04 | Phase 12 | Complete |
 | CLN-01 | Phase 9 | Pending |
-| CLN-02 | Phase 11 | Pending |
+| CLN-02 | Phase 11 | Complete |
 | CLN-03 | Phase 9 | Pending |
 
 **Coverage:**
@@ -129,4 +129,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-04-02*
-*Last updated: 2026-04-02 after roadmap creation*
+*Last updated: 2026-04-03 after phase 10-12 UAT*
