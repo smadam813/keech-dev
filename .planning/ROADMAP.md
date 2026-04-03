@@ -47,7 +47,7 @@ See: `.planning/milestones/v1.5-ROADMAP.md` for full details.
 
 - [ ] **Phase 9: Security & Patches** - Harden all attack surfaces and patch known vulnerabilities
 - [x] **Phase 10: Resilience & Code Quality** - Error boundaries, loading states, and code deduplication (completed 2026-04-03)
-- [ ] **Phase 11: SEO & Branding** - Favicon, OG images, RSS feed, and sitemap accuracy
+- [x] **Phase 11: SEO & Branding** - Favicon, OG images, RSS feed, and sitemap accuracy (completed 2026-04-03)
 - [ ] **Phase 12: Testing Infrastructure** - Vitest and Playwright covering the final code shape
 
 ## Phase Details
@@ -99,8 +99,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 11-01-PLAN.md — Favicon set, site-level OG image, per-post OG images
-- [ ] 11-02-PLAN.md — Sitemap date fix, RSS feed, project image sizes, resume cleanup
+- [x] 11-01-PLAN.md — Favicon set, site-level OG image, per-post OG images
+- [x] 11-02-PLAN.md — Sitemap date fix, RSS feed, project image sizes, resume cleanup
 
 ### Phase 12: Testing Infrastructure
 **Goal**: The codebase has automated test coverage over critical pure functions and browser-dependent behaviors
@@ -134,5 +134,5 @@ Phases execute in numeric order: 9 → 10 → 11 → 12
 | 8. Counts and Transitions | v1.5 | 1/1 | Complete | 2026-03-01 |
 | 9. Security & Patches | v1.6 | 0/2 | Not started | - |
 | 10. Resilience & Code Quality | v1.6 | 4/4 | Complete    | 2026-04-03 |
-| 11. SEO & Branding | v1.6 | 0/2 | Not started | - |
+| 11. SEO & Branding | v1.6 | 2/2 | Complete   | 2026-04-03 |
 | 12. Testing Infrastructure | v1.6 | 0/? | Not started | - |
