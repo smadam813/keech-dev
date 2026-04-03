@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.6
-milestone_name: Address Concerns
-status: complete
+milestone: v1.3
+milestone_name: milestone
+status: v1.6 Address Concerns milestone shipped
 stopped_at: Milestone v1.6 completed and archived
-last_updated: "2026-04-03"
+last_updated: "2026-04-03T17:42:30.841Z"
 last_activity: 2026-04-03
 progress:
-  total_phases: 5
-  completed_phases: 5
-  total_plans: 13
-  completed_plans: 13
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
   percent: 100
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 Phase: 13 of 13 (Sticky/Pinned Mobile TOC)
 Plan: 1 of 1 complete in current phase
 Status: v1.6 Address Concerns milestone shipped
-Last activity: 2026-04-03 — Milestone v1.6 completed and archived
+Last activity: 2026-04-03
 
 Progress: [████████████] 100% (13/13 phases complete across all milestones)
 
