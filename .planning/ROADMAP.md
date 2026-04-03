@@ -96,12 +96,11 @@ Plans:
   3. Sharing a blog post URL renders an OG image with the post title in neobrutalist branding
   4. The sitemap at `/sitemap.xml` reflects actual content dates (not today's date on every build)
   5. An RSS reader can subscribe to `/feed.xml` and see all published blog posts with titles, dates, and descriptions
-**Plans**: 4 plans
-**UI hint**: yes
+**Plans**: 2 plans
 
 Plans:
-- [ ] 11-01: TBD
-- [ ] 11-02: TBD
+- [ ] 11-01-PLAN.md — Favicon set, site-level OG image, per-post OG images
+- [ ] 11-02-PLAN.md — Sitemap date fix, RSS feed, project image sizes, resume cleanup
 
 ### Phase 12: Testing Infrastructure
 **Goal**: The codebase has automated test coverage over critical pure functions and browser-dependent behaviors
@@ -135,5 +134,5 @@ Phases execute in numeric order: 9 → 10 → 11 → 12
 | 8. Counts and Transitions | v1.5 | 1/1 | Complete | 2026-03-01 |
 | 9. Security & Patches | v1.6 | 0/2 | Not started | - |
 | 10. Resilience & Code Quality | v1.6 | 4/4 | Complete    | 2026-04-03 |
-| 11. SEO & Branding | v1.6 | 0/? | Not started | - |
+| 11. SEO & Branding | v1.6 | 0/2 | Not started | - |
 | 12. Testing Infrastructure | v1.6 | 0/? | Not started | - |
