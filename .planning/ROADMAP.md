@@ -5,7 +5,7 @@
 - ✅ **v1.3 Hero Polish** — Phases 1-2 (shipped 2026-02-09)
 - ✅ **v1.4 Blog Stats** — Phases 3-5 (shipped 2026-02-22)
 - ✅ **v1.5 Tag Filtering** — Phases 6-8 (shipped 2026-03-01)
-- 🚧 **v1.6 Address Concerns** — Phases 9-12 (in progress)
+- 🚧 **v1.6 Address Concerns** — Phases 9-13 (in progress)
 
 ## Phases
 
@@ -120,13 +120,13 @@ Plans:
 
 ### Phase 13: Sticky/Pinned Mobile TOC
 
-**Goal:** After scrolling to a heading via TOC link, user must scroll all the way back up to access TOC again. Pin the TOC or add a back-to-top affordance so navigation between sections is frictionless.
-**Requirements:** TBD
+**Goal:** Mobile TOC pins to viewport top when scrolled past, with auto-collapse on heading link click, so section navigation is frictionless at any scroll position.
+**Requirements:** D-01, D-02, D-03, D-04, D-05, D-06, D-07
 **Depends on:** Phase 12
-**Plans:** 0 plans
+**Plans:** 1 plan
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 13 to break down)
+- [ ] 13-01-PLAN.md — Sticky positioning, auto-collapse on link click, scroll-margin-top adjustment, E2E tests
 
 ## Backlog
 
@@ -151,4 +151,4 @@ Phases execute in numeric order: 9 → 10 → 11 → 12 → 13
 | 10. Resilience & Code Quality | v1.6 | 4/4 | Complete    | 2026-04-03 |
 | 11. SEO & Branding | v1.6 | 3/3 | Complete    | 2026-04-03 |
 | 12. Testing Infrastructure | v1.6 | 3/3 | Complete    | 2026-04-03 |
-| 13. Sticky/Pinned Mobile TOC | v1.6 | 0/0 | Not Started | — |
+| 13. Sticky/Pinned Mobile TOC | v1.6 | 0/1 | Not Started | — |
