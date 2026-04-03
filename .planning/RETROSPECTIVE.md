@@ -44,6 +44,55 @@
 
 ---
 
+## Milestone: v1.6 — Address Concerns
+
+**Shipped:** 2026-04-03
+**Phases:** 5 | **Plans:** 13 | **Quick tasks:** 3
+
+### What Was Built
+- Security headers (CSP, X-Frame-Options, etc.) on all routes via next.config.ts headers config
+- API input validation (slug regex, batch limits) and rate limiting (@upstash/ratelimit)
+- MDX try-catch with branded fallback + error boundaries at three route levels
+- Loading skeleton UI for route transitions
+- Code quality: shared useFilteredList hook, formatDate, localStorage helpers, FilterChip unification, Hero hook extraction
+- Othala rune favicon set + dynamic OG image generators (site-level + per-post)
+- RSS feed at /feed.xml, sitemap with actual content dates, project image sizes
+- Vitest (18 unit tests) + Playwright (14 E2E tests) infrastructure
+- Collapsible mobile TOC accordion + sticky positioning with auto-collapse
+- ESLint migrated to native flat config (Next.js 16 dropped `next lint` CLI)
+
+### What Worked
+- **Comprehensive audit-driven scope**: Starting from a codebase audit meant every requirement had clear justification — no scope creep, no "nice to have" features
+- **Phase 13 emerged from UAT**: The sticky TOC was a backlog item promoted to a phase during Phase 12 UAT — the workflow handled mid-milestone scope addition cleanly via decimal-free insertion
+- **Quick tasks for audit cleanup**: Using /gsd:quick for lint fix, traceability backport, and E2E hardcoded slug fix was efficient — full phase overhead would have been wasteful for these
+- **Nyquist validation**: All 5 phases achieved compliance; the automated validation audit caught documentation gaps early
+- **Milestone audit before completion**: The audit confirmed 38/38 requirements satisfied and identified only deferred tech debt, giving confidence to ship
+
+### What Was Inefficient
+- **Phase 10 had 4 plans for what could have been 2-3**: The code quality consolidation (formatDate, localStorage, FilterChip, Hero hooks) was split too granularly — plans 10-02 and 10-03 could have been one plan
+- **Some SUMMARY.md one-liners were noisy**: Auto-extracted accomplishments included internal notes (e.g., "Rule 2 - Missing critical functionality") that needed manual cleanup at archive time
+- **STATE.md still referenced v1.5 context**: The state file wasn't fully updated during v1.6 execution — it still showed v1.5 phase counts and performance metrics
+
+### Patterns Established
+- **Audit-driven milestone scoping**: Codebase audit → categorized concerns → requirements → roadmap phases
+- **Security headers via next.config.ts**: Central headers config in next.config.ts covers all routes without middleware
+- **MDX two-layer error protection**: try-catch in MDXContent component + route-level error.tsx boundary
+- **Dynamic OG images via ImageResponse**: No external service; Next.js built-in ImageResponse with inline JSX
+- **CSS sticky TOC**: Pure CSS `position: sticky` with auto-collapse via onClick state toggle — no IntersectionObserver needed
+
+### Key Lessons
+1. **Hardening milestones are high-value, low-glamour work** — 38 requirements across security, quality, accessibility, SEO, and testing produced no visible new features but dramatically improved site robustness
+2. **CSP with static generation requires pragmatic compromises** — `unsafe-eval` for MDX and `unsafe-inline` for syntax highlighting are acceptable tradeoffs when there's no user-generated content
+3. **Test infrastructure should be the last phase** — testing the final code shape avoids rewriting tests when earlier phases change APIs
+4. **Quick tasks are the right tool for audit-discovered fixes** — full GSD phase overhead isn't justified for single-file documentation fixes or one-line code changes
+
+### Cost Observations
+- Model mix: ~70% opus (planning, verification, milestone ops), ~30% sonnet/haiku (execution, research)
+- Sessions: Multiple (phases executed across several sessions with context handoffs)
+- Notable: Largest milestone by plan count (13 plans vs 2-6 in prior milestones) with highest requirement count (38)
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -53,6 +102,7 @@
 | v1.3 | 9 | 2 | 2 | First milestone; established GSD workflow |
 | v1.4 | 2 | 3 | 6 | Parallel execution, render-prop pattern |
 | v1.5 | 3 | 3 | 4 | Fastest plans (~1-4 min each), clean audit |
+| v1.6 | 2 | 5 | 13 | Largest scope; audit-driven; first testing infrastructure |
 
 ### Cumulative Quality
 
@@ -61,9 +111,11 @@
 | v1.3 | 6 | 100% | 0 | 0 |
 | v1.4 | 6 | 100% | 1 (@upstash/redis) | 0 |
 | v1.5 | 13 | 100% | 0 | 0 |
+| v1.6 | 38 | 100% | 3 (@upstash/ratelimit, vitest, playwright) | 7 (deferred) |
 
 ### Top Lessons (Verified Across Milestones)
 
-1. **CSS-first approaches consistently outperform JS libraries** — rune glows (CSS radial gradients), view count display (localStorage cache), filter transitions (CSS opacity) all avoided adding dependencies
-2. **Polymorphic/composable patterns prevent code duplication** — render-prop for view counts (v1.4), renderChip for filter bar (v1.5), polymorphic chips (v1.5) all followed this principle
-3. **Small scope + fast execution beats large scope + slow execution** — all three milestones shipped with zero tech debt and 100% requirement coverage
+1. **CSS-first approaches consistently outperform JS libraries** — rune glows (CSS radial gradients), view count display (localStorage cache), filter transitions (CSS opacity), sticky TOC (CSS position: sticky) all avoided adding dependencies
+2. **Polymorphic/composable patterns prevent code duplication** — render-prop for view counts (v1.4), renderChip for filter bar (v1.5), polymorphic chips (v1.5), unified FilterChip (v1.6) all followed this principle
+3. **Audit-driven scoping produces comprehensive, justified milestones** — v1.6's 38 requirements all traced back to a codebase audit, resulting in zero scope creep and 100% coverage
+4. **Quick tasks complement phase workflow for small fixes** — full GSD overhead isn't warranted for single-file changes; /gsd:quick strikes the right balance
