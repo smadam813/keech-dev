@@ -7,7 +7,7 @@
     "dev": "velite --watch & next dev --turbopack",
     "build": "velite && next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "velite": "velite"
   },
   "repository": {
@@ -39,7 +39,6 @@
     "velite": "^0.3.1"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3.3.3",
     "@types/node": "^25.1.0",
     "@types/react": "^19.2.10",
     "@types/react-dom": "^19.2.3",
