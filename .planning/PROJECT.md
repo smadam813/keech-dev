@@ -67,6 +67,7 @@ A polished, intentional developer portfolio — fast, visually distinctive, and 
 - ✓ RSS feed at /feed.xml with auto-discovery — v1.6 Phase 11
 - ✓ Project images include responsive sizes attribute — v1.6 Phase 11
 - ✓ Resume placeholder removed from about page — v1.6 Phase 11
+- ✓ CSP script-src permits Next.js inline scripts for hydration — v1.6 Phase 11
 
 ## Current Milestone: v1.6 Address Concerns
 
@@ -165,4 +166,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-02 after v1.6 milestone started*
+*Last updated: 2026-04-03 after Phase 11 completion*
