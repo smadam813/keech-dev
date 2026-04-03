@@ -26,7 +26,7 @@ export function CopyButton({ getText, className }: CopyButtonProps) {
       onClick={handleCopy}
       className={cn(
         'absolute right-2 top-2 p-2 rounded border-2 border-black bg-surface',
-        'opacity-0 group-hover:opacity-100 transition-opacity',
+        'opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity',
         'hover:bg-accent hover:text-background',
         className
       )}
