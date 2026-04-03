@@ -1,7 +1,7 @@
 import { projects } from '@/.velite'
 import { notFound } from 'next/navigation'
 import { MDXContent } from '@/components/blog/mdx-content'
-import { TechBadge } from '@/components/projects/tech-badge'
+import { FilterChip } from '@/components/ui/filter-chip'
 import { ArrowLeft, Github, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -71,7 +71,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
         {project.stack.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-6">
             {project.stack.map((tech) => (
-              <TechBadge key={tech} tech={tech} />
+              <FilterChip key={tech} label={tech} variant="tech" />
             ))}
           </div>
         )}
@@ -116,6 +116,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
             src={project.image.src}
             alt={`${project.title} screenshot`}
             fill
+            sizes="(max-width: 1200px) 100vw, 1200px"
             className="object-cover"
           />
         </div>

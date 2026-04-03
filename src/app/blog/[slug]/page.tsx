@@ -2,9 +2,11 @@ import { posts } from '@/.velite'
 import { notFound } from 'next/navigation'
 import { MDXContent } from '@/components/blog/mdx-content'
 import { TableOfContents } from '@/components/blog/toc'
-import { TagChip } from '@/components/blog/tag-chip'
+import { MobileToc } from '@/components/blog/mobile-toc'
+import { FilterChip } from '@/components/ui/filter-chip'
 import { ViewCounter } from '@/components/blog/view-counter'
 import { POST_RUNES } from '@/components/runes/rune-config'
+import { formatDate } from '@/lib/format'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import type { Metadata } from 'next'
@@ -50,21 +52,8 @@ export default async function PostPage({ params }: PostPageProps) {
     notFound()
   }
 
-  const formattedDate = new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    timeZone: 'UTC'
-  }).format(new Date(post.date))
-
-  const formattedUpdated = post.updated
-    ? new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      timeZone: 'UTC'
-    }).format(new Date(post.updated))
-    : null
+  const formattedDate = formatDate(post.date)
+  const formattedUpdated = post.updated ? formatDate(post.updated) : null
 
   return (
     <article className="w-full mx-auto max-w-6xl px-6 pt-12 pb-16">
@@ -76,6 +65,9 @@ export default async function PostPage({ params }: PostPageProps) {
         <ArrowLeft size={16} />
         <span>All Blog Posts</span>
       </Link>
+
+      {/* Mobile table of contents - visible below lg breakpoint */}
+      <MobileToc entries={post.toc} />
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_16rem] gap-12 lg:gap-16">
         {/* Main content */}
@@ -106,7 +98,7 @@ export default async function PostPage({ params }: PostPageProps) {
             {post.tags.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {post.tags.map((tag) => (
-                  <TagChip key={tag} tag={tag} />
+                  <FilterChip key={tag} label={tag} href={`/blog?tags=${tag}`} />
                 ))}
               </div>
             )}

@@ -1,9 +1,9 @@
 'use client'
 
-import { useSearchParams, usePathname } from 'next/navigation'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo } from 'react'
 import { FilterBar } from '@/components/ui/filter-bar'
-import { TagChip } from '@/components/blog/tag-chip'
+import { FilterChip } from '@/components/ui/filter-chip'
+import { useFilteredList } from '@/hooks/use-filtered-list'
 import { PostCard } from './post-card'
 import { ListingViewCounts } from './listing-view-counts'
 import { ScrollReveal } from '@/components/ui/scroll-reveal'
@@ -23,85 +23,23 @@ interface FilteredPostListProps {
 }
 
 export function FilteredPostList({ posts, allTags }: FilteredPostListProps) {
-  const searchParams = useSearchParams()
-  const pathname = usePathname()
-
-  // Read filter state from URL
-  const activeTags = useMemo(
-    () => new Set(searchParams.get('tags')?.split(',').filter(Boolean) ?? []),
-    [searchParams]
-  )
+  const {
+    filteredItems: filteredPosts,
+    activeFilters: activeTags,
+    isFiltering,
+    isTransitioning,
+    filterCounts: tagCounts,
+    handleToggle,
+    handleClear,
+  } = useFilteredList({
+    items: posts,
+    allFilterValues: allTags,
+    getItemValues: (post) => post.tags,
+    paramName: 'tags',
+  })
 
   // Stable slugs for view count fetching (all posts, not filtered)
   const allSlugs = useMemo(() => posts.map((p) => p.slug), [posts])
-
-  // AND logic: posts must contain ALL selected tags
-  const filteredPosts =
-    activeTags.size === 0
-      ? posts
-      : posts.filter((post) => [...activeTags].every((tag) => post.tags.includes(tag)))
-
-  const isFiltering = activeTags.size > 0
-
-  // Static counts: total posts per tag (not contextual to active filters)
-  const tagCounts = useMemo(() => {
-    const counts: Record<string, number> = {}
-    for (const tag of allTags) {
-      counts[tag] = posts.filter((p) => p.tags.includes(tag)).length
-    }
-    return counts
-  }, [posts, allTags])
-
-  const [isTransitioning, setIsTransitioning] = useState(false)
-  const isInitialRender = useRef(true)
-
-  // Derive a stable key from filtered post slugs to detect content changes
-  const filteredKey = filteredPosts.map((p) => p.slug).join(',')
-
-  useEffect(() => {
-    // Skip fade on initial render (including URL-preloaded filters)
-    if (isInitialRender.current) {
-      isInitialRender.current = false
-      return
-    }
-    // Only fade when filters are active and content changes
-    if (!isFiltering) return
-    setIsTransitioning(true)
-    const timer = setTimeout(() => setIsTransitioning(false), 150)
-    return () => clearTimeout(timer)
-  }, [filteredKey, isFiltering])
-
-  // Write new tag set to URL via replaceState (no server re-render)
-  const updateURL = useCallback(
-    (next: Set<string>) => {
-      const params = new URLSearchParams(searchParams.toString())
-      if (next.size === 0) {
-        params.delete('tags')
-      } else {
-        params.set('tags', [...next].sort().join(','))
-      }
-      const query = params.toString()
-      window.history.replaceState(null, '', query ? `${pathname}?${query}` : pathname)
-    },
-    [searchParams, pathname]
-  )
-
-  const handleToggle = useCallback(
-    (tag: string) => {
-      const next = new Set(activeTags)
-      if (next.has(tag)) {
-        next.delete(tag)
-      } else {
-        next.add(tag)
-      }
-      updateURL(next)
-    },
-    [activeTags, updateURL]
-  )
-
-  const handleClear = useCallback(() => {
-    updateURL(new Set())
-  }, [updateURL])
 
   return (
     <ListingViewCounts slugs={allSlugs}>
@@ -112,7 +50,7 @@ export function FilteredPostList({ posts, allTags }: FilteredPostListProps) {
         onClear={handleClear}
         counts={tagCounts}
         renderChip={({ item, active, onToggle, count }) => (
-          <TagChip key={item} tag={item} active={active} onToggle={onToggle} count={count} />
+          <FilterChip key={item} label={item} variant="tag" active={active} onToggle={onToggle} count={count} />
         )}
         label="Filter by tag"
       />

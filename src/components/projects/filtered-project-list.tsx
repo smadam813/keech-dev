@@ -1,9 +1,8 @@
 'use client'
 
-import { useSearchParams, usePathname } from 'next/navigation'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FilterBar } from '@/components/ui/filter-bar'
-import { TechBadge } from '@/components/projects/tech-badge'
+import { FilterChip } from '@/components/ui/filter-chip'
+import { useFilteredList } from '@/hooks/use-filtered-list'
 import { ProjectCard } from './project-card'
 import { ScrollReveal } from '@/components/ui/scroll-reveal'
 import { cn } from '@/lib/utils'
@@ -22,80 +21,20 @@ interface FilteredProjectListProps {
 }
 
 export function FilteredProjectList({ projects, allStack }: FilteredProjectListProps) {
-  const searchParams = useSearchParams()
-  const pathname = usePathname()
-
-  // Read filter state from URL
-  const activeStack = useMemo(
-    () => new Set(searchParams.get('stack')?.split(',').filter(Boolean) ?? []),
-    [searchParams]
-  )
-
-  const isFiltering = activeStack.size > 0
-
-  // AND logic: show all when no filters, otherwise only projects containing ALL selected stack items
-  const filteredProjects =
-    activeStack.size === 0
-      ? projects
-      : projects.filter((project) =>
-          [...activeStack].every((tech) => project.stack.includes(tech))
-        )
-
-  // Static counts: total projects per stack item (not contextual to active filters)
-  const stackCounts = useMemo(() => {
-    const counts: Record<string, number> = {}
-    for (const tech of allStack) {
-      counts[tech] = projects.filter((p) => p.stack.includes(tech)).length
-    }
-    return counts
-  }, [projects, allStack])
-
-  const [isTransitioning, setIsTransitioning] = useState(false)
-  const isInitialRender = useRef(true)
-  const filteredKey = filteredProjects.map((p) => p.slug).join(',')
-
-  useEffect(() => {
-    if (isInitialRender.current) {
-      isInitialRender.current = false
-      return
-    }
-    if (!isFiltering) return
-    setIsTransitioning(true)
-    const timer = setTimeout(() => setIsTransitioning(false), 150)
-    return () => clearTimeout(timer)
-  }, [filteredKey, isFiltering])
-
-  // Write updated stack set to URL via replaceState (no navigation)
-  const updateURL = useCallback(
-    (next: Set<string>) => {
-      const params = new URLSearchParams(searchParams.toString())
-      if (next.size === 0) {
-        params.delete('stack')
-      } else {
-        params.set('stack', [...next].sort().join(','))
-      }
-      const query = params.toString()
-      window.history.replaceState(null, '', query ? `${pathname}?${query}` : pathname)
-    },
-    [searchParams, pathname]
-  )
-
-  const handleToggle = useCallback(
-    (item: string) => {
-      const next = new Set(activeStack)
-      if (next.has(item)) {
-        next.delete(item)
-      } else {
-        next.add(item)
-      }
-      updateURL(next)
-    },
-    [activeStack, updateURL]
-  )
-
-  const handleClear = useCallback(() => {
-    updateURL(new Set())
-  }, [updateURL])
+  const {
+    filteredItems: filteredProjects,
+    activeFilters: activeStack,
+    isFiltering,
+    isTransitioning,
+    filterCounts: stackCounts,
+    handleToggle,
+    handleClear,
+  } = useFilteredList({
+    items: projects,
+    allFilterValues: allStack,
+    getItemValues: (project) => project.stack,
+    paramName: 'stack',
+  })
 
   return (
     <>
@@ -106,7 +45,7 @@ export function FilteredProjectList({ projects, allStack }: FilteredProjectListP
         onClear={handleClear}
         counts={stackCounts}
         renderChip={({ item, active, onToggle, count }) => (
-          <TechBadge key={item} tech={item} active={active} onToggle={onToggle} count={count} />
+          <FilterChip key={item} label={item} variant="tech" active={active} onToggle={onToggle} count={count} />
         )}
         label="Filter by technology"
       />

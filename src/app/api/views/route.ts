@@ -1,4 +1,5 @@
 import { redis } from '@/lib/redis'
+import { validateSlugs } from '@/lib/validation'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,6 +10,11 @@ export async function GET(request: Request) {
 
   if (slugs.length === 0) {
     return Response.json({ counts: {} })
+  }
+
+  const validation = validateSlugs(slugs)
+  if (!validation.valid) {
+    return Response.json({ error: validation.error }, { status: 400 })
   }
 
   try {

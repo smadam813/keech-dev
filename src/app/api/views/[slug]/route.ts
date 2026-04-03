@@ -1,4 +1,6 @@
 import { redis } from '@/lib/redis'
+import { validateSlug } from '@/lib/validation'
+import { viewsRateLimit } from '@/lib/rate-limit'
 import { createHash } from 'crypto'
 
 export const dynamic = 'force-dynamic'
@@ -12,6 +14,10 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params
+
+  if (!validateSlug(slug)) {
+    return Response.json({ error: 'Invalid slug' }, { status: 400 })
+  }
 
   try {
     const views = await redis.get<number>(`views:${slug}`) ?? 0
@@ -31,9 +37,19 @@ export async function POST(
 ) {
   const { slug } = await params
 
+  if (!validateSlug(slug)) {
+    return Response.json({ error: 'Invalid slug' }, { status: 400 })
+  }
+
+  const forwarded = request.headers.get('x-forwarded-for')
+  const ip = forwarded?.split(',')[0]?.trim() ?? '127.0.0.1'
+
+  const { success } = await viewsRateLimit.limit(ip)
+  if (!success) {
+    return Response.json({ error: 'Too many requests' }, { status: 429 })
+  }
+
   try {
-    const forwarded = request.headers.get('x-forwarded-for')
-    const ip = forwarded?.split(',')[0]?.trim() ?? '127.0.0.1'
     const ipHash = hashIP(ip)
 
     // Step 1: Check/set dedup key (NX = only if not exists, 24h TTL)

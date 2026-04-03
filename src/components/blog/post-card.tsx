@@ -1,7 +1,8 @@
 import Link from 'next/link'
-import { TagChip } from './tag-chip'
+import { FilterChip } from '@/components/ui/filter-chip'
 import { POST_RUNES } from '@/components/runes/rune-config'
 import { PostCardViewCount } from './listing-view-counts'
+import { formatDate } from '@/lib/format'
 
 interface PostCardProps {
   post: {
@@ -16,12 +17,7 @@ interface PostCardProps {
 }
 
 export function PostCard({ post }: PostCardProps) {
-  const formattedDate = new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    timeZone: 'UTC'
-  }).format(new Date(post.date))
+  const formattedDate = formatDate(post.date)
 
   return (
     <Link
@@ -54,7 +50,7 @@ export function PostCard({ post }: PostCardProps) {
         {post.tags.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-auto">
             {post.tags.map((tag) => (
-              <TagChip key={tag} tag={tag} />
+              <FilterChip key={tag} label={tag} />
             ))}
           </div>
         )}

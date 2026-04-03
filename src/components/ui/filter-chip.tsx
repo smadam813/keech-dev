@@ -1,8 +1,9 @@
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 
-interface TagChipProps {
-  tag: string
+interface FilterChipProps {
+  label: string
+  variant?: 'tag' | 'tech'
   href?: string
   active?: boolean
   onToggle?: () => void
@@ -10,7 +11,7 @@ interface TagChipProps {
   className?: string
 }
 
-export function TagChip({ tag, href, active, onToggle, count, className }: TagChipProps) {
+export function FilterChip({ label, href, active, onToggle, count, className }: FilterChipProps) {
   const baseClasses = 'inline-block px-2 py-0.5 text-xs font-mono font-bold border-2 border-black'
 
   // Toggle button mode (for filter bar)
@@ -29,7 +30,7 @@ export function TagChip({ tag, href, active, onToggle, count, className }: TagCh
           className
         )}
       >
-        {tag}
+        {label}
         {count !== undefined && (
           <span className="ml-1 opacity-60">({count})</span>
         )}
@@ -37,7 +38,7 @@ export function TagChip({ tag, href, active, onToggle, count, className }: TagCh
     )
   }
 
-  // Link mode (existing behavior)
+  // Link mode (for blog post detail tag links)
   if (href) {
     return (
       <Link
@@ -49,11 +50,11 @@ export function TagChip({ tag, href, active, onToggle, count, className }: TagCh
           className
         )}
       >
-        {tag}
+        {label}
       </Link>
     )
   }
 
-  // Display-only mode (existing behavior)
-  return <span className={cn(baseClasses, 'bg-accent/10', className)}>{tag}</span>
+  // Display-only mode
+  return <span className={cn(baseClasses, 'bg-accent/10', className)}>{label}</span>
 }
