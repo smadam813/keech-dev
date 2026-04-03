@@ -7,12 +7,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 npm run dev       # Velite --watch & Next.js Turbopack (two parallel processes)
 npm run build     # velite && next build (sequential — Velite must complete first)
-npm run lint      # ESLint (next/core-web-vitals + next/typescript)
+npm run lint      # ESLint flat config (core-web-vitals + typescript; 3 React 19 rules downgraded to warn)
+npm run test      # Vitest unit tests
+npm run test:e2e  # Playwright end-to-end tests
 npm run start     # Serve production build
 npm run velite    # Run Velite content compilation alone (useful for debugging content issues)
 ```
 
-No test framework is configured. No CI/CD pipelines exist — deployment is git-push to Vercel.
+No CI/CD pipelines exist — deployment is git-push to Vercel.
 
 ## Architecture
 
@@ -77,9 +79,26 @@ Client components use localStorage as a read-through cache to prevent flash on r
 
 Environment variables required: `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` (used by `Redis.fromEnv()` in `src/lib/redis.ts`).
 
+### Testing
+
+Vitest for unit tests (`vitest.config.ts`), Playwright for e2e (`playwright.config.ts`). Unit tests live alongside source files as `*.test.ts(x)`. E2e specs in `e2e/`. Coverage includes error boundaries, hooks, lib utilities, and UI components.
+
+### Error Handling
+
+- `error.tsx` — route-level error boundary (also `blog/[slug]/error.tsx` for post pages)
+- `global-error.tsx` — root error boundary
+- `not-found.tsx` — 404 page
+- `loading.tsx` — loading skeleton
+
+### Security Hardening
+
+`next.config.ts` sets security headers on all routes: Content-Security-Policy (self-only with eval for MDX), X-Frame-Options DENY, X-Content-Type-Options nosniff, Referrer-Policy strict-origin-when-cross-origin.
+
+API routes use input validation (`src/lib/validation.ts` — slug format + batch size limits) and rate limiting via `@upstash/ratelimit` on the view-count POST endpoint.
+
 ### Static Generation & SEO
 
-Content pages use `generateStaticParams()` for full static generation. SEO handled by `sitemap.ts` and `robots.ts` in app root. Vercel Web Analytics is included in the root layout.
+Content pages use `generateStaticParams()` for full static generation. SEO handled by `sitemap.ts`, `robots.ts`, and `opengraph-image.tsx` (dynamic OG image generation) in app root. RSS feed at `src/app/feed.xml/route.ts`. Vercel Web Analytics is included in the root layout.
 
 ### Utilities
 
