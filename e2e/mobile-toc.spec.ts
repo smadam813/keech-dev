@@ -64,4 +64,51 @@ test.describe('mobile table of contents', () => {
       await expect(page).toHaveURL(new RegExp(href.replace('#', '#')))
     }
   })
+
+  test('TOC toggle remains visible after scrolling down', async ({ page }) => {
+    await page.goto('/blog')
+    const firstPost = page.locator('a[href^="/blog/"]').first()
+    await firstPost.click()
+    await page.waitForURL(/\/blog\/.+/)
+
+    const tocToggle = page.getByRole('button', { name: /contents/i })
+
+    if (await tocToggle.count() === 0) {
+      test.skip(true, 'No TOC on this blog post')
+      return
+    }
+
+    // Scroll down significantly (past the TOC's natural position)
+    await page.evaluate(() => window.scrollTo(0, 1000))
+    await page.waitForTimeout(300) // allow scroll + sticky to settle
+
+    // The TOC toggle button should still be visible (sticky)
+    await expect(tocToggle).toBeVisible()
+    await expect(tocToggle).toBeInViewport()
+  })
+
+  test('auto-collapses after heading link click', async ({ page }) => {
+    await page.goto('/blog')
+    const firstPost = page.locator('a[href^="/blog/"]').first()
+    await firstPost.click()
+    await page.waitForURL(/\/blog\/.+/)
+
+    const tocToggle = page.getByRole('button', { name: /contents/i })
+
+    if (await tocToggle.count() === 0) {
+      test.skip(true, 'No TOC on this blog post')
+      return
+    }
+
+    // Expand TOC
+    await tocToggle.click()
+    await expect(tocToggle).toHaveAttribute('aria-expanded', 'true')
+
+    // Click a heading link
+    const firstLink = page.locator('#mobile-toc-content a').first()
+    await firstLink.click()
+
+    // TOC should auto-collapse
+    await expect(tocToggle).toHaveAttribute('aria-expanded', 'false')
+  })
 })
