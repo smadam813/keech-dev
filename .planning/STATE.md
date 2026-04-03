@@ -5,7 +5,7 @@ milestone_name: Address Concerns
 status: active
 last_updated: "2026-04-02"
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -18,14 +18,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-02)
 
 **Core value:** A polished, intentional developer portfolio — fast, visually distinctive, and well-crafted in every detail.
-**Current focus:** Defining requirements for v1.6 Address Concerns
+**Current focus:** Phase 9: Security & Patches
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-04-02 — Milestone v1.6 started
+Phase: 9 of 12 (Security & Patches) — first phase of v1.6
+Plan: 0 of ? in current phase
+Status: Ready to plan
+Last activity: 2026-04-02 — Roadmap created for v1.6 Address Concerns (4 phases, 31 requirements)
 
 ## Performance Metrics
 
@@ -53,6 +53,11 @@ Last activity: 2026-04-02 — Milestone v1.6 started
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
+Recent decisions affecting current work:
+
+- [v1.6 planning]: CSP uses next.config.ts headers(), not nonce middleware (static generation compatibility)
+- [v1.6 planning]: Dedup before testing so tests cover final code shape
+- [v1.6 planning]: Major dep upgrades (analytics v2, Shiki v4) deferred to separate milestone
 
 ### Pending Todos
 
@@ -60,7 +65,8 @@ None.
 
 ### Blockers/Concerns
 
-None.
+- Norse font may exceed 500KB Satori bundle limit for OG images (measure during Phase 11, fallback to Inter-only)
+- CSP requires `unsafe-eval` due to `new Function()` MDX execution (accepted trade-off, removal deferred)
 
 ### Quick Tasks Completed
 
@@ -78,5 +84,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-04-02
-Stopped at: Defining requirements for v1.6
+Stopped at: Roadmap created for v1.6 (Phases 9-12, 31 requirements mapped)
 Resume file: None
