@@ -48,7 +48,7 @@ See: `.planning/milestones/v1.5-ROADMAP.md` for full details.
 - [ ] **Phase 9: Security & Patches** - Harden all attack surfaces and patch known vulnerabilities
 - [x] **Phase 10: Resilience & Code Quality** - Error boundaries, loading states, and code deduplication (completed 2026-04-03)
 - [x] **Phase 11: SEO & Branding** - Favicon, OG images, RSS feed, and sitemap accuracy (completed 2026-04-03)
-- [ ] **Phase 12: Testing Infrastructure** - Vitest and Playwright covering the final code shape
+- [x] **Phase 12: Testing Infrastructure** - Vitest and Playwright covering the final code shape (completed 2026-04-03)
 
 ## Phase Details
 
@@ -114,9 +114,9 @@ Plans:
 **UI hint**: yes
 
 Plans:
-- [ ] 12-01-PLAN.md — Vitest configuration and unit tests for formatDate, view helpers, computeGlowPositions
+- [x] 12-01-PLAN.md — Vitest configuration and unit tests for formatDate, view helpers, computeGlowPositions
 - [x] 12-02-PLAN.md — Mobile TOC collapsible accordion component and blog post integration
-- [ ] 12-03-PLAN.md — Playwright configuration and E2E tests for mobile menu, code copy, view count, mobile TOC
+- [x] 12-03-PLAN.md — Playwright configuration and E2E tests for mobile menu, code copy, view count, mobile TOC
 
 ## Progress
 
@@ -136,4 +136,4 @@ Phases execute in numeric order: 9 → 10 → 11 → 12
 | 9. Security & Patches | v1.6 | 0/2 | Not started | - |
 | 10. Resilience & Code Quality | v1.6 | 4/4 | Complete    | 2026-04-03 |
 | 11. SEO & Branding | v1.6 | 3/3 | Complete    | 2026-04-03 |
-| 12. Testing Infrastructure | v1.6 | 1/3 | In Progress|  |
+| 12. Testing Infrastructure | v1.6 | 1/3 | Complete    | 2026-04-03 |
