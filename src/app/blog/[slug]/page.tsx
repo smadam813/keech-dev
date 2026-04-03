@@ -2,6 +2,7 @@ import { posts } from '@/.velite'
 import { notFound } from 'next/navigation'
 import { MDXContent } from '@/components/blog/mdx-content'
 import { TableOfContents } from '@/components/blog/toc'
+import { MobileToc } from '@/components/blog/mobile-toc'
 import { FilterChip } from '@/components/ui/filter-chip'
 import { ViewCounter } from '@/components/blog/view-counter'
 import { POST_RUNES } from '@/components/runes/rune-config'
@@ -64,6 +65,9 @@ export default async function PostPage({ params }: PostPageProps) {
         <ArrowLeft size={16} />
         <span>All Blog Posts</span>
       </Link>
+
+      {/* Mobile table of contents - visible below lg breakpoint */}
+      <MobileToc entries={post.toc} />
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_16rem] gap-12 lg:gap-16">
         {/* Main content */}
