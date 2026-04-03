@@ -25,6 +25,7 @@ export default function BlogPostError({
           >
             Try Again
           </button>
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- plain <a> intentional: client-side routing may be broken in error state */}
           <a
             href="/blog"
             className="inline-block border-[3px] border-foreground bg-accent text-white px-6 py-2 font-semibold shadow-brutal hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
