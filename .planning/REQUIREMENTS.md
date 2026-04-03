@@ -59,6 +59,16 @@ Requirements for v1.6 Address Concerns. Each maps to roadmap phases.
 - [x] **CLN-02**: Resume placeholder button replaced with actionable alternative or removed
 - [x] **CLN-03**: Color validation script palette matches actual `globals.css` values
 
+### Mobile TOC Enhancement
+
+- [x] **D-01**: Mobile TOC uses CSS `position: sticky` to pin at viewport top — pure CSS, no JavaScript scroll listeners
+- [x] **D-02**: Sticky behavior applies only below the `lg` breakpoint (mobile/tablet)
+- [x] **D-03**: When sticky, collapsed TOC shows only the "Contents" toggle button
+- [x] **D-04**: Visual indicator distinguishes sticky/pinned state from inline position
+- [x] **D-05**: TOC auto-collapses after user taps a heading link
+- [x] **D-06**: Smooth scroll to target heading after TOC collapse, with scroll-margin-top clearance
+- [x] **D-07**: No separate back-to-top floating button — sticky TOC is the sole navigation affordance
+
 ## Future Requirements
 
 Deferred to separate milestones. Tracked but not in current roadmap.
@@ -121,12 +131,19 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CLN-01 | Phase 9 | Complete |
 | CLN-02 | Phase 11 | Complete |
 | CLN-03 | Phase 9 | Complete |
+| D-01 | Phase 13 | Complete |
+| D-02 | Phase 13 | Complete |
+| D-03 | Phase 13 | Complete |
+| D-04 | Phase 13 | Complete |
+| D-05 | Phase 13 | Complete |
+| D-06 | Phase 13 | Complete |
+| D-07 | Phase 13 | Complete |
 
 **Coverage:**
-- v1.6 requirements: 31 total
-- Mapped to phases: 31/31
+- v1.6 requirements: 38 total
+- Mapped to phases: 38/38
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-02*
-*Last updated: 2026-04-03 after phase 10-12 UAT*
+*Last updated: 2026-04-03 after Phase 13 D-xx backport*
