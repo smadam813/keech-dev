@@ -78,11 +78,13 @@ Plans:
   3. Blog and project listing pages use the same shared filtering hook with no duplicated filter logic
   4. Date formatting and localStorage view cache helpers each have a single source of truth (no duplicated implementations)
   5. Code block copy button is visible and operable when navigated to via keyboard Tab
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 10-01: TBD
-- [ ] 10-02: TBD
+- [ ] 10-01-PLAN.md — Error boundaries, loading skeletons, accessibility fixes
+- [ ] 10-02-PLAN.md — Date formatting and localStorage cache helper extraction
+- [ ] 10-03-PLAN.md — FilterChip unification and useFilteredList hook extraction
+- [ ] 10-04-PLAN.md — Hero component hook extraction
 
 ### Phase 11: SEO & Branding
 **Goal**: The site presents a polished, branded identity in browser tabs, social media shares, search engine crawlers, and RSS readers
@@ -94,7 +96,7 @@ Plans:
   3. Sharing a blog post URL renders an OG image with the post title in neobrutalist branding
   4. The sitemap at `/sitemap.xml` reflects actual content dates (not today's date on every build)
   5. An RSS reader can subscribe to `/feed.xml` and see all published blog posts with titles, dates, and descriptions
-**Plans**: TBD
+**Plans**: 4 plans
 **UI hint**: yes
 
 Plans:
@@ -109,7 +111,7 @@ Plans:
   1. `npx vitest run` passes with unit tests covering date formatting, view count helpers, and rune glow position calculations
   2. `npx playwright test` passes with E2E tests covering mobile menu toggle, code block copy button, and view count increment
   3. Mobile and tablet users can open a collapsible table of contents to navigate blog post sections
-**Plans**: TBD
+**Plans**: 4 plans
 **UI hint**: yes
 
 Plans:
