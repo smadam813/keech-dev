@@ -1,10 +1,11 @@
 ---
 phase: 9
 slug: security-patches
-status: draft
-nyquist_compliant: false
-wave_0_complete: false
+status: complete
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-04-02
+audited: 2026-04-03
 ---
 
 # Phase 9 — Validation Strategy
@@ -17,34 +18,33 @@ created: 2026-04-02
 
 | Property | Value |
 |----------|-------|
-| **Framework** | No test framework configured (project has no tests) |
-| **Config file** | none — Wave 0 installs |
-| **Quick run command** | `npm run build` |
-| **Full suite command** | `npm run build && npm run lint` |
-| **Estimated runtime** | ~30 seconds |
+| **Framework** | Vitest 4.1.2 (jsdom environment) |
+| **Config file** | `vitest.config.ts` |
+| **Quick run command** | `npx vitest run` |
+| **Full suite command** | `npx vitest run && npm run build` |
+| **Estimated runtime** | ~5 seconds |
 
 ---
 
 ## Sampling Rate
 
 - **After every task commit:** Run `npm run build`
-- **After every plan wave:** Run `npm run build && npm run lint`
+- **After every plan wave:** Run `npx vitest run && npm run build`
 - **Before `/gsd:verify-work`:** Full suite must be green
-- **Max feedback latency:** 30 seconds
+- **Max feedback latency:** 5 seconds
 
 ---
 
 ## Per-Task Verification Map
 
-| Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
-|---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 09-01-01 | 01 | 1 | SEC-01 | build | `npm run build` | ✅ | ⬜ pending |
-| 09-01-02 | 01 | 1 | SEC-02 | build | `npm run build` | ✅ | ⬜ pending |
-| 09-02-01 | 02 | 1 | SEC-03, SEC-04 | manual+build | `npm run build` | ✅ | ⬜ pending |
-| 09-02-02 | 02 | 1 | SEC-05 | manual | `curl -X POST ...` | ❌ W0 | ⬜ pending |
-| 09-02-03 | 02 | 1 | SEC-06 | build | `npm run build` | ✅ | ⬜ pending |
-| 09-03-01 | 03 | 1 | CLN-01 | audit | `npm audit` | ✅ | ⬜ pending |
-| 09-03-02 | 03 | 1 | CLN-03 | build | `npm run build` | ✅ | ⬜ pending |
+| Task ID | Plan | Wave | Requirement | Test Type | Automated Command | Test File | Status |
+|---------|------|------|-------------|-----------|-------------------|-----------|--------|
+| 09-01-01 | 01 | 1 | SEC-03, CLN-01 | build+audit | `npm audit && npm run build` | — | ✅ green |
+| 09-01-02 | 01 | 1 | SEC-01 | unit | `npx vitest run src/lib/security-headers.test.ts` | `src/lib/security-headers.test.ts` | ✅ green |
+| 09-01-03 | 01 | 1 | CLN-03 | script | `node scripts/validate-colors.mjs` | — | ✅ green |
+| 09-02-01 | 02 | 2 | SEC-04, SEC-05 | unit | `npx vitest run src/lib/validation.test.ts` | `src/lib/validation.test.ts` | ✅ green |
+| 09-02-02 | 02 | 2 | SEC-02 | unit | `npx vitest run src/components/blog/mdx-content.test.tsx` | `src/components/blog/mdx-content.test.tsx` | ✅ green |
+| 09-02-03 | 02 | 2 | SEC-06 | unit | `npx vitest run src/lib/rate-limit.test.ts` | `src/lib/rate-limit.test.ts` | ✅ green |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -52,8 +52,8 @@ created: 2026-04-02
 
 ## Wave 0 Requirements
 
-- Existing infrastructure covers all phase requirements (build + lint + npm audit).
-- No test framework installation needed — security validations are verified via build, lint, curl commands, and `npm audit`.
+- Vitest was already configured (`vitest.config.ts`). No new framework installation needed.
+- All test files follow existing patterns (`describe`/`it` blocks, vitest globals).
 
 ---
 
@@ -61,22 +61,41 @@ created: 2026-04-02
 
 | Behavior | Requirement | Why Manual | Test Instructions |
 |----------|-------------|------------|-------------------|
-| Security headers present in response | SEC-01 | Headers only visible on deployed/running server | Run `npm run dev`, then `curl -I http://localhost:3000` and verify CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy headers |
-| Rate limiting rejects rapid requests | SEC-05 | Requires sequential HTTP requests against running server | Send 11+ rapid POST requests to `/api/views/test-slug` and verify 429 response |
-| Malformed MDX shows fallback | SEC-02 | Requires visual verification of error boundary | Create test post with invalid MDX, navigate to it in browser, verify branded fallback |
-| API rejects invalid slugs | SEC-04 | Requires HTTP request against running server | `curl -X POST /api/views/'; DROP TABLE` and verify 400 response |
+| Security headers present in live HTTP response | SEC-01 | Headers configured in `next.config.ts` — only verifiable on running server | Run `npm run dev`, then `curl -I http://localhost:3000` and verify CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy headers |
+| Rate limiting rejects rapid requests | SEC-05 | Requires sequential HTTP requests against running server with Redis | Send 11+ rapid POST requests to `/api/views/test-slug` and verify 429 response |
+| Malformed MDX shows fallback in browser | SEC-02 | Visual verification of rendered fallback | Create test post with invalid MDX, navigate in browser, verify branded fallback card |
 
-*If none: "All phase behaviors have automated verification."*
+*Note: All manual-only items also have automated unit test coverage for their code-level behavior. Manual verification confirms end-to-end integration.*
 
 ---
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 30s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 30s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** passed
+
+---
+
+## Validation Audit 2026-04-03
+
+| Metric | Count |
+|--------|-------|
+| Gaps found | 5 |
+| Resolved | 5 |
+| Escalated | 0 |
+
+### Tests Generated
+
+| File | Tests | Requirements |
+|------|-------|--------------|
+| `src/lib/validation.test.ts` | 13 | SEC-04, SEC-05 |
+| `src/lib/security-headers.test.ts` | 5 | SEC-01 |
+| `src/lib/rate-limit.test.ts` | 4 | SEC-06 |
+| `src/components/blog/mdx-content.test.tsx` | 3 | SEC-02 |
+| **Total** | **25** | **5 requirements** |
