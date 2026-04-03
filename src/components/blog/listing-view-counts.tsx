@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useLayoutEffect, useState } from 'react'
-import { formatViewCount } from '@/lib/views'
+import { formatViewCount, getCachedViews, setCachedViews } from '@/lib/views'
 import { POST_RUNES } from '@/components/runes/rune-config'
 
 const ViewCountsContext = createContext<Record<string, number | null>>({})
@@ -14,23 +14,6 @@ export function useViewCount(slug: string): number | null {
 interface ListingViewCountsProps {
   slugs: string[]
   children: React.ReactNode
-}
-
-function getCachedViews(slug: string): number | null {
-  try {
-    const raw = localStorage.getItem(`views:${slug}`)
-    return raw !== null ? Number(raw) : null
-  } catch {
-    return null
-  }
-}
-
-function setCachedViews(slug: string, count: number) {
-  try {
-    localStorage.setItem(`views:${slug}`, String(count))
-  } catch {
-    // Storage full or unavailable — non-critical
-  }
 }
 
 export function ListingViewCounts({ slugs, children }: ListingViewCountsProps) {

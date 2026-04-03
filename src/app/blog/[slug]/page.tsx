@@ -5,6 +5,7 @@ import { TableOfContents } from '@/components/blog/toc'
 import { TagChip } from '@/components/blog/tag-chip'
 import { ViewCounter } from '@/components/blog/view-counter'
 import { POST_RUNES } from '@/components/runes/rune-config'
+import { formatDate } from '@/lib/format'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import type { Metadata } from 'next'
@@ -50,21 +51,8 @@ export default async function PostPage({ params }: PostPageProps) {
     notFound()
   }
 
-  const formattedDate = new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    timeZone: 'UTC'
-  }).format(new Date(post.date))
-
-  const formattedUpdated = post.updated
-    ? new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      timeZone: 'UTC'
-    }).format(new Date(post.updated))
-    : null
+  const formattedDate = formatDate(post.date)
+  const formattedUpdated = post.updated ? formatDate(post.updated) : null
 
   return (
     <article className="w-full mx-auto max-w-6xl px-6 pt-12 pb-16">
