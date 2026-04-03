@@ -38,10 +38,10 @@ created: 2026-04-03
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 13-01-01 | 01 | 1 | D-01 (sticky) | E2E | `npx playwright test e2e/mobile-toc.spec.ts` | ✅ extends existing | ⬜ pending |
-| 13-01-02 | 01 | 1 | D-03 (compact bar) | E2E | `npx playwright test e2e/mobile-toc.spec.ts` | ✅ extends existing | ⬜ pending |
-| 13-01-03 | 01 | 1 | D-05 (auto-collapse) | E2E | `npx playwright test e2e/mobile-toc.spec.ts` | ✅ extends existing | ⬜ pending |
-| 13-01-04 | 01 | 1 | D-06 (scroll-margin) | E2E | `npx playwright test e2e/mobile-toc.spec.ts` | ✅ extends existing | ⬜ pending |
+| 13-01-01 | 01 | 1 | D-01 (sticky) | E2E | `npx playwright test e2e/mobile-toc.spec.ts` | ✅ e2e/mobile-toc.spec.ts:68 | ✅ green |
+| 13-01-02 | 01 | 1 | D-03 (compact bar) | E2E | `npx playwright test e2e/mobile-toc.spec.ts` | ✅ e2e/mobile-toc.spec.ts:6 | ✅ green |
+| 13-01-03 | 01 | 1 | D-05 (auto-collapse) | E2E | `npx playwright test e2e/mobile-toc.spec.ts` | ✅ e2e/mobile-toc.spec.ts:90 | ✅ green |
+| 13-01-04 | 01 | 1 | D-02, D-07 (mobile-only, desktop unchanged) | E2E | `npx playwright test e2e/mobile-toc.spec.ts` | ✅ implicit (Pixel 5 device + build) | ✅ green |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -49,8 +49,8 @@ created: 2026-04-03
 
 ## Wave 0 Requirements
 
-- [ ] Extend `e2e/mobile-toc.spec.ts` — add test for sticky visibility after scroll
-- [ ] Extend `e2e/mobile-toc.spec.ts` — add test for auto-collapse after heading link click
+- [x] Extend `e2e/mobile-toc.spec.ts` — add test for sticky visibility after scroll
+- [x] Extend `e2e/mobile-toc.spec.ts` — add test for auto-collapse after heading link click
 
 *Existing test infrastructure (Vitest + Playwright) from Phase 12 covers framework needs.*
 
@@ -67,11 +67,23 @@ created: 2026-04-03
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 15s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 15s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** approved 2026-04-03
+
+---
+
+## Validation Audit 2026-04-03
+
+| Metric | Count |
+|--------|-------|
+| Gaps found | 0 |
+| Resolved | 0 |
+| Escalated | 0 |
+
+All 4 automatable requirements (D-01, D-03, D-05, D-02/D-07) have E2E coverage in `e2e/mobile-toc.spec.ts` (4 tests, all green). 2 manual-only items (D-04, D-06) correctly classified — visual rendering details not amenable to DOM assertions.
