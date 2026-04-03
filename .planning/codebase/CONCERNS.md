@@ -1,215 +1,113 @@
 # Codebase Concerns
 
-**Analysis Date:** 2026-03-22
+**Analysis Date:** 2026-04-03
 
-## Critical Severity
+## v1.6 Milestone Summary
 
-### Security: `new Function()` MDX Execution
+The v1.6 "Address Concerns" milestone resolved the majority of issues from the 2026-03-22 audit. All 38 requirements passed verification. The following categories are now addressed: error boundaries, code duplication (localStorage helpers, date formatting, filtered lists, tag/tech badges), security headers, slug validation, rate limiting, favicons, OG images, RSS feed, sitemap dates, copy button keyboard accessibility, VoiceOver list roles, mobile TOC, testing infrastructure, resume placeholder, color script mismatch, project image sizes, and dependency updates.
 
-- Issue: `new Function(code)` executes arbitrary JavaScript at runtime with no sandboxing, try-catch, or CSP consideration
-- Files: `src/components/blog/mdx-content.tsx` (line 13)
-- Impact: Any compromise of the Velite build output or `.velite/` directory results in arbitrary code execution in every visitor's browser. If content sourcing ever expands beyond the local `content/` directory, this is a direct XSS vector.
-- Current mitigation: Content is version-controlled and compiled by Velite at build time. The `.velite/` output directory is gitignored.
-- Fix approach:
-  1. Wrap the `new Function(code)` call in a try-catch with a fallback UI (prevents page crash on malformed MDX)
-  2. Add `Content-Security-Policy` headers via `next.config.ts` `headers()` -- at minimum restrict `script-src` and consider `unsafe-eval` implications
-  3. Long-term: evaluate `next-mdx-remote` or similar libraries that provide controlled MDX execution
-
-### Security: No Security Headers
-
-- Issue: No Content-Security-Policy, X-Frame-Options, X-Content-Type-Options, or other security headers configured
-- Files: `next.config.ts` (no `headers()` function defined), no `src/middleware.ts` file exists
-- Impact: Site is vulnerable to clickjacking, MIME sniffing, and has no eval restrictions. The `new Function()` pattern makes CSP configuration particularly important.
-- Fix approach: Add a `headers()` function to `next.config.ts` with:
-  - `X-Frame-Options: DENY`
-  - `X-Content-Type-Options: nosniff`
-  - `Referrer-Policy: strict-origin-when-cross-origin`
-  - `Content-Security-Policy` with appropriate directives (will need `unsafe-eval` unless MDX execution is reworked)
-
-### Security: Dependency Vulnerabilities
-
-- Issue: `npm audit` reports 2 vulnerabilities (1 high in `flatted`, 1 moderate in `next`) including CSRF bypass, HTTP smuggling, and unbounded disk cache growth
-- Files: `package.json`, `package-lock.json`
-- Impact: The `next` vulnerabilities include null origin CSRF bypass for Server Actions and unbounded image disk cache growth. While current Server Actions usage is minimal, the CSRF bypass affects the views API.
-- Fix approach: Run `npm audit fix` to apply available patches. Update `next` from `16.1.6` to latest patch.
-
-### Missing: No Test Coverage
-
-- Issue: Zero test files exist anywhere in the codebase. No test framework is configured.
-- Files: Every file under `src/` is untested
-- Impact: Refactoring, dependency upgrades, and bug fixes carry regression risk. The MDX execution path, view counting API, and date formatting logic are all untested.
-- Fix approach:
-  1. Install Vitest (aligns with Vite-compatible ecosystem)
-  2. Priority test targets: `src/lib/views.ts`, `src/lib/rune-glows.ts` (pure functions), API routes `src/app/api/views/`, MDX rendering path
-  3. Add Playwright for E2E coverage of mobile menu, copy button, scroll reveal
+This document captures what remains and what emerged during v1.6 work.
 
 ## Moderate Severity
 
-### Missing: No Error Boundaries
+### Security: CSP Requires `unsafe-eval` for MDX Execution
 
-- Issue: No `error.tsx` or `loading.tsx` files exist in any route segment. No React error boundaries wrap client components.
-- Files: All route segments under `src/app/` lack error/loading boundaries
-- Impact: Any client-side error (e.g., MDX execution failure, API fetch error in view counter) crashes the entire page with a white screen instead of graceful degradation
-- Fix approach: Add `error.tsx` at `src/app/error.tsx` (global) and `src/app/blog/[slug]/error.tsx` (MDX-specific). Add `loading.tsx` skeletons for route transitions.
+- Issue: `new Function(code)` in the MDX rendering path forces `script-src 'unsafe-eval'` in the Content-Security-Policy header, weakening the CSP significantly
+- Files: `src/components/blog/mdx-content.tsx` (line 14), `next.config.ts` (line 5)
+- Impact: The `unsafe-eval` directive allows `eval()` and similar dynamic code execution in the browser. While a try-catch fallback now prevents crashes, the fundamental XSS vector from compromised build output remains. CSP cannot block it.
+- Fix approach: Migrate to `next-mdx-remote` or a compile-time MDX approach that produces static React components instead of runtime `new Function()` execution. This would allow removing `unsafe-eval` entirely. Tracked as DEP-03 in milestone audit.
 
-### Missing: No Favicon or OG Images
+### Security: CSP Requires `unsafe-inline` for Syntax Highlighting
 
-- Issue: No favicon (`.ico`, `.svg`, `.png`), no apple-touch-icon, and no Open Graph images exist anywhere in the codebase
-- Files: `public/` directory has no icon files; `src/app/` has no `icon.tsx`, `opengraph-image.tsx`, or `apple-icon.tsx`
-- Impact: Browser tabs show a generic icon. Social media shares of blog posts and the site itself render without a preview image, significantly reducing click-through rates.
-- Fix approach:
-  1. Add favicon files to `public/` or use Next.js Metadata API `icon.tsx`
-  2. Create `opengraph-image.tsx` using Next.js Image Generation for dynamic OG images per blog post
-  3. Add default OG image reference in `src/app/layout.tsx` metadata
+- Issue: `rehype-pretty-code` injects inline `style` attributes on code tokens, requiring `style-src 'unsafe-inline'` in the CSP
+- Files: `next.config.ts` (line 6), `velite.config.ts` (rehype-pretty-code plugin)
+- Impact: `unsafe-inline` for styles reduces protection against CSS injection attacks. This is a common tradeoff for syntax highlighting libraries.
+- Fix approach: Investigate Shiki's CSS-variables theme approach or a transformer that outputs class-based styling instead of inline styles. Alternatively, generate nonce-based CSP headers via middleware.
 
-### Code Duplication: localStorage Cache Helpers
+### Security: Dependency Vulnerabilities
 
-- Issue: `getCachedViews()` and `setCachedViews()` functions are copy-pasted identically in two files
-- Files: `src/components/blog/view-counter.tsx` (lines 10-25), `src/components/blog/listing-view-counts.tsx` (lines 19-34)
-- Impact: Bug fixes or behavior changes must be applied in two places. Easy to diverge.
-- Fix approach: Extract to `src/lib/views.ts` alongside the existing `formatViewCount()` function
+- Issue: `npm audit` reports 3 vulnerabilities (2 high in `flatted` and `picomatch`, 1 moderate). These are transitive dependencies.
+- Files: `package.json`, `package-lock.json`
+- Impact: `flatted` has unbounded recursion DoS and prototype pollution via `parse()`. `picomatch` has ReDoS via extglob quantifiers and method injection in POSIX character classes. Both are transitive (not directly used in application code) but present in the dependency tree.
+- Fix approach: Run `npm audit fix`. If transitive dependencies cannot be updated directly, use `overrides` in `package.json` to force patched versions.
 
-### Code Duplication: Date Formatting
+### Linting: `eslint-config-next` Version Mismatch
 
-- Issue: Identical `Intl.DateTimeFormat` construction with same options (`en-US`, `numeric` year, `long` month, `numeric` day, `UTC` timezone) repeated in three locations
-- Files: `src/app/blog/[slug]/page.tsx` (lines 53-58, 61-66), `src/components/blog/post-card.tsx` (lines 19-24)
-- Impact: Inconsistent formatting if one instance is modified without the others
-- Fix approach: Create `formatDate(isoString: string): string` in `src/lib/views.ts` or a new `src/lib/format.ts`
+- Issue: `eslint-config-next` is pinned at `16.1.6` while `next` is at `16.2.2`. Additionally, ESLint produces 4 errors and 10 warnings on a clean run.
+- Files: `package.json` (line 54: `eslint-config-next@^16.1.6`), `eslint.config.mjs`
+- Impact: The version skew between `next` and `eslint-config-next` may cause rule drift. The 4 errors are:
+  - 3x `@next/next/no-html-link-for-pages` in error boundary fallbacks (`src/app/error.tsx`, `src/app/global-error.tsx`, `src/app/blog/[slug]/error.tsx`, `src/components/blog/mdx-content.tsx`) — these use `<a>` instead of `<Link>` intentionally (error boundaries should not depend on Next.js router)
+  - The 10 warnings are `react-hooks/set-state-in-effect` (4x) and `react-hooks/refs` (1x) — downgraded to warnings in config but still firing
+- Fix approach: Update `eslint-config-next` to match `next` version (`^16.2.2`). For the `<a>` errors in error boundaries, add targeted ESLint disable comments with explanation — error boundaries intentionally avoid `<Link>` to prevent cascading failures. For `set-state-in-effect` warnings, these are intentional patterns (localStorage reads in `useLayoutEffect`, media query sync) that React 19's stricter rules flag.
 
-### Code Duplication: Filtered List Components
+### Lint Script: `next lint` CLI Removed
 
-- Issue: `FilteredPostList` and `FilteredProjectList` share nearly identical structure (~90% structural overlap): URL-based filter state, transition animation, `updateURL` via `replaceState`, clear handler, empty state UI
-- Files: `src/components/blog/filtered-post-list.tsx` (154 lines), `src/components/projects/filtered-project-list.tsx` (150 lines)
-- Impact: Any filter behavior fix or enhancement must be applied in both files. The URL management logic, transition state, and empty state pattern are identical.
-- Fix approach: Extract a generic `useFilteredList` hook or a `FilteredListLayout` wrapper component that accepts collection-specific rendering via render props
+- Issue: The original `npm run lint` script used `next lint`, which was removed in Next.js 16.2.2. The script has been updated to `eslint .` but this was a breaking change during v1.6.
+- Files: `package.json` (line 8: `"lint": "eslint ."`)
+- Impact: Resolved for the project, but worth noting that Next.js major CLI changes can break CI-like workflows. The current `eslint .` invocation works but does not benefit from Next.js's automatic ESLint configuration detection that `next lint` provided.
+- Fix approach: No action needed. Current setup works. Monitor Next.js release notes for lint tooling changes.
 
-### Code Duplication: TagChip and TechBadge
+### Missing: No Middleware
 
-- Issue: `TagChip` and `TechBadge` share identical toggle button mode implementation (same class logic, same `aria-pressed`, same shadow/translate hover pattern)
-- Files: `src/components/blog/tag-chip.tsx` (lines 17-37), `src/components/projects/tech-badge.tsx` (lines 15-36)
-- Impact: Minor -- visual consistency could diverge if one is updated without the other
-- Fix approach: Extract shared toggle badge component, or keep separate if they intentionally diverge in future
-
-### Performance: Missing `sizes` on Project Card Images
-
-- Issue: `<Image>` components in project cards use `fill` layout without a `sizes` prop
-- Files: `src/components/projects/project-card.tsx` (lines 32-37), `src/app/projects/[slug]/page.tsx` (lines 115-120)
-- Impact: Without `sizes`, Next.js Image generates default srcset but the browser cannot select the optimal image size, potentially downloading larger images than needed on mobile
-- Fix approach: Add `sizes="(max-width: 768px) 100vw, 50vw"` to project card images and `sizes="(max-width: 1024px) 100vw, 56rem"` to project detail images
-
-### API: No Rate Limiting on View Counter
-
-- Issue: The POST endpoint at `/api/views/[slug]` has IP-based deduplication (24h TTL) but no rate limiting
-- Files: `src/app/api/views/[slug]/route.ts`
-- Impact: A bot or malicious actor can hammer the endpoint with requests from rotating IPs, inflating view counts and consuming Upstash Redis quota. Each unique IP creates a dedup key and an increment.
-- Fix approach: Add Upstash Ratelimit (`@upstash/ratelimit`) with a sliding window. Vercel's Edge middleware or Next.js middleware can enforce this before the route handler runs.
-
-### API: No Input Validation on Slug Parameters
-
-- Issue: Slug parameters from URL paths and query strings are used directly in Redis key construction without validation or sanitization
-- Files: `src/app/api/views/[slug]/route.ts` (line 14, 32: `views:${slug}`), `src/app/api/views/route.ts` (line 8: splits on comma, no validation)
-- Impact: Crafted slugs could create unexpected Redis keys. The batch endpoint accepts arbitrary comma-separated values with no length limit on the slugs array.
-- Fix approach: Validate slugs against `generateStaticParams()` output or enforce a regex pattern (e.g., `^[a-z0-9-]+$`). Limit batch size in the GET `/api/views` endpoint.
-
-### SEO: No OG Images for Blog Posts
-
-- Issue: Blog post metadata includes `openGraph` but no images. Project metadata conditionally includes images only when `project.image` exists. The root layout metadata has no images.
-- Files: `src/app/blog/[slug]/page.tsx` (lines 35-42), `src/app/layout.tsx` (lines 22-28)
-- Impact: Social media shares render without preview images. This significantly reduces engagement and click-through rates for shared content.
-- Fix approach: Use Next.js `opengraph-image.tsx` convention or add a default OG image to metadata
-
-### Sitemap: Static Routes Use `new Date()`
-
-- Issue: Static routes in the sitemap (`/`, `/about`, `/blog`, `/projects`) and project routes use `new Date()` for `lastModified`, meaning every build regenerates with the current date regardless of actual content changes
-- Files: `src/app/sitemap.ts` (lines 8-11, 21-25)
-- Impact: Search engines see constantly changing `lastModified` dates for unchanged pages, reducing crawl efficiency signals. Blog post dates correctly use `post.date`, but project routes do not use `project.date` or `project.updated`.
-- Fix approach: Use fixed dates for static routes (or the most recent content date). Use `project.updated ?? project.date` for project routes.
+- Issue: No `src/middleware.ts` exists. Security headers are applied via `next.config.ts` `headers()` function, and rate limiting is applied per-route in API handlers.
+- Files: No middleware file exists
+- Impact: Headers applied via `next.config.ts` work for static and dynamic routes but cannot be dynamic (e.g., nonce-based CSP). Rate limiting in individual route handlers means each new API route must independently remember to add rate limiting. Middleware would centralize both.
+- Fix approach: Consider adding `src/middleware.ts` for centralized security headers with nonce-based CSP and global rate limiting. This would also enable removing `unsafe-inline` from style-src by using nonces.
 
 ## Minor Severity
 
-### Accessibility: Table of Contents Hidden on Mobile
+### Code Quality: React 19 Lint Warnings (10 warnings)
 
-- Issue: The `<aside>` containing the table of contents is `hidden lg:block`, completely removing it from the DOM on mobile/tablet
-- Files: `src/app/blog/[slug]/page.tsx` (line 121)
-- Impact: Mobile readers of long posts have no way to navigate between sections. On a 3000-word post, this is a significant UX gap.
-- Fix approach: Add a collapsible TOC component for mobile (e.g., sticky bottom bar or expandable section at top of article)
+- Issue: React 19's stricter `react-hooks` rules flag intentional patterns used throughout the codebase
+- Files:
+  - `src/components/blog/view-counter.tsx` (line 17) — `setCounts` in `useLayoutEffect` for localStorage cache read
+  - `src/components/blog/listing-view-counts.tsx` (line 33) — same pattern
+  - `src/hooks/use-hero-animation.ts` (lines 40, 54) — `setPrefersReducedMotion` and `setRevealStage` in effects for external system sync
+  - `src/components/hero.tsx` (line 63) — ref access in render for computed glow positions
+- Impact: 10 warnings on every lint run. These are all intentional patterns (localStorage reads before paint, media query sync, computed positions from refs). The warnings are downgraded from errors via `eslint.config.mjs` rules but add noise.
+- Fix approach: For localStorage patterns, consider `useSyncExternalStore` with a localStorage adapter to eliminate the `useLayoutEffect` + `setState` pattern. For media query sync, use `useSyncExternalStore` with `matchMedia`. For ref reads in render, this is a computed value pattern that React 19 flags but is functionally correct for positional data.
 
-### Accessibility: Copy Button Not Keyboard-Discoverable
+### Code Quality: `<a>` Tags in Error Boundaries (4 errors)
 
-- Issue: The copy button is `opacity-0 group-hover:opacity-100`, making it invisible until mouse hover. Keyboard-only users tabbing through code blocks cannot see the button they're about to activate.
-- Files: `src/components/blog/copy-button.tsx` (line 29)
-- Impact: Keyboard and screen reader users can still activate the button, but sighted keyboard users have no visual indication it exists
-- Fix approach: Add `focus-visible:opacity-100` alongside `group-hover:opacity-100`
+- Issue: Error boundary fallback UIs use raw `<a>` tags instead of Next.js `<Link>` component
+- Files: `src/app/error.tsx` (line 26), `src/app/global-error.tsx` (line 32), `src/app/blog/[slug]/error.tsx` (line 28), `src/components/blog/mdx-content.tsx` (line 29)
+- Impact: ESLint reports 4 errors. However, this is intentional — error boundaries should not depend on the Next.js router, which may itself be in an error state. Using `<a>` ensures navigation works even during catastrophic failures.
+- Fix approach: Add `// eslint-disable-next-line @next/next/no-html-link-for-pages` comments above each `<a>` tag with a brief explanation. This documents the intent and silences the errors.
 
-### Accessibility: Custom List Bullets May Affect VoiceOver
+### Performance: OG Image Font Loading Uses `readFile`
 
-- Issue: `list-style: none` on `.prose ul` with `::before` pseudo-element rune bullets. The code includes a comment acknowledging this Safari/VoiceOver concern.
-- Files: `src/app/globals.css` (lines 361-383)
-- Impact: Safari VoiceOver may not announce list semantics. The comment states this is considered acceptable because structural `<li>` children are retained.
-- Fix approach: Add `role="list"` to MDX `<ul>` elements via the MDX component overrides in `src/components/blog/mdx-content.tsx` if VoiceOver behavior is confirmed problematic
+- Issue: Blog post OG image generation loads the Inter-Bold font via `readFile(join(process.cwd(), ...))` instead of `fetch` or `import.meta.url`
+- Files: `src/app/blog/[slug]/opengraph-image.tsx` (lines 14-16), `src/app/opengraph-image.tsx` (same pattern likely)
+- Impact: This is a Turbopack workaround. The `readFile`/`process.cwd()` approach works in production but may break if the build output directory structure changes. It also prevents edge runtime deployment since `node:fs` is not available at the edge.
+- Fix approach: Low priority. Monitor Turbopack's support for font loading in OG image routes. When Turbopack supports `fetch` for local assets in image generation, migrate to that approach.
+
+### Dependency: Velite Pre-Release (0.x.x)
+
+- Issue: `velite@0.3.1` is pre-release. The API surface may change on minor version bumps per semver 0.x conventions.
+- Files: `package.json` (line 42: `"velite": "^0.3.1"`), `velite.config.ts`
+- Impact: A Velite upgrade could require config file changes, schema API changes, or output format changes. The `.velite/` import alias and collection schemas are tightly coupled.
+- Fix approach: Pin the exact version (`"velite": "0.3.1"` without caret) to prevent accidental upgrades. Test upgrades in a branch.
+
+### Dependency: Major Version Updates Available
+
+- Issue: `@vercel/analytics` (`1.6.1` -> `2.0.1` major) and `shiki` (`3.22.0` -> `4.0.2` major) have major version bumps available
+- Files: `package.json`
+- Impact: Major versions may introduce breaking API changes. `@vercel/analytics` v2 may change the import or initialization pattern. Shiki v4 may affect rehype-pretty-code integration.
+- Fix approach: Evaluate each migration separately. Check changelogs for breaking changes before upgrading.
 
 ### Accessibility: `useLayoutEffect` SSR Warning Potential
 
-- Issue: `useLayoutEffect` is used in two client components for localStorage reads. While these are client components (`'use client'`), `useLayoutEffect` generates React warnings during SSR if components are ever server-rendered.
-- Files: `src/components/blog/view-counter.tsx` (line 32), `src/components/blog/listing-view-counts.tsx` (line 40)
-- Impact: Currently safe because components are exclusively client-rendered. If rendering approach changes, this would produce console warnings.
-- Fix approach: No action needed unless these components need SSR. The pattern is intentional for preventing flash.
+- Issue: `useLayoutEffect` is used in two client components for localStorage reads
+- Files: `src/components/blog/view-counter.tsx` (line 15), `src/components/blog/listing-view-counts.tsx` (line 23)
+- Impact: Currently safe because components are exclusively client-rendered (`'use client'` directive). If rendering approach ever changes, `useLayoutEffect` generates React warnings during SSR.
+- Fix approach: No action needed unless SSR is required. The `useSyncExternalStore` migration mentioned in the lint warnings section would also resolve this.
 
-### Performance: Hero Component Complexity
+### Housekeeping: Worktree Artifacts (3.6 GB)
 
-- Issue: The Hero component manages 5 state variables, 5 `useEffect` hooks, a `ResizeObserver`, and a `setTimeout` chain for reveal orchestration
-- Files: `src/components/hero.tsx` (177 lines)
-- Impact: High cognitive complexity for a single component. The reveal sequence timing (350ms + 250ms pause + 500ms text + glow cascade) is spread across multiple effects with implicit ordering dependencies.
-- Fix approach: Consider extracting animation orchestration into a custom `useRevealSequence` hook. The `ResizeObserver` logic could be a separate `useGlowPositions` hook.
-
-### Performance: Unoptimized About Page Headshot
-
-- Issue: The about page headshot uses explicit `width={384}` and `height={512}` with `object-cover` but no `sizes` attribute
-- Files: `src/app/about/page.tsx` (lines 17-24)
-- Impact: Minor -- the image is small (76KB webp) and has `priority` set, but explicit sizing means Next.js generates a single variant rather than responsive srcset
-- Fix approach: Low priority. Image is already well-optimized at 76KB.
-
-### Missing: No RSS Feed
-
-- Issue: Blog has no RSS/Atom feed endpoint despite having structured post data with dates, descriptions, and content
-- Files: No feed endpoint exists
-- Impact: Content consumers who prefer RSS cannot subscribe to the blog. Reduces discoverability.
-- Fix approach: Create `src/app/feed.xml/route.ts` that generates RSS from the `posts` collection
-
-### Missing: Resume Placeholder
-
-- Issue: The About page has a disabled "Resume Coming Soon" button that is permanently non-functional
-- Files: `src/app/about/page.tsx` (lines 54-65)
-- Impact: Minor UX concern -- a disabled button with no timeline sets unclear expectations
-- Fix approach: Either add the resume PDF or remove the button until ready
-
-### Code Quality: `validate-colors.mjs` Palette Mismatch
-
-- Issue: The color validation script uses `muted: '#666666'` but `globals.css` defines `--color-muted: #4A4A4A`
-- Files: `scripts/validate-colors.mjs` (line 6), `src/app/globals.css` (line 11)
-- Impact: WCAG contrast validation results from the script do not reflect the actual palette. The script reports incorrect contrast ratios for any pair involving the muted color.
-- Fix approach: Update the script's palette to match `globals.css` values. Consider deriving the palette from CSS custom properties or a shared config.
-
-### Dependency: Velite Pre-Release
-
-- Issue: `velite@0.3.1` is pre-release (0.x.x semver). The API surface may change on minor version bumps.
-- Files: `package.json`, `velite.config.ts`
-- Impact: A Velite upgrade could require config file changes, schema API changes, or output format changes. The `.velite/` import alias and collection schemas are tightly coupled.
-- Fix approach: Pin the exact version in `package.json`. Test upgrades in a branch. Monitor the Velite GitHub repository for breaking change announcements.
-
-### Dependency: Outdated Packages
-
-- Issue: Several dependencies have available updates including Next.js (`16.1.6` -> `16.2.1`), Tailwind CSS (`4.1.18` -> `4.2.2`), `@vercel/analytics` (`1.6.1` -> `2.0.1` major), and Shiki (`3.22.0` -> `4.0.2` major)
-- Files: `package.json`
-- Impact: The Next.js update specifically addresses the `npm audit` vulnerabilities. The `@vercel/analytics` and Shiki major bumps may require import or API changes.
-- Fix approach: Update Next.js and Tailwind CSS (patch/minor). Evaluate `@vercel/analytics` v2 and Shiki v4 migration paths separately as major versions.
-
-### Browser Compatibility: `inert` Attribute
-
-- Issue: The `inert` HTML attribute is used for focus management on mobile menu open
-- Files: `src/components/layout/header.tsx` (lines 56-68)
-- Impact: `inert` has strong modern browser support (Chrome 102+, Safari 15.5+, Firefox 112+). Older browsers ignore it, meaning main content remains focusable while the mobile menu is open. This is a progressive enhancement concern, not a blocker.
-- Fix approach: Acceptable as-is. The attribute degrades gracefully. Add polyfill only if analytics show significant older browser traffic.
+- Issue: `.claude/worktrees/` contains 7+ agent worktree directories consuming 3.6 GB of disk space
+- Files: `.claude/worktrees/agent-a0f09039/`, `.claude/worktrees/agent-a4b27611/`, and 5 others
+- Impact: Disk space waste. These directories are gitignored but persist locally. Each contains a full copy of `node_modules` and build artifacts.
+- Fix approach: Delete stale worktree directories: `rm -rf .claude/worktrees/agent-*`. These are ephemeral Claude Code agent working directories that are safe to remove after their tasks complete.
 
 ## Scaling Considerations
 
@@ -218,15 +116,29 @@
 - Current state: 5 blog posts, 2 projects
 - Concern: All posts and projects are loaded into memory as full collections via Velite. At 500+ posts with full MDX body content, build memory usage could spike.
 - Files: `velite.config.ts`, all listing pages that import from `@/.velite`
-- Scaling path: Velite handles content at build time only. Monitor build duration and memory. If problematic, investigate Velite collection pagination or splitting.
+- Scaling path: Not a near-term concern. Monitor build duration and memory as content grows.
 
 ### Redis Key Growth
 
-- Current state: Each unique IP+slug combination creates a dedup key with 24h TTL. Each post slug creates a permanent view count key.
-- Concern: Dedup keys are self-cleaning (24h TTL), but view count keys grow without bound. At thousands of posts, the key count grows linearly.
-- Files: `src/app/api/views/[slug]/route.ts`
-- Scaling path: Upstash free tier allows 10K commands/day. Monitor usage. View counts are simple integers -- storage is minimal even at scale.
+- Current state: Each unique IP+slug combination creates a dedup key with 24h TTL. Each post slug creates a permanent view count key. Rate limit keys use sliding window with automatic expiry.
+- Concern: Dedup keys are self-cleaning (24h TTL). View count keys grow linearly with post count. Rate limit keys managed by `@upstash/ratelimit`.
+- Files: `src/app/api/views/[slug]/route.ts`, `src/lib/rate-limit.ts`
+- Scaling path: Upstash free tier allows 10K commands/day. At current content volume, this is not a concern.
+
+## Test Coverage Assessment
+
+### Current State
+
+17 test files exist covering:
+- **Unit tests (Vitest):** Error boundaries, loading skeleton, copy button, MDX content, filter chip, hooks (filtered list, glow positions, hero animation), lib utilities (format, rate limit, rune glows, security headers, SEO assets, validation, views)
+- **E2E tests (Playwright):** Mobile menu, code copy, view count, mobile TOC
+
+### Gaps
+
+- **API route handlers** (`src/app/api/views/route.ts`, `src/app/api/views/[slug]/route.ts`) have no unit tests. The validation and rate limiting logic they use is tested, but the route handler integration (request parsing, Redis interaction, response formatting) is not.
+- **Page components** (`src/app/blog/page.tsx`, `src/app/projects/page.tsx`, etc.) have no component tests. These are server components which are harder to unit test but could have integration tests.
+- **OG image generation** (`src/app/opengraph-image.tsx`, `src/app/blog/[slug]/opengraph-image.tsx`) is untested. The SEO assets test file (`src/lib/seo-assets.test.ts`) exists but OG image rendering output is not verified.
 
 ---
 
-*Concerns audit: 2026-03-22*
+*Concerns audit: 2026-04-03*

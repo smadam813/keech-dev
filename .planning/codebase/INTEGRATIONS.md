@@ -1,6 +1,6 @@
 # External Integrations
 
-**Analysis Date:** 2026-03-22
+**Analysis Date:** 2026-04-03
 
 ## APIs & External Services
 
@@ -16,31 +16,48 @@ Blog post view tracking via serverless Redis. Non-critical UI feature -- all cal
   ```
 - **Auth:** Reads `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` from environment (via `Redis.fromEnv()`)
 
+### Upstash Ratelimit - API Protection
+
+Rate limiting for the view count increment endpoint.
+
+- **SDK:** `@upstash/ratelimit` 2.0.8
+- **Config:** `src/lib/rate-limit.ts`
+  ```typescript
+  import { Ratelimit } from '@upstash/ratelimit'
+  import { redis } from '@/lib/redis'
+  export const viewsRateLimit = new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(10, '60 s'),
+    prefix: 'ratelimit:views',
+  })
+  ```
+- **Limit:** 10 requests per 60 seconds per IP (sliding window)
+
 **API Routes:**
 
 | Route | Method | Purpose | File |
 |-------|--------|---------|------|
 | `/api/views?slugs=a,b` | GET | Batch fetch view counts for listing pages | `src/app/api/views/route.ts` |
 | `/api/views/[slug]` | GET | Fetch single post view count | `src/app/api/views/[slug]/route.ts` |
-| `/api/views/[slug]` | POST | Increment view count (with IP dedup) | `src/app/api/views/[slug]/route.ts` |
+| `/api/views/[slug]` | POST | Increment view count (with IP dedup + rate limit) | `src/app/api/views/[slug]/route.ts` |
 
 Both routes use `export const dynamic = 'force-dynamic'` to disable caching.
 
 **Redis Key Schema:**
 - `views:{slug}` - Integer view count per post (no TTL, persists indefinitely)
 - `dedup:{slug}:{ipHash}` - IP deduplication flag (24h TTL via `ex: 86400`)
+- `ratelimit:views:*` - Rate limit sliding window state (managed by `@upstash/ratelimit`)
 
 **IP Deduplication:**
 - IP extracted from `x-forwarded-for` header (falls back to `127.0.0.1`)
 - Hashed with SHA-256 before storage (privacy-preserving)
 - Uses Redis `SET ... NX` (set-if-not-exists) for atomic dedup check
-- Implementation in `src/app/api/views/[slug]/route.ts`:
-  ```typescript
-  const forwarded = request.headers.get('x-forwarded-for')
-  const ip = forwarded?.split(',')[0]?.trim() ?? '127.0.0.1'
-  const ipHash = hashIP(ip)
-  const dedupResult = await redis.set(`dedup:${slug}:${ipHash}`, '1', { ex: 86400, nx: true })
-  ```
+- Implementation in `src/app/api/views/[slug]/route.ts`
+
+**Input Validation:**
+- `src/lib/validation.ts` - Validates slug format (`/^[a-z0-9-]+$/`, max 100 chars) and batch size (max 20 slugs)
+- `validateSlug(slug)` for single slug validation
+- `validateSlugs(slugs)` for batch validation with error messages
 
 **Client-Side Components:**
 - `src/components/blog/view-counter.tsx` - Single post page: POSTs to increment, uses localStorage cache
@@ -97,6 +114,7 @@ Automatic page view and web vital tracking.
 - No user accounts or sessions
 - Public-facing read-only site
 - API routes are unauthenticated (view counting is open, dedup is IP-based only)
+- Rate limiting via `@upstash/ratelimit` protects POST endpoint from abuse
 
 ## Monitoring & Observability
 
@@ -117,7 +135,6 @@ Automatic page view and web vital tracking.
 
 **Hosting:**
 - Vercel
-  - Project: `keech-dev` (project ID in `.vercel/project.json`)
   - Build command: `velite && next build` (from `package.json` scripts)
 
 **CI Pipeline:**
@@ -167,7 +184,11 @@ Automatic page view and web vital tracking.
 
 **Robots:**
 - Generated via `src/app/robots.ts`
-- Allows all crawlers, references sitemap at `https://keech.dev/sitemap.xml`
+
+**RSS Feed:**
+- `src/app/feed.xml/route.ts` - RSS 2.0 XML feed of published blog posts
+- URL: `https://keech.dev/feed.xml`
+- Cache: `public, max-age=3600, s-maxage=3600`
 
 **OpenGraph / Twitter Cards:**
 - Metadata configured in `src/app/layout.tsx` via Next.js `Metadata` export
@@ -193,4 +214,4 @@ No runtime content fetching, no CMS API calls, no database queries for content.
 
 ---
 
-*Integration audit: 2026-03-22*
+*Integration audit: 2026-04-03*

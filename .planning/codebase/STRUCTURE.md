@@ -1,6 +1,6 @@
 # Codebase Structure
 
-**Analysis Date:** 2026-03-22
+**Analysis Date:** 2026-04-03
 
 ## Directory Layout
 
@@ -8,242 +8,216 @@
 keech-dev/
 ├── .claude/                        # Claude Code configuration
 │   └── skills/                     # Claude Code skills
-│       └── write-blog-post/        # Blog writing skill (SKILL.md + instructions)
-├── content/                        # MDX content source files
-│   ├── posts/                      # Blog post MDX files
-│   └── projects/                   # Project showcase MDX files
+│       └── write-blog-post/        # Blog writing skill (orchestration + guides)
+├── content/                        # MDX content source files (Velite input)
+│   ├── posts/                      # Blog post MDX files (5 posts)
+│   └── projects/                   # Project showcase MDX files (2 projects)
 ├── .devcontainer/                  # Dev container configuration
-│   ├── Dockerfile
-│   ├── docker-compose.yml
-│   └── devcontainer.json
+├── e2e/                            # Playwright E2E test specs
 ├── .planning/                      # GSD planning documents
-│   ├── codebase/                   # Codebase analysis (this file lives here)
-│   ├── milestones/                 # Versioned milestone plans
-│   │   ├── v1.3-phases/
-│   │   ├── v1.4-phases/
-│   │   └── v1.5-phases/
+│   ├── codebase/                   # Codebase analysis documents
+│   ├── milestones/                 # Versioned milestone plans (v1.3-v1.5)
+│   ├── phases/                     # Phase specs (09-13)
 │   ├── quick/                      # Quick task plans
 │   └── research/                   # Research documents
-├── public/                         # Static assets served by Next.js
+├── public/                         # Static assets served at /
 │   ├── fonts/                      # Custom WOFF2 font files
-│   ├── images/                     # Static images
+│   ├── images/                     # Site images
 │   │   ├── posts/                  # Blog post images
-│   │   ├── projects/               # Project images
-│   │   ├── headshot.webp           # About page photo
-│   │   └── hero.webp               # Home page hero image
-│   └── static/                     # Velite-compiled static assets
+│   │   └── projects/               # Project images
+│   └── static/                     # Velite-output assets (hashed, cleaned on build)
 ├── .research/                      # Blog research working files (gitignored)
 ├── scripts/                        # Standalone utility scripts
-│   └── validate-colors.mjs         # WCAG contrast ratio checker
 ├── src/                            # Application source code
-│   ├── app/                        # Next.js App Router (routes)
+│   ├── app/                        # Next.js App Router (routes + API)
 │   │   ├── about/                  # /about route
 │   │   │   └── page.tsx
-│   │   ├── api/                    # API routes (serverless functions)
-│   │   │   └── views/              # View count API
-│   │   │       ├── route.ts        # GET /api/views?slugs=... (batch)
-│   │   │       └── [slug]/
-│   │   │           └── route.ts    # GET/POST /api/views/{slug} (single)
+│   │   ├── api/views/              # View count API
+│   │   │   ├── route.ts            # GET /api/views?slugs=... (batch)
+│   │   │   └── [slug]/
+│   │   │       └── route.ts        # GET/POST /api/views/{slug} (single)
 │   │   ├── blog/                   # /blog route
-│   │   │   ├── [slug]/             # /blog/{slug} dynamic route
-│   │   │   │   └── page.tsx
-│   │   │   └── page.tsx            # Blog listing
+│   │   │   ├── page.tsx            # Blog listing
+│   │   │   └── [slug]/
+│   │   │       └── page.tsx        # Individual post
+│   │   ├── feed.xml/
+│   │   │   └── route.ts            # RSS feed route handler
 │   │   ├── projects/               # /projects route
-│   │   │   ├── [slug]/             # /projects/{slug} dynamic route
-│   │   │   │   └── page.tsx
-│   │   │   └── page.tsx            # Projects listing
-│   │   ├── globals.css             # Tailwind v4 config, design tokens, animations
-│   │   ├── layout.tsx              # Root layout (Header, Footer, fonts, Analytics)
+│   │   │   ├── page.tsx            # Projects listing
+│   │   │   └── [slug]/
+│   │   │       └── page.tsx        # Individual project
+│   │   ├── error.tsx               # Route-level error boundary
+│   │   ├── error.test.tsx          # Error boundary test
+│   │   ├── global-error.tsx        # Root error boundary
+│   │   ├── global-error.test.tsx   # Global error test
+│   │   ├── globals.css             # Design tokens, animations, prose styles
+│   │   ├── layout.tsx              # Root layout
+│   │   ├── loading.tsx             # Loading skeleton
+│   │   ├── loading.test.tsx        # Loading test
 │   │   ├── not-found.tsx           # 404 page
-│   │   ├── page.tsx                # Home page (Hero component)
-│   │   ├── robots.ts               # /robots.txt generation
-│   │   └── sitemap.ts              # /sitemap.xml generation
-│   ├── components/                 # Reusable React components
+│   │   ├── opengraph-image.tsx     # Dynamic OG image
+│   │   ├── page.tsx                # Home page (Hero)
+│   │   ├── robots.ts               # /robots.txt
+│   │   └── sitemap.ts              # /sitemap.xml
+│   ├── assets/fonts/               # Font source files for next/font
+│   ├── components/                 # React components
 │   │   ├── blog/                   # Blog-specific components
-│   │   │   ├── code-block.tsx      # Code block wrapper with copy button
-│   │   │   ├── copy-button.tsx     # Clipboard copy button for code blocks
-│   │   │   ├── filtered-post-list.tsx  # Blog listing with tag filtering
-│   │   │   ├── listing-view-counts.tsx # View count context provider + display
-│   │   │   ├── mdx-content.tsx     # Runtime MDX executor (new Function)
-│   │   │   ├── post-card.tsx       # Blog post preview card
-│   │   │   ├── tag-chip.tsx        # Tag display/toggle chip
-│   │   │   ├── toc.tsx             # Table of contents sidebar
-│   │   │   └── view-counter.tsx    # Single post view counter
-│   │   ├── layout/                 # Site-wide layout components
-│   │   │   ├── footer.tsx          # Footer with social links
-│   │   │   └── header.tsx          # Navigation, mobile menu, scroll lock
+│   │   ├── layout/                 # Site-wide layout (header, footer)
 │   │   ├── projects/               # Project-specific components
-│   │   │   ├── filtered-project-list.tsx  # Project listing with stack filtering
-│   │   │   ├── project-card.tsx    # Project preview card
-│   │   │   └── tech-badge.tsx      # Technology badge display/toggle
-│   │   ├── runes/                  # Elder Futhark rune system
-│   │   │   ├── rune-config.ts      # All 24 runes + context mappings
-│   │   │   └── rune-divider.tsx    # Horizontal divider with rune
-│   │   ├── ui/                     # Generic UI primitives
-│   │   │   ├── filter-bar.tsx      # Domain-agnostic filter chip bar
-│   │   │   └── scroll-reveal.tsx   # IntersectionObserver scroll animation
-│   │   └── hero.tsx                # Home page hero (image, animations, rune glows)
-│   └── lib/                        # Shared utilities and configuration
-│       ├── fonts.ts                # Font loaders (Norse custom, Inter Google)
-│       ├── redis.ts                # Upstash Redis client initialization
-│       ├── rune-glows.ts           # Rune glow positions + object-fit math
-│       ├── utils.ts                # cn() utility (clsx + tailwind-merge)
-│       └── views.ts                # formatViewCount() helper
-├── .velite/                        # Generated content collections (gitignored)
-│   ├── index.d.ts                  # TypeScript type definitions
-│   ├── index.js                    # Re-exports JSON collections
-│   ├── posts.json                  # Compiled blog post data
-│   └── projects.json               # Compiled project data
-├── .vercel/                        # Vercel deployment config (gitignored)
-├── .vscode/                        # VS Code workspace settings
-│   └── tasks.json                  # VS Code task definitions
-├── CLAUDE.md                       # Project context for Claude Code
-├── README.md                       # Project documentation
-├── eslint.config.mjs               # ESLint flat config (next/core-web-vitals + typescript)
-├── next.config.ts                  # Next.js config (image quality only)
-├── next-env.d.ts                   # Next.js TypeScript environment (generated)
-├── package.json                    # Dependencies and npm scripts
-├── package-lock.json               # Dependency lock file
-├── postcss.config.mjs              # PostCSS config (Tailwind v4 plugin)
-├── tsconfig.json                   # TypeScript config (paths, strict mode)
-└── velite.config.ts                # Velite content schema definitions
+│   │   ├── runes/                  # Rune design system config + components
+│   │   ├── ui/                     # Shared UI primitives
+│   │   └── hero.tsx                # Home page hero component
+│   ├── hooks/                      # Custom React hooks
+│   └── lib/                        # Utility functions and service clients
+├── .velite/                        # Velite build output (gitignored)
+├── test-results/                   # Playwright test output (gitignored)
+├── eslint.config.mjs               # ESLint flat config
+├── next.config.ts                  # Next.js config (CSP, security headers)
+├── playwright.config.ts            # Playwright E2E config
+├── postcss.config.mjs              # PostCSS config (Tailwind v4)
+├── tsconfig.json                   # TypeScript config (path aliases, strict)
+├── velite.config.ts                # Velite content pipeline config
+└── vitest.config.ts                # Vitest unit test config
 ```
 
 ## Directory Purposes
 
-**`src/app/`:**
-- Purpose: Next.js App Router; each subdirectory maps to a URL route
-- Contains: Page components (`page.tsx`), route layouts, API routes, SEO files
-- Key files: `layout.tsx` (root wrapper with Header/Footer), `globals.css` (entire design system), `page.tsx` (home)
-- Convention: File/folder structure directly maps to URL routes (`blog/[slug]/page.tsx` -> `/blog/:slug`)
+**`content/`:**
+- Purpose: MDX source files processed by Velite at build time
+- Contains: `.mdx` files with YAML frontmatter
+- Key files: `content/posts/*.mdx` (5 posts), `content/projects/*.mdx` (2 projects)
+- Slugs auto-derived from filename; frontmatter defines metadata
 
-**`src/components/`:**
-- Purpose: Reusable React components organized by feature domain
-- Contains: Server and client components (client components marked with `'use client'`)
-- Organization: Subdirectories group by domain (`blog/`, `projects/`, `layout/`, `runes/`, `ui/`)
-- The `hero.tsx` file sits at the `components/` root because it is a page-level component not belonging to a subdomain
+**`src/app/`:**
+- Purpose: Next.js App Router -- pages, layouts, API routes, SEO files, error boundaries
+- Contains: `page.tsx`, `layout.tsx`, `error.tsx`, `global-error.tsx`, `loading.tsx`, `not-found.tsx`, `sitemap.ts`, `robots.ts`, `globals.css`, route handlers, co-located test files
+- Key files: `src/app/layout.tsx` (root layout), `src/app/globals.css` (entire design system)
 
 **`src/components/blog/`:**
 - Purpose: All blog-related components
-- Contains: Post rendering (MDXContent, CodeBlock, CopyButton), listing (FilteredPostList, PostCard, TagChip), view tracking (ViewCounter, ListingViewCounts), navigation (TableOfContents)
-- 9 files, most are client components
-
-**`src/components/projects/`:**
-- Purpose: All project-related components
-- Contains: Listing (FilteredProjectList, ProjectCard), display (TechBadge)
-- 3 files; mirrors blog structure but simpler (no view counts, no TOC)
+- Key files:
+  - `mdx-content.tsx` -- Runtime MDX execution via `new Function()` with error fallback (client)
+  - `filtered-post-list.tsx` -- Tag-filtered post grid with view counts (client)
+  - `listing-view-counts.tsx` -- Batch view count Context provider (client)
+  - `view-counter.tsx` -- Single post view counter with localStorage cache (client)
+  - `post-card.tsx` -- Post card for listing grid (client)
+  - `code-block.tsx` -- Code block wrapper with copy button
+  - `copy-button.tsx` -- Clipboard copy button (client)
+  - `toc.tsx` -- Desktop sidebar table of contents (server)
+  - `mobile-toc.tsx` -- Sticky collapsible mobile TOC (client)
 
 **`src/components/layout/`:**
 - Purpose: Site-wide structural components used in root layout
-- Contains: `header.tsx` (navigation, mobile menu, scroll lock, focus management), `footer.tsx` (social links)
-- Header is a client component; Footer is a server component
+- Key files: `header.tsx` (nav + mobile menu with scroll lock, focus management, Escape key; client), `footer.tsx` (server)
+
+**`src/components/projects/`:**
+- Purpose: Project-specific components
+- Key files: `filtered-project-list.tsx` (stack-filtered grid, client), `project-card.tsx` (card for listing, client)
 
 **`src/components/runes/`:**
 - Purpose: Elder Futhark rune data and rune-themed UI elements
-- Contains: `rune-config.ts` (data, all 24 runes + context mappings), `rune-divider.tsx` (section divider component)
-- `rune-config.ts` is server-safe (no `'use client'`), imported across both server and client components
+- Key files: `rune-config.ts` (all 24 runes + context mappings: NAV_RUNES, POST_RUNES, etc.; server-safe), `rune-divider.tsx` (decorative divider; server)
 
 **`src/components/ui/`:**
-- Purpose: Generic, domain-agnostic UI primitives
-- Contains: `filter-bar.tsx` (render-prop filter chip container), `scroll-reveal.tsx` (IntersectionObserver wrapper)
+- Purpose: Shared, domain-agnostic UI primitives
+- Key files: `filter-bar.tsx` (generic filter bar with render prop), `filter-chip.tsx` (tag/stack chip with variant prop, client), `scroll-reveal.tsx` (IntersectionObserver fade-in, client)
+
+**`src/hooks/`:**
+- Purpose: Reusable client-side stateful logic
+- Key files:
+  - `use-filtered-list.ts` -- Generic URL-synced AND-filter with transition state
+  - `use-hero-animation.ts` -- Hero reveal sequence orchestration (3-beat animation)
+  - `use-glow-positions.ts` -- Responsive rune glow positioning via ResizeObserver
+- Each hook has a co-located `.test.ts` file
 
 **`src/lib/`:**
-- Purpose: Shared utilities, configuration, and service clients
-- Contains: Font loaders, Redis client, class-name utility, view formatting, rune glow positioning math
-- 5 files; all are plain TypeScript modules (no React components)
+- Purpose: Pure utilities, service clients, shared functions
+- Key files:
+  - `utils.ts` -- `cn()` (clsx + tailwind-merge)
+  - `fonts.ts` -- Norse + Inter font config (CSS variables: `--font-display`, `--font-body`)
+  - `format.ts` -- `formatDate()` helper
+  - `views.ts` -- `formatViewCount()`, `getCachedViews()`, `setCachedViews()` (localStorage)
+  - `validation.ts` -- `validateSlug()`, `validateSlugs()` (regex, length, batch limits)
+  - `rate-limit.ts` -- `viewsRateLimit` (Upstash sliding window 10 req/60s)
+  - `redis.ts` -- `redis` instance (`Redis.fromEnv()`)
+  - `rune-glows.ts` -- `RUNE_GLOWS` data array + `computeGlowPositions()` for object-fit: cover math
+- Most lib files have co-located `.test.ts` files
 
-**`content/`:**
-- Purpose: MDX source files for all site content
-- Contains: Blog posts (`posts/*.mdx`) and projects (`projects/*.mdx`)
-- Current content: 5 blog posts, 2 projects
-- Slugs auto-derived from filename; frontmatter defines metadata
-
-**`public/`:**
-- Purpose: Static assets served directly by Next.js at the root URL path
-- Contains: Custom fonts (`fonts/`), images (`images/`), Velite-compiled assets (`static/`)
-- `images/posts/` -- blog post images referenced from MDX
-- `images/projects/` -- project screenshot images
-- `static/` -- Velite output for processed content images (gitignored, regenerated on build)
+**`e2e/`:**
+- Purpose: Playwright E2E tests (run against dev server)
+- Key files: `code-copy.spec.ts`, `mobile-menu.spec.ts`, `mobile-toc.spec.ts`, `view-count.spec.ts`
 
 **`scripts/`:**
-- Purpose: Standalone utility scripts not part of the build pipeline
-- Contains: `validate-colors.mjs` -- computes WCAG contrast ratios for the color palette
-- Run manually: `node scripts/validate-colors.mjs`
-
-**`.claude/skills/write-blog-post/`:**
-- Purpose: Claude Code skill for end-to-end blog post creation
-- Contains: `SKILL.md` (orchestration instructions), `writing-guide.md` (style guide), `research-instructions.md`, `writer-instructions.md`, `image-prompt-instructions.md`, `example-post.mdx`
-- Used by Claude Code when spawning blog-writing subagents
-
-**`.devcontainer/`:**
-- Purpose: Dev container configuration for consistent development environments
-- Contains: `Dockerfile`, `docker-compose.yml`, `devcontainer.json`
+- Purpose: Standalone build/validation scripts
+- Key files: `validate-colors.mjs` (WCAG contrast ratio checker for the palette)
 
 ## Key File Locations
 
 **Entry Points:**
-- `src/app/layout.tsx`: Root layout (Header, Footer, fonts, Vercel Analytics)
+- `src/app/layout.tsx`: Root layout (fonts, header, footer, analytics, site-wide metadata)
 - `src/app/page.tsx`: Home page (`/`)
 - `src/app/blog/page.tsx`: Blog listing (`/blog`)
-- `src/app/blog/[slug]/page.tsx`: Individual blog post (`/blog/{slug}`)
+- `src/app/blog/[slug]/page.tsx`: Individual post (`/blog/{slug}`)
 - `src/app/projects/page.tsx`: Projects listing (`/projects`)
 - `src/app/projects/[slug]/page.tsx`: Individual project (`/projects/{slug}`)
 - `src/app/about/page.tsx`: About page (`/about`)
-- `src/app/not-found.tsx`: 404 fallback page
 
 **API Routes:**
-- `src/app/api/views/route.ts`: Batch view count fetch (`GET /api/views?slugs=...`)
-- `src/app/api/views/[slug]/route.ts`: Single view count fetch/increment (`GET/POST /api/views/{slug}`)
+- `src/app/api/views/route.ts`: Batch view count fetch
+- `src/app/api/views/[slug]/route.ts`: Single view count fetch/increment
 
 **Configuration:**
-- `velite.config.ts`: Content collection schemas (Post and Project), rehype plugins, output config
-- `tsconfig.json`: Path aliases (`@/*` -> `./src/*`, `@/.velite` -> `./.velite`), strict mode, ES2022 target
-- `next.config.ts`: Minimal config (image quality settings only)
+- `velite.config.ts`: Content collection schemas, rehype plugins, output config
+- `tsconfig.json`: Path aliases (`@/*` -> `./src/*`, `@/.velite` -> `./.velite`), strict mode, ES2022
+- `next.config.ts`: CSP header, security headers, image quality settings
 - `postcss.config.mjs`: Tailwind v4 via `@tailwindcss/postcss`
 - `eslint.config.mjs`: Flat config extending `next/core-web-vitals` and `next/typescript`
-- `src/app/globals.css`: Design system (Tailwind `@theme` tokens, keyframes, prose styles, code block styles, animation utilities, reduced-motion overrides)
+- `vitest.config.ts`: Vitest with jsdom, react plugin, tsconfig paths
+- `playwright.config.ts`: Playwright E2E config
+- `.env.local`: Environment variables (exists, not committed)
+
+**Design System:**
+- `src/app/globals.css`: All design tokens (`@theme` directive), keyframes, animation utilities, prose typography, code block styles, reduced-motion overrides
+- `src/lib/fonts.ts`: Font declarations (Norse display via `localFont`, Inter body)
+- `src/components/runes/rune-config.ts`: Rune-to-route mapping, aett color config, all 24 Elder Futhark runes
 
 **Core Logic:**
-- `src/components/blog/mdx-content.tsx`: Runtime MDX execution via `new Function()`
-- `src/components/layout/header.tsx`: Navigation with mobile menu, scroll lock, focus management, keyboard handling
-- `src/components/hero.tsx`: Hero section with orchestrated reveal animation, rune glow overlays, ResizeObserver
-- `src/components/runes/rune-config.ts`: All 24 Elder Futhark runes + semantic context mappings
-- `src/lib/rune-glows.ts`: Rune glow position data + `computeGlowPositions()` for object-fit: cover math
-- `src/lib/redis.ts`: Upstash Redis client (`Redis.fromEnv()`)
+- `src/components/blog/mdx-content.tsx`: Runtime MDX execution with fallback
+- `src/components/layout/header.tsx`: Navigation with mobile menu, scroll lock, focus management, Escape key
+- `src/components/hero.tsx`: Hero section with orchestrated reveal animation, rune glow overlays
+- `src/hooks/use-filtered-list.ts`: Generic filter engine shared by blog and projects
+- `src/lib/rune-glows.ts`: Rune glow position data + object-fit: cover math
 
-**Content Pipeline:**
-- `velite.config.ts`: Schema definitions, rehype plugin chain, output directory config
-- `content/posts/*.mdx`: Blog post source files (5 posts)
-- `content/projects/*.mdx`: Project source files (2 projects)
-- `.velite/index.js`: Generated re-export of JSON collections
-- `.velite/index.d.ts`: Generated TypeScript types derived from velite.config.ts schemas
+**Testing:**
+- `src/**/*.test.ts(x)`: Vitest unit tests (co-located with source files)
+- `e2e/*.spec.ts`: Playwright E2E specs (separate directory)
 
 ## Naming Conventions
 
 **Files:**
-- Components: kebab-case `.tsx` (e.g., `post-card.tsx`, `mdx-content.tsx`, `scroll-reveal.tsx`)
-- Config/data modules: kebab-case `.ts` (e.g., `rune-config.ts`, `rune-glows.ts`)
-- Utilities: kebab-case `.ts` (e.g., `utils.ts`, `fonts.ts`, `views.ts`)
-- Content: kebab-case `.mdx` (e.g., `humans-writing-code-is-over.mdx`, `keech-dev.mdx`)
-- Images: kebab-case `.webp` (e.g., `hero.webp`, `headshot.webp`, `agent-driven-workflow.webp`)
-- Root config: standard names (`package.json`, `tsconfig.json`, `velite.config.ts`, `eslint.config.mjs`)
+- `kebab-case.tsx` for components: `filtered-post-list.tsx`, `scroll-reveal.tsx`, `mobile-toc.tsx`
+- `kebab-case.ts` for utilities/hooks: `use-filtered-list.ts`, `rate-limit.ts`, `rune-glows.ts`
+- `page.tsx`, `layout.tsx`, `route.ts`, `error.tsx`, `loading.tsx` for Next.js conventions
+- `*.test.ts(x)` for Vitest unit tests (co-located with source): `format.test.ts`, `copy-button.test.tsx`
+- `*.spec.ts` for Playwright E2E tests: `mobile-menu.spec.ts`, `view-count.spec.ts`
+- `kebab-case.mdx` for content: `humans-writing-code-is-over.mdx`
 
 **Directories:**
-- Feature domains: kebab-case plurals (e.g., `components/`, `projects/`, `posts/`)
-- Organizational: lowercase singular (e.g., `layout/`, `blog/`, `ui/`, `lib/`)
-- Dynamic routes: Square brackets per Next.js convention (e.g., `[slug]/`)
-- Hidden dirs: dot-prefixed (e.g., `.velite/`, `.planning/`, `.claude/`)
+- `kebab-case` throughout: `filter-bar`, `rune-config`
+- Domain grouping in components: `blog/`, `projects/`, `layout/`, `runes/`, `ui/`
+- `[slug]` for dynamic route segments (Next.js convention)
 
 **Exports:**
-- Components: Named PascalCase exports (e.g., `export function PostCard`, `export function Hero`)
-- Constants: SCREAMING_SNAKE_CASE (e.g., `ELDER_FUTHARK`, `NAV_RUNES`, `RUNE_GLOWS`, `POST_RUNES`)
-- Interfaces: PascalCase with `Props` suffix for component props (e.g., `PostCardProps`, `FilterBarProps`)
-- Types: PascalCase (e.g., `Rune`, `RuneGlow`)
-- Utility functions: camelCase (e.g., `cn()`, `formatViewCount()`, `computeGlowPositions()`)
+- PascalCase for React components: `Hero`, `FilteredPostList`, `ScrollReveal`, `MobileToc`
+- camelCase for hooks: `useFilteredList`, `useHeroAnimation`, `useGlowPositions`
+- camelCase for utility functions: `formatDate`, `validateSlug`, `getCachedViews`, `computeGlowPositions`
+- camelCase for instances: `redis`, `viewsRateLimit`
+- UPPER_SNAKE_CASE for constant data: `RUNE_GLOWS`, `NAV_RUNES`, `POST_RUNES`, `ELDER_FUTHARK`
+- PascalCase with `Props` suffix for component interfaces: `PostPageProps`, `FilteredPostListProps`
 
 **Pages:**
-- Default export functions: PascalCase matching route (e.g., `export default function BlogPage`, `export default function PostPage`)
-- Metadata: Named export `metadata` or `generateMetadata()` per Next.js convention
+- Default export functions: PascalCase matching route (e.g., `BlogPage`, `PostPage`, `Home`)
+- Metadata: Named export `metadata` or async `generateMetadata()` per Next.js convention
 - Static params: Named export `generateStaticParams()` per Next.js convention
 
 ## Where to Add New Code
@@ -254,47 +228,54 @@ keech-dev/
 - Frontmatter optional: `updated`, `description`, `tags`, `draft`
 - Images: Place in `public/images/posts/` and reference via `/images/posts/{filename}` in MDX
 - Auto-routed: `/blog/{slug}` via `generateStaticParams()` in `src/app/blog/[slug]/page.tsx`
-- Rebuild: `npm run build` regenerates `.velite/` collections
+- Rebuild: `npm run build` (or `npm run dev` with watch) regenerates `.velite/` collections
 
 **New Project:**
 - Create: `content/projects/{slug}.mdx`
 - Frontmatter required: `title`, `slug`, `description`, `date`
 - Frontmatter optional: `updated`, `featured`, `stack`, `github`, `demo`, `category`, `image`
 - Images: Place in `public/images/projects/` and reference in frontmatter `image` field
-- Auto-routed: `/projects/{slug}` via `generateStaticParams()` in `src/app/projects/[slug]/page.tsx`
+- Auto-routed: `/projects/{slug}` via `generateStaticParams()`
 
-**New Page/Route:**
+**New Page Route:**
 - Create: `src/app/{route-name}/page.tsx`
-- For dynamic routes: `src/app/{route-name}/[param]/page.tsx`
+- For dynamic routes: `src/app/{route-name}/[param]/page.tsx` with `generateStaticParams()`
 - Export default function component (PascalCase) and `metadata` or `generateMetadata()`
-- For static content routes: add `generateStaticParams()` if dynamic
 - Update `src/app/sitemap.ts` to include the new route
-- Consider adding navigation entry in `src/components/layout/header.tsx` (`navItems` array) and a rune mapping in `src/components/runes/rune-config.ts` (`NAV_RUNES`)
+- Add navigation entry in `src/components/layout/header.tsx` (`navItems` array)
+- Add rune mapping in `src/components/runes/rune-config.ts` (`NAV_RUNES`)
 
 **New Component:**
 - Determine domain: `blog/`, `projects/`, `layout/`, `ui/`, or `runes/`
 - Create: `src/components/{domain}/{component-name}.tsx`
-- If needs browser APIs or React hooks with state: add `'use client'` directive at top
-- Export: Named export (e.g., `export function MyComponent() { ... }`)
-- Import: `import { MyComponent } from '@/components/{domain}/{component-name}'`
-- For domain-agnostic/primitive components: use `src/components/ui/`
+- If needs browser APIs or stateful hooks: add `'use client'` directive at top
+- Export: Named PascalCase export (e.g., `export function MyComponent() { ... }`)
+- For domain-agnostic UI primitives: use `src/components/ui/`
 - For page-level standalone components: use `src/components/` root (like `hero.tsx`)
+- Unit test: co-locate as `src/components/{domain}/{component-name}.test.tsx`
+
+**New Hook:**
+- Create: `src/hooks/use-{hook-name}.ts`
+- Always `'use client'` (hooks require client context)
+- Export: Named camelCase function (e.g., `export function useMyHook()`)
+- Unit test: co-locate as `src/hooks/use-{hook-name}.test.ts`
 
 **New Utility Function:**
-- For general use: Add to `src/lib/utils.ts`
-- For domain-specific: Create `src/lib/{domain}.ts` (e.g., `src/lib/views.ts` for view formatting)
-- Export: Named export (e.g., `export function myHelper() { ... }`)
-- Import: `import { myHelper } from '@/lib/{module}'`
+- For general use: Add to existing module or create `src/lib/{module-name}.ts`
+- Export: Named camelCase function
+- Unit test: co-locate as `src/lib/{module-name}.test.ts`
 
 **New API Route:**
 - Create: `src/app/api/{resource}/route.ts`
 - For dynamic segments: `src/app/api/{resource}/[param]/route.ts`
 - Export named handler functions: `GET`, `POST`, etc.
-- Add `export const dynamic = 'force-dynamic'` if the route must not be cached
-- For Redis access: import `redis` from `@/lib/redis`
+- Add `export const dynamic = 'force-dynamic'` for uncacheable routes
+- Validate all user input via `src/lib/validation.ts`
+- For Redis access: `import { redis } from '@/lib/redis'`
+- Add rate limiting if public-facing: create limiter in `src/lib/rate-limit.ts`
 
-**New Design Tokens:**
-- Add CSS custom properties to the `@theme` block in `src/app/globals.css`
+**New Design Token:**
+- Add CSS custom property to the `@theme` block in `src/app/globals.css`
 - Reference in Tailwind classes (e.g., `--color-newtoken` becomes `text-newtoken` or `bg-newtoken`)
 
 **New Animation:**
@@ -303,9 +284,14 @@ keech-dev/
 - Add reduced-motion override in the `@media (prefers-reduced-motion: reduce)` block
 - Use `will-change` property for GPU-promoted animations
 
-**New Rune Mapping:**
-- Add context map in `src/components/runes/rune-config.ts` referencing runes from `ELDER_FUTHARK`
-- Follow existing pattern: `export const NEW_RUNES = { purpose: ELDER_FUTHARK.runeName } as const`
+**New E2E Test:**
+- Create: `e2e/{feature-name}.spec.ts`
+- Run: `npm run test:e2e`
+
+**New Content Collection:**
+- Add MDX source directory: `content/{collection-name}/`
+- Define schema in `velite.config.ts` `collections` object
+- Import: `import { collection } from '@/.velite'`
 
 ## Special Directories
 
@@ -314,11 +300,11 @@ keech-dev/
 - Generated: Yes (by Velite prebuild step)
 - Committed: No (gitignored)
 - Contents: `posts.json`, `projects.json`, `index.js`, `index.d.ts`
-- Regenerated on every `npm run build` or `npm run dev` from `content/` MDX files
+- Regenerated on every build from `content/` MDX files
 
 **`.next/`:**
 - Purpose: Next.js build cache and compiled output
-- Generated: Yes (by Next.js)
+- Generated: Yes
 - Committed: No (gitignored)
 
 **`.vercel/`:**
@@ -332,46 +318,45 @@ keech-dev/
 - Committed: No (gitignored)
 
 **`public/static/`:**
-- Purpose: Velite-compiled static assets (processed content images)
-- Generated: Yes (by Velite, output config in `velite.config.ts`: `assets: 'public/static'`)
-- Committed: Not explicitly gitignored, but `clean: true` in config wipes and regenerates each build
+- Purpose: Velite-compiled static assets (processed content images with hashes)
+- Generated: Yes (by Velite, `clean: true` wipes and regenerates each build)
+- Committed: No (rebuilt each deploy)
 
 **`.planning/`:**
 - Purpose: GSD planning and analysis documents
-- Generated: Yes (by GSD tools and Claude Code)
-- Committed: Yes (provides project context)
-- Subdirectories: `codebase/` (analysis), `milestones/` (versioned plans), `quick/` (task plans), `research/`
-
-**`.claude/skills/`:**
-- Purpose: Claude Code skill definitions for repeatable tasks
-- Generated: No (manually authored)
+- Generated: Partially (by GSD commands and Claude Code)
 - Committed: Yes
-- Contains: `write-blog-post/` skill with orchestration, research, writing, and image prompt instructions
+- Subdirectories: `codebase/` (analysis), `milestones/` (v1.3-v1.5), `phases/` (09-13), `quick/` (task plans), `research/`
+
+**`test-results/`:**
+- Purpose: Playwright test artifacts
+- Generated: Yes
+- Committed: No (gitignored)
 
 ## Client vs Server Component Map
 
-| Component | Directive | Why Client |
-|-----------|-----------|------------|
-| `src/components/hero.tsx` | `'use client'` | useState, useEffect, useRef, ResizeObserver, image load events |
-| `src/components/layout/header.tsx` | `'use client'` | useState, usePathname, keyboard events, scroll lock, inert |
-| `src/components/blog/mdx-content.tsx` | `'use client'` | `new Function()` execution at runtime |
-| `src/components/blog/code-block.tsx` | `'use client'` | useRef for DOM access (code text extraction) |
-| `src/components/blog/copy-button.tsx` | `'use client'` | useState, navigator.clipboard API |
-| `src/components/blog/view-counter.tsx` | `'use client'` | useState, useEffect, useLayoutEffect, localStorage, fetch |
-| `src/components/blog/listing-view-counts.tsx` | `'use client'` | createContext, useState, useEffect, useLayoutEffect, localStorage, fetch |
-| `src/components/blog/filtered-post-list.tsx` | `'use client'` | useSearchParams, useState, useCallback, history.replaceState |
-| `src/components/projects/filtered-project-list.tsx` | `'use client'` | useSearchParams, useState, useCallback, history.replaceState |
-| `src/components/ui/filter-bar.tsx` | `'use client'` | Receives callback props from client parents |
-| `src/components/ui/scroll-reveal.tsx` | `'use client'` | useState, useEffect, useRef, IntersectionObserver, matchMedia |
-| `src/components/layout/footer.tsx` | Server | No browser APIs needed |
-| `src/components/blog/post-card.tsx` | Server | Pure presentational |
-| `src/components/blog/tag-chip.tsx` | Server | Pure presentational (toggle mode works via props from client parent) |
-| `src/components/blog/toc.tsx` | Server | Pure presentational |
-| `src/components/projects/project-card.tsx` | Server | Pure presentational |
-| `src/components/projects/tech-badge.tsx` | Server | Pure presentational |
-| `src/components/runes/rune-config.ts` | Server | Data-only module |
+| Component | Type | Why Client |
+|-----------|------|------------|
+| `src/components/hero.tsx` | Client | useState, useEffect, useRef, ResizeObserver, image load |
+| `src/components/layout/header.tsx` | Client | useState, usePathname, keyboard events, scroll lock, inert |
+| `src/components/blog/mdx-content.tsx` | Client | `new Function()` execution at runtime |
+| `src/components/blog/code-block.tsx` | Client | useRef for DOM access (code text extraction) |
+| `src/components/blog/copy-button.tsx` | Client | useState, navigator.clipboard API |
+| `src/components/blog/view-counter.tsx` | Client | useState, useEffect, useLayoutEffect, localStorage, fetch |
+| `src/components/blog/listing-view-counts.tsx` | Client | createContext, useState, useEffect, useLayoutEffect, fetch |
+| `src/components/blog/filtered-post-list.tsx` | Client | useSearchParams, useMemo, uses useFilteredList hook |
+| `src/components/blog/post-card.tsx` | Client | Uses PostCardViewCount from context |
+| `src/components/blog/mobile-toc.tsx` | Client | useState for collapsible toggle |
+| `src/components/projects/filtered-project-list.tsx` | Client | useSearchParams, uses useFilteredList hook |
+| `src/components/projects/project-card.tsx` | Client | Uses FilterChip with toggle behavior |
+| `src/components/ui/filter-bar.tsx` | Server | Receives render prop, no browser APIs |
+| `src/components/ui/filter-chip.tsx` | Client | onClick handlers, variant-based styling |
+| `src/components/ui/scroll-reveal.tsx` | Client | useState, useEffect, IntersectionObserver, matchMedia |
+| `src/components/layout/footer.tsx` | Server | Pure presentational |
+| `src/components/blog/toc.tsx` | Server | Pure presentational (recursive list) |
+| `src/components/runes/rune-config.ts` | Server | Data-only module (no component) |
 | `src/components/runes/rune-divider.tsx` | Server | Pure presentational |
 
 ---
 
-*Structure analysis: 2026-03-22*
+*Structure analysis: 2026-04-03*
