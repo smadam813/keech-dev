@@ -123,7 +123,7 @@ Plans:
 **Goal:** Mobile TOC pins to viewport top when scrolled past, with auto-collapse on heading link click, so section navigation is frictionless at any scroll position.
 **Requirements:** D-01, D-02, D-03, D-04, D-05, D-06, D-07
 **Depends on:** Phase 12
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 
 Plans:
 - [x] 13-01-PLAN.md — Sticky positioning, auto-collapse on link click, scroll-margin-top adjustment, E2E tests
@@ -151,4 +151,4 @@ Phases execute in numeric order: 9 → 10 → 11 → 12 → 13
 | 10. Resilience & Code Quality | v1.6 | 4/4 | Complete    | 2026-04-03 |
 | 11. SEO & Branding | v1.6 | 3/3 | Complete    | 2026-04-03 |
 | 12. Testing Infrastructure | v1.6 | 3/3 | Complete    | 2026-04-03 |
-| 13. Sticky/Pinned Mobile TOC | v1.6 | 1/1 | Complete | 2026-04-03 |
+| 13. Sticky/Pinned Mobile TOC | v1.6 | 1/1 | Complete    | 2026-04-03 |
