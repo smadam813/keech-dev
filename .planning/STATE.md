@@ -76,9 +76,10 @@ None.
 | 6 | Blog post h2/h3 headings with teal accent bottom borders | 2026-02-15 | bd99416 | [6-improve-blog-post-section-headers-to-be-](./quick/6-improve-blog-post-section-headers-to-be-/) |
 | 7 | Increased blog post heading sizes for stronger visual hierarchy | 2026-02-15 | 328ee62 | [7-improve-visibility-of-blog-post-section-](./quick/7-improve-visibility-of-blog-post-section-/) |
 | 8 | Back-to-blog navigation link on blog post pages | 2026-02-16 | a9f1ed9 | [8-add-back-to-blog-navigation-link-on-blog](./quick/8-add-back-to-blog-navigation-link-on-blog/) |
+| 9 | Fix broken npm run lint (native flat config for Next.js 16) | 2026-04-03 | 6d53fea | [260403-h6t-broken-npm-run-lint-fixable-by-switching](./quick/260403-h6t-broken-npm-run-lint-fixable-by-switching/) |
 
 ## Session Continuity
 
-Last session: 2026-03-01
-Stopped at: v1.5 milestone archived
+Last session: 2026-04-03
+Stopped at: Completed quick-260403-h6t
 Resume file: None
