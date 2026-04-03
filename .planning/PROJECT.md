@@ -52,6 +52,14 @@ A polished, intentional developer portfolio — fast, visually distinctive, and 
 - ✓ API input validation (slug format, batch limits) — v1.6 Phase 9
 - ✓ Rate limiting on view counter POST (10/60s per IP) — v1.6 Phase 9
 - ✓ Color validation script corrected — v1.6 Phase 9
+- ✓ Error boundaries at global, root-layout, and blog-post levels — v1.6 Phase 10
+- ✓ Loading skeleton UI for route transitions — v1.6 Phase 10
+- ✓ Shared useFilteredList hook (blog + project lists deduplicated) — v1.6 Phase 10
+- ✓ formatDate utility and localStorage cache helpers consolidated — v1.6 Phase 10
+- ✓ FilterChip unification (TagChip + TechBadge merged) — v1.6 Phase 10
+- ✓ Hero component refactored with extracted hooks — v1.6 Phase 10
+- ✓ Code block copy button keyboard-accessible — v1.6 Phase 10
+- ✓ MDX list elements VoiceOver-compatible — v1.6 Phase 10
 
 ## Current Milestone: v1.6 Address Concerns
 
