@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 
 ## Current Position
 
-Phase: 8 of 8 (Counts and Transitions)
-Plan: 1 of 1 complete in current phase
-Status: v1.5 Tag Filtering milestone shipped
-Last activity: 2026-03-01 — Milestone v1.5 archived
+Phase: 10 of 10 (Resilience & Code Quality)
+Plan: 1 of 4 complete in current phase
+Status: v1.6 Address Concerns in progress
+Last activity: 2026-04-02 — Plan 10-01 completed (error boundaries, loading skeletons, a11y fixes)
 
-Progress: [████████████] 100% (8/8 phases complete across all milestones)
+Progress: [█████████░░░] 75% (1/4 plans complete in phase 10)
 
 ## Performance Metrics
 
@@ -48,11 +48,16 @@ Progress: [████████████] 100% (8/8 phases complete acros
 | 06-filter-components | 1 | ~4min | ~4min |
 | 07-filtered-listing-integration | 2 | ~2min | ~1min |
 | 08-counts-and-transitions | 1 | ~2min | ~2min |
+| 09-security-hardening | 2 | ~4min | ~2min |
+| 10-resilience-code-quality | 1 | ~2min | ~2min |
 | quick-1 through quick-8 | 8 | ~14min | ~2min |
 
 ## Accumulated Context
 
 ### Decisions
+
+- Plain anchor tags in error boundaries instead of Next.js Link (router may be broken in error state)
+- Static heading text in loading skeletons for user orientation during transitions
 
 Decisions are logged in PROJECT.md Key Decisions table.
 
@@ -79,6 +84,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-01
-Stopped at: v1.5 milestone archived
+Last session: 2026-04-02
+Stopped at: Completed 10-01-PLAN.md
 Resume file: None

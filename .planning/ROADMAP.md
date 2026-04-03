@@ -40,6 +40,11 @@ See: `.planning/milestones/v1.5-ROADMAP.md` for full details.
 
 </details>
 
+**v1.6 Address Concerns (Phases 9-10) — IN PROGRESS**
+
+- [x] Phase 9: Security Hardening (2/2 plans) — completed 2026-04-02
+- [ ] Phase 10: Resilience & Code Quality (1/4 plans) — in progress
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -52,3 +57,5 @@ See: `.planning/milestones/v1.5-ROADMAP.md` for full details.
 | 6. Filter Components | v1.5 | 1/1 | Complete | 2026-02-27 |
 | 7. Filtered Listing Integration | v1.5 | 2/2 | Complete | 2026-02-28 |
 | 8. Counts and Transitions | v1.5 | 1/1 | Complete | 2026-03-01 |
+| 9. Security Hardening | v1.6 | 2/2 | Complete | 2026-04-02 |
+| 10. Resilience & Code Quality | v1.6 | 1/4 | In Progress | - |
