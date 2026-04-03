@@ -1,33 +1,31 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.5
-milestone_name: Tag Filtering
-status: complete
-last_updated: "2026-03-01"
+milestone: v1.6
+milestone_name: Address Concerns
+status: active
+last_updated: "2026-04-02"
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 4
-  completed_plans: 4
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-01)
+See: .planning/PROJECT.md (updated 2026-04-02)
 
 **Core value:** A polished, intentional developer portfolio — fast, visually distinctive, and well-crafted in every detail.
-**Current focus:** Planning next milestone
+**Current focus:** Defining requirements for v1.6 Address Concerns
 
 ## Current Position
 
-Phase: 8 of 8 (Counts and Transitions)
-Plan: 1 of 1 complete in current phase
-Status: v1.5 Tag Filtering milestone shipped
-Last activity: 2026-03-01 — Milestone v1.5 archived
-
-Progress: [████████████] 100% (8/8 phases complete across all milestones)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-04-02 — Milestone v1.6 started
 
 ## Performance Metrics
 
@@ -79,6 +77,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-01
-Stopped at: v1.5 milestone archived
+Last session: 2026-04-02
+Stopped at: Defining requirements for v1.6
 Resume file: None

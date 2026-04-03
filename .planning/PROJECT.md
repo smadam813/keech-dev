@@ -42,7 +42,21 @@ A polished, intentional developer portfolio — fast, visually distinctive, and 
 
 ### Active
 
-(None — planning next milestone)
+(Defining requirements for v1.6)
+
+## Current Milestone: v1.6 Address Concerns
+
+**Goal:** Resolve all security, quality, accessibility, and SEO concerns identified in the codebase audit — hardening the site across every severity level.
+
+**Target features:**
+- Security hardening: CSP headers, MDX try-catch, dependency patches, API rate limiting + input validation
+- Error resilience: error boundaries, loading states
+- SEO/branding: favicon, OG images, sitemap fix, RSS feed
+- Code quality: deduplicate localStorage helpers, date formatting, filtered list components, TagChip/TechBadge
+- Accessibility: mobile TOC, keyboard-discoverable copy button, VoiceOver list fix
+- Performance: image `sizes` attributes, Hero component refactor
+- Testing: Vitest setup + priority test targets
+- Cleanup: outdated packages, resume placeholder, color validation script fix
 
 ### Out of Scope
 
@@ -70,6 +84,7 @@ Hero section has load-gated two-beat reveal and 14 ambient rune glows.
 Blog posts display public view counts backed by Upstash Redis with IP deduplication.
 Blog and project listing pages support multi-select filtering with AND logic, count badges, URL persistence, and fade transitions.
 Site is statically generated and deployed via git-push to Vercel.
+Codebase audit (2026-03-22) identified 22 concerns across security, quality, accessibility, SEO, and performance — all targeted for v1.6.
 
 ## Key Decisions
 
@@ -108,5 +123,22 @@ Site is statically generated and deployed via git-push to Vercel.
 - **Image**: No modifications to hero.webp — effects are pure CSS overlays
 - **Theme**: Single theme only (no dark mode) — the palette is the brand
 
+## Evolution
+
+This document evolves at phase transitions and milestone boundaries.
+
+**After each phase transition** (via `/gsd:transition`):
+1. Requirements invalidated? → Move to Out of Scope with reason
+2. Requirements validated? → Move to Validated with phase reference
+3. New requirements emerged? → Add to Active
+4. Decisions to log? → Add to Key Decisions
+5. "What This Is" still accurate? → Update if drifted
+
+**After each milestone** (via `/gsd:complete-milestone`):
+1. Full review of all sections
+2. Core Value check — still the right priority?
+3. Audit Out of Scope — reasons still valid?
+4. Update Context with current state
+
 ---
-*Last updated: 2026-03-01 after v1.5 milestone*
+*Last updated: 2026-04-02 after v1.6 milestone started*
