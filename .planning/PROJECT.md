@@ -60,6 +60,13 @@ A polished, intentional developer portfolio — fast, visually distinctive, and 
 - ✓ Hero component refactored with extracted hooks — v1.6 Phase 10
 - ✓ Code block copy button keyboard-accessible — v1.6 Phase 10
 - ✓ MDX list elements VoiceOver-compatible — v1.6 Phase 10
+- ✓ Favicon set (SVG + ICO + apple-touch-icon) with Othala rune — v1.6 Phase 11
+- ✓ Site-level OG image with neobrutalist branding — v1.6 Phase 11
+- ✓ Per-post OG images with dynamic titles — v1.6 Phase 11
+- ✓ Sitemap uses actual content dates — v1.6 Phase 11
+- ✓ RSS feed at /feed.xml with auto-discovery — v1.6 Phase 11
+- ✓ Project images include responsive sizes attribute — v1.6 Phase 11
+- ✓ Resume placeholder removed from about page — v1.6 Phase 11
 
 ## Current Milestone: v1.6 Address Concerns
 
