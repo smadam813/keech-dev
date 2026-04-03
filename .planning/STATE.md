@@ -25,7 +25,7 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 Phase: 8 of 8 (Counts and Transitions)
 Plan: 1 of 1 complete in current phase
 Status: v1.5 Tag Filtering milestone shipped
-Last activity: 2026-04-03 — Completed quick task 260403-h8n: Missing D-xx IDs in REQUIREMENTS.md traceability table
+Last activity: 2026-04-03 — Completed quick task 260403-h6t: Fix broken npm run lint
 
 Progress: [████████████] 100% (8/8 phases complete across all milestones)
 
