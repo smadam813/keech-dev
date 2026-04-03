@@ -1,9 +1,9 @@
 ---
-status: diagnosed
+status: resolved
 phase: 11-seo-branding
 source: [11-VERIFICATION.md]
 started: 2026-04-03T04:30:00Z
-updated: 2026-04-03T05:15:00Z
+updated: 2026-04-03T12:00:00Z
 ---
 
 ## Current Test
@@ -56,7 +56,7 @@ blocked: 0
 ## Gaps
 
 - truth: "Blog posts render on /blog and per-post OG images are accessible"
-  status: failed
+  status: resolved
   reason: "User reported: blog posts not showing locally. CSP blocks inline scripts needed for Suspense hydration."
   severity: blocker
   test: 3
@@ -71,7 +71,7 @@ blocked: 0
   debug_session: ".planning/debug/blog-posts-not-showing.md"
 
 - truth: "RSS feed accessible at /feed.xml"
-  status: failed
+  status: resolved
   reason: "User reported: visiting /feed.xml returns 404. Feed only exists on v1.6-address-concerns branch, not deployed."
   severity: major
   test: 4
@@ -84,7 +84,7 @@ blocked: 0
   debug_session: ".planning/debug/feed-xml-404.md"
 
 - truth: "Homepage logo and client-interactive content renders correctly"
-  status: failed
+  status: resolved
   reason: "User reported: keech.dev logo no longer on homepage, Projects page also broken. Same CSP root cause as blog."
   severity: blocker
   test: 5
