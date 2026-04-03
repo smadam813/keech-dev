@@ -4,8 +4,11 @@ test.describe('code block copy button', () => {
   test('copies code and shows copied state', async ({ page, context }) => {
     await context.grantPermissions(['clipboard-read', 'clipboard-write'])
 
-    // Navigate directly to a blog post known to have code blocks
-    await page.goto('/blog/jira-vs-markdown-ai-agents')
+    // Navigate to first blog post via listing page
+    await page.goto('/blog')
+    const firstPost = page.locator('a[href^="/blog/"]').first()
+    await firstPost.click()
+    await page.waitForURL(/\/blog\/.+/)
 
     // Find a code block (rehype-pretty-code wraps in figure)
     const codeBlock = page.locator('figure[data-rehype-pretty-code-figure]').first()
