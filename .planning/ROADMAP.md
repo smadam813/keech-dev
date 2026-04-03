@@ -46,7 +46,7 @@ See: `.planning/milestones/v1.5-ROADMAP.md` for full details.
 **Milestone Goal:** Resolve all security, quality, accessibility, and SEO concerns identified in the codebase audit — hardening the site across every severity level.
 
 - [ ] **Phase 9: Security & Patches** - Harden all attack surfaces and patch known vulnerabilities
-- [ ] **Phase 10: Resilience & Code Quality** - Error boundaries, loading states, and code deduplication
+- [x] **Phase 10: Resilience & Code Quality** - Error boundaries, loading states, and code deduplication (completed 2026-04-03)
 - [ ] **Phase 11: SEO & Branding** - Favicon, OG images, RSS feed, and sitemap accuracy
 - [ ] **Phase 12: Testing Infrastructure** - Vitest and Playwright covering the final code shape
 
@@ -81,10 +81,10 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
-- [ ] 10-01-PLAN.md — Error boundaries, loading skeletons, accessibility fixes
+- [x] 10-01-PLAN.md — Error boundaries, loading skeletons, accessibility fixes
 - [x] 10-02-PLAN.md — Date formatting and localStorage cache helper extraction
-- [ ] 10-03-PLAN.md — FilterChip unification and useFilteredList hook extraction
-- [ ] 10-04-PLAN.md — Hero component hook extraction
+- [x] 10-03-PLAN.md — FilterChip unification and useFilteredList hook extraction
+- [x] 10-04-PLAN.md — Hero component hook extraction
 
 ### Phase 11: SEO & Branding
 **Goal**: The site presents a polished, branded identity in browser tabs, social media shares, search engine crawlers, and RSS readers
@@ -134,6 +134,6 @@ Phases execute in numeric order: 9 → 10 → 11 → 12
 | 7. Filtered Listing Integration | v1.5 | 2/2 | Complete | 2026-02-28 |
 | 8. Counts and Transitions | v1.5 | 1/1 | Complete | 2026-03-01 |
 | 9. Security & Patches | v1.6 | 0/2 | Not started | - |
-| 10. Resilience & Code Quality | v1.6 | 0/? | Not started | - |
+| 10. Resilience & Code Quality | v1.6 | 4/4 | Complete   | 2026-04-03 |
 | 11. SEO & Branding | v1.6 | 0/? | Not started | - |
 | 12. Testing Infrastructure | v1.6 | 0/? | Not started | - |

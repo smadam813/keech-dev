@@ -27,8 +27,8 @@ Requirements for v1.6 Address Concerns. Each maps to roadmap phases.
 
 - [x] **QUAL-01**: localStorage cache helpers extracted to single location in `src/lib/views.ts`
 - [x] **QUAL-02**: Date formatting extracted to shared `formatDate()` utility
-- [ ] **QUAL-03**: Filtered list logic extracted to shared `useFilteredList` hook
-- [ ] **QUAL-04**: TagChip and TechBadge toggle mode unified into shared component
+- [x] **QUAL-03**: Filtered list logic extracted to shared `useFilteredList` hook
+- [x] **QUAL-04**: TagChip and TechBadge toggle mode unified into shared component
 - [ ] **QUAL-05**: Hero component refactored — animation orchestration and glow positioning extracted to custom hooks
 
 ### SEO & Branding
@@ -102,8 +102,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ERR-04 | Phase 10 | Pending |
 | QUAL-01 | Phase 10 | Complete |
 | QUAL-02 | Phase 10 | Complete |
-| QUAL-03 | Phase 10 | Pending |
-| QUAL-04 | Phase 10 | Pending |
+| QUAL-03 | Phase 10 | Complete |
+| QUAL-04 | Phase 10 | Complete |
 | QUAL-05 | Phase 10 | Pending |
 | SEO-01 | Phase 11 | Pending |
 | SEO-02 | Phase 11 | Pending |
