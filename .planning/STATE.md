@@ -1,42 +1,45 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.5
-milestone_name: Tag Filtering
-status: complete
-last_updated: "2026-03-01"
+milestone: v1.3
+milestone_name: milestone
+status: v1.6 Address Concerns milestone shipped
+stopped_at: Milestone v1.6 completed and archived
+last_updated: "2026-04-03T17:42:30.841Z"
+last_activity: 2026-04-03
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 4
-  completed_plans: 4
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 100
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-01)
+See: .planning/PROJECT.md (updated 2026-04-03)
 
 **Core value:** A polished, intentional developer portfolio — fast, visually distinctive, and well-crafted in every detail.
 **Current focus:** Planning next milestone
 
 ## Current Position
 
-Phase: 8 of 8 (Counts and Transitions)
+Phase: 13 of 13 (Sticky/Pinned Mobile TOC)
 Plan: 1 of 1 complete in current phase
-Status: v1.5 Tag Filtering milestone shipped
-Last activity: 2026-03-01 — Milestone v1.5 archived
+Status: v1.6 Address Concerns milestone shipped
+Last activity: 2026-04-03
 
-Progress: [████████████] 100% (8/8 phases complete across all milestones)
+Progress: [████████████] 100% (13/13 phases complete across all milestones)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 20
-- Average duration: ~5 min
-- Total execution time: ~1h 29min
 
-**By Phase:**
+- Total plans completed: 33 (20 from v1.3-v1.5 + 13 from v1.6)
+- Quick tasks completed: 11
+
+**By Phase (v1.3-v1.5):**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
@@ -48,7 +51,16 @@ Progress: [████████████] 100% (8/8 phases complete acros
 | 06-filter-components | 1 | ~4min | ~4min |
 | 07-filtered-listing-integration | 2 | ~2min | ~1min |
 | 08-counts-and-transitions | 1 | ~2min | ~2min |
-| quick-1 through quick-8 | 8 | ~14min | ~2min |
+
+**By Phase (v1.6):**
+
+| Phase | Plans | Completed |
+|-------|-------|-----------|
+| 09-security-patches | 2 | 2026-04-03 |
+| 10-resilience-code-quality | 4 | 2026-04-03 |
+| 11-seo-branding | 3 | 2026-04-03 |
+| 12-testing-infrastructure | 3 | 2026-04-03 |
+| 13-sticky-pinned-mobile-toc | 1 | 2026-04-03 |
 
 ## Accumulated Context
 
@@ -76,9 +88,12 @@ None.
 | 6 | Blog post h2/h3 headings with teal accent bottom borders | 2026-02-15 | bd99416 | [6-improve-blog-post-section-headers-to-be-](./quick/6-improve-blog-post-section-headers-to-be-/) |
 | 7 | Increased blog post heading sizes for stronger visual hierarchy | 2026-02-15 | 328ee62 | [7-improve-visibility-of-blog-post-section-](./quick/7-improve-visibility-of-blog-post-section-/) |
 | 8 | Back-to-blog navigation link on blog post pages | 2026-02-16 | a9f1ed9 | [8-add-back-to-blog-navigation-link-on-blog](./quick/8-add-back-to-blog-navigation-link-on-blog/) |
+| 9 | Fix broken npm run lint (native flat config for Next.js 16) | 2026-04-03 | 6d53fea | [260403-h6t-broken-npm-run-lint-fixable-by-switching](./quick/260403-h6t-broken-npm-run-lint-fixable-by-switching/) |
+| 10 | Backport D-01 through D-07 to REQUIREMENTS.md traceability table | 2026-04-03 | 292732d | [260403-h8n-missing-d-xx-ids-in-requirements-md-trac](./quick/260403-h8n-missing-d-xx-ids-in-requirements-md-trac/) |
+| 11 | Replace hardcoded slug in code-copy E2E spec with dynamic listing navigation | 2026-04-03 | ed80b09 | [260403-h8h-hardcoded-slug-in-e2e-spec-swap-for-a-dy](./quick/260403-h8h-hardcoded-slug-in-e2e-spec-swap-for-a-dy/) |
 
 ## Session Continuity
 
-Last session: 2026-03-01
-Stopped at: v1.5 milestone archived
+Last session: 2026-04-03
+Stopped at: Milestone v1.6 completed and archived
 Resume file: None

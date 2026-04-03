@@ -1,244 +1,434 @@
 # Testing Patterns
 
-**Analysis Date:** 2026-03-22
+**Analysis Date:** 2026-04-03
 
 ## Test Framework
 
-**Runner:**
-- No test framework is configured
-- No Jest, Vitest, or other test runner installed
-- No test-related dependencies in `package.json`
+**Unit/Component Runner:**
+- Vitest 4.1.2
+- Config: `vitest.config.ts`
+- Environment: jsdom
+- Setup file: `vitest.setup.ts` (imports `@testing-library/jest-dom/vitest`)
 
-**Assertion Library:**
-- Not applicable -- no testing framework
+**E2E Runner:**
+- Playwright 1.59.1
+- Config: `playwright.config.ts`
+- Projects: `desktop-chromium` (Desktop Chrome), `mobile-chromium` (Pixel 5)
+- Web server: builds and starts app on `localhost:3000`
+
+**Assertion Libraries:**
+- Vitest built-in (`expect`, `describe`, `it`)
+- `@testing-library/jest-dom` for DOM matchers (`toBeInTheDocument`, `toHaveAttribute`)
+- `@testing-library/react` for render/screen/fireEvent
+- Playwright built-in assertions (`expect(locator).toBeVisible()`)
 
 **Run Commands:**
 ```bash
-npm run lint      # ESLint (primary automated quality gate)
-npm run build     # TypeScript + Velite schema validation (build-time checks)
-npm run velite    # Velite content compilation alone (useful for debugging content)
+npm run test          # vitest run (all unit/component tests)
+npm run test:e2e      # playwright test (all E2E specs)
 ```
-
-No `test` script exists in `package.json`. Available scripts are: `dev`, `build`, `start`, `lint`, `velite`.
 
 ## Test File Organization
 
-**Location:**
-- No test files exist in the codebase
-- No `*.test.*` or `*.spec.*` files found anywhere in `src/`
+**Unit/Component Tests:**
+- Co-located with source files as `{module}.test.ts` or `{module}.test.tsx`
+- Pattern: `src/lib/format.test.ts` tests `src/lib/format.ts`
+- Pattern: `src/components/blog/copy-button.test.tsx` tests `src/components/blog/copy-button.tsx`
 
-**Naming:**
-- Not applicable -- no test files exist
+**E2E Tests:**
+- Separate `e2e/` directory at project root
+- Named as `{feature}.spec.ts`
 
-**Structure:**
-- `.gitignore` includes `/coverage` entry, suggesting test coverage was considered but not implemented
+**Current test files (17 unit/component + 4 E2E):**
 
-## Quality Assurance Strategy
+Unit/component:
+- `src/lib/format.test.ts` -- date formatting
+- `src/lib/validation.test.ts` -- slug validation
+- `src/lib/views.test.ts` -- view count formatting and localStorage cache
+- `src/lib/rune-glows.test.ts` -- glow position computation
+- `src/lib/rate-limit.test.ts` -- rate limiter configuration
+- `src/lib/security-headers.test.ts` -- security headers in next.config
+- `src/lib/seo-assets.test.ts` -- favicon, OG images, sitemap, RSS feed, project images
+- `src/hooks/use-hero-animation.test.ts` -- hero animation state machine
+- `src/hooks/use-filtered-list.test.ts` -- filter hook with URL sync
+- `src/hooks/use-glow-positions.test.ts` -- ResizeObserver-driven glow positioning
+- `src/components/blog/copy-button.test.tsx` -- keyboard accessibility, a11y
+- `src/components/blog/mdx-content.test.tsx` -- malformed MDX fallback rendering
+- `src/components/ui/filter-chip.test.tsx` -- toggle/link/display modes
+- `src/app/error.test.tsx` -- global error boundary
+- `src/app/global-error.test.tsx` -- root layout error boundary
+- `src/app/loading.test.tsx` -- all loading skeleton components
+- `src/app/blog/[slug]/error.test.tsx` -- blog post error boundary
 
-This project relies on a **multi-layer build-time validation** strategy instead of automated tests. Each layer catches different categories of errors.
+E2E:
+- `e2e/mobile-menu.spec.ts` -- mobile menu open/close, escape, navigation
+- `e2e/code-copy.spec.ts` -- code block copy button interaction
+- `e2e/mobile-toc.spec.ts` -- mobile table of contents expand/collapse, sticky, auto-collapse
+- `e2e/view-count.spec.ts` -- view count display on blog post
 
-### Layer 1: TypeScript Strict Mode
+## Vitest Configuration
 
-**Config:** `tsconfig.json` with `"strict": true`
+**File:** `vitest.config.ts`
+```typescript
+import { defineConfig } from 'vitest/config'
+import react from '@vitejs/plugin-react'
+import tsconfigPaths from 'vite-tsconfig-paths'
 
-**What it catches:**
-- Type mismatches in component props
-- Missing required properties
-- Null/undefined access without checks
-- Incorrect function signatures
-- Import path errors (via path aliases `@/*` and `@/.velite`)
+export default defineConfig({
+  plugins: [tsconfigPaths(), react()],
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    include: ['src/**/*.test.{ts,tsx}'],
+    setupFiles: ['./vitest.setup.ts'],
+  },
+})
+```
 
-**Key settings in `tsconfig.json`:**
-- `target: "ES2022"` -- modern JS features
-- `strict: true` -- enables all strict checks
-- `noEmit: true` -- type checking only (Next.js handles compilation)
-- `moduleResolution: "bundler"` -- Next.js/Turbopack compatible
+**Key details:**
+- `tsconfigPaths()` enables `@/*` and `@/.velite` path aliases in tests
+- `react()` plugin enables JSX/TSX in test files
+- `globals: true` makes `describe`, `it`, `expect` available without imports (but tests still explicitly import them)
+- jsdom environment provides `document`, `localStorage`, `navigator`, `window`
 
-### Layer 2: ESLint
+**Setup file:** `vitest.setup.ts`
+```typescript
+import '@testing-library/jest-dom/vitest'
+```
+This adds DOM matchers like `toBeInTheDocument()`, `toHaveAttribute()`, `toHaveClass()`.
 
-**Config:** `eslint.config.mjs` (ESLint v9 flat config)
+## Playwright Configuration
 
-**What it catches:**
-- React hooks rule violations (deps arrays, conditional hooks)
-- Next.js-specific issues (Image component usage, Link usage, metadata patterns)
-- TypeScript-specific linting (unused variables, any types)
-- Accessibility issues via `jsx-a11y` (included in `next/core-web-vitals`)
+**File:** `playwright.config.ts`
+```typescript
+export default defineConfig({
+  testDir: './e2e',
+  fullyParallel: true,
+  forbidOnly: !!process.env.CI,
+  retries: 0,
+  workers: 1,
+  reporter: 'list',
+  use: {
+    baseURL: 'http://localhost:3000',
+    trace: 'on-first-retry',
+  },
+  projects: [
+    { name: 'desktop-chromium', use: { ...devices['Desktop Chrome'] } },
+    { name: 'mobile-chromium', use: { ...devices['Pixel 5'] } },
+  ],
+  webServer: {
+    command: 'npm run build && npm run start',
+    url: 'http://localhost:3000',
+    reuseExistingServer: !process.env.CI,
+    timeout: 120000,
+  },
+})
+```
 
-**Run:** `npm run lint` (calls `next lint`)
+**Key details:**
+- Tests run against a production build (not dev server)
+- Single worker to avoid port conflicts
+- 2-minute timeout for build + start
+- Reuses existing server locally (set `reuseExistingServer: !process.env.CI`)
+- Mobile tests use `test.use({ ...devices['Pixel 5'] })` at the top of the spec file
 
-**Extends:**
-- `next/core-web-vitals` -- React, React Hooks, jsx-a11y, Next.js best practices
-- `next/typescript` -- TypeScript-specific rules
+## Test Structure
 
-### Layer 3: Velite Content Schema Validation
+**Unit Test Pattern:**
+```typescript
+import { describe, it, expect } from 'vitest'
+import { formatDate } from './format'
 
-**Config:** `velite.config.ts` with Zod schemas
+describe('formatDate', () => {
+  it('formats ISO date to human-readable', () => {
+    expect(formatDate('2024-01-15')).toBe('January 15, 2024')
+  })
 
-**What it catches:**
-- Missing required frontmatter fields in MDX files
-- Invalid data types (e.g., non-ISO date strings)
-- String length violations (`title: s.string().max(99)`, `description: s.string().max(300)`)
-- Invalid enum values for `category` field
-- Invalid slug formats
-- Missing MDX body content
+  it('handles edge case', () => {
+    expect(formatDate('2024-02-29')).toBe('February 29, 2024')
+  })
+})
+```
 
-**Run:** Automatically during `npm run build` (first step: `velite && next build`). Also runnable standalone via `npm run velite`.
+**Component Test Pattern:**
+```typescript
+import { describe, it, expect, vi } from 'vitest'
+import { render, screen, fireEvent } from '@testing-library/react'
+import { CopyButton } from './copy-button'
 
-**Post frontmatter schema (required/optional):**
-- Required: `title`, `slug`, `date`
-- Optional: `updated`, `description`, `tags`, `draft`
-- Auto-generated: `toc`, `metadata` (reading time), `excerpt`, `body` (compiled MDX)
+describe('CopyButton', () => {
+  it('has an accessible label for screen readers', () => {
+    render(<CopyButton getText={() => 'code'} />)
+    expect(screen.getByRole('button', { name: /copy code/i })).toBeInTheDocument()
+  })
+})
+```
 
-**Project frontmatter schema (required/optional):**
-- Required: `title`, `slug`, `description`, `date`
-- Optional: `updated`, `featured`, `stack`, `github`, `demo`, `category`, `image`
+**Hook Test Pattern:**
+```typescript
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { renderHook, act } from '@testing-library/react'
+import { useRef } from 'react'
+import { useHeroAnimation } from './use-hero-animation'
 
-### Layer 4: Next.js Build
+describe('useHeroAnimation', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.stubGlobal('matchMedia', vi.fn((query: string) => ({
+      matches: false,
+      media: query,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    })))
+  })
 
-**What it catches:**
-- Server/client component boundary violations
-- Invalid `generateStaticParams()` output
-- Invalid metadata exports
-- Import errors from generated `.velite/` content
-- Invalid `route.ts` handler signatures
-- Hydration mismatches (in dev mode)
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+  })
 
-**Run:** Second step of `npm run build` (`next build`)
+  it('starts in loading stage', () => {
+    const { result } = renderHook(() => {
+      const imgRef = useRef<HTMLImageElement | null>(null)
+      return useHeroAnimation({ imgRef })
+    })
+    expect(result.current.revealStage).toBe('loading')
+  })
 
-### Layer 5: Validation Scripts
+  it('transitions after image load', async () => {
+    const { result } = renderHook(() => {
+      const imgRef = useRef<HTMLImageElement | null>(null)
+      return useHeroAnimation({ imgRef })
+    })
+    act(() => { result.current.handleLoad() })
+    await act(async () => { vi.advanceTimersByTime(600) })
+    expect(result.current.revealStage).toBe('text-reveal')
+  })
+})
+```
 
-**Script:** `scripts/validate-colors.mjs`
+**E2E Test Pattern:**
+```typescript
+import { test, expect, devices } from '@playwright/test'
 
-**What it does:** Computes WCAG 2.1 contrast ratios for all palette color pairs and reports PASS/FAIL against the 4.5:1 AA threshold.
+test.use({ ...devices['Pixel 5'] })  // For mobile-specific tests
 
-**Run:** `node scripts/validate-colors.mjs` (manual, not part of build pipeline)
-
-**Covers:** The core palette from `src/app/globals.css`: background (#E8B4B8), foreground (#000000), accent (#2D8B8B), surface (#F5E6E8), muted (#666666)
-
-## Deployment Pipeline
-
-**No CI/CD configured:**
-- No `.github/workflows/` directory
-- No GitHub Actions, CircleCI, or other CI configuration
-- Deployment is git-push to Vercel
-
-**Vercel Build Process:**
-1. `npm run build` executes: `velite && next build`
-2. Velite compiles MDX content with schema validation
-3. Next.js builds with TypeScript checking
-4. If either step fails, deployment is blocked
-
-**This means:**
-- Velite schema validation runs on every deploy
-- TypeScript errors block deployment
-- ESLint is NOT automatically run during Vercel build (must be run manually or added to build script)
+test.describe('feature name', () => {
+  test('user interaction flow', async ({ page }) => {
+    await page.goto('/')
+    const element = page.getByRole('button', { name: /label/i })
+    await element.click()
+    await expect(element).toHaveAttribute('aria-expanded', 'true')
+  })
+})
+```
 
 ## Mocking
 
-**Framework:** Not applicable -- no mocking framework installed
+**Framework:** Vitest `vi` module
 
-## Fixtures and Factories
+**Module Mocks (`vi.mock`):**
+```typescript
+// Mock next/navigation
+vi.mock('next/navigation', () => ({
+  useSearchParams: () => ({ get: mockGet, toString: mockSearchParamsToString }),
+  usePathname: () => '/blog',
+}))
 
-**Test Data:** Not applicable -- no test files exist
+// Mock next/link as plain anchor
+vi.mock('next/link', () => ({
+  default: ({ href, children, className }) => <a href={href} className={className}>{children}</a>,
+}))
 
-**Content fixtures:** MDX files in `content/posts/` and `content/projects/` serve as implicit integration test fixtures -- if Velite can compile them, the schema is valid.
+// Mock internal modules
+vi.mock('@/lib/redis', () => ({ redis: {} }))
+vi.mock('./code-block', () => ({
+  CodeBlock: ({ children }) => <pre>{children}</pre>,
+}))
+```
+
+**Global Stubs (`vi.stubGlobal`):**
+```typescript
+// Browser APIs not available in jsdom
+vi.stubGlobal('matchMedia', vi.fn((query) => ({
+  matches: false,
+  media: query,
+  addEventListener: vi.fn(),
+  removeEventListener: vi.fn(),
+})))
+
+vi.stubGlobal('ResizeObserver', MockResizeObserverClass)
+vi.stubGlobal('history', { replaceState: vi.fn() })
+```
+
+**Clipboard Mock:**
+```typescript
+Object.defineProperty(navigator, 'clipboard', {
+  value: { writeText: vi.fn().mockResolvedValue(undefined) },
+  writable: true,
+})
+```
+
+**Timer Mocks:**
+```typescript
+beforeEach(() => { vi.useFakeTimers() })
+afterEach(() => { vi.useRealTimers() })
+
+// Advance timers in act() for React state updates
+await act(async () => { vi.advanceTimersByTime(600) })
+```
+
+**Module Reset for Re-import:**
+```typescript
+beforeEach(() => { vi.resetModules() })
+// Then dynamic import:
+const { viewsRateLimit } = await import('./rate-limit')
+```
+
+**What to Mock:**
+- `next/navigation` hooks (`useSearchParams`, `usePathname`)
+- `next/link` component (renders as plain `<a>` in jsdom)
+- Browser APIs: `matchMedia`, `ResizeObserver`, `navigator.clipboard`, `window.history`
+- Redis/external services: `@/lib/redis`, `@upstash/ratelimit`
+- Client components with browser-only deps when testing parents: `./code-block`
+
+**What NOT to Mock:**
+- The module under test itself
+- Pure utility functions (test real implementation)
+- React rendering (use @testing-library/react)
+- CSS classes (inspect via `className` property)
+
+## File-Based Assertion Pattern
+
+The `src/lib/seo-assets.test.ts` file uses a distinctive pattern: reading source files with `fs.readFileSync` and asserting on their contents. This avoids needing a Next.js runtime for testing ImageResponse, dynamic imports, etc.
+
+```typescript
+import { readFileSync, statSync } from 'node:fs'
+import { join } from 'node:path'
+
+const root = join(process.cwd())
+
+it('icon.svg contains the Othala rune path', () => {
+  const svg = readFileSync(join(root, 'src/app/icon.svg'), 'utf-8')
+  expect(svg).toContain('<path')
+  expect(svg).toContain('#E8B4B8')
+})
+
+it('exports generateStaticParams', () => {
+  const src = readFileSync(join(root, 'src/app/blog/[slug]/opengraph-image.tsx'), 'utf-8')
+  expect(src).toMatch(/export\s+(function|async\s+function)\s+generateStaticParams/)
+})
+```
+
+**Use this pattern when:**
+- Testing Next.js features that require the full runtime (ImageResponse, route handlers)
+- Verifying source-level contracts (exports, imports, content strings)
+- Checking binary asset existence and size
+
+## E2E Patterns
+
+**Navigation via listing pages:**
+```typescript
+// Navigate to blog listing, then click into a post (avoids hardcoded slugs)
+await page.goto('/blog')
+const firstPost = page.locator('a[href^="/blog/"]').first()
+await firstPost.click()
+await page.waitForURL(/\/blog\/.+/)
+```
+
+**Graceful skip for content-dependent tests:**
+```typescript
+if (await tocToggle.count() === 0) {
+  test.skip(true, 'No TOC on this blog post')
+  return
+}
+```
+
+**API route interception:**
+```typescript
+await page.route('**/api/views/**', async (route) => {
+  await route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ views: 42 }),
+  })
+})
+```
+
+**Mobile viewport setup:**
+```typescript
+import { devices } from '@playwright/test'
+test.use({ ...devices['Pixel 5'] })
+```
+
+**Clipboard permissions:**
+```typescript
+test('copies code', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write'])
+  // ...
+})
+```
+
+## Test Naming Convention
+
+**Unit tests:** `describe('functionName', () => { it('verb phrase describing behavior', ...) })`
+- Examples: `it('formats ISO date to human-readable')`, `it('rejects a slug with special characters')`
+
+**Component tests:** `describe('ComponentName', () => { ... })` or `describe('ComponentName mode (context)', () => { ... })`
+- Examples: `describe('CopyButton keyboard accessibility (A11Y-01)')`, `describe('FilterChip toggle mode')`
+
+**Traceability tags:** Some describe blocks include requirement IDs in parentheses:
+- `(A11Y-01)`, `(SEC-01)`, `(SEC-02)`, `(SEC-06)`, `(SEO-01)` through `(SEO-06)`, `(CLN-02)`
+- These trace back to concern/gap IDs from planning documents
+
+**E2E tests:** `test.describe('feature name', () => { test('user action and expected result', ...) })`
+- Examples: `test('toggles open and closed')`, `test('copies code and shows copied state')`
 
 ## Coverage
 
-**Requirements:** Not enforced -- no testing framework configured
-
-**No coverage tooling installed.** The `.gitignore` includes `/coverage` which suggests coverage was anticipated but not yet implemented.
+**Requirements:** No coverage thresholds enforced
+**Coverage tooling:** Vitest supports it but no `--coverage` script is configured
+**`.gitignore`** includes `/coverage` entry (ready for when coverage is added)
 
 ## Test Types
 
 **Unit Tests:**
-- Not configured
-- Candidates if added:
-  - `src/lib/utils.ts` -- `cn()` class merging behavior
-  - `src/lib/views.ts` -- `formatViewCount()` pluralization
-  - `src/lib/rune-glows.ts` -- `computeGlowPositions()` math with various container dimensions
-  - `src/app/api/views/[slug]/route.ts` -- `hashIP()` function
+- Pure functions: `format.ts`, `validation.ts`, `views.ts`, `rune-glows.ts`
+- Configuration verification: `rate-limit.test.ts`, `security-headers.test.ts`
+- Asset/source verification: `seo-assets.test.ts`
 
-**Integration Tests:**
-- Not configured
-- Candidates if added:
-  - API routes (`src/app/api/views/route.ts`, `src/app/api/views/[slug]/route.ts`) -- Redis interaction, deduplication logic
-  - MDX rendering pipeline -- `MDXContent` component with `new Function()` execution
-  - Content pipeline -- Velite compilation with edge-case frontmatter
+**Component Tests:**
+- Render + assert on DOM: `copy-button.test.tsx`, `filter-chip.test.tsx`, `mdx-content.test.tsx`
+- Error boundaries: `error.test.tsx`, `global-error.test.tsx`, `blog/[slug]/error.test.tsx`
+- Loading skeletons: `loading.test.tsx`
+
+**Hook Tests:**
+- State machine behavior: `use-hero-animation.test.ts`
+- Filter logic with URL sync: `use-filtered-list.test.ts`
+- ResizeObserver integration: `use-glow-positions.test.ts`
 
 **E2E Tests:**
-- Not configured
-- No Playwright, Cypress, or similar framework installed
-- Candidates if added:
-  - Blog post page rendering (content, metadata, TOC)
-  - Tag filtering with URL state persistence
-  - Mobile menu toggle, keyboard navigation, focus management
-  - View count display and increment
+- Interactive flows: mobile menu, code copy, mobile TOC
+- API-dependent rendering: view counts (with route interception)
+- Cross-device: mobile tests use Pixel 5 viewport
 
-## What Is Validated vs. What Is Not
+## Additional Quality Layers
 
-**Validated (build-time):**
-- All TypeScript types and interfaces
-- All MDX frontmatter against Zod schemas
-- Import paths and module resolution
-- React hooks rules and Next.js patterns (ESLint)
-- Accessibility attributes (jsx-a11y via ESLint)
+**Layer 1: TypeScript Strict Mode** (`tsconfig.json` with `strict: true`)
+- Catches type mismatches, null access, import errors
 
-**NOT validated (no runtime tests):**
-- Component rendering correctness
-- Conditional rendering logic (draft filtering, tag filtering, empty states)
-- Browser API interactions (IntersectionObserver, ResizeObserver, localStorage, clipboard)
-- Animation sequencing and reduced-motion behavior
-- API route behavior (Redis operations, IP deduplication, error responses)
-- View count caching (localStorage read-through cache)
-- URL state management (search params for filters)
-- Focus management and keyboard navigation
-- Mobile menu scroll lock behavior
-- SEO metadata generation correctness (`generateMetadata()`)
-- Static params generation (`generateStaticParams()`)
-- Date formatting logic (repeated in multiple components)
-- `MDXContent` runtime code execution safety
+**Layer 2: ESLint** (`eslint.config.mjs`)
+- React hooks rules, Next.js patterns, jsx-a11y accessibility
 
-## Common Patterns (for future test implementation)
+**Layer 3: Velite Schema Validation** (`velite.config.ts`)
+- Validates all MDX frontmatter against Zod schemas at build time
+- Run standalone: `npm run velite`
 
-**If a test framework were added, follow these patterns:**
+**Layer 4: Next.js Build**
+- Server/client boundary violations, invalid metadata, hydration issues
 
-**Utility function tests:**
-```typescript
-// Example structure for src/lib/utils.test.ts
-describe('cn', () => {
-  it('merges class names', () => {
-    expect(cn('px-2', 'py-1')).toBe('px-2 py-1')
-  })
-  it('resolves tailwind conflicts', () => {
-    expect(cn('px-2', 'px-4')).toBe('px-4')
-  })
-  it('handles conditional classes', () => {
-    expect(cn('base', false && 'hidden', 'end')).toBe('base end')
-  })
-})
-```
-
-**API route tests:**
-```typescript
-// Example structure for src/app/api/views/route.test.ts
-describe('GET /api/views', () => {
-  it('returns empty counts for no slugs', async () => {
-    const req = new Request('http://localhost/api/views?slugs=')
-    const res = await GET(req)
-    expect(await res.json()).toEqual({ counts: {} })
-  })
-  it('returns counts for valid slugs', async () => {
-    // Mock redis.mget
-    const req = new Request('http://localhost/api/views?slugs=post-1,post-2')
-    const res = await GET(req)
-    expect(res.status).toBe(200)
-  })
-})
-```
-
-**Recommended framework:** Vitest (aligns with Vite ecosystem, fast, TypeScript-native, compatible with Next.js via `@vitejs/plugin-react`)
+**Deployment:** Git-push to Vercel runs `velite && next build`. No CI pipeline -- tests must be run manually before push.
 
 ---
 
-*Testing analysis: 2026-03-22*
+*Testing analysis: 2026-04-03*

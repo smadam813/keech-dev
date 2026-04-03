@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { Github, ExternalLink } from 'lucide-react'
-import { TechBadge } from './tech-badge'
+import { FilterChip } from '@/components/ui/filter-chip'
 
 interface ProjectCardProps {
   project: {
@@ -33,6 +33,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
               src={project.image.src}
               alt={`${project.title} screenshot`}
               fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               className="object-cover"
             />
           </div>
@@ -54,7 +55,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
           {project.stack.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mb-4">
               {project.stack.slice(0, 4).map((tech) => (
-                <TechBadge key={tech} tech={tech} />
+                <FilterChip key={tech} label={tech} />
               ))}
               {project.stack.length > 4 && (
                 <span className="text-xs text-muted self-center">

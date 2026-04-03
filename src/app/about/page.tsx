@@ -1,6 +1,5 @@
 import { Metadata } from 'next'
 import Image from 'next/image'
-import { Download } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'About',
@@ -50,19 +49,6 @@ export default function AboutPage() {
             </p>
           </div>
 
-          {/* Resume download section */}
-          <div className="mt-6">
-            {/* When resume.pdf exists, change to: <a href="/resume.pdf" download className="inline-flex items-center gap-2 ...">Download Resume</a> */}
-            <button
-              disabled
-              className="inline-flex items-center gap-2 px-4 py-2
-                         border-[3px] border-black bg-muted/20 text-muted
-                         cursor-not-allowed opacity-60 font-medium"
-            >
-              <Download className="w-5 h-5" />
-              Resume Coming Soon
-            </button>
-          </div>
         </div>
       </div>
     </section>

@@ -2,7 +2,7 @@
 
 ## What This Is
 
-Personal portfolio/blog at keech.dev built with Next.js 16, React 19, Tailwind CSS v4, and Velite for MDX content. Features a neobrutalist visual identity with Norse-themed hero section, load-gated reveal animation, ambient rune glow effects, Redis-backed blog view counts, and multi-select tag/stack filtering on listing pages.
+Personal portfolio/blog at keech.dev built with Next.js 16, React 19, Tailwind CSS v4, and Velite for MDX content. Features a neobrutalist visual identity with Norse-themed hero section, load-gated reveal animation, ambient rune glow effects, Redis-backed blog view counts, multi-select tag/stack filtering, security headers, branded error boundaries, dynamic OG images, RSS feed, and automated test coverage via Vitest and Playwright.
 
 ## Core Value
 
@@ -39,6 +39,37 @@ A polished, intentional developer portfolio — fast, visually distinctive, and 
 - ✓ "Showing X of Y" result count when filters active — v1.5
 - ✓ Neobrutalist press animation on filter chips — v1.5
 - ✓ Filter state persists in URL search params — v1.5
+- ✓ Security headers (CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy) on all routes — v1.6
+- ✓ Zero npm audit vulnerabilities — v1.6
+- ✓ MDX rendering error fallback with branded UI — v1.6
+- ✓ API input validation (slug format, batch limits) — v1.6
+- ✓ Rate limiting on view counter POST (10/60s per IP) — v1.6
+- ✓ Color validation script corrected — v1.6
+- ✓ Error boundaries at global, root-layout, and blog-post levels — v1.6
+- ✓ Loading skeleton UI for route transitions — v1.6
+- ✓ Shared useFilteredList hook (blog + project lists deduplicated) — v1.6
+- ✓ formatDate utility and localStorage cache helpers consolidated — v1.6
+- ✓ FilterChip unification (TagChip + TechBadge merged) — v1.6
+- ✓ Hero component refactored with extracted hooks — v1.6
+- ✓ Code block copy button keyboard-accessible — v1.6
+- ✓ MDX list elements VoiceOver-compatible — v1.6
+- ✓ Favicon set (SVG + ICO + apple-touch-icon) with Othala rune — v1.6
+- ✓ Site-level OG image with neobrutalist branding — v1.6
+- ✓ Per-post OG images with dynamic titles — v1.6
+- ✓ Sitemap uses actual content dates — v1.6
+- ✓ RSS feed at /feed.xml with auto-discovery — v1.6
+- ✓ Project images include responsive sizes attribute — v1.6
+- ✓ Resume placeholder removed from about page — v1.6
+- ✓ CSP script-src permits Next.js inline scripts for hydration — v1.6
+- ✓ Vitest configured with path aliases, jsdom, and React Testing Library — v1.6
+- ✓ Unit tests for formatDate, view count helpers, computeGlowPositions — v1.6
+- ✓ Playwright configured with Chromium-only for E2E testing — v1.6
+- ✓ E2E tests for mobile menu, code copy, view count, mobile TOC — v1.6
+- ✓ Collapsible mobile TOC accordion for blog posts — v1.6
+- ✓ Sticky mobile TOC with auto-collapse on heading navigation — v1.6
+- ✓ CSS-only sticky positioning for mobile TOC (no JS scroll listeners) — v1.6
+- ✓ Visual sticky indicator distinguishes pinned from inline TOC — v1.6
+- ✓ Smooth scroll with scroll-margin-top clearance on TOC heading links — v1.6
 
 ### Active
 
@@ -61,44 +92,61 @@ A polished, intentional developer portfolio — fast, visually distinctive, and 
 - Server-side filtering via route segments — explodes static generation matrix
 - Sidebar filter panel — single-dimension filtering doesn't need a sidebar
 - Persistent filter state in localStorage — URL search params are the persistence mechanism
+- CSP without `unsafe-eval` — requires replacing `new Function()` MDX execution (tracked as DEP-03)
+- Nonce-based CSP via middleware — incompatible with static generation
+- Comprehensive E2E test suite — diminishing returns for personal portfolio
+- Visual regression testing — high maintenance, low value for personal site
 
 ## Context
 
-Shipped v1.5 Tag Filtering with 2,360 LOC across TypeScript + CSS.
+Shipped v1.6 Address Concerns with 38 requirements across security, quality, accessibility, SEO, and testing.
 Tech stack: Next.js 16, React 19, Tailwind CSS v4, Velite, MDX, Upstash Redis.
+Codebase: ~72 source files modified in v1.6, total project well over 3,000 LOC TypeScript + CSS.
 Hero section has load-gated two-beat reveal and 14 ambient rune glows.
 Blog posts display public view counts backed by Upstash Redis with IP deduplication.
 Blog and project listing pages support multi-select filtering with AND logic, count badges, URL persistence, and fade transitions.
+All pages serve security headers (CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy).
+Branded error boundaries at three levels catch runtime errors gracefully.
+Othala rune favicon + dynamic OG images for social sharing.
+RSS feed at /feed.xml, sitemap with actual content dates.
+Test coverage: 18 Vitest unit tests + 14 Playwright E2E tests.
+Collapsible sticky mobile TOC for blog post section navigation.
 Site is statically generated and deployed via git-push to Vercel.
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| CSS overlay hotspots for rune glow | No new image assets needed, pure CSS, maintainable | ✓ Good — 14 runes positioned with radial gradient overlays |
-| Staggered pulse timing | Each rune at its own rhythm feels organic, like embers | ✓ Good — power-curve entrance cascade + per-rune breathing |
-| Sync animation via image onLoad | Prevents text animation playing over empty gradient | ✓ Good — dual-path detection covers all load scenarios |
-| Convert Hero to client component | Need onLoad callback from Image — requires 'use client' | ✓ Good — minimal JS, most logic is CSS-driven |
-| Separate heroTextReveal keyframe | Hero needs more visual presence at large sizes (24px vs 20px) | ✓ Good — distinct from body fadeInUp |
-| 600ms delay between bg and text reveal | Two-beat rhythm (350ms blur + 250ms pause) | ✓ Good — feels coordinated and intentional |
-| 14 runes (not 13) | Visual inspection found additional rune missed by research | ✓ Good — all runes covered |
-| Color distribution 6 teal / 4 amber / 4 gold | Adjusted from strict aett grouping for visual balance | ✓ Good — balanced across image |
-| Manual position calibration | Research estimates were off 5-15% in both axes | ✓ Good — pixel-precise alignment |
-| No mix-blend-mode | Preserves GPU-composited opacity animation | ✓ Good — smooth performance |
-| @upstash/redis over deprecated @vercel/kv | @vercel/kv deprecated Dec 2024, @upstash/redis is the direct replacement | ✓ Good — future-proof, same underlying service |
-| Two-step SET NX + conditional INCR | Correctness over ~1-2ms latency for dedup enforcement | ✓ Good — repeat POSTs never inflate count |
-| localStorage view cache over shimmer | Shimmer felt jarring; cached count provides instant display on return visits | ✓ Good — flicker-free UX |
-| Render-prop pattern for listing view counts | Keeps PostCard server-renderable while ListingViewCounts owns client boundary | ✓ Good — clean server/client split |
-| Batch redis.mget() for listing page | Single round-trip retrieval vs N individual fetches | ✓ Good — efficient at any post count |
-| No slug validation against published posts | Orphan Redis keys are harmless, zero-cost simplification | ✓ Good — simpler API |
-| Polymorphic chip components (display/link/toggle) | Single component serves all contexts without code duplication | ✓ Good — zero regression on existing usage sites |
-| renderChip prop delegation on FilterBar | FilterBar never imports specific chip components; parent controls appearance | ✓ Good — reusable across blog and projects |
-| Mutually exclusive class pattern for toggle states | Avoids tailwind-merge conflicts with custom shadow tokens | ✓ Good — deterministic styling |
-| window.history.replaceState for URL filter updates | Avoids router.replace re-renders while Next.js syncs with useSearchParams | ✓ Good — lightweight URL updates |
-| Suspense boundary for useSearchParams | Isolates client island in static page; preserves static generation | ✓ Good — /blog and /projects remain static routes |
-| Static counts (total per tag/stack) | Simpler than contextual counts; more useful for small content sets | ✓ Good — shows content distribution at a glance |
-| Grid fades as a unit (not individual cards) | Cleaner visual for small card counts | ✓ Good — consistent transition |
-| useRef initial-render guard for fade | Prevents flash-of-invisible-content on page load with URL-preloaded filters | ✓ Good — no FOIC |
+| CSS overlay hotspots for rune glow | No new image assets needed, pure CSS, maintainable | ✓ Good |
+| Staggered pulse timing | Each rune at its own rhythm feels organic, like embers | ✓ Good |
+| Sync animation via image onLoad | Prevents text animation playing over empty gradient | ✓ Good |
+| Convert Hero to client component | Need onLoad callback from Image — requires 'use client' | ✓ Good |
+| Separate heroTextReveal keyframe | Hero needs more visual presence at large sizes | ✓ Good |
+| 600ms delay between bg and text reveal | Two-beat rhythm (350ms blur + 250ms pause) | ✓ Good |
+| 14 runes (not 13) | Visual inspection found additional rune missed by research | ✓ Good |
+| Color distribution 6 teal / 4 amber / 4 gold | Adjusted from strict aett grouping for visual balance | ✓ Good |
+| Manual position calibration | Research estimates were off 5-15% in both axes | ✓ Good |
+| No mix-blend-mode | Preserves GPU-composited opacity animation | ✓ Good |
+| @upstash/redis over deprecated @vercel/kv | @vercel/kv deprecated Dec 2024, @upstash/redis is the direct replacement | ✓ Good |
+| Two-step SET NX + conditional INCR | Correctness over ~1-2ms latency for dedup enforcement | ✓ Good |
+| localStorage view cache over shimmer | Shimmer felt jarring; cached count provides instant display on return visits | ✓ Good |
+| Render-prop pattern for listing view counts | Keeps PostCard server-renderable while ListingViewCounts owns client boundary | ✓ Good |
+| Batch redis.mget() for listing page | Single round-trip retrieval vs N individual fetches | ✓ Good |
+| No slug validation against published posts | Orphan Redis keys are harmless, zero-cost simplification | ✓ Good |
+| Polymorphic chip components (display/link/toggle) | Single component serves all contexts without code duplication | ✓ Good |
+| renderChip prop delegation on FilterBar | FilterBar never imports specific chip components; parent controls appearance | ✓ Good |
+| Mutually exclusive class pattern for toggle states | Avoids tailwind-merge conflicts with custom shadow tokens | ✓ Good |
+| window.history.replaceState for URL filter updates | Avoids router.replace re-renders while Next.js syncs with useSearchParams | ✓ Good |
+| Suspense boundary for useSearchParams | Isolates client island in static page; preserves static generation | ✓ Good |
+| Static counts (total per tag/stack) | Simpler than contextual counts; more useful for small content sets | ✓ Good |
+| Grid fades as a unit (not individual cards) | Cleaner visual for small card counts | ✓ Good |
+| useRef initial-render guard for fade | Prevents flash-of-invisible-content on page load with URL-preloaded filters | ✓ Good |
+| CSP with unsafe-eval + unsafe-inline | Pragmatic for MDX new Function() and rehype-pretty-code; no user-generated content | ✓ Good — revisit when MDX pipeline changes (DEP-03) |
+| @upstash/ratelimit sliding window (10/60s) | Simple, serverless-native rate limiting for view counter POST | ✓ Good |
+| OG image font via readFile/process.cwd() | Turbopack workaround — fetch/import.meta.url not available in OG route | ⚠️ Revisit when Turbopack adds support |
+| Playwright Chromium-only | No CI pipeline; Firefox/WebKit add time without value for personal site | ✓ Good |
+| Pure CSS sticky TOC (no JS scroll listeners) | Simpler, more performant, leverages native browser behavior | ✓ Good |
+| Auto-collapse TOC on heading click | Reduces friction — user picks a heading, TOC gets out of the way | ✓ Good |
 
 ## Constraints
 
@@ -108,5 +156,22 @@ Site is statically generated and deployed via git-push to Vercel.
 - **Image**: No modifications to hero.webp — effects are pure CSS overlays
 - **Theme**: Single theme only (no dark mode) — the palette is the brand
 
+## Evolution
+
+This document evolves at phase transitions and milestone boundaries.
+
+**After each phase transition** (via `/gsd:transition`):
+1. Requirements invalidated? → Move to Out of Scope with reason
+2. Requirements validated? → Move to Validated with phase reference
+3. New requirements emerged? → Add to Active
+4. Decisions to log? → Add to Key Decisions
+5. "What This Is" still accurate? → Update if drifted
+
+**After each milestone** (via `/gsd:complete-milestone`):
+1. Full review of all sections
+2. Core Value check — still the right priority?
+3. Audit Out of Scope — reasons still valid?
+4. Update Context with current state
+
 ---
-*Last updated: 2026-03-01 after v1.5 milestone*
+*Last updated: 2026-04-03 after v1.6 milestone*

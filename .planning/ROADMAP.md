@@ -5,6 +5,7 @@
 - ✅ **v1.3 Hero Polish** — Phases 1-2 (shipped 2026-02-09)
 - ✅ **v1.4 Blog Stats** — Phases 3-5 (shipped 2026-02-22)
 - ✅ **v1.5 Tag Filtering** — Phases 6-8 (shipped 2026-03-01)
+- ✅ **v1.6 Address Concerns** — Phases 9-13 (shipped 2026-04-03)
 
 ## Phases
 
@@ -40,6 +41,19 @@ See: `.planning/milestones/v1.5-ROADMAP.md` for full details.
 
 </details>
 
+<details>
+<summary>✅ v1.6 Address Concerns (Phases 9-13) — SHIPPED 2026-04-03</summary>
+
+- [x] Phase 9: Security & Patches (2/2 plans) — completed 2026-04-03
+- [x] Phase 10: Resilience & Code Quality (4/4 plans) — completed 2026-04-03
+- [x] Phase 11: SEO & Branding (3/3 plans) — completed 2026-04-03
+- [x] Phase 12: Testing Infrastructure (3/3 plans) — completed 2026-04-03
+- [x] Phase 13: Sticky/Pinned Mobile TOC (1/1 plans) — completed 2026-04-03
+
+See: `.planning/milestones/v1.6-ROADMAP.md` for full details.
+
+</details>
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -52,3 +66,8 @@ See: `.planning/milestones/v1.5-ROADMAP.md` for full details.
 | 6. Filter Components | v1.5 | 1/1 | Complete | 2026-02-27 |
 | 7. Filtered Listing Integration | v1.5 | 2/2 | Complete | 2026-02-28 |
 | 8. Counts and Transitions | v1.5 | 1/1 | Complete | 2026-03-01 |
+| 9. Security & Patches | v1.6 | 2/2 | Complete | 2026-04-03 |
+| 10. Resilience & Code Quality | v1.6 | 4/4 | Complete | 2026-04-03 |
+| 11. SEO & Branding | v1.6 | 3/3 | Complete | 2026-04-03 |
+| 12. Testing Infrastructure | v1.6 | 3/3 | Complete | 2026-04-03 |
+| 13. Sticky/Pinned Mobile TOC | v1.6 | 1/1 | Complete | 2026-04-03 |

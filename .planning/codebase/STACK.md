@@ -1,6 +1,6 @@
 # Technology Stack
 
-**Analysis Date:** 2026-03-22
+**Analysis Date:** 2026-04-03
 
 ## Languages
 
@@ -14,17 +14,17 @@
 ## Runtime
 
 **Environment:**
-- Node.js v24.14.0
+- Node.js v22.21.0
 - Target: ES2022 (set in `tsconfig.json`)
 
 **Package Manager:**
-- npm 11.9.0
-- Lockfile: `package-lock.json` (lockfileVersion 3, present and committed)
+- npm
+- Lockfile: `package-lock.json` (present and committed)
 
 ## Frameworks
 
 **Core:**
-- Next.js 16.1.6 - App Router, React Server Components, static generation
+- Next.js 16.2.2 - App Router, React Server Components, static generation
   - Config: `next.config.ts`
   - Turbopack used in dev mode (`next dev --turbopack`)
 - React 19.2.4 - UI rendering (server components by default, client components where browser APIs needed)
@@ -45,16 +45,35 @@
 **Linting:**
 - ESLint 9.39.2 - Flat config format
   - Config: `eslint.config.mjs`
-  - Extends: `next/core-web-vitals`, `next/typescript`
-  - Uses `@eslint/eslintrc` 3.3.3 FlatCompat adapter
+  - Extends: `eslint-config-next/core-web-vitals`, `eslint-config-next/typescript`
+  - Ignores: `.velite/`, `.claude/worktrees/`, `.next/`
+  - Rule overrides (set to `warn`):
+    - `react-hooks/set-state-in-effect` - intentional setState in effects for external sync
+    - `react-hooks/static-components` - dynamic MDX components
+    - `react-hooks/refs` - ref reads in render for computed positions
 
 **Testing:**
-- None configured. No test framework, no test files, no CI pipeline.
+- Vitest 4.1.2 - Unit test runner
+  - Config: `vitest.config.ts`
+  - Environment: jsdom (via `jsdom` 29.0.1)
+  - Test pattern: `src/**/*.test.{ts,tsx}`
+  - Setup file: `vitest.setup.ts`
+  - Plugins: `@vitejs/plugin-react` 6.0.1, `vite-tsconfig-paths` 6.1.1
+  - Run: `npm run test`
+- Playwright 1.59.1 - E2E test runner
+  - Config: `playwright.config.ts`
+  - Test dir: `./e2e/`
+  - Projects: desktop Chromium, mobile Chromium (Pixel 5)
+  - Web server: builds and starts app on `localhost:3000`
+  - Run: `npm run test:e2e`
+- Testing Library React 16.3.2 - Component testing utilities
+- Testing Library jest-dom 6.9.1 - DOM assertion matchers
 
 ## Key Dependencies
 
 **Critical (runtime):**
 - `@upstash/redis` 1.36.2 - Serverless Redis client for view counting (`src/lib/redis.ts`)
+- `@upstash/ratelimit` 2.0.8 - Rate limiting for view count API (`src/lib/rate-limit.ts`)
 - `@vercel/analytics` 1.6.1 - Web analytics, imported in root layout (`src/app/layout.tsx`)
 - `lucide-react` 0.563.0 - Icon library used throughout components
 
@@ -94,14 +113,15 @@
   - `@/.velite` -> `./.velite`
 
 **Next.js (`next.config.ts`):**
-- Minimal config -- only image quality settings (`qualities: [75, 80]`)
-- No custom webpack config (Turbopack does not support custom plugins)
+- Image quality settings (`qualities: [75, 80]`)
+- Security headers: CSP, X-Frame-Options (DENY), X-Content-Type-Options (nosniff), Referrer-Policy (strict-origin-when-cross-origin)
+- CSP allows: self, unsafe-eval, unsafe-inline, `va.vercel-scripts.com`
 
 **PostCSS (`postcss.config.mjs`):**
 - Single plugin: `@tailwindcss/postcss` (Tailwind v4 integration)
 
 **Environment:**
-- `.env.local` present (contains Upstash Redis credentials -- never read contents)
+- `.env.local` present (contains Upstash Redis credentials)
 - Required vars: `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`
 
 **Fonts (`src/lib/fonts.ts`):**
@@ -128,9 +148,20 @@ Sequential: Velite must complete MDX compilation before Next.js build starts. Ou
 
 **Lint (`npm run lint`):**
 ```bash
-next lint
+eslint .
 ```
-Uses ESLint with `next/core-web-vitals` and `next/typescript` rule sets.
+Uses ESLint flat config with `next/core-web-vitals` and `next/typescript` rule sets.
+
+**Unit Tests (`npm run test`):**
+```bash
+vitest run
+```
+
+**E2E Tests (`npm run test:e2e`):**
+```bash
+playwright test
+```
+Builds the app, starts on port 3000, runs desktop + mobile Chromium projects.
 
 **Content Only (`npm run velite`):**
 ```bash
@@ -141,17 +172,16 @@ Run Velite content compilation alone. Useful for debugging MDX content issues.
 ## Platform Requirements
 
 **Development:**
-- Node.js 24.x (no `.nvmrc` or `.node-version` file)
-- npm 11.x
+- Node.js 22.x (no `.nvmrc` or `.node-version` file)
+- npm
 - `.env.local` with Upstash Redis credentials for view counting (feature degrades gracefully without them)
 - No Docker or containerization required for local dev
 
 **Production:**
 - Deployed to Vercel (git-push deployment, no CI pipeline)
-- Vercel project ID in `.vercel/project.json`
 - Static site with two serverless API routes for view counting
 - Environment variables configured in Vercel dashboard
 
 ---
 
-*Stack analysis: 2026-03-22*
+*Stack analysis: 2026-04-03*
