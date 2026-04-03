@@ -7,7 +7,7 @@
     "dev": "velite --watch & next dev --turbopack",
     "build": "velite && next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "velite": "velite",
     "test": "vitest run",
     "test:e2e": "playwright test"
@@ -42,7 +42,6 @@
     "velite": "^0.3.1"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3.3.3",
     "@playwright/test": "^1.59.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",

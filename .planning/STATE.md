@@ -1,41 +1,37 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.6
-milestone_name: Address Concerns
-status: completed
-stopped_at: Completed 13-01-PLAN.md
-last_updated: "2026-04-03T14:43:17.942Z"
-last_activity: 2026-04-03
+milestone: v1.5
+milestone_name: Tag Filtering
+status: complete
+last_updated: "2026-03-01"
 progress:
-  total_phases: 5
-  completed_phases: 5
-  total_plans: 13
-  completed_plans: 13
-  percent: 100
+  total_phases: 3
+  completed_phases: 3
+  total_plans: 4
+  completed_plans: 4
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-03)
+See: .planning/PROJECT.md (updated 2026-03-01)
 
 **Core value:** A polished, intentional developer portfolio — fast, visually distinctive, and well-crafted in every detail.
-**Current focus:** Phase 13 — sticky-pinned-mobile-toc (complete)
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Phase: 13
-Plan: Not started
-Status: Phase 13 complete
-Last activity: 2026-04-03
+Phase: 8 of 8 (Counts and Transitions)
+Plan: 1 of 1 complete in current phase
+Status: v1.5 Tag Filtering milestone shipped
+Last activity: 2026-03-01 — Milestone v1.5 archived
 
-Progress: [████████████████████] 13/13 plans (100%)
+Progress: [████████████] 100% (8/8 phases complete across all milestones)
 
 ## Performance Metrics
 
 **Velocity:**
-
 - Total plans completed: 20
 - Average duration: ~5 min
 - Total execution time: ~1h 29min
@@ -53,24 +49,12 @@ Progress: [████████████████████] 13/13 p
 | 07-filtered-listing-integration | 2 | ~2min | ~1min |
 | 08-counts-and-transitions | 1 | ~2min | ~2min |
 | quick-1 through quick-8 | 8 | ~14min | ~2min |
-| Phase 10 P04 | 2min | 2 tasks | 3 files |
-| Phase 10 P03 | 3min | 2 tasks | 10 files |
-| Phase 12 P02 | 1min | 2 tasks | 3 files |
-| Phase 13 P01 | 4min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
-
-- [Phase 10]: Extracted Hero animation and glow positioning into custom hooks for separation of concerns
-- [Phase 10]: Unified TagChip/TechBadge into FilterChip and extracted useFilteredList hook for shared filtering
-- [Phase 11]: Used unsafe-inline over nonce-based CSP — Next.js App Router + static generation makes nonce injection fragile
-- [Phase 11]: Used Satori readFile workaround for font loading in OG images (Turbopack incompatible with fetch)
-- [Phase 12]: Reuse existing TocList component for mobile TOC rather than reimplementing heading rendering
-- [Phase 13]: Event delegation on container div for auto-collapse, preserving shared TocList component
-- [Phase 13]: 9rem scroll-margin-top globally rather than mobile-only responsive override
 
 ### Pending Todos
 
@@ -92,9 +76,10 @@ None.
 | 6 | Blog post h2/h3 headings with teal accent bottom borders | 2026-02-15 | bd99416 | [6-improve-blog-post-section-headers-to-be-](./quick/6-improve-blog-post-section-headers-to-be-/) |
 | 7 | Increased blog post heading sizes for stronger visual hierarchy | 2026-02-15 | 328ee62 | [7-improve-visibility-of-blog-post-section-](./quick/7-improve-visibility-of-blog-post-section-/) |
 | 8 | Back-to-blog navigation link on blog post pages | 2026-02-16 | a9f1ed9 | [8-add-back-to-blog-navigation-link-on-blog](./quick/8-add-back-to-blog-navigation-link-on-blog/) |
+| 9 | Fix broken npm run lint (native flat config for Next.js 16) | 2026-04-03 | 6d53fea | [260403-h6t-broken-npm-run-lint-fixable-by-switching](./quick/260403-h6t-broken-npm-run-lint-fixable-by-switching/) |
 
 ## Session Continuity
 
-Last session: 2026-04-03T14:37:48Z
-Stopped at: Completed 13-01-PLAN.md
+Last session: 2026-04-03
+Stopped at: Completed quick-260403-h6t
 Resume file: None
