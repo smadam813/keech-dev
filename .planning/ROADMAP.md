@@ -82,7 +82,7 @@ Plans:
 
 Plans:
 - [ ] 10-01-PLAN.md — Error boundaries, loading skeletons, accessibility fixes
-- [ ] 10-02-PLAN.md — Date formatting and localStorage cache helper extraction
+- [x] 10-02-PLAN.md — Date formatting and localStorage cache helper extraction
 - [ ] 10-03-PLAN.md — FilterChip unification and useFilteredList hook extraction
 - [ ] 10-04-PLAN.md — Hero component hook extraction
 
