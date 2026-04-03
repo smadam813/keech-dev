@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import * as runtime from 'react/jsx-runtime'
 import type { MDXComponents } from 'mdx/types'
 import { CodeBlock } from './code-block'
@@ -15,7 +16,9 @@ const useMDXComponent = (code: string) => {
 }
 
 const defaultComponents: MDXComponents = {
-  pre: CodeBlock
+  pre: CodeBlock,
+  ul: (props: React.ComponentPropsWithoutRef<'ul'>) => <ul role="list" {...props} />,
+  ol: (props: React.ComponentPropsWithoutRef<'ol'>) => <ol role="list" {...props} />,
 }
 
 export function MDXContent({ code, components = {} }: MDXContentProps) {
