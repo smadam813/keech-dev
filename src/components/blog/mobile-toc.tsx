@@ -60,7 +60,7 @@ export function MobileToc({ entries }: MobileTocProps) {
           )}
         >
           <div className="px-4 pb-4 overflow-auto max-h-[60vh]">
-            <TocList entries={entries} />
+            <TocList entries={[{ title: 'Introduction', url: '#', items: [] }, ...entries]} />
           </div>
         </div>
       </div>

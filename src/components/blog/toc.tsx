@@ -16,7 +16,7 @@ export function TableOfContents({ entries }: TocProps) {
   return (
     <nav className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-auto">
       <h2 className="font-display text-lg font-bold mb-4">Contents</h2>
-      <TocList entries={entries} />
+      <TocList entries={[{ title: 'Introduction', url: '#', items: [] }, ...entries]} />
     </nav>
   )
 }
