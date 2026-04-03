@@ -62,11 +62,11 @@ See: `.planning/milestones/v1.5-ROADMAP.md` for full details.
   3. `npm audit` reports zero vulnerabilities
   4. Hitting the view counter API with an invalid slug (special characters, SQL injection patterns) returns a 400 error
   5. Rapid-fire POST requests to the view counter are rejected after the rate limit threshold
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 09-01: TBD
-- [ ] 09-02: TBD
+- [ ] 09-01-PLAN.md — Patch dependencies, security headers, color script fix
+- [ ] 09-02-PLAN.md — API input validation, rate limiting, MDX error fallback
 
 ### Phase 10: Resilience & Code Quality
 **Goal**: Runtime errors are caught gracefully at every level, and duplicated code is consolidated into shared utilities and hooks
@@ -131,7 +131,7 @@ Phases execute in numeric order: 9 → 10 → 11 → 12
 | 6. Filter Components | v1.5 | 1/1 | Complete | 2026-02-27 |
 | 7. Filtered Listing Integration | v1.5 | 2/2 | Complete | 2026-02-28 |
 | 8. Counts and Transitions | v1.5 | 1/1 | Complete | 2026-03-01 |
-| 9. Security & Patches | v1.6 | 0/? | Not started | - |
+| 9. Security & Patches | v1.6 | 0/2 | Not started | - |
 | 10. Resilience & Code Quality | v1.6 | 0/? | Not started | - |
 | 11. SEO & Branding | v1.6 | 0/? | Not started | - |
 | 12. Testing Infrastructure | v1.6 | 0/? | Not started | - |
