@@ -2,7 +2,7 @@ import { posts } from '@/.velite'
 import { notFound } from 'next/navigation'
 import { MDXContent } from '@/components/blog/mdx-content'
 import { TableOfContents } from '@/components/blog/toc'
-import { TagChip } from '@/components/blog/tag-chip'
+import { FilterChip } from '@/components/ui/filter-chip'
 import { ViewCounter } from '@/components/blog/view-counter'
 import { POST_RUNES } from '@/components/runes/rune-config'
 import { formatDate } from '@/lib/format'
@@ -94,7 +94,7 @@ export default async function PostPage({ params }: PostPageProps) {
             {post.tags.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {post.tags.map((tag) => (
-                  <TagChip key={tag} tag={tag} />
+                  <FilterChip key={tag} label={tag} href={`/blog?tags=${tag}`} />
                 ))}
               </div>
             )}
