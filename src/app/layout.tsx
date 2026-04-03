@@ -36,6 +36,11 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  alternates: {
+    types: {
+      'application/rss+xml': 'https://keech.dev/feed.xml',
+    },
+  },
 };
 
 export default function RootLayout({
