@@ -118,22 +118,24 @@ Plans:
 - [x] 12-02-PLAN.md — Mobile TOC collapsible accordion component and blog post integration
 - [x] 12-03-PLAN.md — Playwright configuration and E2E tests for mobile menu, code copy, view count, mobile TOC
 
-## Backlog
+### Phase 13: Sticky/Pinned Mobile TOC
 
-### Phase 999.1: Sticky/Pinned Mobile TOC (BACKLOG)
-
-**Goal:** [Captured for future planning]
-After scrolling to a heading via TOC link, user must scroll all the way back up to access TOC again. Pin the TOC or add a back-to-top affordance so navigation between sections is frictionless.
+**Goal:** After scrolling to a heading via TOC link, user must scroll all the way back up to access TOC again. Pin the TOC or add a back-to-top affordance so navigation between sections is frictionless.
 **Requirements:** TBD
+**Depends on:** Phase 12
 **Plans:** 0 plans
 
 Plans:
-- [ ] TBD (promote with /gsd:review-backlog when ready)
+- [ ] TBD (run /gsd:plan-phase 13 to break down)
+
+## Backlog
+
+(empty)
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 9 → 10 → 11 → 12
+Phases execute in numeric order: 9 → 10 → 11 → 12 → 13
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -149,3 +151,4 @@ Phases execute in numeric order: 9 → 10 → 11 → 12
 | 10. Resilience & Code Quality | v1.6 | 4/4 | Complete    | 2026-04-03 |
 | 11. SEO & Branding | v1.6 | 3/3 | Complete    | 2026-04-03 |
 | 12. Testing Infrastructure | v1.6 | 3/3 | Complete    | 2026-04-03 |
+| 13. Sticky/Pinned Mobile TOC | v1.6 | 0/0 | Not Started | — |
