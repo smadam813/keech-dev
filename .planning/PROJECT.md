@@ -68,6 +68,11 @@ A polished, intentional developer portfolio — fast, visually distinctive, and 
 - ✓ Project images include responsive sizes attribute — v1.6 Phase 11
 - ✓ Resume placeholder removed from about page — v1.6 Phase 11
 - ✓ CSP script-src permits Next.js inline scripts for hydration — v1.6 Phase 11
+- ✓ Vitest configured with path aliases, jsdom, and React Testing Library — v1.6 Phase 12
+- ✓ Unit tests for formatDate, view count helpers, computeGlowPositions (18 tests) — v1.6 Phase 12
+- ✓ Playwright configured with Chromium-only for E2E testing — v1.6 Phase 12
+- ✓ E2E tests for mobile menu, code copy, view count, mobile TOC — v1.6 Phase 12
+- ✓ Collapsible mobile TOC accordion for blog posts — v1.6 Phase 12
 
 ## Current Milestone: v1.6 Address Concerns
 
@@ -166,4 +171,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-03 after Phase 11 completion*
+*Last updated: 2026-04-03 after Phase 12 completion*
