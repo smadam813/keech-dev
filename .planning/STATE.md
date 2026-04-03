@@ -77,9 +77,10 @@ None.
 | 7 | Increased blog post heading sizes for stronger visual hierarchy | 2026-02-15 | 328ee62 | [7-improve-visibility-of-blog-post-section-](./quick/7-improve-visibility-of-blog-post-section-/) |
 | 8 | Back-to-blog navigation link on blog post pages | 2026-02-16 | a9f1ed9 | [8-add-back-to-blog-navigation-link-on-blog](./quick/8-add-back-to-blog-navigation-link-on-blog/) |
 | 9 | Fix broken npm run lint (native flat config for Next.js 16) | 2026-04-03 | 6d53fea | [260403-h6t-broken-npm-run-lint-fixable-by-switching](./quick/260403-h6t-broken-npm-run-lint-fixable-by-switching/) |
+| 10 | Backport D-01 through D-07 to REQUIREMENTS.md traceability table | 2026-04-03 | 292732d | [260403-h8n-missing-d-xx-ids-in-requirements-md-trac](./quick/260403-h8n-missing-d-xx-ids-in-requirements-md-trac/) |
 
 ## Session Continuity
 
 Last session: 2026-04-03
-Stopped at: Completed quick-260403-h6t
+Stopped at: Completed quick-260403-h8n
 Resume file: None
