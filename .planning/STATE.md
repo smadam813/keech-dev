@@ -18,19 +18,19 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-01)
+See: .planning/PROJECT.md (updated 2026-04-03)
 
 **Core value:** A polished, intentional developer portfolio — fast, visually distinctive, and well-crafted in every detail.
-**Current focus:** Phase 11 — seo-branding
+**Current focus:** Phase 12 — testing-infrastructure
 
 ## Current Position
 
 Phase: 12
 Plan: Not started
-Status: Executing Phase 11
+Status: Ready to plan
 Last activity: 2026-04-03
 
-Progress: [████████████] 100% (8/8 phases complete across all milestones)
+Progress: [████████████████████] 9/9 plans (100%)
 
 ## Performance Metrics
 
@@ -64,6 +64,8 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 - [Phase 10]: Extracted Hero animation and glow positioning into custom hooks for separation of concerns
 - [Phase 10]: Unified TagChip/TechBadge into FilterChip and extracted useFilteredList hook for shared filtering
+- [Phase 11]: Used unsafe-inline over nonce-based CSP — Next.js App Router + static generation makes nonce injection fragile
+- [Phase 11]: Used Satori readFile workaround for font loading in OG images (Turbopack incompatible with fetch)
 
 ### Pending Todos
 
@@ -88,6 +90,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-03T03:30:50.748Z
-Stopped at: Phase 11 context gathered
-Resume file: .planning/phases/11-seo-branding/11-CONTEXT.md
+Last session: 2026-04-03
+Stopped at: Phase 11 complete, ready to plan Phase 12
+Resume file: None
