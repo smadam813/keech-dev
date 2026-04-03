@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: Address Concerns
 status: executing
-stopped_at: Phase 13 context gathered
-last_updated: "2026-04-03T14:19:56.843Z"
+stopped_at: "Completed 13-01-PLAN.md"
+last_updated: "2026-04-03T14:37:48Z"
 last_activity: 2026-04-03
 progress:
   total_phases: 5
-  completed_phases: 4
-  total_plans: 12
-  completed_plans: 12
+  completed_phases: 5
+  total_plans: 13
+  completed_plans: 13
   percent: 100
 ---
 
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-03)
 
 **Core value:** A polished, intentional developer portfolio — fast, visually distinctive, and well-crafted in every detail.
-**Current focus:** Phase 12 — testing-infrastructure
+**Current focus:** Phase 13 — sticky-pinned-mobile-toc (complete)
 
 ## Current Position
 
-Phase: 12
-Plan: Not started
-Status: Ready to execute
+Phase: 13 (sticky-pinned-mobile-toc)
+Plan: 1 of 1 complete
+Status: Phase 13 complete
 Last activity: 2026-04-03
 
-Progress: [████████████████████] 9/9 plans (100%)
+Progress: [████████████████████] 13/13 plans (100%)
 
 ## Performance Metrics
 
@@ -56,6 +56,7 @@ Progress: [████████████████████] 9/9 pla
 | Phase 10 P04 | 2min | 2 tasks | 3 files |
 | Phase 10 P03 | 3min | 2 tasks | 10 files |
 | Phase 12 P02 | 1min | 2 tasks | 3 files |
+| Phase 13 P01 | 4min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -68,6 +69,8 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - [Phase 11]: Used unsafe-inline over nonce-based CSP — Next.js App Router + static generation makes nonce injection fragile
 - [Phase 11]: Used Satori readFile workaround for font loading in OG images (Turbopack incompatible with fetch)
 - [Phase 12]: Reuse existing TocList component for mobile TOC rather than reimplementing heading rendering
+- [Phase 13]: Event delegation on container div for auto-collapse, preserving shared TocList component
+- [Phase 13]: 9rem scroll-margin-top globally rather than mobile-only responsive override
 
 ### Pending Todos
 
@@ -92,6 +95,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-03T14:19:56.841Z
-Stopped at: Phase 13 context gathered
-Resume file: .planning/phases/13-sticky-pinned-mobile-toc/13-CONTEXT.md
+Last session: 2026-04-03T14:37:48Z
+Stopped at: Completed 13-01-PLAN.md
+Resume file: None

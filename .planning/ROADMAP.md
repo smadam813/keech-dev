@@ -126,7 +126,7 @@ Plans:
 **Plans:** 1 plan
 
 Plans:
-- [ ] 13-01-PLAN.md — Sticky positioning, auto-collapse on link click, scroll-margin-top adjustment, E2E tests
+- [x] 13-01-PLAN.md — Sticky positioning, auto-collapse on link click, scroll-margin-top adjustment, E2E tests
 
 ## Backlog
 
@@ -151,4 +151,4 @@ Phases execute in numeric order: 9 → 10 → 11 → 12 → 13
 | 10. Resilience & Code Quality | v1.6 | 4/4 | Complete    | 2026-04-03 |
 | 11. SEO & Branding | v1.6 | 3/3 | Complete    | 2026-04-03 |
 | 12. Testing Infrastructure | v1.6 | 3/3 | Complete    | 2026-04-03 |
-| 13. Sticky/Pinned Mobile TOC | v1.6 | 0/1 | Not Started | — |
+| 13. Sticky/Pinned Mobile TOC | v1.6 | 1/1 | Complete | 2026-04-03 |
