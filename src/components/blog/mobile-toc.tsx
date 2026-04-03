@@ -18,7 +18,10 @@ export function MobileToc({ entries }: MobileTocProps) {
   }
 
   return (
-    <div className="lg:hidden mb-8">
+    <div className={cn(
+      'lg:hidden mb-8',
+      'sticky top-16 z-40 bg-background -mx-6 px-6 pt-2',
+    )}>
       <div className={cn(
         'border-[3px] border-foreground shadow-brutal bg-surface',
       )}>
@@ -46,6 +49,11 @@ export function MobileToc({ entries }: MobileTocProps) {
           id="mobile-toc-content"
           role="region"
           aria-label="Table of contents"
+          onClick={(e) => {
+            if ((e.target as HTMLElement).closest('a')) {
+              setIsOpen(false)
+            }
+          }}
           className={cn(
             'overflow-hidden transition-[max-height] duration-200 ease-in-out',
             isOpen ? 'max-h-[70vh]' : 'max-h-0',

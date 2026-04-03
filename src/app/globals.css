@@ -335,11 +335,11 @@
     @apply font-display text-xl font-bold mt-6 mb-2;
   }
 
-  /* Anchor scroll offset — clears fixed header (h-16 = 4rem) + 1rem breathing room */
+  /* Anchor scroll offset — clears fixed header (4rem) + sticky mobile TOC (~3.5rem) + breathing room */
   .prose h2,
   .prose h3,
   .prose h4 {
-    scroll-margin-top: 5rem;
+    scroll-margin-top: 9rem;
   }
 
   /* Paragraphs */
