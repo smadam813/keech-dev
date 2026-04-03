@@ -44,6 +44,15 @@ A polished, intentional developer portfolio — fast, visually distinctive, and 
 
 (Defining requirements for v1.6)
 
+### Recently Validated
+
+- ✓ Security headers (CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy) on all routes — v1.6 Phase 9
+- ✓ Zero npm audit vulnerabilities — v1.6 Phase 9
+- ✓ MDX rendering error fallback with branded UI — v1.6 Phase 9
+- ✓ API input validation (slug format, batch limits) — v1.6 Phase 9
+- ✓ Rate limiting on view counter POST (10/60s per IP) — v1.6 Phase 9
+- ✓ Color validation script corrected — v1.6 Phase 9
+
 ## Current Milestone: v1.6 Address Concerns
 
 **Goal:** Resolve all security, quality, accessibility, and SEO concerns identified in the codebase audit — hardening the site across every severity level.
