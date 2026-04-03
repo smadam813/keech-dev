@@ -92,7 +92,7 @@ Vitest for unit tests (`vitest.config.ts`), Playwright for e2e (`playwright.conf
 - `not-found.tsx` — 404 page
 - `loading.tsx` — loading skeleton
 
-Error boundaries use plain `<a>` tags (not `next/link`) intentionally — client-side routing may be broken when the error boundary is showing. ESLint `@next/next/no-html-link-for-pages` warnings on these files are expected false positives.
+Error boundaries use plain `<a>` tags (not `next/link`) intentionally — client-side routing may be broken when the error boundary is showing. Each `<a>` tag has an `eslint-disable-next-line @next/next/no-html-link-for-pages` comment to suppress the false-positive lint error. The same applies to `MDXFallback` in `mdx-content.tsx`.
 
 ### Security Hardening
 
