@@ -1,4 +1,4 @@
-interface TocEntry {
+export interface TocEntry {
   title: string
   url: string
   items: TocEntry[]
@@ -21,7 +21,7 @@ export function TableOfContents({ entries }: TocProps) {
   )
 }
 
-function TocList({ entries, depth = 0 }: { entries: TocEntry[]; depth?: number }) {
+export function TocList({ entries, depth = 0 }: { entries: TocEntry[]; depth?: number }) {
   return (
     <ul className={depth > 0 ? 'ml-4' : ''}>
       {entries.map((entry) => (
