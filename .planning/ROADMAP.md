@@ -5,6 +5,7 @@
 - ✅ **v1.3 Hero Polish** — Phases 1-2 (shipped 2026-02-09)
 - ✅ **v1.4 Blog Stats** — Phases 3-5 (shipped 2026-02-22)
 - ✅ **v1.5 Tag Filtering** — Phases 6-8 (shipped 2026-03-01)
+- 🚧 **v1.6 Address Concerns** — Phases 9-12 (in progress)
 
 ## Phases
 
@@ -40,7 +41,87 @@ See: `.planning/milestones/v1.5-ROADMAP.md` for full details.
 
 </details>
 
+### 🚧 v1.6 Address Concerns (In Progress)
+
+**Milestone Goal:** Resolve all security, quality, accessibility, and SEO concerns identified in the codebase audit — hardening the site across every severity level.
+
+- [ ] **Phase 9: Security & Patches** - Harden all attack surfaces and patch known vulnerabilities
+- [ ] **Phase 10: Resilience & Code Quality** - Error boundaries, loading states, and code deduplication
+- [ ] **Phase 11: SEO & Branding** - Favicon, OG images, RSS feed, and sitemap accuracy
+- [ ] **Phase 12: Testing Infrastructure** - Vitest and Playwright covering the final code shape
+
+## Phase Details
+
+### Phase 9: Security & Patches
+**Goal**: Site is hardened against known vulnerabilities — every request serves security headers, API inputs are validated, and dependencies are patched
+**Depends on**: Nothing (first phase of v1.6)
+**Requirements**: SEC-01, SEC-02, SEC-03, SEC-04, SEC-05, SEC-06, CLN-01, CLN-03
+**Success Criteria** (what must be TRUE):
+  1. Every page response includes Content-Security-Policy, X-Frame-Options, X-Content-Type-Options, and Referrer-Policy headers
+  2. A blog post with malformed MDX renders a branded fallback message instead of a white screen
+  3. `npm audit` reports zero vulnerabilities
+  4. Hitting the view counter API with an invalid slug (special characters, SQL injection patterns) returns a 400 error
+  5. Rapid-fire POST requests to the view counter are rejected after the rate limit threshold
+**Plans**: 2 plans
+
+Plans:
+- [ ] 09-01-PLAN.md — Patch dependencies, security headers, color script fix
+- [ ] 09-02-PLAN.md — API input validation, rate limiting, MDX error fallback
+
+### Phase 10: Resilience & Code Quality
+**Goal**: Runtime errors are caught gracefully at every level, and duplicated code is consolidated into shared utilities and hooks
+**Depends on**: Phase 9
+**Requirements**: ERR-01, ERR-02, ERR-03, ERR-04, QUAL-01, QUAL-02, QUAL-03, QUAL-04, QUAL-05, A11Y-01, A11Y-02
+**Success Criteria** (what must be TRUE):
+  1. A runtime error on any page shows a branded error screen with navigation back to safety (not a white screen or raw stack trace)
+  2. Route transitions display skeleton loading UI instead of frozen content
+  3. Blog and project listing pages use the same shared filtering hook with no duplicated filter logic
+  4. Date formatting and localStorage view cache helpers each have a single source of truth (no duplicated implementations)
+  5. Code block copy button is visible and operable when navigated to via keyboard Tab
+**Plans**: 4 plans
+
+Plans:
+- [ ] 10-01-PLAN.md — Error boundaries, loading skeletons, accessibility fixes
+- [ ] 10-02-PLAN.md — Date formatting and localStorage cache helper extraction
+- [ ] 10-03-PLAN.md — FilterChip unification and useFilteredList hook extraction
+- [ ] 10-04-PLAN.md — Hero component hook extraction
+
+### Phase 11: SEO & Branding
+**Goal**: The site presents a polished, branded identity in browser tabs, social media shares, search engine crawlers, and RSS readers
+**Depends on**: Phase 10
+**Requirements**: SEO-01, SEO-02, SEO-03, SEO-04, SEO-05, SEO-06, CLN-02
+**Success Criteria** (what must be TRUE):
+  1. Browser tabs and mobile bookmarks show a custom keech.dev favicon (not the default Next.js icon)
+  2. Sharing keech.dev on Twitter/LinkedIn renders a branded 1200x630 preview card with site name and description
+  3. Sharing a blog post URL renders an OG image with the post title in neobrutalist branding
+  4. The sitemap at `/sitemap.xml` reflects actual content dates (not today's date on every build)
+  5. An RSS reader can subscribe to `/feed.xml` and see all published blog posts with titles, dates, and descriptions
+**Plans**: 4 plans
+**UI hint**: yes
+
+Plans:
+- [ ] 11-01: TBD
+- [ ] 11-02: TBD
+
+### Phase 12: Testing Infrastructure
+**Goal**: The codebase has automated test coverage over critical pure functions and browser-dependent behaviors
+**Depends on**: Phase 10, Phase 11
+**Requirements**: A11Y-03, TEST-01, TEST-02, TEST-03, TEST-04
+**Success Criteria** (what must be TRUE):
+  1. `npx vitest run` passes with unit tests covering date formatting, view count helpers, and rune glow position calculations
+  2. `npx playwright test` passes with E2E tests covering mobile menu toggle, code block copy button, and view count increment
+  3. Mobile and tablet users can open a collapsible table of contents to navigate blog post sections
+**Plans**: 4 plans
+**UI hint**: yes
+
+Plans:
+- [ ] 12-01: TBD
+- [ ] 12-02: TBD
+
 ## Progress
+
+**Execution Order:**
+Phases execute in numeric order: 9 → 10 → 11 → 12
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -52,3 +133,7 @@ See: `.planning/milestones/v1.5-ROADMAP.md` for full details.
 | 6. Filter Components | v1.5 | 1/1 | Complete | 2026-02-27 |
 | 7. Filtered Listing Integration | v1.5 | 2/2 | Complete | 2026-02-28 |
 | 8. Counts and Transitions | v1.5 | 1/1 | Complete | 2026-03-01 |
+| 9. Security & Patches | v1.6 | 0/2 | Not started | - |
+| 10. Resilience & Code Quality | v1.6 | 0/? | Not started | - |
+| 11. SEO & Branding | v1.6 | 0/? | Not started | - |
+| 12. Testing Infrastructure | v1.6 | 0/? | Not started | - |
