@@ -158,7 +158,7 @@ Phases execute in numeric order: 14 → 15 → 16 → 17 → 18 → 19
 | 12. Testing Infrastructure | v1.6 | 3/3 | Complete | 2026-04-03 |
 | 13. Sticky/Pinned Mobile TOC | v1.6 | 1/1 | Complete | 2026-04-03 |
 | 14. Foundation Hardening | v1.7 | 1/1 | Complete    | 2026-04-04 |
-| 15. Middleware Infrastructure | v1.7 | 1/1 | Complete   | 2026-04-04 |
+| 15. Middleware Infrastructure | v1.7 | 1/1 | Complete    | 2026-04-04 |
 | 16. MDX Migration | v1.7 | 0/0 | Not started | - |
 | 17. Syntax Highlighting Theme Migration | v1.7 | 0/0 | Not started | - |
 | 18. React 19 Lint Cleanup | v1.7 | 0/0 | Not started | - |
