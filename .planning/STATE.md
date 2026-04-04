@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Address Additional Concerns
 status: executing
-stopped_at: Phase 17 complete
-last_updated: "2026-04-04T05:11:42.939Z"
+stopped_at: Phase 17 context gathered
+last_updated: "2026-04-04T05:42:09.769Z"
 last_activity: 2026-04-04
 progress:
   total_phases: 6
-  completed_phases: 3
-  total_plans: 4
+  completed_phases: 4
+  total_plans: 5
   completed_plans: 5
-  percent: 67
+  percent: 33
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-03)
 
 **Core value:** A polished, intentional developer portfolio — fast, visually distinctive, and well-crafted in every detail.
-**Current focus:** Phase 17 — syntax-highlighting-theme-migration (complete)
+**Current focus:** Phase 17 — syntax-highlighting-theme-migration
 
 ## Current Position
 
-Phase: 17
-Plan: 1/1 complete
-Status: Phase 17 complete
+Phase: 18
+Plan: Not started
+Status: Executing Phase 17
 Last activity: 2026-04-04
 
-Progress: [████████░░░░] 67% (v1.7: 4/6 phases)
+Progress: [████░░░░░░░░] 33% (v1.7: 2/6 phases)
 
 ## Performance Metrics
 
@@ -61,7 +61,6 @@ Recent decisions affecting v1.7:
 - Accept `unsafe-inline` in style-src: marginal security gain not worth effort; CSS-variables theme adopted for design system benefits
 - `unsafe-inline` stays in script-src: unavoidable without nonces (which break static generation)
 - [Phase 14]: Pin Velite to exact version (no caret) to prevent unexpected build breakage
-- [Phase 17]: CSS-variables theme with `--shiki-` prefix; `keepBackground: false` for CSS-first code block background
 
 ### Pending Todos
 
@@ -91,6 +90,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-04T05:36:52Z
-Stopped at: Phase 17 complete
-Resume file: .planning/phases/17-syntax-highlighting-theme-migration/17-01-SUMMARY.md
+Last session: 2026-04-04T05:23:01.755Z
+Stopped at: Phase 17 context gathered
+Resume file: .planning/phases/17-syntax-highlighting-theme-migration/17-CONTEXT.md
