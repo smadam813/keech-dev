@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Address Additional Concerns
 status: executing
-stopped_at: Phase 16 plan 01 complete
-last_updated: "2026-04-04T04:47:11Z"
-last_activity: 2026-04-04
+stopped_at: Phase 16 context gathered
+last_updated: "2026-04-04T04:39:48.624Z"
+last_activity: 2026-04-04 -- Phase 16 execution started
 progress:
   total_phases: 6
-  completed_phases: 3
-  total_plans: 3
-  completed_plans: 3
-  percent: 50
+  completed_phases: 2
+  total_plans: 4
+  completed_plans: 2
+  percent: 33
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-03)
 
 **Core value:** A polished, intentional developer portfolio — fast, visually distinctive, and well-crafted in every detail.
-**Current focus:** Phase 16 — MDX Migration
+**Current focus:** Phase 16 — mdx-migration
 
 ## Current Position
 
-Phase: 16
-Plan: 1 of 1 complete
-Status: Phase 16 plan 01 complete
-Last activity: 2026-04-04
+Phase: 16 (mdx-migration) — EXECUTING
+Plan: 1 of 2
+Status: Executing Phase 16
+Last activity: 2026-04-04 -- Phase 16 execution started
 
-Progress: [██████░░░░░░] 50% (v1.7: 3/6 phases)
+Progress: [████░░░░░░░░] 33% (v1.7: 2/6 phases)
 
 ## Performance Metrics
 
@@ -61,8 +61,6 @@ Recent decisions affecting v1.7:
 - Accept `unsafe-inline` in style-src: marginal security gain not worth effort; CSS-variables theme adopted for design system benefits
 - `unsafe-inline` stays in script-src: unavoidable without nonces (which break static generation)
 - [Phase 14]: Pin Velite to exact version (no caret) to prevent unexpected build breakage
-- [Phase 16]: s.markdown() for compile-time HTML, dangerouslySetInnerHTML for rendering, DOM-based code block enhancement
-- [Phase 16]: rehype plugin for role="list" instead of React component overrides (correct layer for HTML attributes)
 
 ### Pending Todos
 
@@ -70,6 +68,8 @@ None.
 
 ### Blockers/Concerns
 
+- Phase 16: rehype plugin for `role="list"` needs validation in `s.markdown()` mode
+- Phase 16: DOM-based copy button injection needs verification against rehype-pretty-code HTML structure
 - Phase 17: CSS-variables theme is coarser than github-dark-dimmed (~10 vars vs ~40 scopes) — visual check required
 
 ### Quick Tasks Completed
@@ -90,6 +90,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-04T04:47:11Z
-Stopped at: Completed 16-01-PLAN.md
-Resume file: .planning/ROADMAP.md
+Last session: 2026-04-04T04:25:51.111Z
+Stopped at: Phase 16 context gathered
+Resume file: .planning/phases/16-mdx-migration/16-CONTEXT.md
