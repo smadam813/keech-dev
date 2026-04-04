@@ -31,10 +31,10 @@ Requirements for milestone v1.7 Address Additional Concerns. Each maps to roadma
 
 ### Syntax Highlighting
 
-- [ ] **SYN-01**: Shiki uses CSS-variables theme via createCssVariablesTheme()
-- [ ] **SYN-02**: Token color variables defined in globals.css
-- [ ] **SYN-03**: Code block background explicitly set in CSS (keepBackground: false)
-- [ ] **SYN-04**: Visual parity with current github-dark-dimmed color scheme
+- [x] **SYN-01**: Shiki uses CSS-variables theme via createCssVariablesTheme()
+- [x] **SYN-02**: Token color variables defined in globals.css
+- [x] **SYN-03**: Code block background explicitly set in CSS (keepBackground: false)
+- [x] **SYN-04**: Visual parity with current github-dark-dimmed color scheme
 
 ### React Quality
 
@@ -95,10 +95,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MDX-03 | Phase 16 | Complete |
 | MDX-04 | Phase 16 | Complete |
 | MDX-05 | Phase 16 | Complete |
-| SYN-01 | Phase 17 | Pending |
-| SYN-02 | Phase 17 | Pending |
-| SYN-03 | Phase 17 | Pending |
-| SYN-04 | Phase 17 | Pending |
+| SYN-01 | Phase 17 | Complete |
+| SYN-02 | Phase 17 | Complete |
+| SYN-03 | Phase 17 | Complete |
+| SYN-04 | Phase 17 | Complete |
 | RQ-01 | Phase 18 | Pending |
 | RQ-02 | Phase 18 | Pending |
 | RQ-03 | Phase 18 | Pending |

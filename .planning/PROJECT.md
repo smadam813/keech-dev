@@ -85,6 +85,11 @@ A polished, intentional developer portfolio — fast, visually distinctive, and 
 - ✓ VoiceOver-compatible list elements (role="list") preserved via rehype plugin — v1.7
 - ✓ unsafe-eval removed from script-src in CSP — v1.7
 
+- ✓ Syntax highlighting uses CSS-variables theme via createCssVariablesTheme() — v1.7
+- ✓ Token color variables defined in globals.css as --shiki-* CSS custom properties — v1.7
+- ✓ Code block background explicitly set via CSS variable (keepBackground: false) — v1.7
+- ✓ Visual parity with github-dark-dimmed color scheme maintained — v1.7
+
 ### Active
 
 ## Current Milestone: v1.7 Address Additional Concerns
@@ -202,4 +207,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-04 after Phase 14 Foundation Hardening complete*
+*Last updated: 2026-04-04 after Phase 17 Syntax Highlighting Theme Migration complete*
