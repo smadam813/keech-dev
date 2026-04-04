@@ -60,7 +60,7 @@ See: `.planning/milestones/v1.6-ROADMAP.md` for full details.
 **Milestone Goal:** Harden CSP by eliminating `unsafe-eval`, centralize security via middleware, migrate syntax highlighting to CSS-variables theme, and clean up remaining lint/dependency/React quality concerns.
 
 - [x] **Phase 14: Foundation Hardening** - Clean dependency tree, lock Velite, reduce lint noise before migrations (completed 2026-04-04)
-- [ ] **Phase 15: Middleware Infrastructure** - Centralize all security headers in src/proxy.ts
+- [x] **Phase 15: Middleware Infrastructure** - Centralize all security headers in src/middleware.ts (completed 2026-04-04)
 - [ ] **Phase 16: MDX Migration** - Switch to s.markdown() and remove unsafe-eval from CSP
 - [ ] **Phase 17: Syntax Highlighting Theme Migration** - Move token colors to CSS variables in globals.css
 - [ ] **Phase 18: React 19 Lint Cleanup** - Migrate localStorage/matchMedia patterns to useSyncExternalStore
@@ -83,16 +83,14 @@ Plans:
 - [x] 14-01-PLAN.md -- Fix audit vulnerabilities, pin Velite, bump eslint-config-next, verify lint comments, clean worktrees
 
 ### Phase 15: Middleware Infrastructure
-**Goal**: All security headers are served from a single proxy.ts file, with no duplication from next.config.ts
+**Goal**: All security headers are served from a single middleware file, with no duplication from next.config.ts
 **Depends on**: Phase 14
 **Requirements**: MID-01, MID-02, MID-03
 **Success Criteria** (what must be TRUE):
   1. Browser DevTools Network tab shows CSP, X-Frame-Options, X-Content-Type-Options, and Referrer-Policy headers on every page response
   2. `next.config.ts` contains no `headers()` function
   3. Only one Content-Security-Policy header appears per response (no duplication)
-**Plans:** 1 plan
-Plans:
-- [ ] 15-01-PLAN.md -- Create src/proxy.ts with security headers, remove headers() from next.config.ts, rewrite unit tests
+**Plans**: TBD
 
 ### Phase 16: MDX Migration
 **Goal**: Blog posts and projects render from compiled HTML instead of runtime JavaScript execution, enabling unsafe-eval removal from CSP
@@ -160,7 +158,7 @@ Phases execute in numeric order: 14 → 15 → 16 → 17 → 18 → 19
 | 12. Testing Infrastructure | v1.6 | 3/3 | Complete | 2026-04-03 |
 | 13. Sticky/Pinned Mobile TOC | v1.6 | 1/1 | Complete | 2026-04-03 |
 | 14. Foundation Hardening | v1.7 | 1/1 | Complete    | 2026-04-04 |
-| 15. Middleware Infrastructure | v1.7 | 0/1 | Not started | - |
+| 15. Middleware Infrastructure | v1.7 | 1/1 | Complete   | 2026-04-04 |
 | 16. MDX Migration | v1.7 | 0/0 | Not started | - |
 | 17. Syntax Highlighting Theme Migration | v1.7 | 0/0 | Not started | - |
 | 18. React 19 Lint Cleanup | v1.7 | 0/0 | Not started | - |
