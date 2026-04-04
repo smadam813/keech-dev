@@ -124,7 +124,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
 
       {/* MDX body content */}
       <div className="prose prose-projects">
-        <MDXContent code={project.body} />
+        <MDXContent html={project.body} />
       </div>
     </article>
   )
