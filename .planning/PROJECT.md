@@ -73,7 +73,19 @@ A polished, intentional developer portfolio — fast, visually distinctive, and 
 
 ### Active
 
-(None — planning next milestone)
+## Current Milestone: v1.7 Address Additional Concerns
+
+**Goal:** Harden CSP by eliminating `unsafe-eval` and `unsafe-inline`, centralize security via middleware, and clean up remaining lint/dependency/testing concerns.
+
+**Target features:**
+- Migrate MDX rendering from `new Function()` to compile-time approach, removing `unsafe-eval` from CSP
+- Add Next.js middleware for centralized security headers with nonce-based CSP
+- Migrate syntax highlighting to class-based/CSS-variables styling, removing `unsafe-inline` from CSP
+- Fix npm audit vulnerabilities via overrides or updates
+- Sync eslint-config-next version and silence intentional lint violations
+- Migrate localStorage/media query patterns to `useSyncExternalStore`
+- Pin Velite to exact version
+- Clean up stale worktree artifacts
 
 ### Out of Scope
 
@@ -105,13 +117,15 @@ Codebase: ~72 source files modified in v1.6, total project well over 3,000 LOC T
 Hero section has load-gated two-beat reveal and 14 ambient rune glows.
 Blog posts display public view counts backed by Upstash Redis with IP deduplication.
 Blog and project listing pages support multi-select filtering with AND logic, count badges, URL persistence, and fade transitions.
-All pages serve security headers (CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy).
+All pages serve security headers (CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy) via next.config.ts headers().
 Branded error boundaries at three levels catch runtime errors gracefully.
 Othala rune favicon + dynamic OG images for social sharing.
 RSS feed at /feed.xml, sitemap with actual content dates.
 Test coverage: 18 Vitest unit tests + 14 Playwright E2E tests.
 Collapsible sticky mobile TOC for blog post section navigation.
 Site is statically generated and deployed via git-push to Vercel.
+CSP currently requires `unsafe-eval` (MDX `new Function()`) and `unsafe-inline` (rehype-pretty-code inline styles).
+npm audit reports 3 transitive vulnerabilities (flatted, picomatch). eslint-config-next version skew from next@16.2.2.
 
 ## Key Decisions
 
@@ -174,4 +188,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-03 after v1.6 milestone*
+*Last updated: 2026-04-03 after v1.7 milestone start*
