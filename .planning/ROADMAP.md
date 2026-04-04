@@ -115,7 +115,9 @@ Plans:
   2. Token color variables are defined in `globals.css` alongside other design tokens
   3. Code block background is explicitly set in CSS (not inherited from page background)
   4. Code blocks are visually consistent with the current github-dark-dimmed appearance (no jarring color regressions)
-**Plans**: TBD
+**Plans:** 1 plan
+Plans:
+- [ ] 17-01-PLAN.md -- Switch to CSS-variables theme and define token color variables in globals.css
 
 ### Phase 18: React 19 Lint Cleanup
 **Goal**: All localStorage and matchMedia patterns use idiomatic React 19 APIs, eliminating set-state-in-effect warnings while preserving animation orchestration
@@ -162,6 +164,6 @@ Phases execute in numeric order: 14 → 15 → 16 → 17 → 18 → 19
 | 14. Foundation Hardening | v1.7 | 1/1 | Complete    | 2026-04-04 |
 | 15. Middleware Infrastructure | v1.7 | 1/1 | Complete    | 2026-04-04 |
 | 16. MDX Migration | v1.7 | 2/2 | Complete    | 2026-04-04 |
-| 17. Syntax Highlighting Theme Migration | v1.7 | 0/0 | Not started | - |
+| 17. Syntax Highlighting Theme Migration | v1.7 | 0/1 | Planning    | - |
 | 18. React 19 Lint Cleanup | v1.7 | 0/0 | Not started | - |
 | 19. Verification and Polish | v1.7 | 0/0 | Not started | - |
