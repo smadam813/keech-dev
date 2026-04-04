@@ -226,6 +226,29 @@
 }
 
 /* ==========================================================================
+   Syntax Highlighting Theme (Shiki CSS Variables)
+   Colors sourced from github-dark-dimmed for visual parity.
+   Used by rehype-pretty-code via createCssVariablesTheme().
+   ========================================================================== */
+
+:root {
+  --shiki-foreground: #adbac7;
+  --shiki-background: #22272e;
+  --shiki-token-comment: #768390;
+  --shiki-token-keyword: #f47067;
+  --shiki-token-string: #96d0ff;
+  --shiki-token-function: #dcbdfb;
+  --shiki-token-constant: #6cb6ff;
+  --shiki-token-parameter: #adbac7;
+  --shiki-token-string-expression: #96d0ff;
+  --shiki-token-punctuation: #adbac7;
+  --shiki-token-link: #96d0ff;
+  --shiki-token-inserted: #8ddb8c;
+  --shiki-token-deleted: #ff938a;
+  --shiki-token-changed: #f69d50;
+}
+
+/* ==========================================================================
    Code Block Styles (rehype-pretty-code)
    ========================================================================== */
 
@@ -250,6 +273,8 @@
   figure[data-rehype-pretty-code-figure] pre {
     @apply overflow-x-auto py-4;
     margin: 0;
+    background-color: var(--shiki-background);
+    color: var(--shiki-foreground);
   }
 
   /* Code element - grid display for line alignment */
