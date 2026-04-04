@@ -1,316 +1,251 @@
-# Pitfalls Research
+# Domain Pitfalls
 
-**Domain:** Hardening an existing Next.js 16 App Router portfolio/blog (CSP, testing, error boundaries, OG images, dependency upgrades, code deduplication)
-**Researched:** 2026-04-02
-**Confidence:** HIGH (pitfalls verified against official docs, GitHub issues, and current codebase analysis)
+**Domain:** CSP hardening, MDX migration, lint cleanup for a statically generated Next.js 16 site with Velite
+**Researched:** 2026-04-03
+**Confidence:** HIGH (pitfalls verified against official docs, GitHub discussions, and current codebase analysis)
 
 ## Critical Pitfalls
 
-### Pitfall 1: CSP Nonces Force Dynamic Rendering, Destroying Static Generation
+Mistakes that cause rewrites or major issues.
 
-**What goes wrong:**
-The standard Next.js CSP approach uses nonces in middleware -- a unique random token per request added to `Content-Security-Policy` and applied to script tags. This requires every page to be dynamically rendered because a static page has no per-request context to generate nonces. Enabling nonce-based CSP converts the entire site from static to dynamic, killing the core performance advantage of a portfolio site and breaking `generateStaticParams()`.
+### Pitfall 1: Nonce-Based CSP Destroys Static Generation
 
-**Why it happens:**
-The official Next.js CSP docs show nonce-based middleware as the primary approach. Developers follow this path without realizing it is incompatible with `output: 'export'` or static generation. The site currently generates all content pages statically via `generateStaticParams()`.
+**What goes wrong:** Adding middleware that generates per-request nonces forces all pages into dynamic rendering. Every page that reads `headers()` to get the nonce opts out of static generation. The entire site -- currently fully statically generated and CDN-cached on Vercel -- becomes server-rendered on every request.
 
-**How to avoid:**
-Use header-based CSP in `next.config.ts` `headers()` function with hash-based allowlisting instead of nonces. For this project specifically:
-- Set CSP via `next.config.ts` `headers()` -- these apply to static pages without dynamic rendering
-- Use `'unsafe-eval'` in `script-src` because `new Function()` in MDX execution requires it (there is no workaround short of replacing the MDX execution model)
-- Use `'unsafe-inline'` in `style-src` because Tailwind CSS v4 may inject inline styles
-- Whitelist Vercel Analytics domains explicitly in `script-src` and `connect-src`
-- Start with `Content-Security-Policy-Report-Only` to validate before enforcing
+**Why it happens:** Nonces must be unique per request by definition. Static pages are generated at build time when no request exists, so no nonce can be injected into the HTML body. Next.js middleware does run for static pages on Vercel (for rewrites/redirects at the edge), and it CAN set response headers on the response. But middleware cannot modify the pre-built HTML content to inject nonce attributes into `<script>` and `<style>` tags. The nonce in the CSP header would not match any tag in the HTML, causing the browser to block everything.
 
-**Warning signs:**
-- Pages that were static now show `x-nextjs-cache: MISS` on every request
-- Build output changes from "Static" to "Dynamic" in the Next.js build summary
-- TTFB increases from ~50ms to ~200ms+ on Vercel
+**Consequences:** If you force dynamic rendering to make nonces work: page load times increase (no CDN cache), Vercel serverless function invocations spike, TTFB degrades from ~50ms to ~200ms+, and hosting costs increase. For a personal portfolio site, this is a disproportionate tradeoff.
 
-**Phase to address:**
-Security hardening phase (first phase) -- CSP headers are the highest-risk item and should be tackled early with `Report-Only` mode to surface breakage before enforcing.
+**Prevention:** Use hash-based CSP with static headers instead of nonces:
+- For `script-src`: Enable `experimental.sri` in `next.config.ts` to add Subresource Integrity attributes to script tags at build time. Use `'strict-dynamic'` in the CSP which trusts scripts loaded by already-trusted scripts. The SRI hashes allow the browser to verify script integrity without per-request nonces.
+- For `style-src`: Eliminate inline styles entirely (see Pitfall 3) rather than trying to nonce them. Target a static CSP with `'self'` for `style-src`.
+- Move security headers from `next.config.ts` `headers()` to middleware for centralization, but keep the CSP values STATIC (no per-request nonce generation). Middleware can set static response headers on pre-built pages without requiring dynamic rendering.
+
+**Detection:** If `next build` output shows pages as "Dynamic" or "Server" instead of "Static", static generation has been accidentally destroyed. Check for any `headers()` import from `next/headers` in page or layout components.
+
+**Confidence:** HIGH -- confirmed by [Next.js CSP documentation](https://nextjs.org/docs/app/guides/content-security-policy) and [GitHub Discussion #54907](https://github.com/vercel/next.js/discussions/54907).
 
 ---
 
-### Pitfall 2: CSP Breaks Vercel Analytics, Inline Styles, or MDX Execution
+### Pitfall 2: Velite MDX Body Format Assumptions During Migration
 
-**What goes wrong:**
-A strict CSP blocks three things this site depends on: (1) `new Function()` for MDX rendering fails without `'unsafe-eval'`, turning every blog post into a white screen; (2) Vercel Analytics script fails to load if its domains are not allowlisted; (3) Tailwind CSS v4's runtime behavior or any inline styles break without `'unsafe-inline'` or proper hashing in `style-src`.
+**What goes wrong:** Velite's `s.mdx()` outputs a function-body string -- verified by inspecting `.velite/posts.json`, the body starts with `const{Fragment:e,jsx:t,jsxs:i}=arguments[0]`. This format is purpose-built for `new Function(code)` execution. Developers attempt to change the rendering approach without understanding this coupling. Common mistakes: (a) trying to `eval()` the string directly (same CSP problem), (b) changing Velite's `outputFormat` to `'program'` which produces ES module syntax (`import`/`export`) that cannot be passed to `new Function()`, (c) trying to use `next-mdx-remote` without realizing it also uses `new Function()` internally.
 
-**Why it happens:**
-CSP is deployed in enforcing mode without testing against every page type. The developer tests the homepage (no MDX, no analytics widget visible), sees no errors, and ships. Blog posts crash, analytics silently stop collecting, and style regressions appear on pages with dynamic class application.
+**Why it happens:** The Velite documentation shows `new Function()` as the canonical and only rendering pattern. The `s.mdx()` schema output format is not independently configurable -- it follows the global `mdx.compileOptions.outputFormat` setting which defaults to `'function-body'`. Developers search for "MDX without unsafe-eval" and find suggestions that all ultimately require either `new Function()` or file-system writes.
 
-**How to avoid:**
-1. Deploy CSP as `Content-Security-Policy-Report-Only` first -- this logs violations to the browser console without blocking anything
-2. Test every page type: homepage, blog listing, single blog post (MDX execution), project listing, project detail, about page, 404 page
-3. Check the browser console for CSP violation reports on each page
-4. Required directives for this site:
-   - `script-src 'self' 'unsafe-eval' https://va.vercel-scripts.com` (MDX + Vercel Analytics)
-   - `style-src 'self' 'unsafe-inline'` (Tailwind CSS v4 inline styles)
-   - `connect-src 'self' https://va.vercel-scripts.com https://vitals.vercel-insights.com` (Analytics data reporting)
-   - `img-src 'self' data: blob:` (Next.js Image optimization)
-   - `font-src 'self'` (Norse + Inter WOFF2 fonts)
-5. Only switch from `Report-Only` to enforcing after a full verification pass
+**Consequences:** Build failures, runtime errors where the MDX component is undefined, or -- if `next-mdx-remote` is adopted thinking it solves the problem -- the same `unsafe-eval` requirement persists.
 
-**Warning signs:**
-- Blog posts render blank (MDX execution blocked)
-- Vercel Analytics dashboard shows zero traffic after deploy
-- Styles appear broken or elements unstyled on specific pages
-- Console shows `Refused to evaluate a string as JavaScript` errors
+**Prevention:** The key insight is that `mdx-content.tsx` is currently a `'use client'` component, meaning `new Function()` runs IN THE BROWSER. This is why `unsafe-eval` is needed in the CSP. The most practical migration path:
 
-**Phase to address:**
-Security hardening phase -- deploy `Report-Only` first, enforce in a follow-up commit after verification.
+1. **Move MDX evaluation to a server component (recommended):** Convert `MDXContent` from `'use client'` to a server component. Server components execute during build (for static pages) or on the server (for dynamic pages) -- neither context is governed by the browser's CSP. `new Function()` in a server component does NOT require `unsafe-eval` in the CSP because the CSP only restricts browser-side execution. The component override map (`{ pre: CodeBlock }`) can still work because client components can be passed as props to server components in Next.js App Router.
+
+2. **Compile-to-file approach (complex):** Write a custom Velite plugin or post-build script that converts each `body` string into an importable ES module file (`.velite/posts/[slug].mjs`), then use dynamic `import()` instead of `new Function()`. Eliminates `new Function()` entirely but requires significant pipeline changes.
+
+3. **DO NOT use `next-mdx-remote`:** It uses `new Function()` internally ([confirmed in Issue #274](https://github.com/hashicorp/next-mdx-remote/issues/274)). Swapping to it gains nothing for CSP.
+
+**Detection:** After migration, remove `unsafe-eval` from the CSP, load a blog post in Chrome, and check the DevTools Console for CSP violation errors. If none appear, the migration succeeded.
+
+**Confidence:** HIGH -- verified by reading the actual Velite output, the current `mdx-content.tsx` source, and [MDX Discussion #2322](https://github.com/orgs/mdx-js/discussions/2322).
 
 ---
 
-### Pitfall 3: Error Boundaries That Swallow MDX Errors or Break Layout
+### Pitfall 3: Shiki CSS-Variables Theme Breaks CodeBlock Styling
 
-**What goes wrong:**
-Adding `error.tsx` at the wrong level either (a) catches MDX rendering errors but replaces the entire page including header/footer with a generic error screen, or (b) catches layout-level errors and creates an infinite error loop. The `global-error.tsx` file replaces the entire HTML document including `<html>` and `<body>` tags, which means the site's header, footer, fonts, and styles disappear when it triggers.
+**What goes wrong:** Switching rehype-pretty-code from `theme: 'github-dark-dimmed'` (which applies `style="color:#abc123"` inline on every `<span>`) to a CSS-variables theme changes the HTML output entirely. Tokens get `style="--shiki-light:#xxx;--shiki-dark:#xxx"` instead of direct `color` values. Without corresponding CSS rules that set `color: var(--shiki-light)`, all code blocks render as unstyled monochrome text against the page background.
 
-**Why it happens:**
-Developers add `error.tsx` at `src/app/error.tsx` thinking it catches all errors gracefully. But `error.tsx` in a segment does NOT catch errors from `layout.tsx` in the same segment -- it only catches errors from `page.tsx` and child components. For root layout errors, you need `global-error.tsx`, which must include its own `<html>` and `<body>` tags and cannot use the root layout's fonts or styles.
+**Why it happens:** rehype-pretty-code with a single theme writes direct inline color styles. With the multi-theme approach (`themes: { light: '...', dark: '...' }` instead of `theme: '...'`), it outputs CSS custom properties instead. The developer must provide CSS that bridges the variables to actual colors. This is poorly documented for single-theme use cases -- most CSS-variables documentation assumes you want light/dark switching.
 
-**How to avoid:**
-1. Add `error.tsx` at `src/app/blog/[slug]/error.tsx` specifically for MDX rendering errors -- this preserves the root layout (header, footer, fonts)
-2. Add `error.tsx` at `src/app/error.tsx` as a general fallback -- preserves root layout
-3. Add `global-error.tsx` at `src/app/global-error.tsx` only as a last-resort -- must duplicate font loading and basic styles since root layout is bypassed
-4. The blog slug error boundary should offer a "return to blog" link, not just "try again" (retrying broken MDX will always fail)
-5. Error boundaries are client components -- do not attempt to use `generateMetadata` or server-only APIs in them
+**Consequences:** Every code block in every blog post loses syntax highlighting. On keech.dev's dusty rose background with the current neobrutalist design, unstyled code blocks are unreadable and a visible quality regression.
 
-**Warning signs:**
-- Error page shows without any styling, fonts, or navigation
-- "Try again" button on error page re-triggers the same error infinitely
-- Error in root layout crashes to browser default error page
-- Build errors masquerade as runtime errors during static generation
+**Prevention:** For a single-theme site, there are three approaches ranked by simplicity:
 
-**Phase to address:**
-Error resilience phase (early) -- error boundaries should be in place before adding features that might break (dependency upgrades, refactoring).
+1. **Keep inline styles, accept `'unsafe-inline'` for style-src (pragmatic):** `unsafe-inline` for styles is far less dangerous than `unsafe-eval` for scripts. CSS injection attacks are limited in scope (exfiltration via `background-image: url()` or layout manipulation) compared to script injection (full account takeover). Many security-conscious production sites accept `style-src 'unsafe-inline'` as a reasonable tradeoff. If the primary goal is removing `unsafe-eval`, this is the simplest path.
+
+2. **Switch to `@shikijs/rehype` with CSS class output:** Replace `rehype-pretty-code` with Shiki's own rehype plugin which offers a `defaultColor` option and `cssVariablePrefix`. Configure for a single theme with class-based output, then define token colors in `globals.css`. This eliminates inline styles entirely but requires rewriting the theme CSS.
+
+3. **Use a Shiki transformer to strip inline styles:** Keep `rehype-pretty-code` but add a custom `transformerCompactLineOptions` or a post-processing transformer that converts inline `style` attributes to `class` attributes with corresponding CSS. More surgical but fragile across Shiki version bumps.
+
+**Detection:** Visual inspection of any blog post with code blocks. Automated: Playwright test that checks code block `<span>` elements have a non-default `color` value.
+
+**Confidence:** HIGH -- verified against [Shiki dual themes documentation](https://shiki.matsu.io/guide/dual-themes) and [rehype-pretty-code docs](https://rehype-pretty.pages.dev/).
 
 ---
 
-### Pitfall 4: Vitest Cannot Resolve `@/.velite` Imports Without Explicit Alias
+## Moderate Pitfalls
 
-**What goes wrong:**
-Tests that import any module which transitively imports from `@/.velite` (the generated Velite content collections) fail with `Cannot find module '@/.velite'` or similar resolution errors. The `.velite/` directory only exists after running `velite` build, and `vite-tsconfig-paths` may not resolve the `@/.velite` alias correctly since it maps to a gitignored build artifact outside `src/`.
+### Pitfall 4: `keepBackground: true` Creates Orphaned Inline Style After Theme Migration
 
-**Why it happens:**
-The `@/.velite` path alias is unusual -- it maps to `./.velite` (project root, outside `src/`), which is a generated directory that does not exist until `velite` runs. `vite-tsconfig-paths` reads `tsconfig.json` paths but the `.velite/` directory may not exist in CI or fresh clones until the build step runs. Tests importing components that depend on post/project collections will fail.
+**What goes wrong:** The current `velite.config.ts` has `keepBackground: true` for rehype-pretty-code. This injects a `background-color` inline style on the `<pre>` element. When migrating to CSS-variables or class-based themes, this inline background persists even if token colors switch to CSS variables, creating a split: hardcoded background + variable text colors. Worse, if you remove `keepBackground`, code blocks lose their dark background and inherit the dusty rose page background, making code unreadable.
 
-**How to avoid:**
-1. Add explicit alias in `vitest.config.ts`: `resolve: { alias: { '@/.velite': path.resolve(__dirname, '.velite') } }`
-2. Create a `.velite/__mocks__` or test fixture that provides mock post/project data, so tests do not depend on real Velite output
-3. Run `npm run velite` as a `globalSetup` in Vitest config if testing against real content
-4. For unit tests of pure functions (`src/lib/views.ts`, `src/lib/rune-glows.ts`), structure tests to avoid transitive Velite imports entirely
-5. Add `npm run velite` to the CI pipeline before `vitest run`
+**Prevention:** When switching theme approaches: (1) Set `keepBackground: false`, (2) Add explicit CSS: `pre[data-theme] { background-color: #22272e; }` (the github-dark-dimmed background) or use a CSS variable for it, (3) Verify the code block background renders correctly in both the `CodeBlock` wrapper and any inline code elements.
 
-**Warning signs:**
-- Tests pass locally (where `.velite/` exists from dev) but fail in CI
-- `Module not found` errors referencing `.velite` paths
-- Mysterious test failures after `git clean` or fresh clone
-
-**Phase to address:**
-Testing setup phase -- the Vitest configuration must handle Velite aliases from day one or every test that touches content-dependent code will fail.
+**Detection:** Code blocks appear with wrong background color -- either page-colored (dusty rose) or with jarring mismatched light/dark backgrounds.
 
 ---
 
-### Pitfall 5: OG Image Generation Exceeds Edge Runtime Limits or Blocks Static Pages
+### Pitfall 5: Middleware + `next.config.ts` Headers Double-Apply CSP
 
-**What goes wrong:**
-Dynamic OG images via `opengraph-image.tsx` use the `ImageResponse` API (based on Satori), which has a 500KB bundle size limit including fonts. Loading the Norse custom font (WOFF2) into the OG image generator can exceed this limit. Additionally, if `opengraph-image.tsx` uses Node.js APIs (like `fs.readFileSync` for fonts) but the corresponding page uses edge runtime, the image route breaks with cryptic import errors.
+**What goes wrong:** When adding middleware for CSP headers, developers forget to remove the existing `headers()` function in `next.config.ts`. Both apply, resulting in duplicate `Content-Security-Policy` headers. Browsers enforce the INTERSECTION of all CSP policies -- the most restrictive combination wins. If the old config header allows `unsafe-eval` but the new middleware header removes it, the stricter policy applies (correct behavior but confusing during testing). If the middleware header is MORE permissive, the config header constrains it silently.
 
-**Why it happens:**
-Developers load multiple font weights/styles or large font files into the OG image generator. The Norse display font may be too large for the edge runtime bundle limit. Alternatively, developers use `fs.readFileSync` to load fonts (common in tutorials) which fails on edge runtime.
+**Prevention:** When adding middleware CSP:
+1. Remove the CSP line from `next.config.ts` `headers()` first
+2. Keep non-CSP security headers (X-Frame-Options, X-Content-Type-Options, Referrer-Policy) in middleware too for centralization, then remove the entire `headers()` function
+3. Verify in DevTools Network tab that only ONE `Content-Security-Policy` header appears in responses
+4. Test with a fresh browser tab (not cached) to avoid stale header confusion
 
-**How to avoid:**
-1. Use `fetch()` with `new URL('./font.woff2', import.meta.url)` to load fonts -- works in both Node and Edge runtimes
-2. Keep font file size under 200KB for OG images -- use a single weight of Inter for body text in OG images, skip Norse if it pushes over the limit
-3. Test OG images with `curl http://localhost:3000/blog/your-slug/opengraph-image` during development
-4. For blog posts, pass only `title`, `description`, and `date` to the OG template -- do not try to render MDX content in the image
-5. Consider using Node.js runtime explicitly (`export const runtime = 'nodejs'`) if edge constraints are too tight -- this is fine for a portfolio site with low traffic
+**Detection:** Chrome DevTools Network tab shows two `Content-Security-Policy` response headers. Or: middleware CSP changes do not seem to take effect because the `next.config.ts` header is more restrictive.
 
-**Warning signs:**
-- OG images work locally but fail on Vercel deployment
-- Build error mentioning bundle size exceeded
-- Social media previews show broken image icons
-- OG image endpoint returns 500 or takes >5 seconds
-
-**Phase to address:**
-SEO/branding phase -- OG images should be added after error boundaries are in place so failures degrade gracefully.
+**Confidence:** HIGH -- this is a mechanical mistake confirmed by testing response headers.
 
 ---
 
-### Pitfall 6: Dependency Upgrades Break Build in Cascading Ways
+### Pitfall 6: `useSyncExternalStore` Hydration Mismatch with `getServerSnapshot`
 
-**What goes wrong:**
-Upgrading Shiki v3 to v4, `@vercel/analytics` v1 to v2, and Next.js simultaneously creates a debugging nightmare. If the build breaks, you cannot tell which upgrade caused it. Shiki v4 may change how `rehype-pretty-code` generates HTML, breaking the `CodeBlock` component's `<pre>` override. `@vercel/analytics` v2 changes the import path or initialization pattern. A Next.js patch may change CSP behavior or static generation semantics.
+**What goes wrong:** When migrating `useLayoutEffect` + `setState` patterns (localStorage reads in `view-counter.tsx` and `listing-view-counts.tsx`, `matchMedia` checks in `use-hero-animation.ts`) to `useSyncExternalStore`, the `getServerSnapshot` parameter returns a value that differs from the initial client value. This causes React hydration mismatches.
 
-**Why it happens:**
-Developers batch all dependency updates into one commit to "get it over with." When the build breaks, they face multiple interacting changes and cannot bisect the failure.
+**Why it happens:** `useSyncExternalStore` requires a `getServerSnapshot` function for SSR/SSG. Since `localStorage` and `window.matchMedia` do not exist at build time, `getServerSnapshot` must return a fallback. If that fallback differs from what the client reads on first render, React detects a mismatch. The current code avoids this by using `useState(null)` + `useLayoutEffect` which defers the external store read to after hydration.
 
-**How to avoid:**
-1. Upgrade one dependency at a time, verify build + visual check between each
-2. Order: Next.js patch first (fixes security vulns), then Tailwind CSS minor, then Shiki major, then `@vercel/analytics` major
-3. For Shiki v4: the breaking changes are minor (typo corrections in API names) but verify `rehype-pretty-code` compatibility -- it may need its own update to support Shiki v4
-4. For `@vercel/analytics` v2: check if the import path changes from `@vercel/analytics/next` to something else, and test that the `<Analytics />` component still works
-5. Pin Velite at `0.3.1` -- do not upgrade a pre-release 0.x dependency during a hardening milestone
-6. Run `npm run build` after each individual upgrade, not just `npm run dev`
+**Specific cases in this codebase:**
+- **View counts (`view-counter.tsx`, `listing-view-counts.tsx`):** `getServerSnapshot` returns `null`, `getSnapshot` reads localStorage which may return a number. This mismatch triggers a hydration warning. However, since the current pattern also starts with `null` and updates in `useLayoutEffect`, the visual behavior is identical -- the mismatch warning is the only difference.
+- **Reduced motion (`use-hero-animation.ts`):** `getServerSnapshot` returns `false`, but `matchMedia('(prefers-reduced-motion: reduce)')` may return `true` on the client. If the user has reduced motion enabled, the hero animation plays for one frame before being suppressed.
 
-**Warning signs:**
-- Build succeeds but code blocks render without syntax highlighting
-- Build succeeds but Vercel Analytics stops collecting data (silent failure)
-- TypeScript errors in files you did not touch
-- `npm audit` shows new vulnerabilities introduced by updated transitive dependencies
+**Prevention:**
+- `getServerSnapshot` MUST return the same value as the client's initial render to avoid hydration mismatch. For localStorage: return `null` from both `getServerSnapshot` and the initial `getSnapshot`, then trigger an update via the `subscribe` callback.
+- `getSnapshot` must return a PRIMITIVE or a STABLE REFERENCE. Returning `new Object()` or a freshly-created array each time causes infinite re-renders because `Object.is()` comparison always fails. For the view counts record (`Record<string, number | null>`), use a module-level cache variable and only replace it when values actually change.
+- For `matchMedia`: use the `subscribe` callback to listen for `change` events and return the current `.matches` boolean from `getSnapshot`. Return `false` from `getServerSnapshot`.
+- Do NOT try to solve hydration mismatches by omitting `getServerSnapshot` -- this causes a hard error during SSR, not just a warning.
 
-**Phase to address:**
-Dependency cleanup phase (late in milestone) -- upgrades should be the last thing done, after tests are in place to catch regressions.
+**Detection:** React hydration mismatch warnings in browser console. Content flickering on page load. Infinite re-render loops (if returning objects from `getSnapshot` without stable references).
+
+**Confidence:** MEDIUM -- the current `useLayoutEffect` pattern works correctly. This migration is a code quality improvement to silence React 19 lint warnings, not a functional requirement. The [React docs](https://react.dev/reference/react/useSyncExternalStore) and [TkDodo's blog post](https://tkdodo.eu/blog/avoiding-hydration-mismatches-with-use-sync-external-store) confirm the hydration risks.
 
 ---
 
-### Pitfall 7: Code Deduplication Introduces Subtle Behavioral Regressions
+### Pitfall 7: npm Overrides Silently Break or Stop Applying
 
-**What goes wrong:**
-Extracting a shared `useFilteredList` hook from `FilteredPostList` and `FilteredProjectList` introduces subtle differences in URL parameter handling, filter chip rendering, or transition timing. The two components look 90% identical but the 10% difference (different card components, different filter keys like `tags` vs `stack`, different sort logic) means the abstraction either leaks or forces awkward parameterization.
+**What goes wrong:** `overrides` in `package.json` pin a transitive dependency (`flatted`, `picomatch`) to a patched version. This works initially, but: (a) running `npm install` twice may produce different `package-lock.json` files (a known npm bug improved but not fully fixed as of early 2025), (b) when the parent dependency updates, the override path may no longer match, (c) the forced version may be API-incompatible with the consumer, causing silent runtime errors in build tools.
 
-**Why it happens:**
-The components genuinely share structure, so deduplication feels obvious. But the abstraction boundary is drawn wrong -- either too much is extracted (forcing collection-specific logic into generic callbacks) or too little (the hook handles URL state but the component still duplicates animation/transition logic). Without tests, the regression is caught only by manual visual inspection.
+**Why it happens:** npm `overrides` bypass the dependency resolution algorithm. They do not verify API compatibility between the forced version and the consuming package. npm also does not warn when an override becomes stale or inapplicable after a parent version change.
 
-**How to avoid:**
-1. Write tests for current behavior BEFORE refactoring -- capture URL state management, filter logic, transition behavior, and empty state rendering for both blog and projects
-2. Extract the `useFilteredList` hook first (URL state + filter logic), keep rendering in separate components
-3. Do NOT extract a shared `FilteredListLayout` component -- the rendering differences (PostCard vs ProjectCard, tag chip vs tech badge) make a shared layout fragile
-4. Verify after extraction: URL filter persistence, browser back/forward with filters, "clear filters" behavior, "Showing X of Y" count accuracy, fade transition timing
-5. Extract localStorage helpers and date formatting BEFORE the filtered list refactor -- these are low-risk and reduce noise in the larger refactor
+**Consequences:** Silent runtime errors in Velite or ESLint builds. `npm audit` still reports vulnerabilities (override not applied). Inconsistent `package-lock.json` between developers.
 
-**Warning signs:**
-- Filters work on blog but break on projects (or vice versa) after refactoring
-- URL parameters use wrong key names (`tags` vs `stack` confusion)
-- Transition animation plays on initial page load (the `useRef` initial-render guard gets lost in extraction)
-- "Showing X of Y" count is wrong after clearing filters
+**Prevention:**
+- Use the most general override path: `"flatted": ">=4.0.1"` rather than `"velite>flatted": ">=4.0.1"` -- the general form catches all transitive instances
+- After adding overrides, verify with `npm ls flatted` that the correct version appears everywhere in the tree
+- Add a comment in `package.json` documenting WHY each override exists and WHEN it can be removed
+- Run `npm run build` after adding overrides to verify build tools still function correctly
+- Treat overrides as temporary technical debt -- check monthly whether upstream packages have released fixes that make the override unnecessary
+- After every `npm update` or `npm install`, re-run `npm audit` to verify overrides are still effective
 
-**Phase to address:**
-Code quality phase (middle of milestone) -- deduplication should happen after tests are in place and before dependency upgrades, so regressions are caught immediately.
+**Detection:** `npm audit` still shows vulnerabilities after adding overrides. `npm ls <package>` shows the old version in some paths. Build tools (Velite, ESLint) produce unexpected errors after updating unrelated dependencies.
+
+**Confidence:** HIGH -- well-documented npm behavior, confirmed by [npm overrides RFC](https://github.com/npm/rfcs/blob/main/accepted/0036-overrides.md) and [HeroDevs guide](https://www.herodevs.com/blog-posts/a-guide-to-npm-overrides-take-control-of-your-dependencies).
 
 ---
 
-## Technical Debt Patterns
+### Pitfall 8: Server-Component MDX Breaks Client Component Overrides
 
-Shortcuts that seem reasonable but create long-term problems.
+**What goes wrong:** When moving `MDXContent` from `'use client'` to a server component (Pitfall 2, Option 1), the component override mechanism requires careful handling. `CodeBlock` is a `'use client'` component (uses `useRef`, `useCallback`). Passing client components as MDX overrides in a server component IS supported in Next.js App Router, but the MDX function body expects to receive the component map at evaluation time via `new Function(code)({...runtime}).default`. If the component map is applied AFTER evaluation (e.g., wrapping the output), the `<pre>` elements are already rendered without the `CodeBlock` wrapper.
 
-| Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
-|----------|-------------------|----------------|-----------------|
-| `'unsafe-eval'` in CSP for MDX | MDX rendering works without rearchitecting | Weakens CSP, any future XSS can escalate to arbitrary code execution | Acceptable for now -- replacing `new Function()` requires migrating to `next-mdx-remote` or similar, which is out of scope for a hardening milestone |
-| `'unsafe-inline'` in `style-src` | Tailwind CSS v4 works without style hashing | Inline style injection attacks possible | Acceptable -- Tailwind v4 CSS-first config may inject inline styles; hashing every style is impractical |
-| Skipping Playwright E2E tests | Faster test setup, focus on unit tests | Mobile menu, copy button, scroll reveal remain untested | Acceptable for v1.6 MVP -- add E2E in a future milestone when behavior is stable |
-| Keeping `FilteredPostList` and `FilteredProjectList` separate | Zero regression risk, no refactoring needed | 150 lines of duplication remain | Never -- the duplication is a real maintenance burden and should be addressed, but only with tests in place first |
-| Pinning Velite at 0.3.1 | Avoids 0.x breaking changes during hardening | Falling behind on Velite improvements | Acceptable until Velite reaches 1.0 or a needed feature requires upgrade |
+**Why it happens:** The current pattern passes components via `<Component components={{ pre: CodeBlock }} />` -- this works because the MDX function body produces a component that accepts a `components` prop and uses it during rendering. This same pattern should work in a server component context. The failure mode is if the developer tries to evaluate the MDX function without passing the component map, then post-processes the output.
 
-## Integration Gotchas
+**Prevention:** When converting `MDXContent` to a server component:
+1. The `useMDXComponent` function (which calls `new Function(code)`) should remain in the server component -- it runs at build time for static pages
+2. Pass the component map the same way: `<Component components={{ pre: CodeBlock, ul: ..., ol: ... }} />`
+3. Import `CodeBlock` in the server component file -- Next.js allows server components to import and render client components
+4. Test with a blog post that has code blocks to verify the copy button renders and functions
+5. The `try/catch` + `MDXFallback` pattern should remain, but `MDXFallback` may need to stay as a client component (it uses no client APIs currently, so it could be either)
 
-Common mistakes when connecting to external services or integrating new features.
+**Detection:** Blog posts render but code blocks lack the copy button wrapper, or `CodeBlock` appears as a bare `<pre>` without the `<div className="group relative">` container. The copy button is invisible or non-functional.
 
-| Integration | Common Mistake | Correct Approach |
-|-------------|----------------|------------------|
-| CSP + Vercel Analytics | Forgetting `connect-src` for analytics data reporting -- script loads but data fails to send silently | Allowlist both `script-src` (script loading) and `connect-src` (data beacons) for Vercel Analytics domains |
-| @upstash/ratelimit in middleware | Declaring the `Ratelimit` instance inside the middleware handler -- ephemeral cache resets on every invocation | Declare `Ratelimit` instance at module scope so the ephemeral cache persists while the edge function is warm |
-| @upstash/ratelimit + static pages | Applying rate limiting middleware to all routes, including static assets and pages | Use `matcher` config in middleware to only apply rate limiting to `/api/*` routes |
-| Vitest + Velite | Running tests without building Velite first -- `.velite/` directory missing | Add `velite` as a `globalSetup` step or mock the `@/.velite` import in test config |
-| OG images + custom fonts | Using `fs.readFileSync` for font loading (Node.js only) | Use `fetch(new URL('./font.woff2', import.meta.url))` which works in both Node and Edge runtimes |
-| Error boundaries + static generation | Expecting `error.tsx` to catch build-time static generation errors | `error.tsx` only catches runtime client-side errors -- build failures surface as build errors, not error boundaries |
+---
 
-## Performance Traps
+## Minor Pitfalls
 
-Patterns that work at small scale but fail as usage grows.
+### Pitfall 9: ESLint Disable Comments Without Explanatory Context
 
-| Trap | Symptoms | Prevention | When It Breaks |
-|------|----------|------------|----------------|
-| Rate limiting with per-request Redis calls | Every API request makes a Redis roundtrip even if the user is not rate-limited | Use `@upstash/ratelimit` ephemeral cache (module-scope instance) to skip Redis for repeated calls from same IP | At >100 concurrent requests; Redis latency adds 50-100ms per API call |
-| OG image generation without caching | Every social media crawler hit regenerates the OG image from scratch | Set `revalidate` export or use ISR-style caching for OG image routes; Vercel CDN caches by default but verify | When a post goes viral and crawlers hit the OG endpoint hundreds of times |
-| Loading all posts in OG image route | OG image route imports full `posts` collection just to find one post's title | Import only the needed post data, or pass title/description via search params | At 500+ posts; unnecessary memory allocation per OG image render |
+**What goes wrong:** Adding `eslint-disable-next-line` comments for the four `@next/next/no-html-link-for-pages` errors in error boundaries without explanatory suffixes. Future maintainers see the suppress and wonder if it is intentional or a hack.
 
-## Security Mistakes
+**Prevention:** The current codebase already uses the correct pattern (e.g., `// eslint-disable-next-line @next/next/no-html-link-for-pages -- plain <a> intentional: client-side routing may be broken in error state` in `mdx-content.tsx`). Apply the same pattern to the remaining three files (`error.tsx`, `global-error.tsx`, `blog/[slug]/error.tsx`). For `react-hooks/set-state-in-effect` warnings: do NOT add disable comments -- these should be resolved by the `useSyncExternalStore` migration.
 
-Domain-specific security issues beyond general web security.
+### Pitfall 10: `eslint-config-next` Version Update Introduces New Rule Failures
 
-| Mistake | Risk | Prevention |
-|---------|------|------------|
-| CSP allows `'unsafe-eval'` but no other restrictions | Attacker who achieves XSS can execute arbitrary JS via eval | Pair `'unsafe-eval'` with strict `default-src 'self'`, tight `connect-src`, `frame-ancestors 'none'`, and `object-src 'none'` to limit blast radius |
-| Rate limiting only on POST, not GET for batch views endpoint | GET `/api/views?slugs=` accepts unbounded comma-separated slugs, enabling Redis abuse | Validate slug format with regex, limit batch size to 50 slugs max, apply rate limiting to all API routes |
-| Slug parameters used directly in Redis key construction | Crafted slugs like `../../admin` or extremely long strings create unexpected Redis keys | Validate all slugs with `^[a-z0-9][a-z0-9-]*[a-z0-9]$` regex, max length 100 characters |
-| Deploying CSP in enforcing mode without testing | Legitimate site functionality breaks silently for all visitors | Always deploy as `Content-Security-Policy-Report-Only` first, monitor for 24-48 hours, then enforce |
+**What goes wrong:** Updating `eslint-config-next` from `^16.1.6` to match `next@16.2.2` may change rule defaults or add new rules that surface additional errors. The `next lint` CLI removal already happened; the config package itself may have rule severity changes.
 
-## UX Pitfalls
+**Prevention:** Update `eslint-config-next` in an isolated commit. Run `npm run lint` immediately after and fix any new errors before proceeding with other changes. Compare the diff in rule definitions between versions if unexpected errors appear.
 
-Common user experience mistakes when adding hardening features.
+### Pitfall 11: Velite `^0.3.1` Caret Range Allows Breaking 0.x Updates
 
-| Pitfall | User Impact | Better Approach |
-|---------|-------------|-----------------|
-| Error boundary shows "Something went wrong" with only a "Try again" button for MDX errors | MDX errors are deterministic -- retrying will always fail; user is stuck | Show "This post could not be loaded" with a link back to `/blog`, not a retry button |
-| Loading skeleton for blog post shows shimmer where content will be | Blog posts are statically generated and load instantly; skeleton flashes for 0ms and creates visual noise | Only add `loading.tsx` to routes that actually have async data fetching; skip for fully static pages |
-| Rate limit error returns generic 429 with no context | User sees a broken page or mysterious "Too Many Requests" error | Return a friendly JSON error with `retryAfter` header; client-side view counter should fail silently on 429 |
-| OG image has tiny text or wrong aspect ratio | Social media preview looks unprofessional or text is unreadable | Design OG images at 1200x630 pixels (1.91:1 ratio); minimum font size 32px; test with Twitter Card Validator and Facebook Sharing Debugger |
+**What goes wrong:** Under semver, `0.x` versions treat minor bumps as potentially breaking (0.3 to 0.4 is fair game). The caret `^0.3.1` allows `0.3.x` patches but a fresh install on a new machine or CI could pull a different patch version than the lockfile specifies if the lockfile is not committed.
 
-## "Looks Done But Isn't" Checklist
+**Prevention:** Pin exact: `"velite": "0.3.1"` (no caret). The lockfile IS committed in this repo, so the risk is low, but explicit pinning communicates intent. Do this first -- it is a one-character change.
 
-Things that appear complete but are missing critical pieces.
+---
 
-- [ ] **CSP headers:** Often missing `connect-src` for API/analytics beacons -- script loads but data fails silently. Verify analytics data appears in Vercel dashboard after CSP deploy.
-- [ ] **CSP headers:** Often tested only on homepage -- verify on blog post pages (MDX eval), project pages (images), and 404 page.
-- [ ] **Error boundaries:** Often missing `global-error.tsx` -- root layout errors crash to browser default. Verify by temporarily breaking the root layout in dev.
-- [ ] **Error boundaries:** Often forget that error pages must include their own `<html>` and `<body>` tags in `global-error.tsx`. Test that fonts and basic styles appear on the global error page.
-- [ ] **OG images:** Often tested only with direct URL access -- verify with actual social media preview tools (Twitter Card Validator, Facebook Sharing Debugger, LinkedIn Post Inspector).
-- [ ] **OG images:** Often forget to set default OG image in root `layout.tsx` metadata -- pages without custom OG images show no preview.
-- [ ] **Rate limiting:** Often tested only for blocking -- verify that legitimate single-visit users are never rate limited. Test the happy path, not just the block path.
-- [ ] **Vitest setup:** Often works in IDE but fails in `npm test` -- verify the test command works from a clean terminal with no IDE extensions.
-- [ ] **Deduplication refactor:** Often verified only with mouse interaction -- test keyboard navigation of filter chips, URL-preloaded filter state, and browser back/forward.
-- [ ] **Dependency upgrades:** Often verified with `npm run dev` only -- run `npm run build && npm run start` to catch production-only issues (Turbopack dev vs webpack production differences).
+## Integration Pitfalls: The CSP Chain
 
-## Recovery Strategies
+These pitfalls interact. The order of operations matters because each CSP change affects the others.
 
-When pitfalls occur despite prevention, how to recover.
+### The Dependency Chain
 
-| Pitfall | Recovery Cost | Recovery Steps |
-|---------|---------------|----------------|
-| CSP breaks site in production | LOW | CSP was deployed as enforcing -- redeploy with `Report-Only` or remove the header entirely via `next.config.ts` change; Vercel deploys in <60 seconds |
-| Error boundary swallows all errors | LOW | Error boundaries are additive files -- delete the problematic `error.tsx` and the parent segment handles errors instead |
-| Vitest config breaks build | LOW | Vitest config is separate from Next.js config -- `vitest.config.ts` does not affect `npm run build`; fix at leisure |
-| OG image breaks in production | MEDIUM | Social media caches OG images aggressively -- even after fixing, cached broken previews persist for hours/days. Use `?v=2` cache-bust param or social platform cache-clear tools |
-| Deduplication regression in filters | MEDIUM | Git revert the extraction commit, re-add tests for the specific broken behavior, then re-attempt extraction |
-| Shiki v4 breaks code highlighting | MEDIUM | Pin `rehype-pretty-code` and `shiki` back to working versions in `package.json`; verify with `npm run build` |
-| Multiple simultaneous dependency breaks | HIGH | Cannot bisect -- must revert all upgrades and re-apply one at a time. This is why upgrades must be done individually. |
+```
+1. MDX rendering approach determines whether 'unsafe-eval' is needed in script-src
+2. Syntax highlighting approach determines whether 'unsafe-inline' is needed in style-src
+3. Both above must be resolved BEFORE writing the final CSP policy
+4. CSP policy must be finalized BEFORE moving headers to middleware
+5. Middleware must NOT generate per-request nonces (would break static generation)
+```
 
-## Pitfall-to-Phase Mapping
+### What Breaks If Done Out of Order
 
-How roadmap phases should address these pitfalls.
+| Wrong Order | Consequence |
+|-------------|-------------|
+| Move to middleware BEFORE fixing MDX | Middleware CSP without `unsafe-eval` breaks all blog posts |
+| Remove `unsafe-inline` BEFORE fixing syntax highlighting | All code blocks lose styling |
+| Add SRI hashes BEFORE removing `unsafe-eval` | SRI works but `unsafe-eval` still weakens CSP -- wasted effort |
+| Fix syntax highlighting BEFORE fixing MDX | Blog posts break during the intermediate state if `unsafe-eval` is accidentally removed |
 
-| Pitfall | Prevention Phase | Verification |
-|---------|------------------|--------------|
-| CSP nonces destroy static generation | Security hardening (Phase 1) | Build output shows all pages as "Static" after CSP headers added |
-| CSP breaks Vercel Analytics / MDX | Security hardening (Phase 1) | Deploy with `Report-Only`, check browser console on all page types, verify Vercel Analytics dashboard |
-| Error boundaries break layout | Error resilience (Phase 2) | Navigate to each error page directly; verify header/footer/fonts present on segment error pages |
-| Vitest cannot resolve `@/.velite` | Testing setup (Phase 2-3) | `npm test` passes in a fresh clone after `npm install && npm run velite` |
-| OG images exceed edge limits | SEO/branding (Phase 3) | `curl` each OG image endpoint returns 200 with image content-type; test with social preview tools |
-| Dependency upgrades cascade | Dependency cleanup (Phase 4, last) | Each upgrade is a separate commit; `npm run build` passes after each |
-| Code deduplication regressions | Code quality (Phase 3, after tests) | Tests for filter behavior pass before AND after extraction; manual check of URL persistence + transitions |
+### Correct Order
+
+1. Fix MDX rendering (server component migration) -- removes need for `unsafe-eval`
+2. Fix syntax highlighting (CSS-based or accept `unsafe-inline`) -- optionally removes need for `unsafe-inline` in `style-src`
+3. Write the final CSP policy reflecting the new requirements
+4. Move all security headers to middleware with the finalized static CSP
+5. Remove `headers()` from `next.config.ts`
+6. Verify all pages with DevTools -- single CSP header, no violations
+
+---
+
+## Phase-Specific Warnings
+
+| Phase Topic | Likely Pitfall | Mitigation |
+|-------------|---------------|------------|
+| MDX migration (removing `unsafe-eval`) | Pitfall 2 (format assumptions), Pitfall 8 (client component overrides) | Convert `MDXContent` to server component. Verify full pipeline with code-heavy blog posts. Do NOT adopt `next-mdx-remote` (same problem). |
+| Syntax highlighting migration | Pitfall 3 (color loss), Pitfall 4 (background orphan) | Decide: accept `unsafe-inline` for style-src (pragmatic) or switch to class-based theme (thorough). Handle background color explicitly in CSS. Visual regression test every code variant. |
+| CSP middleware | Pitfall 1 (static generation loss), Pitfall 5 (double headers) | Use hash-based static CSP, NOT nonces. Remove `headers()` from `next.config.ts`. Verify `next build` output still shows static pages. |
+| `useSyncExternalStore` migration | Pitfall 6 (hydration mismatch) | Return primitives from `getSnapshot`. Match `getServerSnapshot` to initial client value (`null` for view counts, `false` for reduced motion). Use stable references for objects. |
+| npm overrides | Pitfall 7 (silent breakage) | Document every override. Verify with `npm ls`. Treat as temporary. |
+| ESLint cleanup | Pitfall 9 (mystery suppressions), Pitfall 10 (version sync) | Update config version first in isolation. Explanatory comments on all disable directives. |
+| Velite pinning | Pitfall 11 (0.x breaking changes) | One-character fix. Do first. |
 
 ## Sources
 
-- [Next.js CSP Guide](https://nextjs.org/docs/pages/guides/content-security-policy) -- nonce approach requires dynamic rendering
-- [Next.js Error Handling Docs](https://nextjs.org/docs/app/getting-started/error-handling) -- `error.tsx` does not catch layout errors
-- [Next.js Vitest Setup Guide](https://nextjs.org/docs/app/guides/testing/vitest) -- `vite-tsconfig-paths` for alias resolution
-- [Next.js OG Image Docs](https://nextjs.org/docs/app/api-reference/file-conventions/metadata/opengraph-image) -- 500KB bundle limit, font loading patterns
-- [GitHub Issue #63015: CSP Broken in App Router](https://github.com/vercel/next.js/issues/63015) -- nonce application failures
-- [GitHub Issue #62046: error.tsx not rendered for static routes](https://github.com/vercel/next.js/issues/62046) -- error boundaries and static generation
-- [GitHub Discussion #72006: OG Image Loading Times](https://github.com/vercel/next.js/discussions/72006) -- performance optimization strategies
-- [GitHub Discussion #72424: Vitest path alias docs](https://github.com/vercel/next.js/discussions/72424) -- `vite-tsconfig-paths` configuration
-- [Shiki v4 Migration Guide](https://shiki.style/guide/migrate) -- breaking changes from v3
-- [Shiki v4 Blog Post](https://shiki.style/blog/v4) -- Node.js 20+ requirement, API name corrections
-- [Upstash Ratelimit Docs](https://upstash.com/docs/redis/sdks/ratelimit-ts/overview) -- ephemeral cache pattern
-- [Upstash Blog: Next.js Rate Limiting](https://upstash.com/blog/nextjs-ratelimiting) -- middleware implementation patterns
-- [Vercel CSP Docs](https://vercel.com/docs/headers/security-headers) -- best practices, Report-Only recommendation
-- [@vercel/analytics v2 Changelog](https://github.com/vercel/analytics/releases) -- resilient intake, license change
-- [GitHub Issue #89754: Nonce CSP + cacheComponents](https://github.com/vercel/next.js/issues/89754) -- nonce incompatibility with caching
+- [Next.js CSP Guide](https://nextjs.org/docs/app/guides/content-security-policy) -- nonce approach requires dynamic rendering
+- [Next.js Discussion #54907](https://github.com/vercel/next.js/discussions/54907) -- nonce + static page incompatibility
+- [Next.js Discussion #64554](https://github.com/vercel/next.js/discussions/64554) -- hash-based CSP for SSG
+- [Next.js Discussion #81703](https://github.com/vercel/next.js/discussions/81703) -- `script-src` requires `unsafe-inline` in production
+- [MDX Discussion #2322](https://github.com/orgs/mdx-js/discussions/2322) -- running compiled MDX without Function constructor
+- [next-mdx-remote Issue #274](https://github.com/hashicorp/next-mdx-remote/issues/274) -- also uses `new Function()` internally
+- [Velite MDX Guide](https://velite.js.org/guide/using-mdx) -- function-body output format, evaluation pattern
+- [Velite Code Highlighting Guide](https://velite.js.org/guide/code-highlighting) -- Shiki integration
+- [Shiki Dual Themes Documentation](https://shiki.matsu.io/guide/dual-themes) -- CSS-variables theme approach
+- [rehype-pretty-code Documentation](https://rehype-pretty.pages.dev/) -- theme configuration, CSS variable output
+- [React useSyncExternalStore Reference](https://react.dev/reference/react/useSyncExternalStore) -- official API, `getServerSnapshot` requirements
+- [TkDodo: Avoiding Hydration Mismatches](https://tkdodo.eu/blog/avoiding-hydration-mismatches-with-use-sync-external-store) -- `getServerSnapshot` pitfalls
+- [Nico's Blog: Be Careful with useSyncExternalStore](https://www.nico.fyi/blog/be-careful-with-usesyncexternalstore) -- object reference infinite re-render pitfall
+- [npm Overrides RFC](https://github.com/npm/rfcs/blob/main/accepted/0036-overrides.md) -- official specification
+- [HeroDevs: Guide to npm Overrides](https://www.herodevs.com/blog-posts/a-guide-to-npm-overrides-take-control-of-your-dependencies) -- practical pitfalls and version selector issues
 
 ---
-*Pitfalls research for: v1.6 Address Concerns -- hardening an existing Next.js 16 portfolio/blog*
-*Researched: 2026-04-02*
+*Pitfalls research for: v1.7 Address Additional Concerns -- CSP hardening, MDX migration, lint cleanup*
+*Researched: 2026-04-03*

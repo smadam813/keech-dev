@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.3
-milestone_name: milestone
-status: v1.6 Address Concerns milestone shipped
-stopped_at: Milestone v1.6 completed and archived
-last_updated: "2026-04-03T17:42:30.841Z"
-last_activity: 2026-04-03
+milestone: v1.7
+milestone_name: Address Additional Concerns
+status: verifying
+stopped_at: Completed 14-01-PLAN.md
+last_updated: "2026-04-04T02:54:27.917Z"
+last_activity: 2026-04-04
 progress:
-  total_phases: 0
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 100
+  total_phases: 6
+  completed_phases: 1
+  total_plans: 1
+  completed_plans: 1
+  percent: 0
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-03)
 
 **Core value:** A polished, intentional developer portfolio — fast, visually distinctive, and well-crafted in every detail.
-**Current focus:** Planning next milestone
+**Current focus:** Phase 14 — Foundation Hardening
 
 ## Current Position
 
-Phase: 13 of 13 (Sticky/Pinned Mobile TOC)
-Plan: 1 of 1 complete in current phase
-Status: v1.6 Address Concerns milestone shipped
-Last activity: 2026-04-03
+Phase: 15
+Plan: Not started
+Status: Phase complete — ready for verification
+Last activity: 2026-04-04
 
-Progress: [████████████] 100% (13/13 phases complete across all milestones)
+Progress: [░░░░░░░░░░░░] 0% (v1.7: 0/6 phases)
 
 ## Performance Metrics
 
@@ -39,34 +39,27 @@ Progress: [████████████] 100% (13/13 phases complete acr
 - Total plans completed: 33 (20 from v1.3-v1.5 + 13 from v1.6)
 - Quick tasks completed: 11
 
-**By Phase (v1.3-v1.5):**
+**By Milestone:**
 
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| 01-animation-sync-reveal | 1 | ~15min | ~15min |
-| 02-rune-glow-effects | 1 | ~45min | ~45min |
-| 03-infrastructure-api | 2 | ~3min | ~1.5min |
-| 04-post-page-integration | 2 | ~6min | ~3min |
-| 05-listing-polish | 2 | ~4min | ~2min |
-| 06-filter-components | 1 | ~4min | ~4min |
-| 07-filtered-listing-integration | 2 | ~2min | ~1min |
-| 08-counts-and-transitions | 1 | ~2min | ~2min |
-
-**By Phase (v1.6):**
-
-| Phase | Plans | Completed |
-|-------|-------|-----------|
-| 09-security-patches | 2 | 2026-04-03 |
-| 10-resilience-code-quality | 4 | 2026-04-03 |
-| 11-seo-branding | 3 | 2026-04-03 |
-| 12-testing-infrastructure | 3 | 2026-04-03 |
-| 13-sticky-pinned-mobile-toc | 1 | 2026-04-03 |
+| Milestone | Phases | Plans | Timeline |
+|-----------|--------|-------|----------|
+| v1.3 | 2 | 2 | 9 days |
+| v1.4 | 3 | 6 | 2 days |
+| v1.5 | 3 | 4 | 3 days |
+| v1.6 | 5 | 13 | 2 days |
+| Phase 14 P01 | 2min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
+Recent decisions affecting v1.7:
+
+- `s.markdown()` over server-component MDX: cleanest path, eliminates `new Function()` entirely
+- Accept `unsafe-inline` in style-src: marginal security gain not worth effort; CSS-variables theme adopted for design system benefits
+- `unsafe-inline` stays in script-src: unavoidable without nonces (which break static generation)
+- [Phase 14]: Pin Velite to exact version (no caret) to prevent unexpected build breakage
 
 ### Pending Todos
 
@@ -74,7 +67,9 @@ None.
 
 ### Blockers/Concerns
 
-None.
+- Phase 16: rehype plugin for `role="list"` needs validation in `s.markdown()` mode
+- Phase 16: DOM-based copy button injection needs verification against rehype-pretty-code HTML structure
+- Phase 17: CSS-variables theme is coarser than github-dark-dimmed (~10 vars vs ~40 scopes) — visual check required
 
 ### Quick Tasks Completed
 
@@ -94,6 +89,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-03
-Stopped at: Milestone v1.6 completed and archived
+Last session: 2026-04-04T02:40:08.259Z
+Stopped at: Completed 14-01-PLAN.md
 Resume file: None
