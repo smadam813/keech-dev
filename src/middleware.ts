@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
 
 const cspDirectives = [
   "default-src 'self'",
@@ -13,7 +12,7 @@ const cspDirectives = [
   "form-action 'self'",
 ].join('; ')
 
-export function middleware(request: NextRequest) {
+export function middleware() {
   const response = NextResponse.next()
 
   response.headers.set('Content-Security-Policy', cspDirectives)
