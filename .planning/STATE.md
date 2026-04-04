@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Address Additional Concerns
 status: verifying
-stopped_at: Completed 14-01-PLAN.md
-last_updated: "2026-04-04T02:54:27.917Z"
+stopped_at: Completed 15-01-PLAN.md
+last_updated: "2026-04-04T03:16:55.909Z"
 last_activity: 2026-04-04
 progress:
   total_phases: 6
-  completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
+  completed_phases: 2
+  total_plans: 2
+  completed_plans: 2
   percent: 0
 ---
 
@@ -48,6 +48,7 @@ Progress: [░░░░░░░░░░░░] 0% (v1.7: 0/6 phases)
 | v1.5 | 3 | 4 | 3 days |
 | v1.6 | 5 | 13 | 2 days |
 | Phase 14 P01 | 2min | 2 tasks | 2 files |
+| Phase 15 P01 | 2min | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -60,6 +61,7 @@ Recent decisions affecting v1.7:
 - Accept `unsafe-inline` in style-src: marginal security gain not worth effort; CSS-variables theme adopted for design system benefits
 - `unsafe-inline` stays in script-src: unavoidable without nonces (which break static generation)
 - [Phase 14]: Pin Velite to exact version (no caret) to prevent unexpected build breakage
+- [Phase 15]: Security headers centralized in src/middleware.ts; next.config.ts headers() removed
 
 ### Pending Todos
 
@@ -89,6 +91,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-04T02:40:08.259Z
-Stopped at: Completed 14-01-PLAN.md
+Last session: 2026-04-04T03:16:55.907Z
+Stopped at: Completed 15-01-PLAN.md
 Resume file: None
