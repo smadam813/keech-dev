@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Address Additional Concerns
 status: executing
-stopped_at: Phase 15 plans ready
-last_updated: "2026-04-04T03:23:31.909Z"
+stopped_at: Phase 15 shipped — PR #25
+last_updated: "2026-04-04T04:12:43.564Z"
 last_activity: 2026-04-04
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 2
   completed_plans: 2
-  percent: 0
+  percent: 33
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-03)
 
 **Core value:** A polished, intentional developer portfolio — fast, visually distinctive, and well-crafted in every detail.
-**Current focus:** Phase 15 — middleware-infrastructure
+**Current focus:** Phase 16 — MDX Migration
 
 ## Current Position
 
 Phase: 16
 Plan: Not started
-Status: Executing Phase 15
+Status: Phase 15 shipped — PR #25
 Last activity: 2026-04-04
 
-Progress: [░░░░░░░░░░░░] 0% (v1.7: 0/6 phases)
+Progress: [████░░░░░░░░] 33% (v1.7: 2/6 phases)
 
 ## Performance Metrics
 
@@ -48,6 +48,7 @@ Progress: [░░░░░░░░░░░░] 0% (v1.7: 0/6 phases)
 | v1.5 | 3 | 4 | 3 days |
 | v1.6 | 5 | 13 | 2 days |
 | Phase 14 P01 | 2min | 2 tasks | 2 files |
+| Phase 15 P01 | 2min | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -89,6 +90,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-04T03:12:03.806Z
-Stopped at: Phase 15 plans ready
-Resume file: .planning/phases/15-middleware-infrastructure/15-01-PLAN.md
+Last session: 2026-04-04T04:12:43.564Z
+Stopped at: Phase 15 shipped — PR #25
+Resume file: .planning/ROADMAP.md
