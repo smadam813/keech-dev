@@ -39,7 +39,7 @@ next-env.d.ts
 example-images/
 
 # blog research working files
-.research/
+/.research/
 
 # velite generated files
 .velite
@@ -49,3 +49,4 @@ example-images/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+/.playwright-mcp/
