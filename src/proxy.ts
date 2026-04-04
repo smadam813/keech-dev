@@ -12,7 +12,7 @@ const cspDirectives = [
   "form-action 'self'",
 ].join('; ')
 
-export function middleware() {
+export default function proxy() {
   const response = NextResponse.next()
 
   response.headers.set('Content-Security-Policy', cspDirectives)
