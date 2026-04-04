@@ -23,11 +23,11 @@ Requirements for milestone v1.7 Address Additional Concerns. Each maps to roadma
 
 ### MDX Migration
 
-- [ ] **MDX-01**: Velite config uses s.markdown() instead of s.mdx() for content collections
-- [ ] **MDX-02**: MDXContent renders HTML via dangerouslySetInnerHTML (no new Function)
-- [ ] **MDX-03**: Code block copy button works via DOM-based approach after HTML rendering
-- [ ] **MDX-04**: VoiceOver-compatible list elements (role="list") preserved via rehype plugin
-- [ ] **MDX-05**: `unsafe-eval` removed from script-src in CSP
+- [x] **MDX-01**: Velite config uses s.markdown() instead of s.mdx() for content collections
+- [x] **MDX-02**: MDXContent renders HTML via dangerouslySetInnerHTML (no new Function)
+- [x] **MDX-03**: Code block copy button works via DOM-based approach after HTML rendering
+- [x] **MDX-04**: VoiceOver-compatible list elements (role="list") preserved via rehype plugin
+- [x] **MDX-05**: `unsafe-eval` removed from script-src in CSP
 
 ### Syntax Highlighting
 
@@ -90,11 +90,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MID-01 | Phase 15 | Complete |
 | MID-02 | Phase 15 | Complete |
 | MID-03 | Phase 15 | Complete |
-| MDX-01 | Phase 16 | Pending |
-| MDX-02 | Phase 16 | Pending |
-| MDX-03 | Phase 16 | Pending |
-| MDX-04 | Phase 16 | Pending |
-| MDX-05 | Phase 16 | Pending |
+| MDX-01 | Phase 16 | Complete |
+| MDX-02 | Phase 16 | Complete |
+| MDX-03 | Phase 16 | Complete |
+| MDX-04 | Phase 16 | Complete |
+| MDX-05 | Phase 16 | Complete |
 | SYN-01 | Phase 17 | Pending |
 | SYN-02 | Phase 17 | Pending |
 | SYN-03 | Phase 17 | Pending |

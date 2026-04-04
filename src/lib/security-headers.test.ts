@@ -18,7 +18,8 @@ describe('security headers via proxy (MID-01, MID-02, MID-03)', () => {
     const csp = response.headers.get('Content-Security-Policy')
     expect(csp).toBeDefined()
     expect(csp).toContain("default-src 'self'")
-    expect(csp).toContain("script-src 'self' 'unsafe-eval' 'unsafe-inline'")
+    expect(csp).toContain("script-src 'self' 'unsafe-inline'")
+    expect(csp).not.toContain('unsafe-eval')
   })
 
   it('sets X-Frame-Options to DENY', () => {

@@ -79,6 +79,11 @@ A polished, intentional developer portfolio — fast, visually distinctive, and 
 - ✓ Security headers served from src/proxy.ts (middleware centralization) — v1.7
 - ✓ headers() function removed from next.config.ts — v1.7
 - ✓ Single CSP header per response (no duplication) — v1.7
+- ✓ Velite uses s.markdown() instead of s.mdx() for content collections — v1.7
+- ✓ MDXContent renders HTML via dangerouslySetInnerHTML (no new Function) — v1.7
+- ✓ Code block copy button works via DOM-based approach after HTML rendering — v1.7
+- ✓ VoiceOver-compatible list elements (role="list") preserved via rehype plugin — v1.7
+- ✓ unsafe-eval removed from script-src in CSP — v1.7
 
 ### Active
 

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Address Additional Concerns
 status: executing
-stopped_at: Phase 15 shipped — PR #25
-last_updated: "2026-04-04T04:12:43.564Z"
+stopped_at: Phase 16 context gathered
+last_updated: "2026-04-04T05:11:42.939Z"
 last_activity: 2026-04-04
 progress:
   total_phases: 6
-  completed_phases: 2
-  total_plans: 2
-  completed_plans: 2
+  completed_phases: 3
+  total_plans: 4
+  completed_plans: 4
   percent: 33
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-03)
 
 **Core value:** A polished, intentional developer portfolio — fast, visually distinctive, and well-crafted in every detail.
-**Current focus:** Phase 16 — MDX Migration
+**Current focus:** Phase 16 — mdx-migration
 
 ## Current Position
 
-Phase: 16
+Phase: 17
 Plan: Not started
-Status: Phase 15 shipped — PR #25
+Status: Executing Phase 16
 Last activity: 2026-04-04
 
 Progress: [████░░░░░░░░] 33% (v1.7: 2/6 phases)
@@ -90,6 +90,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-04T04:12:43.564Z
-Stopped at: Phase 15 shipped — PR #25
-Resume file: .planning/ROADMAP.md
+Last session: 2026-04-04T04:25:51.111Z
+Stopped at: Phase 16 context gathered
+Resume file: .planning/phases/16-mdx-migration/16-CONTEXT.md
