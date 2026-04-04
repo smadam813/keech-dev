@@ -82,36 +82,36 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FOUND-01 | — | Pending |
-| FOUND-02 | — | Pending |
-| FOUND-03 | — | Pending |
-| FOUND-04 | — | Pending |
-| FOUND-05 | — | Pending |
-| MID-01 | — | Pending |
-| MID-02 | — | Pending |
-| MID-03 | — | Pending |
-| MDX-01 | — | Pending |
-| MDX-02 | — | Pending |
-| MDX-03 | — | Pending |
-| MDX-04 | — | Pending |
-| MDX-05 | — | Pending |
-| SYN-01 | — | Pending |
-| SYN-02 | — | Pending |
-| SYN-03 | — | Pending |
-| SYN-04 | — | Pending |
-| RQ-01 | — | Pending |
-| RQ-02 | — | Pending |
-| RQ-03 | — | Pending |
-| RQ-04 | — | Pending |
-| VER-01 | — | Pending |
-| VER-02 | — | Pending |
-| VER-03 | — | Pending |
+| FOUND-01 | Phase 14 | Pending |
+| FOUND-02 | Phase 14 | Pending |
+| FOUND-03 | Phase 14 | Pending |
+| FOUND-04 | Phase 14 | Pending |
+| FOUND-05 | Phase 14 | Pending |
+| MID-01 | Phase 15 | Pending |
+| MID-02 | Phase 15 | Pending |
+| MID-03 | Phase 15 | Pending |
+| MDX-01 | Phase 16 | Pending |
+| MDX-02 | Phase 16 | Pending |
+| MDX-03 | Phase 16 | Pending |
+| MDX-04 | Phase 16 | Pending |
+| MDX-05 | Phase 16 | Pending |
+| SYN-01 | Phase 17 | Pending |
+| SYN-02 | Phase 17 | Pending |
+| SYN-03 | Phase 17 | Pending |
+| SYN-04 | Phase 17 | Pending |
+| RQ-01 | Phase 18 | Pending |
+| RQ-02 | Phase 18 | Pending |
+| RQ-03 | Phase 18 | Pending |
+| RQ-04 | Phase 18 | Pending |
+| VER-01 | Phase 19 | Pending |
+| VER-02 | Phase 19 | Pending |
+| VER-03 | Phase 19 | Pending |
 
 **Coverage:**
 - v1.7 requirements: 24 total
-- Mapped to phases: 0
-- Unmapped: 24
+- Mapped to phases: 24
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-03*
-*Last updated: 2026-04-03 after initial definition*
+*Last updated: 2026-04-03 after roadmap creation*

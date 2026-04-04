@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Address Additional Concerns
-status: Defining requirements
-stopped_at: Milestone v1.7 started
+status: Ready to plan
+stopped_at: Roadmap created for v1.7
 last_updated: "2026-04-03T00:00:00.000Z"
 last_activity: 2026-04-03
 progress:
-  total_phases: 0
+  total_phases: 6
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-03)
 
 **Core value:** A polished, intentional developer portfolio — fast, visually distinctive, and well-crafted in every detail.
-**Current focus:** Defining requirements for v1.7
+**Current focus:** Phase 14 — Foundation Hardening
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-04-03 — Milestone v1.7 started
+Phase: 14 of 19 (Foundation Hardening) — first of 6 phases in v1.7
+Plan: 0 of 0 in current phase (not yet planned)
+Status: Ready to plan
+Last activity: 2026-04-03 — Roadmap created for v1.7 Address Additional Concerns
 
-Progress: [░░░░░░░░░░░░] 0%
+Progress: [░░░░░░░░░░░░] 0% (v1.7: 0/6 phases)
 
 ## Performance Metrics
 
@@ -39,34 +39,25 @@ Progress: [░░░░░░░░░░░░] 0%
 - Total plans completed: 33 (20 from v1.3-v1.5 + 13 from v1.6)
 - Quick tasks completed: 11
 
-**By Phase (v1.3-v1.5):**
+**By Milestone:**
 
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| 01-animation-sync-reveal | 1 | ~15min | ~15min |
-| 02-rune-glow-effects | 1 | ~45min | ~45min |
-| 03-infrastructure-api | 2 | ~3min | ~1.5min |
-| 04-post-page-integration | 2 | ~6min | ~3min |
-| 05-listing-polish | 2 | ~4min | ~2min |
-| 06-filter-components | 1 | ~4min | ~4min |
-| 07-filtered-listing-integration | 2 | ~2min | ~1min |
-| 08-counts-and-transitions | 1 | ~2min | ~2min |
-
-**By Phase (v1.6):**
-
-| Phase | Plans | Completed |
-|-------|-------|-----------|
-| 09-security-patches | 2 | 2026-04-03 |
-| 10-resilience-code-quality | 4 | 2026-04-03 |
-| 11-seo-branding | 3 | 2026-04-03 |
-| 12-testing-infrastructure | 3 | 2026-04-03 |
-| 13-sticky-pinned-mobile-toc | 1 | 2026-04-03 |
+| Milestone | Phases | Plans | Timeline |
+|-----------|--------|-------|----------|
+| v1.3 | 2 | 2 | 9 days |
+| v1.4 | 3 | 6 | 2 days |
+| v1.5 | 3 | 4 | 3 days |
+| v1.6 | 5 | 13 | 2 days |
 
 ## Accumulated Context
 
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
+Recent decisions affecting v1.7:
+
+- `s.markdown()` over server-component MDX: cleanest path, eliminates `new Function()` entirely
+- Accept `unsafe-inline` in style-src: marginal security gain not worth effort; CSS-variables theme adopted for design system benefits
+- `unsafe-inline` stays in script-src: unavoidable without nonces (which break static generation)
 
 ### Pending Todos
 
@@ -74,7 +65,9 @@ None.
 
 ### Blockers/Concerns
 
-None.
+- Phase 16: rehype plugin for `role="list"` needs validation in `s.markdown()` mode
+- Phase 16: DOM-based copy button injection needs verification against rehype-pretty-code HTML structure
+- Phase 17: CSS-variables theme is coarser than github-dark-dimmed (~10 vars vs ~40 scopes) — visual check required
 
 ### Quick Tasks Completed
 
@@ -95,5 +88,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-04-03
-Stopped at: Milestone v1.7 started, defining requirements
+Stopped at: Roadmap created for v1.7 — ready to plan Phase 14
 Resume file: None
