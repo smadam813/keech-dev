@@ -9,11 +9,11 @@ Requirements for milestone v1.7 Address Additional Concerns. Each maps to roadma
 
 ### Foundation
 
-- [ ] **FOUND-01**: npm audit reports zero vulnerabilities after fix
-- [ ] **FOUND-02**: eslint-config-next version matches next@16.2.2
-- [ ] **FOUND-03**: Intentional `<a>` tags in error boundaries have eslint-disable comments with explanatory context
-- [ ] **FOUND-04**: Velite pinned to exact version 0.3.1 (no caret)
-- [ ] **FOUND-05**: Stale worktree directories removed, reclaiming ~3.6 GB disk space
+- [x] **FOUND-01**: npm audit reports zero vulnerabilities after fix
+- [x] **FOUND-02**: eslint-config-next version matches next@16.2.2
+- [x] **FOUND-03**: Intentional `<a>` tags in error boundaries have eslint-disable comments with explanatory context
+- [x] **FOUND-04**: Velite pinned to exact version 0.3.1 (no caret)
+- [x] **FOUND-05**: Stale worktree directories removed, reclaiming ~3.6 GB disk space
 
 ### Middleware
 
@@ -82,11 +82,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FOUND-01 | Phase 14 | Pending |
-| FOUND-02 | Phase 14 | Pending |
-| FOUND-03 | Phase 14 | Pending |
-| FOUND-04 | Phase 14 | Pending |
-| FOUND-05 | Phase 14 | Pending |
+| FOUND-01 | Phase 14 | Complete |
+| FOUND-02 | Phase 14 | Complete |
+| FOUND-03 | Phase 14 | Complete |
+| FOUND-04 | Phase 14 | Complete |
+| FOUND-05 | Phase 14 | Complete |
 | MID-01 | Phase 15 | Pending |
 | MID-02 | Phase 15 | Pending |
 | MID-03 | Phase 15 | Pending |

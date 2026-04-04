@@ -59,7 +59,7 @@ See: `.planning/milestones/v1.6-ROADMAP.md` for full details.
 
 **Milestone Goal:** Harden CSP by eliminating `unsafe-eval`, centralize security via middleware, migrate syntax highlighting to CSS-variables theme, and clean up remaining lint/dependency/React quality concerns.
 
-- [ ] **Phase 14: Foundation Hardening** - Clean dependency tree, lock Velite, reduce lint noise before migrations
+- [x] **Phase 14: Foundation Hardening** - Clean dependency tree, lock Velite, reduce lint noise before migrations (completed 2026-04-04)
 - [ ] **Phase 15: Middleware Infrastructure** - Centralize all security headers in src/middleware.ts
 - [ ] **Phase 16: MDX Migration** - Switch to s.markdown() and remove unsafe-eval from CSP
 - [ ] **Phase 17: Syntax Highlighting Theme Migration** - Move token colors to CSS variables in globals.css
@@ -78,9 +78,9 @@ See: `.planning/milestones/v1.6-ROADMAP.md` for full details.
   3. Error boundary `<a>` tags have eslint-disable comments with explanatory context (no unexplained suppressions)
   4. `package.json` shows Velite pinned to exact `0.3.1` (no caret prefix)
   5. Stale worktree directories no longer exist on disk
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 Plans:
-- [ ] 14-01-PLAN.md -- Fix audit vulnerabilities, pin Velite, bump eslint-config-next, verify lint comments, clean worktrees
+- [x] 14-01-PLAN.md -- Fix audit vulnerabilities, pin Velite, bump eslint-config-next, verify lint comments, clean worktrees
 
 ### Phase 15: Middleware Infrastructure
 **Goal**: All security headers are served from a single middleware file, with no duplication from next.config.ts
@@ -157,7 +157,7 @@ Phases execute in numeric order: 14 → 15 → 16 → 17 → 18 → 19
 | 11. SEO & Branding | v1.6 | 3/3 | Complete | 2026-04-03 |
 | 12. Testing Infrastructure | v1.6 | 3/3 | Complete | 2026-04-03 |
 | 13. Sticky/Pinned Mobile TOC | v1.6 | 1/1 | Complete | 2026-04-03 |
-| 14. Foundation Hardening | v1.7 | 0/1 | Not started | - |
+| 14. Foundation Hardening | v1.7 | 1/1 | Complete   | 2026-04-04 |
 | 15. Middleware Infrastructure | v1.7 | 0/0 | Not started | - |
 | 16. MDX Migration | v1.7 | 0/0 | Not started | - |
 | 17. Syntax Highlighting Theme Migration | v1.7 | 0/0 | Not started | - |
