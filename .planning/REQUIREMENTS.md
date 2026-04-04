@@ -17,7 +17,7 @@ Requirements for milestone v1.7 Address Additional Concerns. Each maps to roadma
 
 ### Middleware
 
-- [x] **MID-01**: All security headers (CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy) served from src/middleware.ts
+- [x] **MID-01**: All security headers (CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy) served from src/proxy.ts
 - [x] **MID-02**: headers() function removed from next.config.ts
 - [x] **MID-03**: Single Content-Security-Policy header per response (no duplication)
 
