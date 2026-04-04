@@ -61,7 +61,7 @@ See: `.planning/milestones/v1.6-ROADMAP.md` for full details.
 
 - [x] **Phase 14: Foundation Hardening** - Clean dependency tree, lock Velite, reduce lint noise before migrations (completed 2026-04-04)
 - [x] **Phase 15: Middleware Infrastructure** - Centralize all security headers in src/middleware.ts (completed 2026-04-04)
-- [ ] **Phase 16: MDX Migration** - Switch to s.markdown() and remove unsafe-eval from CSP
+- [x] **Phase 16: MDX Migration** - Switch to s.markdown() and remove unsafe-eval from CSP (completed 2026-04-04)
 - [ ] **Phase 17: Syntax Highlighting Theme Migration** - Move token colors to CSS variables in globals.css
 - [ ] **Phase 18: React 19 Lint Cleanup** - Migrate localStorage/matchMedia patterns to useSyncExternalStore
 - [ ] **Phase 19: Verification and Polish** - End-to-end validation of hardened CSP and zero lint issues
@@ -102,7 +102,9 @@ Plans:
   3. VoiceOver announces list elements correctly (role="list" preserved)
   4. Browser console shows no CSP violations with `unsafe-eval` removed from script-src
   5. MDXContent component no longer uses `new Function()` anywhere in the codebase
-**Plans**: TBD
+**Plans:** 1/1 plans complete
+Plans:
+- [x] 16-01-PLAN.md -- Switch to s.markdown(), rewrite MDXContent, DOM-based copy buttons, remove unsafe-eval from CSP
 
 ### Phase 17: Syntax Highlighting Theme Migration
 **Goal**: Syntax highlighting colors are defined as CSS variables in globals.css, consistent with the site's CSS-first design token approach
@@ -159,7 +161,7 @@ Phases execute in numeric order: 14 → 15 → 16 → 17 → 18 → 19
 | 13. Sticky/Pinned Mobile TOC | v1.6 | 1/1 | Complete | 2026-04-03 |
 | 14. Foundation Hardening | v1.7 | 1/1 | Complete    | 2026-04-04 |
 | 15. Middleware Infrastructure | v1.7 | 1/1 | Complete    | 2026-04-04 |
-| 16. MDX Migration | v1.7 | 0/0 | Not started | - |
+| 16. MDX Migration | v1.7 | 1/1 | Complete    | 2026-04-04 |
 | 17. Syntax Highlighting Theme Migration | v1.7 | 0/0 | Not started | - |
 | 18. React 19 Lint Cleanup | v1.7 | 0/0 | Not started | - |
 | 19. Verification and Polish | v1.7 | 0/0 | Not started | - |
