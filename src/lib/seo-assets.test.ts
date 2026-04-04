@@ -225,14 +225,14 @@ describe('CLN-02: about page has no resume placeholder or Download import', () =
 })
 
 // ---------------------------------------------------------------------------
-// Gap 8 — SEC-01: CSP in next.config.ts includes 'unsafe-inline' in script-src
+// Gap 8 — SEC-01: CSP in proxy includes 'unsafe-inline' in script-src
 // ---------------------------------------------------------------------------
 describe("SEC-01: CSP script-src includes 'unsafe-inline'", () => {
-  const configSrc = readFileSync(join(root, 'next.config.ts'), 'utf-8')
+  const middlewareSrc = readFileSync(join(root, 'src', 'proxy.ts'), 'utf-8')
 
   it("script-src directive contains 'unsafe-inline'", () => {
     // Locate the script-src line and verify unsafe-inline is present
-    const scriptSrcLine = configSrc
+    const scriptSrcLine = middlewareSrc
       .split('\n')
       .find(line => line.includes('script-src'))
     expect(scriptSrcLine).toBeDefined()
@@ -240,8 +240,8 @@ describe("SEC-01: CSP script-src includes 'unsafe-inline'", () => {
   })
 
   it('all other security headers remain intact (X-Frame-Options, X-Content-Type-Options, Referrer-Policy)', () => {
-    expect(configSrc).toContain('X-Frame-Options')
-    expect(configSrc).toContain('X-Content-Type-Options')
-    expect(configSrc).toContain('Referrer-Policy')
+    expect(middlewareSrc).toContain('X-Frame-Options')
+    expect(middlewareSrc).toContain('X-Content-Type-Options')
+    expect(middlewareSrc).toContain('Referrer-Policy')
   })
 })

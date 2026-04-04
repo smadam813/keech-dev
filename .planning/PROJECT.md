@@ -76,6 +76,10 @@ A polished, intentional developer portfolio — fast, visually distinctive, and 
 - ✓ Velite pinned to exact version 0.3.1 — v1.7
 - ✓ Stale worktree artifacts cleaned up — v1.7
 
+- ✓ Security headers served from src/proxy.ts (middleware centralization) — v1.7
+- ✓ headers() function removed from next.config.ts — v1.7
+- ✓ Single CSP header per response (no duplication) — v1.7
+
 ### Active
 
 ## Current Milestone: v1.7 Address Additional Concerns

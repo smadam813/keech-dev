@@ -17,9 +17,9 @@ Requirements for milestone v1.7 Address Additional Concerns. Each maps to roadma
 
 ### Middleware
 
-- [ ] **MID-01**: All security headers (CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy) served from src/middleware.ts
-- [ ] **MID-02**: headers() function removed from next.config.ts
-- [ ] **MID-03**: Single Content-Security-Policy header per response (no duplication)
+- [x] **MID-01**: All security headers (CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy) served from src/proxy.ts
+- [x] **MID-02**: headers() function removed from next.config.ts
+- [x] **MID-03**: Single Content-Security-Policy header per response (no duplication)
 
 ### MDX Migration
 
@@ -87,9 +87,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FOUND-03 | Phase 14 | Complete |
 | FOUND-04 | Phase 14 | Complete |
 | FOUND-05 | Phase 14 | Complete |
-| MID-01 | Phase 15 | Pending |
-| MID-02 | Phase 15 | Pending |
-| MID-03 | Phase 15 | Pending |
+| MID-01 | Phase 15 | Complete |
+| MID-02 | Phase 15 | Complete |
+| MID-03 | Phase 15 | Complete |
 | MDX-01 | Phase 16 | Pending |
 | MDX-02 | Phase 16 | Pending |
 | MDX-03 | Phase 16 | Pending |
