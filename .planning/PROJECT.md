@@ -70,6 +70,11 @@ A polished, intentional developer portfolio — fast, visually distinctive, and 
 - ✓ CSS-only sticky positioning for mobile TOC (no JS scroll listeners) — v1.6
 - ✓ Visual sticky indicator distinguishes pinned from inline TOC — v1.6
 - ✓ Smooth scroll with scroll-margin-top clearance on TOC heading links — v1.6
+- ✓ Zero npm audit vulnerabilities — v1.7
+- ✓ eslint-config-next version synced with next@16.2.2 — v1.7
+- ✓ Error boundary `<a>` tags have eslint-disable comments with context — v1.7
+- ✓ Velite pinned to exact version 0.3.1 — v1.7
+- ✓ Stale worktree artifacts cleaned up — v1.7
 
 ### Active
 
@@ -188,4 +193,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-03 after v1.7 milestone start*
+*Last updated: 2026-04-04 after Phase 14 Foundation Hardening complete*
