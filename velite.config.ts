@@ -1,8 +1,20 @@
 import { defineCollection, defineConfig, s } from 'velite'
 import rehypePrettyCode from 'rehype-pretty-code'
 import rehypeSlug from 'rehype-slug'
+import { createCssVariablesTheme } from 'shiki'
 import type { Root } from 'hast'
 import { visit } from 'unist-util-visit'
+
+/**
+ * CSS-variables theme for syntax highlighting.
+ * Token colors are defined in globals.css alongside other design tokens,
+ * sourced from github-dark-dimmed for visual parity.
+ */
+const codeTheme = createCssVariablesTheme({
+  name: 'css-variables',
+  variablePrefix: '--shiki-',
+  variableDefaults: {}
+})
 
 /**
  * Rehype plugin that adds role="list" to <ul> and <ol> elements.
@@ -84,8 +96,8 @@ export default defineConfig({
       [
         rehypePrettyCode,
         {
-          theme: 'github-dark-dimmed',
-          keepBackground: true,
+          theme: codeTheme,
+          keepBackground: false,
           defaultLang: {
             block: 'typescript',
             inline: 'typescript'
