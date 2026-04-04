@@ -105,7 +105,7 @@ export default async function PostPage({ params }: PostPageProps) {
           </header>
 
           <div className="prose">
-            <MDXContent code={post.body} />
+            <MDXContent html={post.body} />
           </div>
         </div>
 

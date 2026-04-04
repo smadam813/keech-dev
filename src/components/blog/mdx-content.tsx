@@ -1,24 +1,7 @@
-'use client'
-
-import React from 'react'
-import * as runtime from 'react/jsx-runtime'
-import type { MDXComponents } from 'mdx/types'
-import { CodeBlock } from './code-block'
+import { CodeBlockEnhancer } from './code-block-enhancer'
 
 interface MDXContentProps {
-  code: string
-  components?: MDXComponents
-}
-
-const useMDXComponent = (code: string) => {
-  const fn = new Function(code)
-  return fn({ ...runtime }).default
-}
-
-const defaultComponents: MDXComponents = {
-  pre: CodeBlock,
-  ul: (props: React.ComponentPropsWithoutRef<'ul'>) => <ul role="list" {...props} />,
-  ol: (props: React.ComponentPropsWithoutRef<'ol'>) => <ol role="list" {...props} />,
+  html: string
 }
 
 function MDXFallback() {
@@ -37,12 +20,15 @@ function MDXFallback() {
   )
 }
 
-export function MDXContent({ code, components = {} }: MDXContentProps) {
-  try {
-    const Component = useMDXComponent(code)
-    return <Component components={{ ...defaultComponents, ...components }} />
-  } catch (error) {
-    console.error('[mdx] Failed to render content:', error)
+export function MDXContent({ html }: MDXContentProps) {
+  if (!html) {
     return <MDXFallback />
   }
+
+  return (
+    <>
+      <div dangerouslySetInnerHTML={{ __html: html }} />
+      <CodeBlockEnhancer />
+    </>
+  )
 }
