@@ -1,536 +1,660 @@
-# Architecture Research
+# Architecture Patterns
 
-**Domain:** Next.js 16 App Router hardening -- security, resilience, testing, SEO, and code quality integration
-**Researched:** 2026-04-02
-**Confidence:** HIGH
+**Domain:** CSP hardening, MDX migration, middleware, lint cleanup for existing Next.js 16 portfolio
+**Researched:** 2026-04-03
+**Supersedes:** v1.6 architecture research (2026-04-02)
 
-## System Overview: Current vs. Target
+## Integration Overview
 
-```
-CURRENT ARCHITECTURE
-====================================================================
-src/app/
-  layout.tsx .......................... Root layout (no error boundary)
-  page.tsx ............................ Home (static)
-  blog/
-    page.tsx .......................... Blog listing (static + Suspense)
-    [slug]/page.tsx ................... Blog post (static, MDX via new Function)
-  projects/
-    page.tsx .......................... Project listing (static + Suspense)
-    [slug]/page.tsx ................... Project detail (static)
-  api/views/
-    route.ts .......................... Batch GET (no validation, no rate limit)
-    [slug]/route.ts ................... GET/POST (IP dedup, no validation, no rate limit)
-  sitemap.ts .......................... Static (broken lastModified)
-  robots.ts ........................... Static
+This document answers four specific architecture questions about how new v1.7 features integrate with the existing keech.dev codebase. Each section identifies the exact integration points, new vs modified components, and build-order dependencies.
 
-next.config.ts ....................... Minimal (images.qualities only)
-(no middleware.ts) ................... Nothing intercepts requests
+---
 
-src/lib/
-  views.ts ........................... formatViewCount() only
-  redis.ts ........................... Redis.fromEnv()
-  utils.ts ........................... cn()
-  fonts.ts ........................... Norse + Inter
-  rune-glows.ts ...................... Glow position data
+## 1. Replacing `new Function()` MDX Execution While Keeping Velite
 
-NEW FILES / MODIFICATIONS FOR v1.6
-====================================================================
-+ next.config.ts ..................... ADD headers() for security headers
-+ src/middleware.ts .................. NEW: rate limiting via @upstash/ratelimit
-+ src/app/error.tsx .................. NEW: global error boundary
-+ src/app/global-error.tsx ........... NEW: layout-level error boundary
-+ src/app/blog/[slug]/error.tsx ...... NEW: MDX-specific error boundary
-+ src/app/blog/[slug]/loading.tsx .... NEW: blog post skeleton
-+ src/app/blog/[slug]/opengraph-image.tsx  NEW: dynamic OG per post
-+ src/app/opengraph-image.tsx ........ NEW: default site OG image
-+ src/app/feed.xml/route.ts ......... NEW: RSS feed route handler
-+ src/app/icon.svg ................... NEW: favicon (or icon.tsx)
-+ src/app/apple-icon.png ............. NEW: apple touch icon
-~ src/components/blog/mdx-content.tsx  MODIFY: try-catch around new Function()
-~ src/app/api/views/[slug]/route.ts .. MODIFY: slug validation
-~ src/app/api/views/route.ts ......... MODIFY: slug validation + batch limit
-~ src/app/sitemap.ts ................. MODIFY: fix lastModified dates
-~ src/lib/views.ts ................... MODIFY: add localStorage helpers + formatDate()
-+ src/hooks/use-filtered-list.ts ..... NEW: extracted filter hook
-~ src/components/blog/filtered-post-list.tsx  MODIFY: use hook
-~ src/components/projects/filtered-project-list.tsx  MODIFY: use hook
-```
+### Current State
 
-### Component Responsibilities
+Velite's `s.mdx()` compiles MDX at build time into a **function-body string** stored in `.velite/posts.json`. The compiled output starts with `const{Fragment:e,jsx:t,jsxs:i}=arguments[0]` -- it is a raw JavaScript function body expecting `react/jsx-runtime` passed via `arguments[0]`.
 
-| Component | Current Responsibility | v1.6 Change |
-|-----------|----------------------|-------------|
-| `next.config.ts` | Image quality config | Add `headers()` returning security headers on all routes |
-| `middleware.ts` | Does not exist | Rate limiting on `/api/views/*` via @upstash/ratelimit |
-| `mdx-content.tsx` | Executes MDX via `new Function()` | Wrap in try-catch with error fallback UI |
-| `error.tsx` (global) | Does not exist | Catch unhandled errors below root layout |
-| `global-error.tsx` | Does not exist | Catch errors in root layout itself |
-| `blog/[slug]/error.tsx` | Does not exist | MDX-specific error boundary with "content failed to load" messaging |
-| `blog/[slug]/loading.tsx` | Does not exist | Skeleton matching blog post layout |
-| `opengraph-image.tsx` | Does not exist | Generate 1200x630 PNG via `ImageResponse` from `next/og` |
-| `feed.xml/route.ts` | Does not exist | RSS 2.0 XML from `posts` collection |
-| `views.ts` | `formatViewCount()` only | Add `getCachedViews()`, `setCachedViews()`, `formatDate()` |
-| `use-filtered-list.ts` | Logic duplicated in 2 components | Shared hook: URL state, transitions, toggle, clear |
+`MDXContent` in `src/components/blog/mdx-content.tsx` (line 14) calls `new Function(code)` which constructs a function from this string, then invokes it with the jsx runtime to get a React component. This requires `'unsafe-eval'` in the CSP `script-src` directive.
 
-## Recommended Project Structure (v1.6 additions)
+The site currently has 5 blog posts and 2 projects. The body field is approximately 30KB per post.
 
-```
-src/
-  app/
-    error.tsx                    # Global error boundary (client component)
-    global-error.tsx             # Layout error boundary (client component)
-    icon.svg                     # Favicon via metadata file convention
-    apple-icon.png               # Apple touch icon
-    opengraph-image.tsx          # Default site-wide OG image
-    feed.xml/
-      route.ts                   # RSS feed route handler
-    blog/
-      [slug]/
-        error.tsx                # MDX-specific error boundary
-        loading.tsx              # Blog post loading skeleton
-        opengraph-image.tsx      # Dynamic per-post OG image
-    api/
-      views/
-        route.ts                 # (modified: validation + batch limit)
-        [slug]/
-          route.ts               # (modified: slug validation)
-  hooks/
-    use-filtered-list.ts         # Extracted filter state hook
-  lib/
-    views.ts                     # (modified: + cache helpers + formatDate)
-    rate-limit.ts                # Ratelimit instance config (shared by middleware)
-  middleware.ts                  # Rate limiting middleware
-```
+### The Fundamental Constraint
 
-### Structure Rationale
+MDX produces JavaScript. Running JavaScript from a string requires either `eval`, `new Function`, dynamic `import()` of a file, or avoiding JavaScript entirely. The MDX maintainers have stated this explicitly in [Discussion #2322](https://github.com/orgs/mdx-js/discussions/2322): there is no way to "run" compiled MDX without some form of dynamic code execution.
 
-- **`src/hooks/`:** New directory for extracted custom hooks. Keeps hooks discoverable and separate from component files. Only `use-filtered-list.ts` for now, but establishes the convention.
-- **`src/lib/rate-limit.ts`:** Isolates the `Ratelimit` instance creation from middleware so it can be imported by route handlers if needed later.
-- **`feed.xml/route.ts`:** Next.js file convention -- the folder name becomes the URL path (`/feed.xml`), the `route.ts` is the handler.
-- **Error boundaries at two levels:** Global catches everything; `blog/[slug]/error.tsx` provides MDX-specific messaging without crashing the layout.
-- **OG images at two levels:** Root `opengraph-image.tsx` for non-content pages; `blog/[slug]/opengraph-image.tsx` for per-post images with title/date/tags.
+### Recommended Approach: Switch to `s.markdown()` with HTML Output
 
-## Architectural Patterns
+**Confidence: MEDIUM**
 
-### Pattern 1: Security Headers via `next.config.ts` `headers()`
+Switch from `s.mdx()` to `s.markdown()` in `velite.config.ts`. This produces an **HTML string** instead of a JavaScript function body. Render via `dangerouslySetInnerHTML` which is safe because:
+- All content is author-controlled (no user-generated content)
+- Content is compiled at build time by Velite with rehype plugins
+- The HTML is deterministic and committed as build output
 
-**What:** Static security headers applied to all routes via the `headers()` async function in `next.config.ts`. This is the correct approach for a statically generated site -- no middleware overhead needed for headers that do not vary per request.
+**What changes:**
 
-**When to use:** When headers are the same for all routes and do not require per-request logic (no nonces, no dynamic values).
+| File | Change | Type |
+|------|--------|------|
+| `velite.config.ts` | `s.mdx()` -> `s.markdown()` on both collections | Modify |
+| `src/components/blog/mdx-content.tsx` | Replace `new Function()` with `dangerouslySetInnerHTML={{ __html: code }}` | Modify (major rewrite) |
+| `src/components/blog/mdx-content.tsx` | Remove `'use client'` directive -- no longer needs client-side JS execution | Modify |
+| `src/components/blog/mdx-content.tsx` | Remove `react/jsx-runtime` import | Modify |
+| `src/components/blog/code-block.tsx` | Must become a DOM-based client enhancement (see below) | Modify |
+| `next.config.ts` or `src/middleware.ts` | Remove `'unsafe-eval'` from `script-src` | Modify |
+| `.velite/posts.json` | Body field changes from JS function string to HTML string | Auto-regenerated |
 
-**Trade-offs:** Cannot generate nonces (that requires middleware + dynamic rendering). But this site is statically generated, so nonce-based CSP is incompatible anyway. The `unsafe-eval` directive is required because `new Function()` is used for MDX execution.
+**What you lose and how to recover it:**
 
-**Implementation:**
+1. **Custom `<ul role="list">` and `<ol role="list">` overrides:** Currently passed via MDX `components` prop. With HTML output, add a custom rehype plugin to `velite.config.ts` that adds `role="list"` attributes at compile time. This is a 10-line plugin.
+
+2. **`<pre>` -> `CodeBlock` component mapping:** Currently the MDX component override system maps `pre` to `CodeBlock` at render time. With HTML output, two options:
+   - **Option A (preferred):** Use a rehype plugin to wrap each `<pre>` element in a `<div class="code-block-wrapper" data-code-block>` at compile time. Then a client component queries the container for `[data-code-block]` elements and injects copy buttons via a `useEffect` + DOM manipulation approach.
+   - **Option B:** Keep the HTML rendering as a server component and nest a thin client component that uses `useRef` + `useEffect` to find `<pre>` elements and append copy buttons to the DOM. This is essentially what many syntax-highlighting copy-button implementations do.
+
+**MDXContent after migration (simplified):**
 
 ```typescript
-// next.config.ts
-const securityHeaders = [
-  { key: 'X-Frame-Options', value: 'DENY' },
-  { key: 'X-Content-Type-Options', value: 'nosniff' },
-  { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-  { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
-  {
-    key: 'Content-Security-Policy',
-    value: [
-      "default-src 'self'",
-      "script-src 'self' 'unsafe-eval' https://va.vercel-scripts.com",
-      "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob:",
-      "font-src 'self'",
-      "connect-src 'self' https://va.vercel-scripts.com https://*.upstash.io",
-      "frame-ancestors 'none'",
-    ].join('; '),
-  },
-]
+// No longer needs 'use client'
+interface MDXContentProps {
+  code: string  // Now HTML string, not JS function body
+}
 
-const nextConfig: NextConfig = {
-  images: { qualities: [75, 80] },
-  async headers() {
-    return [{ source: '/(.*)', headers: securityHeaders }]
-  },
+function MDXFallback() { /* unchanged */ }
+
+export function MDXContent({ code }: MDXContentProps) {
+  return (
+    <div
+      className="prose"
+      dangerouslySetInnerHTML={{ __html: code }}
+    />
+  )
 }
 ```
 
-**CSP note:** `unsafe-eval` is unavoidable with the current `new Function()` MDX pattern. This is an acceptable trade-off because: (a) all MDX content is author-controlled and compiled at build time, (b) the `.velite/` output is gitignored but deterministic, (c) removing `unsafe-eval` would require migrating to `next-mdx-remote` or a similar library, which is out of scope for a hardening milestone. Vercel Analytics requires `https://va.vercel-scripts.com` in both `script-src` and `connect-src`.
-
-### Pattern 2: Rate Limiting via Middleware + @upstash/ratelimit
-
-**What:** Next.js middleware intercepts requests matching `/api/views/:path*` and applies a sliding window rate limit before the route handler executes. Uses the same Upstash Redis instance already in use for view counts.
-
-**When to use:** When you need request-level gating before route handlers run, without modifying each individual handler.
-
-**Trade-offs:** Middleware runs on every matched request (adds ~1-5ms latency for Redis round-trip). The sliding window algorithm is more precise than fixed window but uses slightly more Redis commands. Acceptable for a personal blog's traffic volume.
-
-**Implementation:**
+The copy button functionality moves to a separate client component:
 
 ```typescript
-// src/lib/rate-limit.ts
-import { Ratelimit } from '@upstash/ratelimit'
-import { Redis } from '@upstash/redis'
+// src/components/blog/code-block-enhancer.tsx
+'use client'
+import { useEffect, useRef } from 'react'
 
-export const viewsRateLimit = new Ratelimit({
-  redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(30, '60 s'), // 30 requests per 60s per IP
-  prefix: 'ratelimit:views',
-})
+export function CodeBlockEnhancer({ children }: { children: React.ReactNode }) {
+  const containerRef = useRef<HTMLDivElement>(null)
 
+  useEffect(() => {
+    if (!containerRef.current) return
+    const preElements = containerRef.current.querySelectorAll('pre')
+    // Inject copy buttons into DOM for each <pre>
+  }, [])
+
+  return <div ref={containerRef}>{children}</div>
+}
+```
+
+### Alternative Considered: `safe-mdx` Library
+
+**Confidence: LOW** -- not recommended.
+
+[safe-mdx](https://github.com/holocron-hq/safe-mdx) parses raw MDX strings into an AST and renders without eval. However, it expects raw MDX source, not Velite's compiled function-body output. Using it would mean bypassing Velite's compilation pipeline entirely, adding a runtime dependency for parsing, and losing all build-time rehype plugin processing. This defeats the purpose of keeping Velite.
+
+### Alternative Considered: Pre-compile to Static Files
+
+**Confidence: LOW** -- fragile.
+
+Write a post-Velite build step that takes each post's function-body string, executes it in Node.js via `renderToStaticMarkup()`, and writes HTML back. Preserves component overrides but adds build complexity, is fragile across React version changes, and is effectively doing at build time what `s.markdown()` already does natively.
+
+### Recommendation
+
+**Use `s.markdown()`.** The site uses zero MDX-specific features in content files -- no JSX components in posts, no imports, no expressions. The only "MDX features" are component overrides (`pre`, `ul`, `ol`) which can all be handled at the rehype level during compilation. This is the cleanest path to removing `unsafe-eval` with the least moving parts.
+
+### Integration Point with Existing Architecture
+
+The blog post page (`src/app/blog/[slug]/page.tsx`, line 108) passes `post.body` to `<MDXContent code={post.body} />`. The prop name stays the same but the value changes from "compiled JS function body" to "HTML string." The page component itself requires no changes. `generateStaticParams()` is unaffected. All other Velite collection fields (title, slug, toc, excerpt, tags, metadata) remain identical because they use separate schema functions (`s.toc()`, `s.excerpt()`, etc.) that are independent of `s.mdx()` vs `s.markdown()`.
+
+---
+
+## 2. Middleware for Nonce-Based CSP Without Breaking Static Generation
+
+### Current State
+
+Security headers are set in `next.config.ts` via the `headers()` function (lines 19-31). This applies static CSP headers to all routes matching `/(.*).` The CSP includes `'unsafe-eval'` and `'unsafe-inline'`.
+
+No `src/middleware.ts` exists. Rate limiting is applied per-route in API handlers.
+
+### The Static Generation Constraint
+
+**Nonce-based CSP is fundamentally incompatible with fully static pages.** Nonces must be unique per request. Static pages are generated at build time and served from CDN cache with no per-request execution to generate or inject nonces.
+
+Forcing dynamic rendering via `export const dynamic = 'force-dynamic'` would destroy CDN caching and SSG performance benefits across the entire site.
+
+Next.js's `experimental.sri` (Subresource Integrity) is the hash-based alternative for static sites, but it is **webpack-only and does not work with Turbopack** ([Issue #66901](https://github.com/vercel/next.js/issues/66901)), which is the default bundler in Next.js 16. Not a viable path.
+
+### Recommended Approach: Middleware for Centralized Static CSP (No Nonces)
+
+**Confidence: HIGH**
+
+Use middleware to centralize all security header management in one place, replacing the `next.config.ts` `headers()` function. The CSP remains static (no nonces) but is managed from a single location that can be incrementally tightened as other migrations complete.
+
+**Benefits over current `headers()` approach:**
+1. Single location for all security headers
+2. Route-aware header customization (could apply different CSP to API routes vs pages)
+3. Colocates with rate limiting if that moves to middleware
+4. Foundation for future nonce-based CSP if the site ever moves to dynamic rendering
+
+**What changes:**
+
+| File | Change | Type |
+|------|--------|------|
+| `src/middleware.ts` | New file: sets security headers on all responses | New |
+| `next.config.ts` | Remove `headers()` function entirely | Modify |
+
+**Middleware implementation:**
+
+```typescript
 // src/middleware.ts
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { viewsRateLimit } from '@/lib/rate-limit'
 
-export async function middleware(request: NextRequest) {
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? '127.0.0.1'
-  const { success } = await viewsRateLimit.limit(ip)
+export function middleware(request: NextRequest) {
+  const response = NextResponse.next()
 
-  if (!success) {
-    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
-  }
+  const csp = [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com",
+    // 'unsafe-eval' removed after MDX migration
+    // 'unsafe-inline' stays in script-src for Next.js hydration scripts
+    "style-src 'self' 'unsafe-inline'",
+    // 'unsafe-inline' in style-src stays (Shiki inline styles, see Section 3)
+    "img-src 'self' data:",
+    "font-src 'self'",
+    "connect-src 'self' https://va.vercel-scripts.com",
+    "frame-ancestors 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+  ].join('; ')
 
-  return NextResponse.next()
+  response.headers.set('Content-Security-Policy', csp)
+  response.headers.set('X-Frame-Options', 'DENY')
+  response.headers.set('X-Content-Type-Options', 'nosniff')
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+
+  return response
 }
 
 export const config = {
-  matcher: '/api/views/:path*',
+  matcher: [
+    // Skip static files, images, and Next.js internals
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
+  ],
 }
 ```
 
-**Key detail:** The `matcher` config restricts middleware to API view routes only. This means the middleware never runs on static page requests, preserving zero-overhead static serving.
+### Why `'unsafe-inline'` Remains in `script-src`
 
-### Pattern 3: Error Boundaries at Route Segment Level
+Next.js injects inline `<script>` tags for hydration data and route prefetching. Without nonces, these cannot be individually whitelisted. The `'unsafe-inline'` directive in `script-src` must remain for any statically-generated Next.js site that does not use nonces. This is an accepted tradeoff documented in the [Next.js CSP guide](https://nextjs.org/docs/app/guides/content-security-policy).
 
-**What:** `error.tsx` files placed at strategic route segments create React error boundaries that catch rendering errors and display fallback UI. Must be client components (`'use client'`).
+The key security win is removing `'unsafe-eval'` (via MDX migration), which blocks `eval()`, `new Function()`, and similar dynamic code execution.
 
-**When to use:** At every route segment where a distinct error experience is needed. For this site, two levels: global (catches everything below root layout) and MDX-specific (catches `new Function()` failures).
+### Build Order Dependency: The CSP Chain
 
-**Trade-offs:** Error boundaries cannot catch errors in the layout of their own segment -- only in children. This is why `global-error.tsx` exists as a separate file convention for catching root layout errors. `global-error.tsx` replaces the entire HTML shell, so it must include its own `<html>` and `<body>` tags.
+The middleware CSP values depend on which other migrations are complete:
 
-**Critical architectural constraint:** `error.tsx` files are always client components. They receive `error` and `reset` props. The `reset()` function attempts to re-render the segment. For MDX errors, reset is unlikely to fix the problem (the compiled MDX is deterministically broken), so the MDX error boundary should offer navigation away rather than retry.
+```
+Step 1: Deploy middleware with CURRENT permissive CSP
+        (same values as next.config.ts headers, just moved to middleware)
+        
+Step 2: Complete MDX migration (s.markdown)
+        -> Remove 'unsafe-eval' from script-src in middleware
+        
+Step 3: Complete CSS-variables theme migration (if pursued)
+        -> Remove 'unsafe-inline' from style-src in middleware (only if inline styles fully eliminated)
+```
 
-**Implementation:**
+**Middleware must be introduced first** with the current permissive CSP, then tightened incrementally. This avoids the risk of deploying a too-strict CSP that breaks the site before migrations are complete.
+
+---
+
+## 3. Switching rehype-pretty-code from Inline Styles to CSS-Variables
+
+### Current State
+
+`velite.config.ts` configures `rehype-pretty-code` with the `github-dark-dimmed` theme and `keepBackground: true`. Shiki injects **inline `style` attributes** on every `<span>` token inside code blocks with hardcoded hex colors like `style="color: #adbac7"`. This requires `style-src 'unsafe-inline'` in the CSP.
+
+The `CodeBlock` component (`src/components/blog/code-block.tsx`) wraps `<pre>` elements with a relative-positioned `<div>` and a `CopyButton`. It passes through all props to the underlying `<pre>` and is completely theme-independent -- it reads `textContent`, not style attributes.
+
+### The CSS-Variables Theme: What It Actually Does
+
+Shiki's `createCssVariablesTheme()` factory replaces hardcoded hex colors with CSS variable references. Instead of `style="color: #adbac7"`, tokens get `style="color: var(--shiki-foreground)"`. You define the actual colors in your stylesheet.
+
+**Critical detail: This still uses inline `style` attributes.** The `css-variables` theme does NOT eliminate inline styles. It replaces hardcoded values with variable references, but the `style` attribute itself remains on every token `<span>`. You still need `'unsafe-inline'` in `style-src`.
+
+### Can We Actually Remove `'unsafe-inline'` from `style-src`?
+
+To truly eliminate inline styles from Shiki output, you would need either:
+
+1. **A custom transformer** that post-processes Shiki output to replace `style` attributes with CSS classes based on token type. Shiki does not ship one natively. You would need to write a rehype plugin that strips `style="color: var(--shiki-X)"` and adds `class="shiki-X"` instead, then define all classes in CSS.
+
+2. **Switch to a completely different syntax highlighter** that outputs class-based markup (like `highlight.js` via `rehype-highlight`), but this loses Shiki's TextMate grammar accuracy.
+
+Neither option is trivial, and both add maintenance burden for marginal security benefit.
+
+### Pragmatic Recommendation: CSS-Variables Theme + Keep `'unsafe-inline'`
+
+**Confidence: HIGH**
+
+Switch to `createCssVariablesTheme()` for design system benefits (colors defined in CSS, easy to tweak) but **accept that `'unsafe-inline'` stays in `style-src`**. The security surface of CSS injection is much smaller than script injection, and for a site with no user-generated content, it is an acceptable tradeoff.
+
+**What changes:**
+
+| File | Change | Type |
+|------|--------|------|
+| `velite.config.ts` | Import `createCssVariablesTheme` from `shiki`, replace theme config | Modify |
+| `velite.config.ts` | Set `keepBackground: false` (background color will come from CSS) | Modify |
+| `src/app/globals.css` | Add Shiki CSS variable definitions matching `github-dark-dimmed` palette | Modify |
+
+**velite.config.ts change:**
 
 ```typescript
-// src/app/blog/[slug]/error.tsx
-'use client'
+import { createCssVariablesTheme } from 'shiki'
 
-export default function BlogPostError({
-  error,
-  reset,
-}: {
-  error: Error & { digest?: string }
-  reset: () => void
-}) {
-  return (
-    <div className="max-w-prose mx-auto px-6 py-20 text-center">
-      <h2 className="font-display text-2xl mb-4">Failed to load post</h2>
-      <p className="text-muted mb-6">
-        This post could not be rendered. The content may be temporarily unavailable.
-      </p>
-      <button onClick={reset} className="...brutal-button-classes...">
-        Try again
-      </button>
-    </div>
+const codeTheme = createCssVariablesTheme({
+  name: 'css-variables',
+  variablePrefix: '--shiki-',
+  variableDefaults: {},
+  fontStyle: true,
+})
+
+// In mdx config:
+[rehypePrettyCode, {
+  theme: codeTheme,
+  keepBackground: false,
+  defaultLang: { block: 'typescript', inline: 'typescript' },
+}]
+```
+
+**globals.css additions:**
+
+```css
+/* Shiki syntax highlighting -- github-dark-dimmed equivalent */
+[data-rehype-pretty-code-figure] pre {
+  --shiki-foreground: #adbac7;
+  --shiki-background: #22272e;
+  --shiki-token-constant: #6cb6ff;
+  --shiki-token-string: #96d0ff;
+  --shiki-token-comment: #768390;
+  --shiki-token-keyword: #f47067;
+  --shiki-token-parameter: #f69d50;
+  --shiki-token-function: #dcbdfb;
+  --shiki-token-string-expression: #96d0ff;
+  --shiki-token-punctuation: #adbac7;
+  --shiki-token-link: #6cb6ff;
+  background-color: var(--shiki-background);
+}
+```
+
+**Note on variable granularity:** The `css-variables` theme is less granular than full TextMate themes. Where `github-dark-dimmed` might distinguish 40+ token scopes, the CSS-variables theme maps to roughly 10 CSS variables. Some tokens that had distinct colors will collapse to the same variable. The visual difference is minor for a blog's code samples.
+
+### Impact on CodeBlock Component
+
+**None.** The `CodeBlock` component is completely unaffected by the theme change. It wraps `<pre>` with a copy button using `querySelector('code')?.textContent` to extract text. No style attributes are read, written, or depended upon. The `CopyButton` component is also theme-independent.
+
+If the MDX migration to `s.markdown()` happens (Section 1), then the `CodeBlock` component changes are driven by that migration, not the theme migration. The two changes are independent.
+
+### If You Want to Fully Eliminate Inline Styles (Optional, Lower Priority)
+
+**Confidence: LOW** -- significant effort for marginal gain.
+
+Write a custom rehype plugin that runs after `rehype-pretty-code`:
+
+```typescript
+// rehype-strip-shiki-styles.ts
+import { visit } from 'unist-util-visit'
+
+export function rehypeStripShikiStyles() {
+  return (tree: any) => {
+    visit(tree, 'element', (node) => {
+      if (node.properties?.style) {
+        const style = node.properties.style as string
+        const match = style.match(/color:\s*var\(--shiki-([^)]+)\)/)
+        if (match) {
+          node.properties.className = [
+            ...(node.properties.className || []),
+            `shiki-${match[1]}`
+          ]
+          delete node.properties.style
+        }
+      }
+    })
+  }
+}
+```
+
+Then add corresponding CSS classes. This is doable but adds a custom plugin to maintain and test.
+
+---
+
+## 4. Where `useSyncExternalStore` Fits in the Component Tree
+
+### Current State
+
+Three locations use `useLayoutEffect`/`useEffect` + `useState` to sync with external browser APIs, generating React 19 lint warnings:
+
+| Component | External Source | Current Pattern | Lint Warning |
+|-----------|----------------|-----------------|--------------|
+| `ViewCounter` (line 15) | `localStorage` | `useLayoutEffect` + `getCachedViews` + `setViews` | `set-state-in-effect` |
+| `ListingViewCounts` (line 23) | `localStorage` (multiple keys) | `useLayoutEffect` + loop + `setCounts` | `set-state-in-effect` |
+| `useHeroAnimation` (line 39) | `window.matchMedia` | `useEffect` + `setPrefersReducedMotion` + `addEventListener` | `set-state-in-effect` |
+| `useHeroAnimation` (line 54) | setTimeout-driven state | `useEffect` + `setRevealStage` | `set-state-in-effect` |
+
+The fourth warning (`setRevealStage` in the reveal sequence effect) is NOT a candidate for `useSyncExternalStore` because it is not subscribing to an external store -- it is orchestrating a timed animation sequence. That pattern is correct as-is and should have its lint warning suppressed with a comment.
+
+### Architecture: Two Reusable Store Adapters
+
+**Confidence: HIGH**
+
+Create two focused hooks in `src/lib/`:
+
+#### Adapter 1: `useLocalStorageSnapshot`
+
+```typescript
+// src/lib/use-local-storage-snapshot.ts
+import { useSyncExternalStore } from 'react'
+
+function subscribe(callback: () => void) {
+  // 'storage' event fires when OTHER tabs change localStorage
+  window.addEventListener('storage', callback)
+  return () => window.removeEventListener('storage', callback)
+}
+
+export function useLocalStorageSnapshot(key: string): string | null {
+  return useSyncExternalStore(
+    subscribe,
+    () => { try { return localStorage.getItem(key) } catch { return null } },
+    () => null  // SSR: no localStorage
   )
 }
 ```
 
-### Pattern 4: Dynamic OG Images via File Convention
-
-**What:** `opengraph-image.tsx` files in route segments automatically generate OG images using the `ImageResponse` API from `next/og`. Next.js discovers these files and adds the appropriate `<meta>` tags to the page's `<head>`.
-
-**When to use:** When you want per-page OG images without a separate image generation service. The file convention approach is cleaner than manually adding image URLs to metadata objects.
-
-**Trade-offs:** ImageResponse uses Satori under the hood, which only supports flexbox and a subset of CSS. Custom fonts must be loaded as ArrayBuffer at build/request time. For static routes with `generateStaticParams()`, OG images are generated at build time (one PNG per post). This adds build time but zero runtime cost.
-
-**Implementation:**
+#### Adapter 2: `usePrefersReducedMotion`
 
 ```typescript
-// src/app/blog/[slug]/opengraph-image.tsx
-import { ImageResponse } from 'next/og'
-import { posts } from '@/.velite'
+// src/lib/use-prefers-reduced-motion.ts
+import { useSyncExternalStore } from 'react'
 
-export const size = { width: 1200, height: 630 }
-export const contentType = 'image/png'
-export const alt = 'Blog post preview'
+const QUERY = '(prefers-reduced-motion: reduce)'
 
-export default async function Image({
-  params,
-}: {
-  params: Promise<{ slug: string }>
-}) {
-  const { slug } = await params
-  const post = posts.find((p) => p.slug === slug)
+function subscribe(callback: () => void) {
+  const mq = window.matchMedia(QUERY)
+  mq.addEventListener('change', callback)
+  return () => mq.removeEventListener('change', callback)
+}
 
-  // Load Norse font for brand consistency
-  const norseFontData = await fetch(
-    new URL('../../../lib/fonts/Norse.woff2', import.meta.url)
-  ).then((res) => res.arrayBuffer())
+function getSnapshot(): boolean {
+  return window.matchMedia(QUERY).matches
+}
 
-  return new ImageResponse(
-    (
-      <div style={{ display: 'flex', flexDirection: 'column', /* ... */ }}>
-        <h1 style={{ fontFamily: 'Norse' }}>{post?.title ?? 'keech.dev'}</h1>
-        {/* Neobrutalist styling with dusty rose bg, black borders */}
-      </div>
-    ),
-    {
-      ...size,
-      fonts: [{ name: 'Norse', data: norseFontData, style: 'normal' }],
+export function usePrefersReducedMotion(): boolean {
+  return useSyncExternalStore(subscribe, getSnapshot, () => false)
+}
+```
+
+### Component Changes
+
+**ViewCounter (`src/components/blog/view-counter.tsx`):**
+
+Replace the `useLayoutEffect` block (lines 15-17) with:
+
+```typescript
+const cachedRaw = useLocalStorageSnapshot(`views:${slug}`)
+const cachedViews = cachedRaw !== null ? Number(cachedRaw) : null
+```
+
+Keep the `useEffect` for the POST request and `setViews`. The component still needs local state for the "fresh from API" value. The `useSyncExternalStore` handles the initial cached read; `useState` handles the API response.
+
+**ListingViewCounts (`src/components/blog/listing-view-counts.tsx`):**
+
+This is trickier because it reads multiple localStorage keys in a loop. Two options:
+
+- **Option A:** Call `useLocalStorageSnapshot` for each slug. But hooks cannot be called in a loop with dynamic count. This requires a different adapter that subscribes once and reads multiple keys.
+- **Option B (recommended):** Create a `useLocalStorageSnapshots(keys: string[])` variant that takes an array of keys and returns a record. Internally it uses a single `useSyncExternalStore` subscription with a `getSnapshot` that reads all keys.
+
+```typescript
+// Addition to use-local-storage-snapshot.ts
+export function useLocalStorageSnapshots(keys: string[]): Record<string, string | null> {
+  const stableKeys = JSON.stringify(keys)
+  return useSyncExternalStore(
+    subscribe,
+    () => {
+      const result: Record<string, string | null> = {}
+      for (const key of JSON.parse(stableKeys) as string[]) {
+        try { result[key] = localStorage.getItem(key) } catch { result[key] = null }
+      }
+      return result
+    },
+    () => {
+      const result: Record<string, string | null> = {}
+      for (const key of JSON.parse(stableKeys) as string[]) result[key] = null
+      return result
     }
   )
 }
-
-export async function generateStaticParams() {
-  return posts.filter((p) => !p.draft).map((p) => ({ slug: p.slug }))
-}
 ```
 
-**Key detail:** Since blog posts use `generateStaticParams()`, the OG images are generated at build time. The `opengraph-image.tsx` file must also export `generateStaticParams()` to match. This means OG images are static PNGs served from Vercel's CDN with zero runtime generation cost.
+**Note on referential stability:** `useSyncExternalStore` calls `getSnapshot` on every render and uses `Object.is` to compare results. The above returns a new object each time, which would trigger infinite re-renders. The `getSnapshot` function needs memoization or the result needs structural comparison. The pragmatic solution is to `JSON.stringify` the result and use a wrapper that parses it, or use `useRef` to cache the previous result and only return a new object when values actually change.
 
-### Pattern 5: Shared Hook Extraction for Filtered Lists
+**useHeroAnimation (`src/hooks/use-hero-animation.ts`):**
 
-**What:** Extract the identical filter state management from `FilteredPostList` and `FilteredProjectList` into a `useFilteredList` hook that handles URL state, transitions, toggle, and clear logic.
-
-**When to use:** When two or more components share 90%+ structural logic differing only in data types, param names, and rendering.
-
-**Trade-offs:** Slightly more indirection (must read the hook to understand filter behavior), but eliminates the dual-maintenance problem. The hook is generic over item type and filter param name.
-
-**Implementation:**
+Replace the matchMedia effect (lines 38-44) with:
 
 ```typescript
-// src/hooks/use-filtered-list.ts
-'use client'
+const prefersReducedMotion = usePrefersReducedMotion()
+```
 
-import { useSearchParams, usePathname } from 'next/navigation'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+Remove the `useState` for `prefersReducedMotion` and the entire `useEffect` block that sets up the matchMedia listener. The hook return value keeps the same shape.
 
-interface UseFilteredListOptions<T> {
-  items: T[]
-  allFilterValues: string[]
-  paramName: string                          // 'tags' or 'stack'
-  getItemValues: (item: T) => string[]       // post => post.tags
+The `setRevealStage` effects (lines 48-67, 72-75) are NOT external store subscriptions -- they are animation orchestration using `setTimeout`. These should remain as `useEffect` + `useState` with lint suppression comments explaining the intentional pattern.
+
+### Where in the Component Tree
+
+No component tree changes. The `useSyncExternalStore` hooks slot into existing client components without introducing new client boundaries:
+
+```
+Layout (server)
+  +-- Hero (client)
+  |     +-- useHeroAnimation
+  |           +-- usePrefersReducedMotion  <-- replaces matchMedia effect
+  |
+  +-- BlogPostPage (server)
+  |     +-- MDXContent (client -> possibly server after migration)
+  |     +-- ViewCounter (client)
+  |           +-- useLocalStorageSnapshot  <-- replaces useLayoutEffect
+  |
+  +-- BlogListPage (server)
+        +-- ListingViewCounts (client)
+              +-- useLocalStorageSnapshots  <-- replaces useLayoutEffect
+              +-- PostCardViewCount (client, via context)
+```
+
+### Subtlety: Write-Then-Read in View Counters
+
+View counter components write to localStorage after an API response (`setCachedViews`), then expect subsequent renders to reflect the new value. With `useSyncExternalStore`, the `storage` event only fires from **other tabs**, not the current window.
+
+**Solution:** After writing to localStorage, dispatch a synthetic `storage` event on the current window:
+
+```typescript
+export function setCachedViews(slug: string, count: number): void {
+  try {
+    const key = `views:${slug}`
+    localStorage.setItem(key, String(count))
+    // Notify current-tab subscribers
+    window.dispatchEvent(new StorageEvent('storage', { key }))
+  } catch { /* non-critical */ }
 }
-
-interface UseFilteredListResult<T> {
-  filteredItems: T[]
-  activeFilters: Set<string>
-  isFiltering: boolean
-  isTransitioning: boolean
-  filterCounts: Record<string, number>
-  handleToggle: (value: string) => void
-  handleClear: () => void
-}
-
-export function useFilteredList<T>({
-  items, allFilterValues, paramName, getItemValues
-}: UseFilteredListOptions<T>): UseFilteredListResult<T> {
-  // ... URL state, AND-logic filtering, transition animation, toggle/clear
-}
 ```
 
-The consuming components shrink from ~150 lines each to ~40 lines of rendering logic.
+This ensures the `useSyncExternalStore` subscription picks up the write from the same tab. Update `src/lib/views.ts` accordingly.
 
-## Data Flow
+### New and Modified Files
 
-### Security Header Flow
+| File | Type | Purpose |
+|------|------|---------|
+| `src/lib/use-local-storage-snapshot.ts` | New | `useSyncExternalStore` adapter for localStorage |
+| `src/lib/use-prefers-reduced-motion.ts` | New | `useSyncExternalStore` adapter for matchMedia |
+| `src/components/blog/view-counter.tsx` | Modify | Replace `useLayoutEffect` with snapshot hook |
+| `src/components/blog/listing-view-counts.tsx` | Modify | Replace `useLayoutEffect` with snapshots hook |
+| `src/hooks/use-hero-animation.ts` | Modify | Replace matchMedia effect with `usePrefersReducedMotion` |
+| `src/lib/views.ts` | Modify | Add `StorageEvent` dispatch to `setCachedViews` |
 
-```
-Browser Request
-    |
-    v
-Vercel Edge Network
-    |
-    v
-next.config.ts headers() -----> Attaches CSP, X-Frame-Options, etc.
-    |
-    v
-Static Page / Route Handler -----> Response with security headers
-```
+---
 
-Headers are applied by Vercel at the CDN level based on `next.config.ts`. No application code runs for static pages.
+## Build Order: The CSP Chain and Dependencies
 
-### Rate Limiting Flow (API routes only)
+The four workstreams have a dependency chain:
 
 ```
-POST /api/views/[slug]
-    |
-    v
-middleware.ts
-    |---> @upstash/ratelimit.limit(ip)
-    |       |
-    |       |---> Redis: EVALSHA (sliding window check)
-    |       |
-    |       +---> 429 Too Many Requests (if over limit)
-    |
-    v (if allowed)
-route.ts handler
-    |---> Slug validation (regex: /^[a-z0-9-]+$/)
-    |---> IP dedup + INCR (existing logic)
-    |
-    v
-Response JSON
+Phase 1: Middleware
+  |  Move headers from next.config.ts to middleware.ts
+  |  Deploy with CURRENT permissive CSP (same values, new location)
+  |  No functional change, just centralizes management
+  |
+Phase 2: MDX Migration  
+  |  Switch s.mdx() -> s.markdown() in velite.config.ts
+  |  Rewrite MDXContent to render HTML
+  |  Adapt CodeBlock copy button to DOM-based approach
+  |  THEN: Remove 'unsafe-eval' from middleware CSP
+  |
+Phase 3: CSS-Variables Theme (optional)
+  |  Switch rehype-pretty-code theme to createCssVariablesTheme
+  |  Add CSS variable definitions to globals.css
+  |  Set keepBackground: false
+  |  NOTE: Does NOT enable removing 'unsafe-inline' from style-src
+  |        (inline style attributes still present, just with CSS var values)
+  |
+Phase 4: useSyncExternalStore (independent)
+  |  Can run in parallel with Phase 2 or 3
+  |  No CSP impact -- pure code quality improvement
+  |  Eliminates 6 of 10 React 19 lint warnings
 ```
 
-### OG Image Generation Flow (build time)
+**Phase 1 must come first** because it establishes the single location where CSP is managed. Without it, tightening CSP requires editing `next.config.ts` headers while also having middleware for other concerns -- a split-brain situation.
+
+**Phase 2 before Phase 3** because `unsafe-eval` removal is the significant security win. CSS-variables is a design-system improvement, not a CSP improvement.
+
+**Phase 4 is independent** of all CSP work and can be interleaved anywhere.
+
+### Critical Note on `'unsafe-inline'` in `script-src`
+
+After all migrations, the CSP will still contain `'unsafe-inline'` in `script-src` for Next.js hydration scripts. This is unavoidable without nonce-based CSP, which requires dynamic rendering. The final tightened CSP will be:
 
 ```
-npm run build
-    |
-    v
-velite -----> .velite/posts.json (compiled MDX + frontmatter)
-    |
-    v
-next build
-    |---> generateStaticParams() per route
-    |---> For each [slug]:
-    |       |---> page.tsx -----> static HTML
-    |       +---> opengraph-image.tsx -----> static 1200x630 PNG
-    |
-    v
-Deploy: static HTML + static OG PNGs (zero runtime cost)
+script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com
+style-src 'self' 'unsafe-inline'
 ```
 
-### RSS Feed Flow
+This is a significant improvement over the current:
 
 ```
-GET /feed.xml
-    |
-    v
-route.ts
-    |---> import { posts } from '@/.velite'
-    |---> Filter drafts, sort by date
-    |---> Generate XML string (RSS 2.0)
-    |---> Return Response with Content-Type: application/rss+xml
+script-src 'self' 'unsafe-eval' 'unsafe-inline' https://va.vercel-scripts.com
+style-src 'self' 'unsafe-inline'
 ```
 
-Since `posts` is imported from the Velite build output, the RSS route can be statically generated. Add `export const dynamic = 'force-static'` to ensure it is pre-rendered at build time.
+The removal of `'unsafe-eval'` is the material security improvement.
 
-### Code Deduplication Flow
+---
 
-```
-BEFORE (v1.5):
-view-counter.tsx -----> getCachedViews() (local copy)
-listing-view-counts.tsx -----> getCachedViews() (local copy)
-blog/[slug]/page.tsx -----> new Intl.DateTimeFormat() (inline)
-post-card.tsx -----> new Intl.DateTimeFormat() (inline)
-filtered-post-list.tsx -----> URL state + transition + toggle (150 lines)
-filtered-project-list.tsx -----> URL state + transition + toggle (150 lines)
+## Component Boundaries Summary
 
-AFTER (v1.6):
-src/lib/views.ts -----> formatViewCount() + getCachedViews() + setCachedViews()
-src/lib/format.ts -----> formatDate()
-src/hooks/use-filtered-list.ts -----> useFilteredList<T>()
-    |
-    +---> view-counter.tsx (imports from lib/views)
-    +---> listing-view-counts.tsx (imports from lib/views)
-    +---> blog/[slug]/page.tsx (imports formatDate)
-    +---> post-card.tsx (imports formatDate)
-    +---> filtered-post-list.tsx (~40 lines, uses hook)
-    +---> filtered-project-list.tsx (~40 lines, uses hook)
-```
+### New Components/Files
 
-## Scaling Considerations
+| File | Type | Purpose |
+|------|------|---------|
+| `src/middleware.ts` | New | Centralized security headers |
+| `src/lib/use-local-storage-snapshot.ts` | New | `useSyncExternalStore` for localStorage |
+| `src/lib/use-prefers-reduced-motion.ts` | New | `useSyncExternalStore` for matchMedia |
+| `src/components/blog/code-block-enhancer.tsx` | New (if using s.markdown) | Client-side copy button injection for HTML-rendered code blocks |
 
-| Scale | Architecture Adjustments |
-|-------|--------------------------|
-| Current (5 posts, 2 projects) | All changes are appropriate. OG image build time negligible. Rate limit overhead minimal. |
-| 50-100 posts | OG image generation adds ~30-60s to build. Still acceptable for Vercel builds. RSS feed XML grows but remains manageable. |
-| 500+ posts | Consider paginated RSS (or limit to latest 50). OG image generation may need caching strategy. Rate limit Redis usage still minimal. |
+### Modified Components
 
-### Scaling Priorities
+| File | Nature of Change |
+|------|-----------------|
+| `velite.config.ts` | `s.mdx()` -> `s.markdown()`, theme change, possible new rehype plugins |
+| `src/components/blog/mdx-content.tsx` | Major rewrite: HTML rendering instead of JS execution, possibly becomes server component |
+| `src/components/blog/code-block.tsx` | May need DOM-based approach or be replaced by `code-block-enhancer.tsx` |
+| `next.config.ts` | Remove `headers()` function |
+| `src/components/blog/view-counter.tsx` | Replace `useLayoutEffect` with `useSyncExternalStore` |
+| `src/components/blog/listing-view-counts.tsx` | Replace `useLayoutEffect` with `useSyncExternalStore` |
+| `src/hooks/use-hero-animation.ts` | Replace matchMedia effect with `usePrefersReducedMotion` |
+| `src/lib/views.ts` | Add `StorageEvent` dispatch to `setCachedViews` |
+| `src/app/globals.css` | Add Shiki CSS variable definitions |
 
-1. **First bottleneck:** OG image build time. Each post generates a 1200x630 PNG at build time. At scale, consider on-demand ISR for OG images instead of full static generation.
-2. **Second bottleneck:** RSS feed size. At 500+ posts, the full XML feed becomes unwieldy. Add `<rss:limit>` or paginate with `?page=N`.
+### Unchanged Components
 
-## Anti-Patterns
+| File | Why Unchanged |
+|------|--------------|
+| `src/app/blog/[slug]/page.tsx` | Still passes `post.body` to MDXContent; prop semantics shift but API shape identical |
+| `src/app/blog/page.tsx` | No MDX rendering on listing page |
+| `src/components/blog/copy-button.tsx` | Pure UI, no dependency on theme or MDX approach |
+| All `@/.velite` imports | Import path unchanged, non-body fields unchanged |
+| `src/app/sitemap.ts` | No MDX dependency |
+| `src/app/feed.xml/route.ts` | No MDX rendering |
 
-### Anti-Pattern 1: CSP via Middleware for Static Sites
+---
 
-**What people do:** Create `middleware.ts` that injects CSP headers with nonces into every response, following the Next.js docs for nonce-based CSP.
-**Why it is wrong for this project:** Nonce-based CSP requires dynamic rendering (each request gets a unique nonce). This site is statically generated. Enabling dynamic rendering for CSP would break static optimization, increase TTFB, and consume serverless function invocations.
-**Do this instead:** Use `next.config.ts` `headers()` for static CSP without nonces. Accept `unsafe-eval` as a necessary trade-off for the `new Function()` MDX pattern. Accept `unsafe-inline` for styles (Tailwind generates inline styles).
+## Scalability Considerations
 
-### Anti-Pattern 2: Rate Limiting Inside Route Handlers
+| Concern | Current (5 posts) | At 50 posts | At 500 posts |
+|---------|-------------------|-------------|--------------|
+| Middleware overhead | Negligible | Negligible | Negligible (header set only) |
+| `s.markdown()` HTML in JSON | ~30KB per body | ~300KB total | ~3MB total JSON, monitor build memory |
+| `useSyncExternalStore` subscriptions | 1-5 storage listeners | Same | Same (listing page is one component) |
+| CSS variable theme CSS | ~500 bytes | Same | Same |
+| Velite rebuild time | <2s | ~5s | ~15s, may need investigation |
 
-**What people do:** Add rate limiting logic directly inside each API route handler.
-**Why it is wrong:** Duplicates rate limiting code across handlers. The request has already been routed and parsed before the check runs. If you add more API routes later, you must remember to add rate limiting to each one.
-**Do this instead:** Use middleware with a `matcher` config. The rate limit check runs before the handler, and the `matcher` ensures it only applies to API routes that need it.
+No scaling concerns for any of these changes at foreseeable content volumes.
 
-### Anti-Pattern 3: Single Global Error Boundary Only
+## Anti-Patterns to Avoid
 
-**What people do:** Add only `src/app/error.tsx` and call it done.
-**Why it is wrong:** The global error boundary cannot catch errors in the root layout. And it provides the same generic error message for all failures -- an MDX rendering error gets the same treatment as a 404 or an API failure.
-**Do this instead:** Add `global-error.tsx` (for layout errors) plus segment-specific `error.tsx` files where distinct error messaging matters (particularly `blog/[slug]/error.tsx` for MDX failures).
+### Anti-Pattern 1: Nonce-Based CSP on a Static Site
 
-### Anti-Pattern 4: Generating OG Images at Runtime
+**What:** Create middleware that generates nonces and injects them into every response.
+**Why bad:** Forces all pages to dynamic rendering, destroying CDN caching and static generation benefits. Every page request now invokes a serverless function.
+**Instead:** Use static CSP via middleware without nonces. Accept `'unsafe-inline'` for scripts as the tradeoff for keeping static generation.
 
-**What people do:** Use `opengraph-image.tsx` without `generateStaticParams()`, causing OG images to be generated on-demand per request.
-**Why it is wrong for this project:** OG images for blog posts are requested by social media crawlers (Twitter, Facebook, LinkedIn). On-demand generation means the first crawler request is slow (500ms-2s), and if it times out, no preview image appears. Since all blog content is known at build time, there is no reason to generate at runtime.
-**Do this instead:** Export `generateStaticParams()` from the OG image file to match the page's static params. Images are pre-generated at build time and served as static assets.
+### Anti-Pattern 2: Removing `'unsafe-inline'` from `style-src` via CSS-Variables Theme Alone
 
-### Anti-Pattern 5: Testing MDX Content Rendering in Unit Tests
+**What:** Switch to `createCssVariablesTheme`, assume inline styles are gone, remove `'unsafe-inline'`.
+**Why bad:** The CSS-variables theme still outputs inline `style` attributes. Only the values change from hardcoded to CSS variables. Removing `'unsafe-inline'` will break all code syntax highlighting.
+**Instead:** Keep `'unsafe-inline'` in `style-src`. If you must eliminate it, write a custom rehype plugin to strip `style` attributes and add classes (significant effort for marginal gain).
 
-**What people do:** Try to unit test the full MDX rendering pipeline including `new Function()`, rehype plugins, and component overrides.
-**Why it is wrong:** The MDX pipeline crosses multiple boundaries (Velite compilation, runtime execution, React rendering). Unit testing individual steps is fragile and couples tests to implementation details. The `new Function()` call especially is hard to unit test meaningfully.
-**Do this instead:** Unit test pure functions (`formatViewCount`, `formatDate`, `computeGlowPositions`, slug validation). Use E2E tests (Playwright) for the MDX rendering pipeline -- load a real blog post and assert the rendered output.
+### Anti-Pattern 3: Using `useSyncExternalStore` for Animation Orchestration
 
-## Integration Points
+**What:** Try to model the hero reveal sequence (setTimeout-based stage transitions) as an external store.
+**Why bad:** Animation orchestration is not an external store. It is internal component state driven by timers. Forcing it into `useSyncExternalStore` adds complexity without benefit.
+**Instead:** Keep `useEffect` + `setTimeout` + `useState` for animation staging. Suppress the lint warning with a comment explaining the intentional pattern.
 
-### External Services
+### Anti-Pattern 4: Running MDX `new Function()` in Middleware
 
-| Service | Integration Pattern | v1.6 Changes |
-|---------|---------------------|--------------|
-| Upstash Redis | `@upstash/redis` via `Redis.fromEnv()` | Add `@upstash/ratelimit` using same Redis instance. Same env vars (`UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`). |
-| Vercel Analytics | `@vercel/analytics/next` in root layout | CSP must allow `https://va.vercel-scripts.com` in `script-src` and `connect-src`. No other changes. |
-| Vercel Edge | Serves static pages + runs middleware | Middleware now runs on `/api/views/*` routes. Static pages unaffected. |
-
-### Internal Boundaries
-
-| Boundary | Communication | v1.6 Notes |
-|----------|---------------|------------|
-| Velite build --> Next.js | `.velite/` directory, imported as `@/.velite` | No change. OG image files import from `@/.velite` the same way pages do. |
-| Middleware --> Route handlers | Request passes through if rate limit allows | New boundary. Middleware returns 429 or passes `NextResponse.next()`. |
-| Error boundaries --> Child routes | React error boundary pattern | New boundary. `error.tsx` wraps the route segment's children. |
-| `useFilteredList` hook --> Filtered list components | Hook return values | New boundary. Hook owns URL state; components own rendering. |
-| `src/lib/views.ts` --> View components | Shared functions | Expanded boundary. Adds `getCachedViews`/`setCachedViews` to existing `formatViewCount`. |
-| `src/lib/format.ts` --> Date display components | `formatDate()` pure function | New file. Three call sites converge. |
-
-## Build Order Recommendation
-
-Based on dependency analysis, the recommended implementation order:
-
-1. **Security headers** (next.config.ts) -- zero dependencies, immediate security improvement, no new files beyond modifying existing config
-2. **Code deduplication** (views.ts, format.ts, use-filtered-list hook) -- pure refactoring with no new features, reduces surface area for subsequent work
-3. **Error boundaries** (error.tsx, global-error.tsx, loading.tsx) -- depends on nothing, but MDX try-catch in mdx-content.tsx should pair with the blog error boundary
-4. **Input validation on API routes** -- small changes to existing route handlers, no new dependencies
-5. **Rate limiting** (middleware.ts, @upstash/ratelimit) -- depends on Upstash Redis (already present), adds new dependency
-6. **OG images** (opengraph-image.tsx) -- depends on Velite content imports and font loading, builds on static generation understanding
-7. **RSS feed** (feed.xml/route.ts) -- depends on Velite content imports, standalone feature
-8. **Favicon/icons** -- standalone, no dependencies
-9. **Sitemap fix** -- trivial, standalone
-10. **Testing setup** (Vitest) -- should come after code deduplication so tests cover the deduplicated code, not the about-to-change duplicated code
-11. **Accessibility fixes** -- small, targeted changes that can be done in any order
-12. **Performance fixes** (image sizes, Hero refactor) -- lowest risk, can be done last
-
-**Rationale for this ordering:**
-- Security first (headers are the highest-impact, lowest-risk change)
-- Deduplication before testing (test the final code shape, not the pre-refactor shape)
-- Error boundaries before OG images (if OG image generation fails during build, error boundaries help in development)
-- Rate limiting before testing (rate limiting is a new dependency that should be stable before writing tests around it)
+**What:** Try to pre-evaluate MDX in middleware and pass rendered HTML downstream.
+**Why bad:** Middleware runs at the edge with no access to React rendering. It cannot execute JSX. This is architecturally impossible.
+**Instead:** Switch to `s.markdown()` so the HTML is produced at Velite build time, not at request time.
 
 ## Sources
 
-- [Next.js Content Security Policy guide](https://nextjs.org/docs/app/guides/content-security-policy)
-- [Next.js headers() config reference](https://nextjs.org/docs/pages/api-reference/config/next-config-js/headers)
-- [Next.js error handling docs](https://nextjs.org/docs/app/getting-started/error-handling)
-- [Next.js error.tsx file convention](https://nextjs.org/docs/app/api-reference/file-conventions/error)
-- [Next.js opengraph-image file convention](https://nextjs.org/docs/app/api-reference/file-conventions/metadata/opengraph-image)
-- [Next.js ImageResponse API](https://nextjs.org/docs/app/api-reference/functions/image-response)
-- [Next.js Vitest testing guide](https://nextjs.org/docs/app/guides/testing/vitest)
-- [Upstash Ratelimit documentation](https://upstash.com/docs/redis/sdks/ratelimit-ts/overview)
-- [Upstash ratelimit-js Next.js middleware example](https://github.com/upstash/ratelimit-js/tree/main/examples/nextjs-middleware)
+- [Velite MDX Support](https://velite.js.org/guide/using-mdx) -- Velite's official MDX docs showing `new Function()` pattern
+- [Velite Markdown Support](https://velite.js.org/guide/using-markdown) -- `s.markdown()` alternative
+- [Velite Code Highlighting](https://velite.js.org/guide/code-highlighting) -- Rehype plugin integration
+- [MDX Discussion #2322](https://github.com/orgs/mdx-js/discussions/2322) -- MDX maintainers confirming no alternative to dynamic execution
+- [Next.js CSP Guide](https://nextjs.org/docs/app/guides/content-security-policy) -- Official nonce/hash CSP guidance
+- [Next.js SRI Issue #66901](https://github.com/vercel/next.js/issues/66901) -- SRI incompatible with Turbopack
+- [Shiki Theme Colors](https://shiki.style/guide/theme-colors) -- `createCssVariablesTheme` documentation
+- [Rehype Pretty Code](https://rehype-pretty.pages.dev/) -- Plugin documentation
+- [React useSyncExternalStore](https://react.dev/reference/react/useSyncExternalStore) -- Official React docs
+- [useSyncExternalStore with localStorage](https://dev.to/muhammed_fayazts_e35676/usesyncexternalstore-the-right-way-to-sync-react-with-localstorage-3c5f) -- Pattern examples
+- [safe-mdx](https://github.com/holocron-hq/safe-mdx) -- Evaluated and not recommended for this use case
+- [Next.js Discussion #54907](https://github.com/vercel/next.js/discussions/54907) -- Using nonces with Next.js limitations
 
 ---
-*Architecture research for: keech.dev v1.6 hardening milestone*
-*Researched: 2026-04-02*
+*Architecture research for: keech.dev v1.7 CSP hardening milestone*
+*Researched: 2026-04-03*

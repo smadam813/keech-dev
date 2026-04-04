@@ -1,195 +1,324 @@
-# Stack Research
+# Technology Stack
 
-**Domain:** Security hardening, testing, SEO/branding for existing Next.js 16 portfolio/blog
-**Researched:** 2026-04-02
-**Confidence:** HIGH
+**Project:** keech.dev v1.7 - CSP Hardening, MDX Migration, Lint Cleanup
+**Researched:** 2026-04-03
+**Overall Confidence:** MEDIUM (MDX migration path has tradeoffs; syntax highlighting migration is well-documented)
 
-## Recommended Stack Additions
+## Executive Summary
 
-These are NEW dependencies only. The existing stack (Next.js 16, React 19, Tailwind CSS v4, Velite, Upstash Redis, etc.) is validated and unchanged.
+This milestone requires NO new npm dependencies for four of five workstreams. The MDX `new Function()` elimination is the only area requiring a new package (`@mdx-js/mdx`), and even that is conditional on a non-trivial architectural change. The syntax highlighting CSP fix uses Shiki's existing `@shikijs/transformers` package (already a transitive dependency of `shiki`). The middleware, `useSyncExternalStore`, and audit fixes are all achievable with existing dependencies or native React APIs.
 
-### Core Technologies
+The biggest finding: **nonce-based CSP is incompatible with static generation**. The site is fully statically generated and deployed to Vercel CDN. Nonces require per-request dynamic rendering, which would kill performance and CDN caching. The correct approach is middleware that applies static CSP headers (no nonces) but centralizes header management, combined with eliminating the *need* for `unsafe-eval` and `unsafe-inline` through code changes.
 
-| Technology | Version | Purpose | Why Recommended |
-|------------|---------|---------|-----------------|
-| `vitest` | `^4.1.2` | Unit/integration test runner | Vitest 4 is the current stable. Fast, ESM-native, works with Next.js via `@vitejs/plugin-react`. Next.js official docs recommend Vitest over Jest for App Router projects. Requires Node.js >= 20. |
-| `@playwright/test` | `^1.59.1` | E2E testing | The standard for E2E in 2026. Needed for testing mobile menu (`inert`), copy button, scroll reveal, and MDX rendering -- all browser-dependent behaviors that unit tests cannot cover. |
-| `@upstash/ratelimit` | `^2.0.8` | API rate limiting | Already using `@upstash/redis` -- this is the companion library from the same team. Uses the existing Redis instance, no new infrastructure. Sliding window algorithm for smooth limiting. |
-| `feed` | `^5.2.0` | RSS/Atom/JSON feed generation | TypeScript-native, generates RSS 2.0 + Atom 1.0 + JSON Feed from a single API. Lightweight (no dependencies). Preferred over the `rss` package which is older and less maintained. |
+## Recommended Stack Changes
 
-### Supporting Libraries (Testing)
+### New Dependencies
 
-| Library | Version | Purpose | When to Use |
-|---------|---------|---------|-------------|
-| `@vitejs/plugin-react` | `^4.x` | React JSX transform for Vitest | Required for Vitest to understand JSX in test files. |
-| `@testing-library/react` | `^16.3.2` | Component test utilities | React 19 compatible as of v16+. Use for testing client components (view counter, filter bar, copy button). |
-| `@testing-library/dom` | `^10.x` | DOM query utilities | Peer dependency of `@testing-library/react`. |
-| `vite-tsconfig-paths` | `^5.x` | Path alias resolution in Vitest | Resolves `@/*` and `@/.velite` aliases in test files so imports match Next.js config. |
-| `jsdom` | `^26.x` | Simulated browser environment | Test environment for Vitest. Lighter than `happy-dom`, more battle-tested. |
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| `@shikijs/transformers` | ^4.0.2 | Convert Shiki inline styles to CSS classes | Eliminates `unsafe-inline` from `style-src` CSP. Uses `transformerStyleToClass` which operates on HAST-level hooks (`pre`, `tokens`), confirmed compatible with rehype plugins. Already a sub-dependency of `shiki` but needs direct installation for import access. |
 
-### No New Dependencies Required
+### Dependencies to Update
 
-These v1.6 features use built-in Next.js capabilities -- no packages to install:
+| Technology | From | To | Why |
+|------------|------|-----|-----|
+| `eslint-config-next` | ^16.1.6 | ^16.2.2 | Match `next@^16.2.2` to prevent rule drift |
 
-| Feature | Implementation | Why No Package |
-|---------|----------------|----------------|
-| Security headers (CSP, X-Frame-Options, etc.) | `headers()` function in `next.config.ts` | Native Next.js config -- returns header arrays per route pattern. |
-| Error boundaries | `error.tsx` and `loading.tsx` files | Next.js App Router file conventions. React error boundaries built into the framework. |
-| OG image generation | `opengraph-image.tsx` using `ImageResponse` from `next/og` | Built into Next.js since v14. Uses Satori + resvg under the hood. No external package. |
-| Favicon | Static files in `src/app/` or `public/` | Next.js Metadata API auto-detects `icon.tsx`, `favicon.ico`, `apple-icon.png`. |
-| Sitemap fix | Modify existing `src/app/sitemap.ts` | Already implemented, just needs date logic correction. |
-| Input validation | Regex validation in route handlers | Pure TypeScript, no validation library needed for simple slug patterns. |
+### Dependencies to Pin
+
+| Technology | From | To | Why |
+|------------|------|-----|-----|
+| `velite` | ^0.3.1 | 0.3.1 | Pre-release (0.x.x) semver means minor bumps can break. Pin exact to prevent accidental upgrades. |
+
+### No New Dependencies Needed
+
+| Capability | Why No Package Needed |
+|------------|----------------------|
+| Next.js middleware | Built into Next.js -- create `src/middleware.ts` |
+| `useSyncExternalStore` | Built into React 19 -- import from `react` |
+| npm audit fixes | `npm audit fix` resolves all 3 vulnerabilities via transitive updates |
+| ESLint disable comments | Configuration change only |
+
+## Detailed Analysis by Workstream
+
+### 1. MDX Rendering: Eliminating `unsafe-eval`
+
+**Current state:** Velite's `s.mdx()` compiles MDX to a function-body string at build time. `MDXContent` component executes it via `new Function(code)` at runtime, requiring `unsafe-eval` in CSP.
+
+**The core problem:** Velite intentionally outputs function-body strings (not importable modules). This is by design -- it avoids bundling component trees at build time, keeping output lean. The `new Function()` pattern IS Velite's recommended rendering approach.
+
+**Option A: Use `@mdx-js/mdx` `run()` function (RECOMMENDED)**
+- Install `@mdx-js/mdx` and use its `run()` function to execute the function-body string
+- `run()` internally uses `new Function()` -- BUT it provides a cleaner API and is the official MDX way to execute function-body output
+- **This does NOT eliminate `unsafe-eval`** -- it just wraps the same mechanism
+- Confidence: HIGH that it works, but does NOT solve the CSP goal
+
+**Option B: Switch to `@shikijs/rehype` + direct MDX file imports via `@next/mdx`**
+- Replace Velite's MDX pipeline entirely with `@next/mdx` which compiles MDX files to importable React components
+- Would eliminate `new Function()` entirely
+- **Breaks the entire Velite content pipeline** -- frontmatter, collections, type-safe schemas, TOC generation, excerpt extraction all depend on Velite
+- NOT recommended -- too much breakage for the CSP gain
+
+**Option C: Accept `unsafe-eval` with documented rationale (RECOMMENDED)**
+- The MDX content is author-controlled (not user-generated)
+- Build output is trusted (Velite compiles at build time, deployed via git push)
+- `unsafe-eval` is a weaker CSP but acceptable when content source is trusted
+- Document the security boundary clearly
+- Remove `unsafe-eval` only if/when Velite adds an alternative output format
+
+**Verdict:** Keep `new Function()` for now. The `unsafe-eval` directive is a pragmatic tradeoff for author-controlled content. No package solves this without replacing Velite. Focus CSP hardening efforts on the achievable wins (removing `unsafe-inline` from styles, adding middleware).
+
+**Confidence:** HIGH -- verified through Velite docs, MDX docs, and `@mdx-js/mdx` source analysis. All `function-body` execution paths use eval-equivalent mechanisms.
+
+### 2. Syntax Highlighting: Eliminating `unsafe-inline` from `style-src`
+
+**Current state:** `rehype-pretty-code` with `theme: 'github-dark-dimmed'` injects inline `style` attributes on every code token `<span>`, requiring `style-src 'unsafe-inline'`.
+
+**Solution: `transformerStyleToClass` from `@shikijs/transformers`**
+
+This is the Shiki maintainer-recommended approach (confirmed in [shiki#671](https://github.com/shikijs/shiki/issues/671) by Anthony Fu):
+
+```typescript
+import { transformerStyleToClass } from '@shikijs/transformers'
+
+const toClass = transformerStyleToClass({
+  classPrefix: '__shiki_',
+})
+```
+
+**How it works:**
+1. Replaces all inline `style` attributes with generated CSS class names
+2. Class names are deterministic hashes of the style values
+3. `toClass.getCSS()` returns the corresponding CSS rules
+4. The CSS is injected into a stylesheet (not inline), which is CSP-safe
+
+**Integration with Velite pipeline:**
+
+The transformer operates on HAST-level hooks (`pre` and `tokens`), NOT the `postprocess` hook. This is critical because `@shikijs/rehype` and `rehype-pretty-code` both operate on HAST -- the `postprocess` hook is never called in rehype pipelines. Since `transformerStyleToClass` uses `pre`/`tokens` hooks, it IS compatible.
+
+**Two sub-approaches for the rehype plugin:**
+
+| Approach | Plugin | Pros | Cons |
+|----------|--------|------|------|
+| A: Keep rehype-pretty-code | `rehype-pretty-code` | No migration, just add transformer | Need to verify transformer passthrough works with rehype-pretty-code's wrapper |
+| B: Switch to @shikijs/rehype | `@shikijs/rehype` | Direct Shiki integration, documented transformer support, Velite docs show this as option | Lose rehype-pretty-code's extra features (line highlighting markup, title blocks) |
+
+**Recommendation:** Try approach A first (add `transformerStyleToClass` to `rehype-pretty-code`'s `transformers` option). If incompatible, fall back to approach B (`@shikijs/rehype` which Velite documents as a supported alternative).
+
+**CSS extraction challenge:** `getCSS()` must be called after build-time compilation, and the CSS must be available in the page's stylesheet. Options:
+1. Generate a static CSS file during Velite build and import it in `globals.css`
+2. Use a Velite transform hook to write the CSS file
+3. Include the CSS as a `<style>` tag with a hash in CSP (less ideal)
+
+**Confidence:** HIGH for the transformer mechanism. MEDIUM for the build-time CSS extraction integration (needs implementation-phase validation).
+
+### 3. Next.js Middleware for Centralized Security Headers
+
+**Current state:** Security headers defined in `next.config.ts` `headers()` function. Works for static and dynamic routes but cannot generate per-request values (nonces).
+
+**Critical finding: Nonces are NOT viable for this site.**
+
+The site is fully statically generated (`generateStaticParams()` on all content pages). Nonce-based CSP requires `dynamic = 'force-dynamic'` on every page, which:
+- Kills CDN caching (every request hits the origin server)
+- Increases TTFB dramatically
+- Increases Vercel costs (serverless function invocations vs. static CDN)
+- Defeats the purpose of static generation
+
+This is confirmed by [Next.js CSP documentation](https://nextjs.org/docs/app/building-your-application/configuring/content-security-policy) and multiple community discussions.
+
+**Recommended approach: Middleware with static CSP headers**
+
+Create `src/middleware.ts` that:
+1. Sets all security headers (CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy)
+2. Uses static CSP directives (no nonces) -- hardened by removing `unsafe-inline` from `style-src`
+3. Centralizes header logic (remove from `next.config.ts headers()`)
+4. Can later add rate limiting, redirects, or other cross-cutting concerns
+
+```typescript
+// src/middleware.ts
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+
+export function middleware(request: NextRequest) {
+  const response = NextResponse.next()
+  // Set security headers on response
+  response.headers.set('Content-Security-Policy', cspHeader)
+  response.headers.set('X-Frame-Options', 'DENY')
+  // ...
+  return response
+}
+
+export const config = {
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+}
+```
+
+**No new dependencies needed.** Middleware is a built-in Next.js feature.
+
+**Confidence:** HIGH -- well-documented Next.js pattern, no compatibility concerns with static generation (middleware runs at the edge before serving cached static pages on Vercel).
+
+### 4. `useSyncExternalStore` for localStorage and Media Queries
+
+**Current state:** Two patterns trigger React 19 lint warnings:
+- `useLayoutEffect` + `setState` for localStorage reads (view-counter.tsx, listing-view-counts.tsx)
+- `useEffect` + `setState` for `matchMedia` sync (use-hero-animation.ts)
+
+**Solution: React 19's built-in `useSyncExternalStore`**
+
+No new package needed. `useSyncExternalStore` is in React 19 core.
+
+**Pattern for localStorage:**
+```typescript
+import { useSyncExternalStore } from 'react'
+
+function useLocalStorageValue(key: string): string | null {
+  return useSyncExternalStore(
+    (callback) => {
+      window.addEventListener('storage', callback)
+      return () => window.removeEventListener('storage', callback)
+    },
+    () => localStorage.getItem(key),    // client snapshot
+    () => null                           // server snapshot (SSR-safe)
+  )
+}
+```
+
+**Pattern for matchMedia:**
+```typescript
+function usePrefersReducedMotion(): boolean {
+  return useSyncExternalStore(
+    (callback) => {
+      const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+      mq.addEventListener('change', callback)
+      return () => mq.removeEventListener('change', callback)
+    },
+    () => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    () => false  // server snapshot
+  )
+}
+```
+
+**Benefits:**
+- Eliminates `useLayoutEffect` + `setState` pattern (removes React 19 lint warnings)
+- SSR-safe via `getServerSnapshot` parameter (no `useLayoutEffect` SSR warning risk)
+- Semantically correct -- localStorage and matchMedia ARE external stores
+- Reduces lint warnings from 10 to ~5 (the remaining ones are animation orchestration effects that are correct as-is)
+
+**Confidence:** HIGH -- `useSyncExternalStore` is a stable React API, well-documented for exactly these patterns.
+
+### 5. npm Audit Vulnerability Fixes
+
+**Current vulnerabilities (3 packages, all transitive):**
+
+| Package | Severity | Via | Fix |
+|---------|----------|-----|-----|
+| `flatted` 3.3.3 | HIGH (DoS + prototype pollution) | `eslint` > `file-entry-cache` > `flat-cache` | `npm audit fix` updates to 3.4.2 |
+| `picomatch` 2.3.1 | HIGH (ReDoS + method injection) | `eslint-config-next` > `fast-glob` > `micromatch` | `npm audit fix` updates to 2.3.2 |
+| `picomatch` 4.0.3 | HIGH (same) | `vitest` > `tinyglobby` | `npm audit fix` updates to 4.0.4 |
+| `brace-expansion` 1.1.12/2.0.2 | MODERATE (DoS) | `eslint`/`typescript-eslint` | `npm audit fix` updates to 1.1.13/2.0.3 |
+
+**Verified:** `npm audit fix --dry-run` confirms all fixes are available via direct updates (no `--force` or `overrides` needed).
+
+**Action:** Run `npm audit fix`. No `package.json` overrides required.
+
+**Note:** Updating `eslint-config-next` to ^16.2.2 (workstream 3) may also resolve the `picomatch` vulnerability through `eslint-config-next` by pulling in a newer `fast-glob`.
+
+**Confidence:** HIGH -- verified with `npm audit fix --dry-run`.
+
+## Alternatives Considered
+
+| Category | Recommended | Alternative | Why Not |
+|----------|-------------|-------------|---------|
+| MDX rendering | Keep `new Function()` + `unsafe-eval` | `next-mdx-remote/rsc` | Broken with Next.js 15.2+ ([github#488](https://github.com/hashicorp/next-mdx-remote/issues/488)), would break on Next.js 16 |
+| MDX rendering | Keep `new Function()` | `safe-mdx` | Cannot use rehype plugins, no syntax highlighting support, would require rewriting entire content pipeline |
+| MDX rendering | Keep `new Function()` | `@next/mdx` direct imports | Would replace Velite entirely -- loses type-safe collections, frontmatter schemas, TOC, excerpts |
+| Syntax highlighting | `transformerStyleToClass` | Shiki `css-variables` theme | Still outputs inline `style` attributes (just with CSS variable values instead of colors) -- does NOT fix CSP |
+| Syntax highlighting | `transformerStyleToClass` | Nonce-based CSP for styles | Requires dynamic rendering, kills static generation |
+| CSP middleware | Static headers in middleware | Nonce-based middleware | Incompatible with static generation, kills CDN caching |
+| localStorage sync | `useSyncExternalStore` | Keep `useLayoutEffect` | Lint warnings persist, SSR-unsafe pattern |
+
+## What NOT to Add
+
+| Package | Why Not |
+|---------|---------|
+| `next-mdx-remote` | Broken with Next.js 15.2+, likely broken on 16.x |
+| `@next-safe/middleware` | Last updated for Next.js 12, uses Pages Router patterns |
+| `@next/mdx` | Would replace Velite, massive scope creep |
+| `safe-mdx` | Too limited (no rehype plugins, no syntax highlighting) |
+| `helmet` or `csp-header` | Overkill for static CSP; hand-written middleware is simpler |
+| `shiki` v4 | Major version bump available (4.0.2) but `rehype-pretty-code@0.14.1` may not support it yet; evaluate separately |
 
 ## Installation
 
 ```bash
-# Rate limiting (production dependency -- used in API routes)
-npm install @upstash/ratelimit feed
+# New dependency
+npm install @shikijs/transformers
 
-# Testing (dev dependencies only)
-npm install -D vitest @vitejs/plugin-react @testing-library/react @testing-library/dom vite-tsconfig-paths jsdom @playwright/test
+# Update eslint-config-next to match next version
+npm install -D eslint-config-next@^16.2.2
 
-# Playwright browsers (one-time setup, not in package.json)
-npx playwright install --with-deps chromium
+# Fix audit vulnerabilities (all transitive)
+npm audit fix
+
+# Pin velite exact version (edit package.json manually)
+# Change "velite": "^0.3.1" to "velite": "0.3.1"
 ```
 
-## Configuration Files to Create
+## Integration Points with Existing Pipeline
 
-### `vitest.config.mts`
+### velite.config.ts Changes
 
 ```typescript
-import { defineConfig } from 'vitest/config'
-import react from '@vitejs/plugin-react'
-import tsconfigPaths from 'vite-tsconfig-paths'
+// Add transformer to rehype-pretty-code options
+import { transformerStyleToClass } from '@shikijs/transformers'
 
-export default defineConfig({
-  plugins: [tsconfigPaths(), react()],
-  test: {
-    environment: 'jsdom',
-    globals: true,
-    include: ['src/**/*.test.{ts,tsx}'],
-  },
+const shikiClassTransformer = transformerStyleToClass({
+  classPrefix: '__shiki_',
 })
+
+// In mdx.rehypePlugins:
+[rehypePrettyCode, {
+  theme: 'github-dark-dimmed',
+  keepBackground: true,
+  defaultLang: { block: 'typescript', inline: 'typescript' },
+  transformers: [shikiClassTransformer],
+}]
+
+// After build: shikiClassTransformer.getCSS() contains the stylesheet
 ```
 
-Key points:
-- `tsconfigPaths()` resolves `@/*` aliases matching `tsconfig.json`
-- `globals: true` enables `describe`/`it`/`expect` without imports
-- Async Server Components cannot be unit-tested with Vitest (use Playwright for those)
+### CSP Header Migration Path
 
-### `playwright.config.ts`
-
-```typescript
-import { defineConfig } from '@playwright/test'
-
-export default defineConfig({
-  testDir: './e2e',
-  webServer: {
-    command: 'npm run build && npm run start',
-    port: 3000,
-    reuseExistingServer: !process.env.CI,
-  },
-  use: {
-    baseURL: 'http://localhost:3000',
-  },
-  projects: [
-    { name: 'chromium', use: { browserName: 'chromium' } },
-  ],
-})
+```
+next.config.ts headers()  -->  src/middleware.ts
+  - Remove async headers() from next.config.ts
+  - Move all security headers to middleware
+  - Update CSP: remove 'unsafe-inline' from style-src (after transformer migration)
+  - Keep 'unsafe-eval' in script-src (MDX requirement, documented)
 ```
 
-Key points:
-- Single browser (Chromium) is sufficient for a personal site
-- Builds production first, then tests against it -- catches build-time issues
-- E2E tests live in `e2e/` directory, separate from unit tests in `src/`
+## Confidence Assessment
 
-### `package.json` script additions
-
-```json
-{
-  "scripts": {
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:e2e": "playwright test"
-  }
-}
-```
-
-## Alternatives Considered
-
-| Recommended | Alternative | When to Use Alternative |
-|-------------|-------------|-------------------------|
-| `vitest` | `jest` | Never for this project. Jest has poor ESM support and requires more config for Next.js App Router. Vitest is officially recommended by Next.js docs. |
-| `@playwright/test` | `cypress` | If you need a visual test runner UI during development. But Cypress is heavier, slower, and less suited for CI. Playwright is the standard. |
-| `feed` | `rss` | Never. The `rss` package is older, JavaScript-only (no TS types), and only generates RSS 2.0. `feed` generates RSS + Atom + JSON Feed with full TypeScript support. |
-| `feed` | Hand-written XML | Only if you want zero dependencies. But `feed` handles XML escaping, date formatting, and spec compliance -- hand-writing RSS XML is error-prone. |
-| `@upstash/ratelimit` | Custom rate limiting with raw Redis | Never. `@upstash/ratelimit` is purpose-built for the Upstash Redis SDK already in use. Reimplementing sliding window is unnecessary complexity. |
-| `@testing-library/react` | `@testing-library/react` + `msw` | Add `msw` (Mock Service Worker) later if you need to mock API routes in integration tests. Not needed for v1.6 scope. |
-| `jsdom` | `happy-dom` | If test speed becomes a bottleneck. `happy-dom` is faster but less spec-complete. Start with `jsdom` for correctness. |
-
-## What NOT to Use
-
-| Avoid | Why | Use Instead |
-|-------|-----|-------------|
-| `helmet` / `next-safe` | These are Express middleware. Next.js uses `headers()` in config or middleware natively. Adding Express-style middleware to Next.js is an anti-pattern. | `next.config.ts` `headers()` function |
-| `@vercel/og` (direct import) | Deprecated in favor of `next/og` which re-exports the same API. Importing `@vercel/og` directly adds an unnecessary dependency. | `import { ImageResponse } from 'next/og'` |
-| `next-seo` | Redundant with Next.js Metadata API (available since v13.2). The built-in `metadata` export and `generateMetadata()` cover all SEO needs. | Next.js built-in Metadata API |
-| `zod` (for slug validation) | Already a transitive dependency via Velite, but adding it as a direct dependency for simple regex slug validation is overkill. | Inline regex: `/^[a-z0-9-]+$/` |
-| `jest` | Poor ESM support, requires `ts-jest` or `@swc/jest`, more configuration overhead. Next.js docs now recommend Vitest. | `vitest` |
-| `next-mdx-remote` | Concerns doc mentions this as a long-term option for safer MDX execution. Do NOT add it in v1.6 -- it would require rearchitecting the content pipeline. The try-catch wrapper addresses the immediate risk. | Try-catch around `new Function()` + CSP headers |
-
-## Version Compatibility
-
-| Package | Compatible With | Notes |
-|---------|-----------------|-------|
-| `vitest@^4.1.2` | `vite@^6.0.0` (auto-installed as dependency) | Vitest brings its own Vite. Does not conflict with Next.js (which uses Turbopack). |
-| `vitest@^4.1.2` | Node.js >= 20 | Hard requirement. Verify with `node --version`. |
-| `@testing-library/react@^16.3.2` | `react@^19` | v16+ supports React 19. Earlier versions (v13-v15) only support React 18. |
-| `@upstash/ratelimit@^2.0.8` | `@upstash/redis@^1.x` | Same team, designed to work together. Uses the existing Redis client instance. |
-| `feed@^5.2.0` | Node.js >= 14 | No framework coupling. Pure data-in, XML/JSON-out. |
-| `@playwright/test@^1.59.1` | Node.js >= 18 | Installs its own browser binaries. No conflict with project dependencies. |
-
-## Integration Points
-
-### Rate Limiting + Existing Redis
-
-`@upstash/ratelimit` accepts the existing `Redis.fromEnv()` instance from `src/lib/redis.ts`. No new environment variables needed.
-
-```typescript
-import { Ratelimit } from '@upstash/ratelimit'
-import { redis } from '@/lib/redis'
-
-const ratelimit = new Ratelimit({
-  redis,
-  limiter: Ratelimit.slidingWindow(10, '60 s'),
-})
-```
-
-### OG Images + Existing Metadata
-
-Next.js auto-discovers `opengraph-image.tsx` files and wires them into the metadata. No changes to existing `generateMetadata()` needed -- the framework merges them.
-
-### RSS Feed + Existing Velite Collections
-
-The `feed` package consumes the same `posts` collection from `@/.velite` that listing pages use. The route handler at `src/app/feed.xml/route.ts` imports posts and maps them to feed items.
-
-### Security Headers + MDX Execution
-
-CSP must include `'unsafe-eval'` in `script-src` because `new Function()` is eval. This is an acceptable tradeoff documented in the concerns -- removing it requires rearchitecting MDX execution (out of scope for v1.6).
+| Area | Confidence | Notes |
+|------|------------|-------|
+| Syntax highlighting (transformerStyleToClass) | HIGH | Shiki maintainer-recommended, HAST-compatible hooks confirmed |
+| Middleware (static CSP) | HIGH | Standard Next.js pattern, no nonce complexity |
+| useSyncExternalStore | HIGH | Stable React API, exact use case it was designed for |
+| npm audit fixes | HIGH | Verified with --dry-run |
+| MDX unsafe-eval removal | HIGH (that it CANNOT be removed) | All execution paths for Velite function-body output require eval-equivalent |
+| CSS extraction at build time | MEDIUM | getCSS() mechanism is clear but integration with Velite build pipeline needs validation |
 
 ## Sources
 
-- [Next.js Testing with Vitest Guide](https://nextjs.org/docs/app/guides/testing/vitest) -- official setup instructions (MEDIUM confidence, page had redirect issues but content verified via search results)
-- [Vitest 4.0 Announcement](https://vitest.dev/blog/vitest-4) -- breaking changes and requirements (HIGH confidence)
-- [Vitest Migration Guide](https://vitest.dev/guide/migration.html) -- v3 to v4 migration (HIGH confidence)
-- [@upstash/ratelimit GitHub](https://github.com/upstash/ratelimit-js) -- API and examples (HIGH confidence)
-- [Upstash Rate Limiting Docs](https://upstash.com/docs/redis/sdks/ratelimit-ts/overview) -- official documentation (HIGH confidence)
-- [Next.js OG Image Generation](https://nextjs.org/docs/app/api-reference/functions/image-response) -- ImageResponse API (HIGH confidence)
-- [Next.js opengraph-image Convention](https://nextjs.org/docs/app/api-reference/file-conventions/metadata/opengraph-image) -- file-based OG images (HIGH confidence)
-- [feed npm package](https://github.com/jpmonette/feed) -- RSS/Atom/JSON feed generator (HIGH confidence)
-- [@testing-library/react npm](https://www.npmjs.com/package/@testing-library/react) -- v16.3.2 with React 19 support (HIGH confidence)
-- [Playwright Release Notes](https://playwright.dev/docs/release-notes) -- v1.59 (HIGH confidence)
-
----
-*Stack research for: v1.6 Address Concerns -- security hardening, testing, OG images, RSS, rate limiting*
-*Researched: 2026-04-02*
+- [Velite MDX documentation](https://velite.js.org/guide/using-mdx)
+- [Velite code highlighting documentation](https://velite.js.org/guide/code-highlighting)
+- [Shiki CSP inline styles issue #671](https://github.com/shikijs/shiki/issues/671)
+- [Shiki transformerStyleToClass PR #826](https://github.com/shikijs/shiki/pull/826)
+- [Shiki transformers documentation](https://shiki.style/packages/transformers)
+- [Shiki css-variables theme](https://shiki.style/guide/theme-colors)
+- [@shikijs/rehype documentation](https://shiki.style/packages/rehype)
+- [Next.js CSP guide](https://nextjs.org/docs/app/building-your-application/configuring/content-security-policy)
+- [next-mdx-remote RSC broken on Next.js 15.2+](https://github.com/hashicorp/next-mdx-remote/issues/488)
+- [MDX on-demand compilation guide](https://mdxjs.com/guides/mdx-on-demand/)
+- [safe-mdx repository](https://github.com/holocron-hq/safe-mdx)
+- [rehype-pretty-code documentation](https://rehype-pretty.pages.dev/)
