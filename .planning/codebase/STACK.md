@@ -1,6 +1,6 @@
 # Technology Stack
 
-**Analysis Date:** 2026-04-03
+**Analysis Date:** 2026-04-05
 
 ## Languages
 
@@ -9,7 +9,7 @@
 - MDX - Blog posts and project content (`content/posts/**/*.mdx`, `content/projects/**/*.mdx`)
 
 **Secondary:**
-- CSS - Tailwind v4 CSS-first configuration and keyframe animations (`src/app/globals.css`)
+- CSS - Tailwind v4 CSS-first configuration, keyframe animations, and Shiki syntax token variables (`src/app/globals.css`)
 
 ## Runtime
 
@@ -19,7 +19,7 @@
 
 **Package Manager:**
 - npm
-- Lockfile: `package-lock.json` (present and committed)
+- Lockfile: `package-lock.json` (present, lockfileVersion 3)
 
 ## Frameworks
 
@@ -35,21 +35,22 @@
   - Config: `velite.config.ts`
   - Output: `.velite/` (gitignored, regenerated every build)
   - Import alias: `@/.velite` maps to `./.velite`
+  - Collections: `posts` (blog) and `projects` (portfolio)
 
 **Styling:**
 - Tailwind CSS 4.1.18 - CSS-first configuration via `@theme` directive
-  - No `tailwind.config.js` -- all tokens defined in `src/app/globals.css`
+  - No `tailwind.config.js` — all tokens defined in `src/app/globals.css`
   - PostCSS integration via `@tailwindcss/postcss` in `postcss.config.mjs`
-- PostCSS 8.5.6 - CSS processing pipeline
+- PostCSS 8.5.6 - CSS processing pipeline (`postcss.config.mjs`)
 
 **Linting:**
 - ESLint 9.39.2 - Flat config format
   - Config: `eslint.config.mjs`
   - Extends: `eslint-config-next/core-web-vitals`, `eslint-config-next/typescript`
   - Ignores: `.velite/`, `.claude/worktrees/`, `.next/`
-  - Rule overrides (set to `warn`):
-    - `react-hooks/set-state-in-effect` - intentional setState in effects for external sync
-    - `react-hooks/static-components` - dynamic MDX components
+  - Three React 19 rules downgraded to `warn` (intentional patterns, not bugs):
+    - `react-hooks/set-state-in-effect` - setState in effects for external system sync
+    - `react-hooks/static-components` - dynamic MDX component registration
     - `react-hooks/refs` - ref reads in render for computed positions
 
 **Testing:**
@@ -59,6 +60,7 @@
   - Test pattern: `src/**/*.test.{ts,tsx}`
   - Setup file: `vitest.setup.ts`
   - Plugins: `@vitejs/plugin-react` 6.0.1, `vite-tsconfig-paths` 6.1.1
+  - Globals: true (no import needed for `describe`/`it`/`expect`)
   - Run: `npm run test`
 - Playwright 1.59.1 - E2E test runner
   - Config: `playwright.config.ts`
@@ -73,22 +75,22 @@
 
 **Critical (runtime):**
 - `@upstash/redis` 1.36.2 - Serverless Redis client for view counting (`src/lib/redis.ts`)
-- `@upstash/ratelimit` 2.0.8 - Rate limiting for view count API (`src/lib/rate-limit.ts`)
+- `@upstash/ratelimit` 2.0.8 - Sliding window rate limiting for view count POST endpoint (`src/lib/rate-limit.ts`); 10 requests per 60s per IP
 - `@vercel/analytics` 1.6.1 - Web analytics, imported in root layout (`src/app/layout.tsx`)
 - `lucide-react` 0.563.0 - Icon library used throughout components
 
 **Content Pipeline:**
-- `rehype-pretty-code` 0.14.1 - Syntax highlighting for MDX code blocks (theme: `github-dark-dimmed`)
+- `rehype-pretty-code` 0.14.1 - Syntax highlighting for MDX code blocks
+  - Theme: CSS variables (`createCssVariablesTheme` from Shiki), token colors defined in `src/app/globals.css` under `--shiki-*` variables; visually matches `github-dark-dimmed`
+  - `keepBackground: false`, default lang: TypeScript
 - `rehype-slug` 6.0.0 - Adds `id` attributes to heading elements for anchor links
-- `shiki` 3.22.0 - Underlying syntax highlighter for rehype-pretty-code
+- `shiki` 3.22.0 - Underlying syntax highlighter powering rehype-pretty-code
 
 **Utility:**
 - `clsx` 2.1.1 - Conditional CSS class string construction
 - `tailwind-merge` 3.4.0 - Merges Tailwind classes without conflicts
 - Combined in `cn()` utility at `src/lib/utils.ts`:
   ```typescript
-  import { type ClassValue, clsx } from "clsx";
-  import { twMerge } from "tailwind-merge";
   export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
   }
@@ -99,7 +101,7 @@
 - `@types/node` 25.1.0 - Node.js type definitions
 - `@types/react` 19.2.10 - React type definitions
 - `@types/react-dom` 19.2.3 - React DOM type definitions
-- `eslint-config-next` 16.1.6 - Next.js ESLint rules
+- `eslint-config-next` 16.2.2 - Next.js ESLint rules
 
 ## Configuration
 
@@ -113,24 +115,45 @@
   - `@/.velite` -> `./.velite`
 
 **Next.js (`next.config.ts`):**
-- Image quality settings (`qualities: [75, 80]`)
-- Security headers: CSP, X-Frame-Options (DENY), X-Content-Type-Options (nosniff), Referrer-Policy (strict-origin-when-cross-origin)
-- CSP allows: self, unsafe-eval, unsafe-inline, `va.vercel-scripts.com`
+- Image quality settings: `qualities: [75, 80]`
+- No security headers here — handled by middleware (see below)
+
+**Middleware (`src/proxy.ts`):**
+- Named `proxy.ts` (not `middleware.ts`) — functions as Next.js middleware
+- Applied to all routes except static files, images, and metadata files
+- Sets security headers on every response:
+  - `Content-Security-Policy`: self-only, allows `unsafe-inline` for scripts/styles, `va.vercel-scripts.com` for analytics, `frame-ancestors 'none'`
+  - `X-Frame-Options: DENY`
+  - `X-Content-Type-Options: nosniff`
+  - `Referrer-Policy: strict-origin-when-cross-origin`
+
+**API Security (`src/lib/`):**
+- `validation.ts` - Slug format validation (regex + length limits, max 20 slugs per batch)
+- `rate-limit.ts` - `@upstash/ratelimit` sliding window: 10 requests / 60s per IP on POST `/api/views/[slug]`
+- IP deduplication in view counting: SHA-256 hashed IP, 24h TTL key in Redis
 
 **PostCSS (`postcss.config.mjs`):**
 - Single plugin: `@tailwindcss/postcss` (Tailwind v4 integration)
 
+**Velite (`velite.config.ts`):**
+- Rehype plugins (in order): `rehype-slug`, `rehype-pretty-code`, custom `rehypeListRole`
+- `rehypeListRole`: custom plugin adding `role="list"` to `<ul>`/`<ol>` for VoiceOver compatibility
+- Assets output to `public/static/`, referenced via `/static/` base path
+- Slug uniqueness enforced per collection via `s.slug('posts')` / `s.slug('projects')`
+
 **Environment:**
-- `.env.local` present (contains Upstash Redis credentials)
+- `.env.local` present (not committed)
 - Required vars: `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`
+- Used only by `src/lib/redis.ts` via `Redis.fromEnv()`
+- View counting degrades gracefully if Redis is unreachable
 
 **Fonts (`src/lib/fonts.ts`):**
 - Norse (custom WOFF2, local): `public/fonts/Norse-Regular.woff2`, `public/fonts/Norse-Bold.woff2`
   - CSS variable: `--font-display`
-  - Used for headings and display text
+  - Headings and display text
 - Inter (Google Font): weights 400, 500, 600, 700
   - CSS variable: `--font-body`
-  - Used for body text
+  - Body text
 
 ## Build Pipeline
 
@@ -138,19 +161,19 @@
 ```bash
 velite --watch & next dev --turbopack
 ```
-Two parallel processes: Velite watches MDX content for changes, Next.js uses Turbopack for fast HMR.
+Two parallel processes: Velite watches MDX content, Next.js uses Turbopack for fast HMR. Velite must be running for content changes to be reflected.
 
 **Production Build (`npm run build`):**
 ```bash
 velite && next build
 ```
-Sequential: Velite must complete MDX compilation before Next.js build starts. Output goes to `.next/`.
+Sequential — Velite MDX compilation must complete before Next.js build starts. Output to `.next/`.
 
 **Lint (`npm run lint`):**
 ```bash
 eslint .
 ```
-Uses ESLint flat config with `next/core-web-vitals` and `next/typescript` rule sets.
+Flat config with `next/core-web-vitals` and `next/typescript` rule sets.
 
 **Unit Tests (`npm run test`):**
 ```bash
@@ -161,27 +184,27 @@ vitest run
 ```bash
 playwright test
 ```
-Builds the app, starts on port 3000, runs desktop + mobile Chromium projects.
+Builds the app, starts on port 3000, runs desktop + mobile Chromium.
 
 **Content Only (`npm run velite`):**
 ```bash
 velite
 ```
-Run Velite content compilation alone. Useful for debugging MDX content issues.
+Useful for debugging MDX content issues without starting the dev server.
 
 ## Platform Requirements
 
 **Development:**
-- Node.js 22.x (no `.nvmrc` or `.node-version` file)
+- Node.js 22.x (no `.nvmrc` or `.node-version` file present)
 - npm
-- `.env.local` with Upstash Redis credentials for view counting (feature degrades gracefully without them)
-- No Docker or containerization required for local dev
+- `.env.local` with Upstash Redis credentials for view counting (feature degrades gracefully without)
+- No Docker or containerization required
 
 **Production:**
-- Deployed to Vercel (git-push deployment, no CI pipeline)
-- Static site with two serverless API routes for view counting
+- Deployed to Vercel via git-push (no CI pipeline)
+- Static site with two serverless API route groups: `GET /api/views` (batch) and `GET/POST /api/views/[slug]`
 - Environment variables configured in Vercel dashboard
 
 ---
 
-*Stack analysis: 2026-04-03*
+*Stack analysis: 2026-04-05*
