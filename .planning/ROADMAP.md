@@ -160,6 +160,6 @@ Phases execute in numeric order: 20 → 21 → 22 → 23
 | 18. React 19 Lint Cleanup | v1.7 | 3/3 | Complete | 2026-04-05 |
 | 19. Verification and Polish | v1.7 | 1/1 | Complete | 2026-04-05 |
 | 20. Dead Code & Test Hygiene | v1.8 | 1/1 | Complete    | 2026-04-05 |
-| 21. Dependency Upgrades | v1.8 | 4/4 | Complete   | 2026-04-05 |
+| 21. Dependency Upgrades | v1.8 | 4/4 | Complete    | 2026-04-05 |
 | 22. TypeScript 6 Upgrade | v1.8 | 0/? | Not started | - |
 | 23. Test Coverage & Code Quality | v1.8 | 0/? | Not started | - |
