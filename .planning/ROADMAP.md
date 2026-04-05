@@ -76,7 +76,7 @@ See: `.planning/milestones/v1.7-ROADMAP.md` for full details.
 
 - [x] **Phase 20: Dead Code & Test Hygiene** - Remove orphaned code, fix test co-location and tsconfig for accurate baselines (completed 2026-04-05)
 - [x] **Phase 21: Dependency Upgrades** - Apply minor/patch and safe major dependency updates across the stack (completed 2026-04-05)
-- [ ] **Phase 22: TypeScript 6 Upgrade** - Upgrade to TypeScript 6.x with migration tooling and full validation
+- [x] **Phase 22: TypeScript 6 Upgrade** - Upgrade to TypeScript 6.x with migration tooling and full validation (completed 2026-04-05)
 - [ ] **Phase 23: Test Coverage & Code Quality** - Fill test gaps for API routes, CodeBlockEnhancer, OG font; evaluate lint suppressions
 
 ## Phase Details
@@ -119,9 +119,9 @@ Plans:
   1. TypeScript 6.x is installed and `npx tsc --noEmit` reports zero errors
   2. `npm run build` produces all-static pages with no compiler warnings
   3. `npm run test` and `npm run lint` pass with zero failures and zero warnings
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 Plans:
-- [ ] 22-01-PLAN.md — Install TypeScript 6.x with ts5to6 migration and full toolchain validation
+- [x] 22-01-PLAN.md — Install TypeScript 6.x with ts5to6 migration and full toolchain validation
 
 ### Phase 23: Test Coverage & Code Quality
 **Goal**: The highest-value test gaps are filled and lint suppression decisions are documented
@@ -163,5 +163,5 @@ Phases execute in numeric order: 20 → 21 → 22 → 23
 | 19. Verification and Polish | v1.7 | 1/1 | Complete | 2026-04-05 |
 | 20. Dead Code & Test Hygiene | v1.8 | 1/1 | Complete    | 2026-04-05 |
 | 21. Dependency Upgrades | v1.8 | 4/4 | Complete    | 2026-04-05 |
-| 22. TypeScript 6 Upgrade | v1.8 | 0/1 | Not started | - |
+| 22. TypeScript 6 Upgrade | v1.8 | 1/1 | Complete    | 2026-04-05 |
 | 23. Test Coverage & Code Quality | v1.8 | 0/? | Not started | - |
