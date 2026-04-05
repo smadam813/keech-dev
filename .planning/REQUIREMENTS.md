@@ -17,7 +17,7 @@ Requirements for v1.8 Validate & Address Concerns. Each maps to roadmap phases.
 ### Dependency Updates
 
 - [x] **DEPS-01**: Apply minor/patch updates (tailwindcss, rehype-pretty-code, tailwind-merge, @upstash/redis, @types/node, @types/react)
-- [ ] **DEPS-02**: Upgrade shiki 3→4 together with rehype-pretty-code, validate CSS-variables theme
+- [x] **DEPS-02**: Upgrade shiki 3→4 together with rehype-pretty-code, validate CSS-variables theme
 - [ ] **DEPS-03**: Upgrade lucide-react to 1.x (if not removed by HYGN-02)
 - [ ] **DEPS-04**: Upgrade @vercel/analytics to 2.x, verify no CSP domain changes needed
 - [ ] **DEPS-05**: Upgrade TypeScript to 6.x, run ts5to6 migration tool, validate with tsc --noEmit
@@ -62,7 +62,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | HYGN-03 | Phase 20 | Pending |
 | HYGN-04 | Phase 20 | Pending |
 | DEPS-01 | Phase 21 | Complete |
-| DEPS-02 | Phase 21 | Pending |
+| DEPS-02 | Phase 21 | Complete |
 | DEPS-03 | Phase 21 | Pending |
 | DEPS-04 | Phase 21 | Pending |
 | DEPS-05 | Phase 22 | Pending |

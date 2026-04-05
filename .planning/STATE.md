@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.8
 milestone_name: Validate & Address Concerns
 status: executing
-stopped_at: Completed 21-01-PLAN.md
-last_updated: "2026-04-05T22:25:18.541Z"
+stopped_at: Completed 21-02-PLAN.md
+last_updated: "2026-04-05T22:27:52.034Z"
 last_activity: 2026-04-05
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 5
-  completed_plans: 2
-  percent: 40
+  completed_plans: 3
+  percent: 60
 ---
 
 # Project State
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-05)
 ## Current Position
 
 Phase: 21 (Dependency Upgrades) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-04-05
 
@@ -49,6 +49,7 @@ Progress: [░░░░░░░░░░░░] 0%
 | v1.6 | 5 | 13 | 2 days |
 | v1.7 | 6 | 9 | 3 days |
 | Phase 21 P01 | 1min | 1 tasks | 2 files |
+| Phase 21 P02 | 1min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -62,6 +63,7 @@ Research-informed decisions for v1.8:
 - tsconfig `types` array fix in Phase 20 pre-empts TS6 breaking change in Phase 22
 - HYGN-02/DEPS-03 conditional: if lucide-react removed, DEPS-03 is N/A
 - [Phase 21]: Upgraded tailwindcss and @tailwindcss/postcss together to avoid version mismatch (Pitfall 2)
+- [Phase 21]: shiki 4 createCssVariablesTheme API unchanged from v3 -- zero code changes needed
 
 ### Pending Todos
 
@@ -89,6 +91,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-05T22:25:18.539Z
-Stopped at: Completed 21-01-PLAN.md
+Last session: 2026-04-05T22:27:52.032Z
+Stopped at: Completed 21-02-PLAN.md
 Resume file: None
