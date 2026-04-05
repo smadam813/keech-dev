@@ -2,7 +2,8 @@ import { projects } from '@/.velite'
 import { notFound } from 'next/navigation'
 import { MDXContent } from '@/components/blog/mdx-content'
 import { FilterChip } from '@/components/ui/filter-chip'
-import { ArrowLeft, Github, ExternalLink } from 'lucide-react'
+import { ArrowLeft, ExternalLink } from 'lucide-react'
+import { GithubIcon } from '@/components/icons/brand-icons'
 import Link from 'next/link'
 import Image from 'next/image'
 import type { Metadata } from 'next'
@@ -88,7 +89,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                          hover:shadow-brutal-hover hover:translate-x-[2px] hover:translate-y-[2px]
                          transition-all duration-150"
             >
-              <Github size={18} />
+              <GithubIcon size={18} />
               <span>View Code</span>
             </a>
           )}

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { Github, ExternalLink } from 'lucide-react'
+import { ExternalLink } from 'lucide-react'
+import { GithubIcon } from '@/components/icons/brand-icons'
 import { FilterChip } from '@/components/ui/filter-chip'
 
 interface ProjectCardProps {
@@ -69,7 +70,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
           <div className="flex items-center gap-4 text-sm text-muted">
             {project.github && (
               <span className="flex items-center gap-1">
-                <Github size={14} />
+                <GithubIcon size={14} />
                 <span>Code</span>
               </span>
             )}

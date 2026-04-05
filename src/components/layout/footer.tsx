@@ -1,9 +1,9 @@
 import Link from 'next/link'
-import { Github, Linkedin } from 'lucide-react'
+import { GithubIcon, LinkedinIcon } from '@/components/icons/brand-icons'
 
 const socialLinks = [
-  { href: 'https://github.com/smadam813', icon: Github, label: 'GitHub' },
-  { href: 'https://linkedin.com/in/adam-keech', icon: Linkedin, label: 'LinkedIn' },
+  { href: 'https://github.com/smadam813', icon: GithubIcon, label: 'GitHub' },
+  { href: 'https://linkedin.com/in/adam-keech', icon: LinkedinIcon, label: 'LinkedIn' },
 ]
 
 export function Footer() {
