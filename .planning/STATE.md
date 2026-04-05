@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.7
-milestone_name: Address Additional Concerns
-status: complete
-stopped_at: Milestone v1.7 archived
-last_updated: "2026-04-05T15:00:00.000Z"
+milestone: v1.8
+milestone_name: Validate & Address Concerns
+status: active
+stopped_at: null
+last_updated: "2026-04-05T16:00:00.000Z"
 last_activity: 2026-04-05
 progress:
-  total_phases: 6
-  completed_phases: 6
-  total_plans: 9
-  completed_plans: 9
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** A polished, intentional developer portfolio — fast, visually distinctive, and well-crafted in every detail.
-**Current focus:** Planning next milestone
+**Current focus:** Defining requirements for v1.8
 
 ## Current Position
 
-Phase: —
+Phase: Not started (defining requirements)
 Plan: —
-Status: v1.7 complete, awaiting next milestone
-Last activity: 2026-04-05
+Status: Defining requirements
+Last activity: 2026-04-05 — Milestone v1.8 started
 
-Progress: [████████████] 100% (v1.7: 6/6 phases)
+Progress: [░░░░░░░░░░░░] 0%
 
 ## Performance Metrics
 

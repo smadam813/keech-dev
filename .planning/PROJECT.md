@@ -99,7 +99,17 @@ A polished, intentional developer portfolio — fast, visually distinctive, and 
 
 ### Active
 
-(No active requirements — start next milestone to define)
+## Current Milestone: v1.8 Validate & Address Concerns
+
+**Goal:** Resolve remaining concerns from the codebase audit — dead code, test hygiene, dependency updates, and test coverage gaps.
+
+**Target features:**
+- Remove orphaned CopyButton component and its tests
+- Relocate security-headers.test.ts to co-locate with src/proxy.ts
+- Fix TypeScript false errors in test files
+- Evaluate and apply dependency updates (minor/patch + major assessment)
+- Fill test coverage gaps (API routes, CodeBlockEnhancer, OG font path)
+- Address react-hooks/set-state-in-effect suppressions if refactor is clean
 
 ### Out of Scope
 
@@ -212,4 +222,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-05 after v1.7 milestone*
+*Last updated: 2026-04-05 after v1.8 milestone start*
