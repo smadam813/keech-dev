@@ -17,7 +17,6 @@
     "text_mode": false,
     "research_before_questions": true,
     "skip_discuss": false,
-    "use_worktrees": true,
     "_auto_chain_active": true
   },
   "git": {

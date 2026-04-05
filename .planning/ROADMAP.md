@@ -55,7 +55,7 @@ See: `.planning/milestones/v1.6-ROADMAP.md` for full details.
 
 </details>
 
-### v1.7 Address Additional Concerns (In Progress)
+### 🚧 v1.7 Address Additional Concerns (In Progress)
 
 **Milestone Goal:** Harden CSP by eliminating `unsafe-eval`, centralize security via middleware, migrate syntax highlighting to CSS-variables theme, and clean up remaining lint/dependency/React quality concerns.
 
@@ -128,10 +128,7 @@ Plans:
   2. Hero animation respects prefers-reduced-motion changes without page reload
   3. `npm run lint` produces zero `react-hooks/set-state-in-effect` warnings
   4. Hero animation reveal sequence still plays correctly (orchestration effects preserved with explanatory suppression comments)
-**Plans:** 2 plans
-Plans:
-- [ ] 18-01-PLAN.md -- Create useMediaQuery and useViewStore hooks with useSyncExternalStore + tests
-- [ ] 18-02-PLAN.md -- Migrate all consumers to shared hooks, fix ref-during-render and remaining lint warnings
+**Plans**: TBD
 
 ### Phase 19: Verification and Polish
 **Goal**: The entire site passes end-to-end validation under the hardened CSP with zero lint issues and full static generation preserved
@@ -168,5 +165,5 @@ Phases execute in numeric order: 14 → 15 → 16 → 17 → 18 → 19
 | 15. Middleware Infrastructure | v1.7 | 1/1 | Complete    | 2026-04-04 |
 | 16. MDX Migration | v1.7 | 2/2 | Complete    | 2026-04-04 |
 | 17. Syntax Highlighting Theme Migration | v1.7 | 1/1 | Complete    | 2026-04-04 |
-| 18. React 19 Lint Cleanup | v1.7 | 0/2 | Not started | - |
+| 18. React 19 Lint Cleanup | v1.7 | 0/0 | Not started | - |
 | 19. Verification and Polish | v1.7 | 0/0 | Not started | - |
