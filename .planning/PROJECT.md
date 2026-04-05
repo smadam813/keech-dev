@@ -103,6 +103,11 @@ A polished, intentional developer portfolio — fast, visually distinctive, and 
 - ✓ Security-headers test relocated to co-locate with src/proxy.ts — v1.8
 - ✓ vitest/globals added to tsconfig types, zero false tsc errors — v1.8
 - ✓ Error import shadowing fixed in error.test.tsx — v1.8
+- ✓ Minor/patch dependencies updated (tailwindcss 4.2.2, tailwind-merge 3.5.0, @upstash/redis 1.37.0, rehype-pretty-code 0.14.3, @types/node 25.5.2, @types/react 19.2.14) — v1.8
+- ✓ shiki upgraded from 3.x to 4.x with zero code changes (CSS-variables theme unchanged) — v1.8
+- ✓ @vercel/analytics upgraded from 1.x to 2.x with zero code changes — v1.8
+- ✓ lucide-react upgraded from 0.x to 1.x with brand icon SVG replacements — v1.8
+- ✓ Zero npm audit vulnerabilities maintained after all dependency upgrades — v1.8
 
 ## Current Milestone: v1.8 Validate & Address Concerns
 
@@ -152,7 +157,7 @@ Syntax highlighting uses CSS-variables theme with 14 --shiki-* token variables i
 Branded error boundaries at three levels catch runtime errors gracefully.
 Othala rune favicon + dynamic OG images for social sharing.
 RSS feed at /feed.xml, sitemap with actual content dates.
-Test coverage: 135 Vitest unit tests + 18 Playwright E2E tests (16 active, 2 graceful skips).
+Test coverage: 132 Vitest unit tests + 18 Playwright E2E tests (16 active, 2 graceful skips).
 Collapsible sticky mobile TOC for blog post section navigation.
 Site is statically generated and deployed via git-push to Vercel.
 Zero npm audit vulnerabilities. Zero ESLint errors/warnings.
@@ -227,4 +232,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-05 after Phase 20 completion*
+*Last updated: 2026-04-05 after Phase 21 completion*
