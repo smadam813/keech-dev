@@ -107,10 +107,10 @@ describe('useFilteredList', () => {
     expect(window.history.replaceState).toHaveBeenCalledWith(null, '', '/blog')
   })
 
-  it('exposes isTransitioning as false initially (no transition on first render)', () => {
+  it('exposes isPending as false initially (no transition on first render)', () => {
     mockGet.mockReturnValue('react')
     const { result } = renderHook(() => useFilteredList(makeOptions('react')))
-    // On initial render, isTransitioning should be false (skipped by useRef guard)
-    expect(result.current.isTransitioning).toBe(false)
+    // On initial render, isPending should be false (useTransition starts idle)
+    expect(result.current.isPending).toBe(false)
   })
 })

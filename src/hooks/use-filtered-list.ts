@@ -1,7 +1,7 @@
 'use client'
 
 import { useSearchParams, usePathname } from 'next/navigation'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useTransition } from 'react'
 
 interface UseFilteredListOptions<T> {
   items: T[]
@@ -14,7 +14,7 @@ interface UseFilteredListResult<T> {
   filteredItems: T[]
   activeFilters: Set<string>
   isFiltering: boolean
-  isTransitioning: boolean
+  isPending: boolean
   filterCounts: Record<string, number>
   handleToggle: (value: string) => void
   handleClear: () => void
@@ -50,25 +50,7 @@ export function useFilteredList<T>(options: UseFilteredListOptions<T>): UseFilte
     return counts
   }, [items, allFilterValues, getItemValues])
 
-  const [isTransitioning, setIsTransitioning] = useState(false)
-  const isInitialRender = useRef(true)
-
-  // Derive a stable key from active filters to detect content changes
-  const filteredKey = [...activeFilters].sort().join(',')
-
-  useEffect(() => {
-    // Skip fade on initial render (including URL-preloaded filters)
-    if (isInitialRender.current) {
-      isInitialRender.current = false
-      return
-    }
-    // Only fade when filters are active and content changes
-    if (!isFiltering) return
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- Intentional: sync transition flag triggers CSS fade before setTimeout clears it
-    setIsTransitioning(true)
-    const timer = setTimeout(() => setIsTransitioning(false), 150)
-    return () => clearTimeout(timer)
-  }, [filteredKey, isFiltering])
+  const [isPending, startTransition] = useTransition()
 
   // Write new filter set to URL via replaceState (no server re-render)
   const updateURL = useCallback(
@@ -80,7 +62,9 @@ export function useFilteredList<T>(options: UseFilteredListOptions<T>): UseFilte
         params.set(paramName, [...next].sort().join(','))
       }
       const query = params.toString()
-      window.history.replaceState(null, '', query ? `${pathname}?${query}` : pathname)
+      startTransition(() => {
+        window.history.replaceState(null, '', query ? `${pathname}?${query}` : pathname)
+      })
     },
     [searchParams, pathname, paramName]
   )
@@ -106,7 +90,7 @@ export function useFilteredList<T>(options: UseFilteredListOptions<T>): UseFilte
     filteredItems,
     activeFilters,
     isFiltering,
-    isTransitioning,
+    isPending,
     filterCounts,
     handleToggle,
     handleClear,
