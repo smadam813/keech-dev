@@ -2,7 +2,7 @@
 
 ## What This Is
 
-Personal portfolio/blog at keech.dev built with Next.js 16, React 19, Tailwind CSS v4, and Velite for MDX content. Features a neobrutalist visual identity with Norse-themed hero section, load-gated reveal animation, ambient rune glow effects, Redis-backed blog view counts, multi-select tag/stack filtering, security headers, branded error boundaries, dynamic OG images, RSS feed, and automated test coverage via Vitest and Playwright.
+Personal portfolio/blog at keech.dev built with Next.js 16, React 19, Tailwind CSS v4, and Velite for MDX content. Features a neobrutalist visual identity with Norse-themed hero section, load-gated reveal animation, ambient rune glow effects, Redis-backed blog view counts, multi-select tag/stack filtering, centralized security headers via middleware (CSP without unsafe-eval), branded error boundaries, dynamic OG images, RSS feed, CSS-variables syntax highlighting, and automated test coverage via Vitest and Playwright.
 
 ## Core Value
 
@@ -89,22 +89,17 @@ A polished, intentional developer portfolio — fast, visually distinctive, and 
 - ✓ Token color variables defined in globals.css as --shiki-* CSS custom properties — v1.7
 - ✓ Code block background explicitly set via CSS variable (keepBackground: false) — v1.7
 - ✓ Visual parity with github-dark-dimmed color scheme maintained — v1.7
+- ✓ localStorage patterns in view-counter and listing-view-counts use useSyncExternalStore — v1.7
+- ✓ matchMedia pattern in use-hero-animation uses useSyncExternalStore — v1.7
+- ✓ Zero react-hooks/set-state-in-effect warnings from npm run lint — v1.7
+- ✓ Animation orchestration effects preserved with explanatory suppression comments — v1.7
+- ✓ All existing E2E tests pass with hardened CSP — v1.7
+- ✓ next build output shows all pages as Static — v1.7
+- ✓ Zero ESLint errors and zero warnings from npm run lint — v1.7
 
 ### Active
 
-## Current Milestone: v1.7 Address Additional Concerns
-
-**Goal:** Harden CSP by eliminating `unsafe-eval` and `unsafe-inline`, centralize security via middleware, and clean up remaining lint/dependency/testing concerns.
-
-**Target features:**
-- Migrate MDX rendering from `new Function()` to compile-time approach, removing `unsafe-eval` from CSP
-- Add Next.js middleware for centralized security headers with nonce-based CSP
-- Migrate syntax highlighting to class-based/CSS-variables styling, removing `unsafe-inline` from CSP
-- Fix npm audit vulnerabilities via overrides or updates
-- Sync eslint-config-next version and silence intentional lint violations
-- Migrate localStorage/media query patterns to `useSyncExternalStore`
-- Pin Velite to exact version
-- Clean up stale worktree artifacts
+(No active requirements — start next milestone to define)
 
 ### Out of Scope
 
@@ -123,28 +118,29 @@ A polished, intentional developer portfolio — fast, visually distinctive, and 
 - Server-side filtering via route segments — explodes static generation matrix
 - Sidebar filter panel — single-dimension filtering doesn't need a sidebar
 - Persistent filter state in localStorage — URL search params are the persistence mechanism
-- CSP without `unsafe-eval` — requires replacing `new Function()` MDX execution (tracked as DEP-03)
-- Nonce-based CSP via middleware — incompatible with static generation
+- Nonce-based CSP — incompatible with static generation; nonces require per-request dynamic rendering
+- Remove `unsafe-inline` from script-src — required for Next.js hydration; only removable with nonces
 - Comprehensive E2E test suite — diminishing returns for personal portfolio
 - Visual regression testing — high maintenance, low value for personal site
 
 ## Context
 
-Shipped v1.6 Address Concerns with 38 requirements across security, quality, accessibility, SEO, and testing.
-Tech stack: Next.js 16, React 19, Tailwind CSS v4, Velite, MDX, Upstash Redis.
-Codebase: ~72 source files modified in v1.6, total project well over 3,000 LOC TypeScript + CSS.
+Shipped v1.7 Address Additional Concerns with 24 requirements across security hardening, MDX migration, and React quality.
+Tech stack: Next.js 16, React 19, Tailwind CSS v4, Velite (s.markdown()), Upstash Redis.
+Codebase: ~4,900 LOC TypeScript + CSS across ~100 source files.
 Hero section has load-gated two-beat reveal and 14 ambient rune glows.
 Blog posts display public view counts backed by Upstash Redis with IP deduplication.
 Blog and project listing pages support multi-select filtering with AND logic, count badges, URL persistence, and fade transitions.
-All pages serve security headers (CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy) via next.config.ts headers().
+Security headers (CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy) served from src/proxy.ts middleware.
+CSP no longer requires `unsafe-eval` — MDX renders compile-time HTML via dangerouslySetInnerHTML.
+Syntax highlighting uses CSS-variables theme with 14 --shiki-* token variables in globals.css.
 Branded error boundaries at three levels catch runtime errors gracefully.
 Othala rune favicon + dynamic OG images for social sharing.
 RSS feed at /feed.xml, sitemap with actual content dates.
-Test coverage: 18 Vitest unit tests + 14 Playwright E2E tests.
+Test coverage: 135 Vitest unit tests + 18 Playwright E2E tests (16 active, 2 graceful skips).
 Collapsible sticky mobile TOC for blog post section navigation.
 Site is statically generated and deployed via git-push to Vercel.
-CSP currently requires `unsafe-eval` (MDX `new Function()`) and `unsafe-inline` (rehype-pretty-code inline styles).
-npm audit reports 3 transitive vulnerabilities (flatted, picomatch). eslint-config-next version skew from next@16.2.2.
+Zero npm audit vulnerabilities. Zero ESLint errors/warnings.
 
 ## Key Decisions
 
@@ -174,12 +170,21 @@ npm audit reports 3 transitive vulnerabilities (flatted, picomatch). eslint-conf
 | Static counts (total per tag/stack) | Simpler than contextual counts; more useful for small content sets | ✓ Good |
 | Grid fades as a unit (not individual cards) | Cleaner visual for small card counts | ✓ Good |
 | useRef initial-render guard for fade | Prevents flash-of-invisible-content on page load with URL-preloaded filters | ✓ Good |
-| CSP with unsafe-eval + unsafe-inline | Pragmatic for MDX new Function() and rehype-pretty-code; no user-generated content | ✓ Good — revisit when MDX pipeline changes (DEP-03) |
+| CSP with unsafe-eval + unsafe-inline | Was pragmatic for MDX new Function(); resolved in v1.7 by switching to s.markdown() | ✓ Good — unsafe-eval removed in v1.7 |
 | @upstash/ratelimit sliding window (10/60s) | Simple, serverless-native rate limiting for view counter POST | ✓ Good |
 | OG image font via readFile/process.cwd() | Turbopack workaround — fetch/import.meta.url not available in OG route | ⚠️ Revisit when Turbopack adds support |
 | Playwright Chromium-only | No CI pipeline; Firefox/WebKit add time without value for personal site | ✓ Good |
 | Pure CSS sticky TOC (no JS scroll listeners) | Simpler, more performant, leverages native browser behavior | ✓ Good |
 | Auto-collapse TOC on heading click | Reduces friction — user picks a heading, TOC gets out of the way | ✓ Good |
+| s.markdown() over s.mdx() for Velite | Eliminates new Function() entirely; compile-time HTML is safer and simpler | ✓ Good |
+| dangerouslySetInnerHTML for MDX rendering | Only viable path after removing runtime JS execution; content is author-controlled | ✓ Good |
+| DOM-based CodeBlockEnhancer for copy buttons | Post-render DOM injection works with static HTML; no React hydration needed | ✓ Good |
+| src/proxy.ts for centralized security headers | Next.js 16 convention; single source of truth replaces next.config.ts headers() | ✓ Good |
+| Accept unsafe-inline in style-src | Marginal security gain not worth effort; CSS-variables approach adopted for design benefits | ✓ Good |
+| CSS-variables Shiki theme (createCssVariablesTheme) | Aligns with CSS-first design token approach; ~10 vars cover key token scopes | ✓ Good |
+| useSyncExternalStore for localStorage/matchMedia | Idiomatic React 19; eliminates set-state-in-effect warnings cleanly | ✓ Good |
+| useTransition for filter opacity transitions | Replaces manual isTransitioning/useEffect/setTimeout; eliminates 1-frame flash | ✓ Good |
+| Pin Velite to exact 0.3.1 (no caret) | Prevents unexpected build breakage from minor version changes | ✓ Good |
 
 ## Constraints
 
@@ -207,4 +212,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-05 after Phase 18 React 19 Lint Cleanup complete*
+*Last updated: 2026-04-05 after v1.7 milestone*

@@ -1,5 +1,22 @@
 # Milestones
 
+## v1.7 Address Additional Concerns (Shipped: 2026-04-05)
+
+**Phases completed:** 6 phases, 9 plans, 21 tasks
+
+**Key accomplishments:**
+
+- Zero audit vulnerabilities, eslint-config-next aligned to 16.2.2, Velite pinned to exact 0.3.1, all error boundary lint comments verified
+- Security headers (CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy) moved from next.config.ts headers() to src/middleware.ts for single-source-of-truth header management
+- Switched MDX rendering from runtime new Function() to compile-time HTML via Velite s.markdown() and dangerouslySetInnerHTML, removing unsafe-eval from CSP
+- Syntax highlighting migrated from bundled github-dark-dimmed to CSS custom properties with 14 token color variables in globals.css
+- Two useSyncExternalStore-based hooks (useMediaQuery, useViewStore) replacing useState+useEffect anti-patterns, with full TDD test coverage (9 tests)
+- Migrated all React 19 lint-violating patterns to shared hooks and derived state, achieving zero ESLint warnings across 135 passing tests
+- Replaced manual isTransitioning/useEffect/setTimeout with React 19 useTransition to eliminate 1-frame flash on tag filter clicks
+- Full validation suite green: zero lint warnings, 135 unit tests passing, all pages static, 16/18 E2E tests passing (2 graceful skips) under hardened CSP without unsafe-eval
+
+---
+
 ## v1.6 Address Concerns (Shipped: 2026-04-03)
 
 **Phases completed:** 5 phases, 13 plans, 25 tasks
