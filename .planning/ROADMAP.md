@@ -142,7 +142,9 @@ Plans:
   1. All existing Playwright E2E tests pass (mobile menu, code copy, view counts, mobile TOC)
   2. `next build` output shows every page as Static (no dynamic rendering introduced)
   3. `npm run lint` reports zero errors and zero warnings
-**Plans**: TBD
+**Plans:** 1 plan
+Plans:
+- [ ] 19-01-PLAN.md -- Run lint, build, unit tests, and E2E validation; fix any failures
 
 ## Progress
 
@@ -170,4 +172,4 @@ Phases execute in numeric order: 14 → 15 → 16 → 17 → 18 → 19
 | 16. MDX Migration | v1.7 | 2/2 | Complete    | 2026-04-04 |
 | 17. Syntax Highlighting Theme Migration | v1.7 | 1/1 | Complete    | 2026-04-04 |
 | 18. React 19 Lint Cleanup | v1.7 | 3/3 | Complete   | 2026-04-05 |
-| 19. Verification and Polish | v1.7 | 0/0 | Not started | - |
+| 19. Verification and Polish | v1.7 | 0/1 | Not started | - |
