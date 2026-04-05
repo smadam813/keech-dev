@@ -22,7 +22,7 @@ describe('Error boundary (global)', () => {
   })
 
   it('does not use a Next.js Link for the escape href (plain anchor)', () => {
-    const { container } = render(<Error error={new Error('boom')} reset={() => {}} />)
+    render(<Error error={new Error('boom')} reset={() => {}} />)
     // next/link renders as <a> in test env too, but the component uses plain <a href="/">
     // Verify the link element is a native anchor (not wrapped in any special component)
     const link = screen.getByRole('link', { name: /go home/i })

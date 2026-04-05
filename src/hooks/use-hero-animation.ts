@@ -49,13 +49,11 @@ export function useHeroAnimation({ imgRef }: UseHeroAnimationOptions): UseHeroAn
 
     // Intentional animation orchestration: reveal sequence uses sequential setState
     // with setTimeout delays to coordinate CSS transitions. Not derivable state.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setRevealStage('bg-reveal')
 
     // Beat 2: Text fade-up (after blur transition + pause)
     // 350ms blur transition + 250ms pause = 600ms delay
     const timer = setTimeout(() => {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRevealStage('text-reveal')
     }, 600)
 

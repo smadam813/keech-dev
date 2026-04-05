@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef } from 'react'
+import { useRef, useMemo } from 'react'
 import Image from 'next/image'
 import heroImage from '../../public/images/hero.webp'
 import { cn } from '@/lib/utils'
@@ -25,7 +25,7 @@ function buildShuffledDelays(count: number): string[] {
 export function Hero() {
   const imgRef = useRef<HTMLImageElement>(null)
   const sectionRef = useRef<HTMLElement>(null)
-  const entranceDelays = useRef(buildShuffledDelays(RUNE_GLOWS.length))
+  const entranceDelays = useMemo(() => buildShuffledDelays(RUNE_GLOWS.length), [])
 
   const { revealStage, glowsActive, prefersReducedMotion, handleLoad } = useHeroAnimation({ imgRef })
   const positions = useGlowPositions({ sectionRef })
@@ -77,7 +77,7 @@ export function Hero() {
                 width: `${rune.size}rem`,
                 height: `${rune.size}rem`,
                 '--breath-duration': rune.breathDuration,
-                '--entrance-delay': entranceDelays.current[i],
+                '--entrance-delay': entranceDelays[i],
               } as React.CSSProperties}
             />
           )

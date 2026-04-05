@@ -15,6 +15,7 @@ export function ScrollReveal({ children, className = '' }: ScrollRevealProps) {
 
   useEffect(() => {
     if (prefersReducedMotion) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Skip animation: instantly show content when user prefers reduced motion
       setIsVisible(true)
       return
     }

@@ -25,10 +25,6 @@ export function useFilteredList<T>(options: UseFilteredListOptions<T>): UseFilte
   const searchParams = useSearchParams()
   const pathname = usePathname()
 
-  // Stabilize getItemValues so inline arrows don't defeat useMemo
-  const getItemValuesRef = useRef(getItemValues)
-  getItemValuesRef.current = getItemValues
-
   // Read filter state from URL
   const activeFilters = useMemo(
     () => new Set(searchParams.get(paramName)?.split(',').filter(Boolean) ?? []),
@@ -42,17 +38,17 @@ export function useFilteredList<T>(options: UseFilteredListOptions<T>): UseFilte
     activeFilters.size === 0
       ? items
       : items.filter((item) =>
-          [...activeFilters].every((v) => getItemValuesRef.current(item).includes(v))
+          [...activeFilters].every((v) => getItemValues(item).includes(v))
         )
 
   // Static counts: total items per filter value (not contextual to active filters)
   const filterCounts = useMemo(() => {
     const counts: Record<string, number> = {}
     for (const value of allFilterValues) {
-      counts[value] = items.filter((item) => getItemValuesRef.current(item).includes(value)).length
+      counts[value] = items.filter((item) => getItemValues(item).includes(value)).length
     }
     return counts
-  }, [items, allFilterValues])
+  }, [items, allFilterValues, getItemValues])
 
   const [isTransitioning, setIsTransitioning] = useState(false)
   const isInitialRender = useRef(true)
@@ -68,6 +64,7 @@ export function useFilteredList<T>(options: UseFilteredListOptions<T>): UseFilte
     }
     // Only fade when filters are active and content changes
     if (!isFiltering) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Intentional: sync transition flag triggers CSS fade before setTimeout clears it
     setIsTransitioning(true)
     const timer = setTimeout(() => setIsTransitioning(false), 150)
     return () => clearTimeout(timer)
