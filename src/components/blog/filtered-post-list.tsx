@@ -27,7 +27,7 @@ export function FilteredPostList({ posts, allTags }: FilteredPostListProps) {
     filteredItems: filteredPosts,
     activeFilters: activeTags,
     isFiltering,
-    isTransitioning,
+    isPending,
     filterCounts: tagCounts,
     handleToggle,
     handleClear,
@@ -63,7 +63,7 @@ export function FilteredPostList({ posts, allTags }: FilteredPostListProps) {
         <div className={cn(
           'grid gap-6 md:grid-cols-2 lg:grid-cols-3',
           'transition-opacity duration-200 filter-grid-fade',
-          isTransitioning ? 'opacity-0' : 'opacity-100'
+          isPending ? 'opacity-0' : 'opacity-100'
         )}>
           {filteredPosts.map((post) =>
             isFiltering ? (

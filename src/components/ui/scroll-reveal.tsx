@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useMediaQuery } from '@/hooks/use-media-query'
 
 interface ScrollRevealProps {
   children: ReactNode
@@ -10,15 +11,11 @@ interface ScrollRevealProps {
 export function ScrollReveal({ children, className = '' }: ScrollRevealProps) {
   const ref = useRef<HTMLDivElement>(null)
   const [isVisible, setIsVisible] = useState(false)
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
+  const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
 
   useEffect(() => {
-    // Check for reduced motion preference
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
-    setPrefersReducedMotion(mediaQuery.matches)
-
-    // If reduced motion is preferred, skip animation setup
-    if (mediaQuery.matches) {
+    if (prefersReducedMotion) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Skip animation: instantly show content when user prefers reduced motion
       setIsVisible(true)
       return
     }
@@ -44,7 +41,7 @@ export function ScrollReveal({ children, className = '' }: ScrollRevealProps) {
     return () => {
       observer.disconnect()
     }
-  }, [])
+  }, [prefersReducedMotion])
 
   // If reduced motion is preferred, render children without animation wrapper
   if (prefersReducedMotion) {

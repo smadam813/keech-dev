@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Address Additional Concerns
 status: executing
-stopped_at: Phase 17 context gathered
-last_updated: "2026-04-04T19:11:59.476Z"
-last_activity: 2026-04-04
+stopped_at: Completed 18-03-PLAN.md
+last_updated: "2026-04-05T04:44:16.674Z"
+last_activity: 2026-04-05
 progress:
   total_phases: 6
-  completed_phases: 4
-  total_plans: 5
-  completed_plans: 5
+  completed_phases: 5
+  total_plans: 8
+  completed_plans: 8
   percent: 100
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-03)
 
 **Core value:** A polished, intentional developer portfolio — fast, visually distinctive, and well-crafted in every detail.
-**Current focus:** Phase 17 — syntax-highlighting-theme-migration
+**Current focus:** Phase 18 — React 19 Lint Cleanup
 
 ## Current Position
 
-Phase: 18
+Phase: 19
 Plan: Not started
-Status: Executing Phase 17
-Last activity: 2026-04-04
+Status: Executing Phase 18
+Last activity: 2026-04-05
 
 Progress: [████░░░░░░░░] 33% (v1.7: 2/6 phases)
 
@@ -36,7 +36,7 @@ Progress: [████░░░░░░░░] 33% (v1.7: 2/6 phases)
 
 **Velocity:**
 
-- Total plans completed: 33 (20 from v1.3-v1.5 + 13 from v1.6)
+- Total plans completed: 35 (20 from v1.3-v1.5 + 13 from v1.6)
 - Quick tasks completed: 11
 
 **By Milestone:**
@@ -49,6 +49,7 @@ Progress: [████░░░░░░░░] 33% (v1.7: 2/6 phases)
 | v1.6 | 5 | 13 | 2 days |
 | Phase 14 P01 | 2min | 2 tasks | 2 files |
 | Phase 15 P01 | 2min | 3 tasks | 2 files |
+| Phase 18 P03 | 2min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -61,6 +62,7 @@ Recent decisions affecting v1.7:
 - Accept `unsafe-inline` in style-src: marginal security gain not worth effort; CSS-variables theme adopted for design system benefits
 - `unsafe-inline` stays in script-src: unavoidable without nonces (which break static generation)
 - [Phase 14]: Pin Velite to exact version (no caret) to prevent unexpected build breakage
+- [Phase 18]: Used useTransition isPending as direct opacity flag -- eliminates manual isTransitioning + useEffect + setTimeout entirely
 
 ### Pending Todos
 
@@ -90,6 +92,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-04T05:23:01.755Z
-Stopped at: Phase 17 context gathered
-Resume file: .planning/phases/17-syntax-highlighting-theme-migration/17-CONTEXT.md
+Last session: 2026-04-05T04:31:00.300Z
+Stopped at: Completed 18-03-PLAN.md
+Resume file: None

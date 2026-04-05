@@ -1,7 +1,7 @@
 'use client'
 
 import { useSearchParams, usePathname } from 'next/navigation'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 
 interface UseFilteredListOptions<T> {
   items: T[]
@@ -14,7 +14,7 @@ interface UseFilteredListResult<T> {
   filteredItems: T[]
   activeFilters: Set<string>
   isFiltering: boolean
-  isTransitioning: boolean
+  isPending: boolean
   filterCounts: Record<string, number>
   handleToggle: (value: string) => void
   handleClear: () => void
@@ -24,10 +24,6 @@ export function useFilteredList<T>(options: UseFilteredListOptions<T>): UseFilte
   const { items, allFilterValues, getItemValues, paramName } = options
   const searchParams = useSearchParams()
   const pathname = usePathname()
-
-  // Stabilize getItemValues so inline arrows don't defeat useMemo
-  const getItemValuesRef = useRef(getItemValues)
-  getItemValuesRef.current = getItemValues
 
   // Read filter state from URL
   const activeFilters = useMemo(
@@ -42,36 +38,19 @@ export function useFilteredList<T>(options: UseFilteredListOptions<T>): UseFilte
     activeFilters.size === 0
       ? items
       : items.filter((item) =>
-          [...activeFilters].every((v) => getItemValuesRef.current(item).includes(v))
+          [...activeFilters].every((v) => getItemValues(item).includes(v))
         )
 
   // Static counts: total items per filter value (not contextual to active filters)
   const filterCounts = useMemo(() => {
     const counts: Record<string, number> = {}
     for (const value of allFilterValues) {
-      counts[value] = items.filter((item) => getItemValuesRef.current(item).includes(value)).length
+      counts[value] = items.filter((item) => getItemValues(item).includes(value)).length
     }
     return counts
-  }, [items, allFilterValues])
+  }, [items, allFilterValues, getItemValues])
 
-  const [isTransitioning, setIsTransitioning] = useState(false)
-  const isInitialRender = useRef(true)
-
-  // Derive a stable key from active filters to detect content changes
-  const filteredKey = [...activeFilters].sort().join(',')
-
-  useEffect(() => {
-    // Skip fade on initial render (including URL-preloaded filters)
-    if (isInitialRender.current) {
-      isInitialRender.current = false
-      return
-    }
-    // Only fade when filters are active and content changes
-    if (!isFiltering) return
-    setIsTransitioning(true)
-    const timer = setTimeout(() => setIsTransitioning(false), 150)
-    return () => clearTimeout(timer)
-  }, [filteredKey, isFiltering])
+  const [isPending, setIsPending] = useState(false)
 
   // Write new filter set to URL via replaceState (no server re-render)
   const updateURL = useCallback(
@@ -83,7 +62,16 @@ export function useFilteredList<T>(options: UseFilteredListOptions<T>): UseFilte
         params.set(paramName, [...next].sort().join(','))
       }
       const query = params.toString()
+      // Set isPending synchronously — React batches this with the searchParams
+      // re-render from replaceState, so new content renders at opacity-0
+      setIsPending(true)
       window.history.replaceState(null, '', query ? `${pathname}?${query}` : pathname)
+      // After paint, fade new content in
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setIsPending(false)
+        })
+      })
     },
     [searchParams, pathname, paramName]
   )
@@ -109,7 +97,7 @@ export function useFilteredList<T>(options: UseFilteredListOptions<T>): UseFilte
     filteredItems,
     activeFilters,
     isFiltering,
-    isTransitioning,
+    isPending,
     filterCounts,
     handleToggle,
     handleClear,

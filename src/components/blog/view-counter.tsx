@@ -1,21 +1,17 @@
 'use client'
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { formatViewCount, getCachedViews, setCachedViews } from '@/lib/views'
+import { useEffect, useRef, useState } from 'react'
+import { formatViewCount, setCachedViews } from '@/lib/views'
+import { useViewStore } from '@/hooks/use-view-store'
 
 interface ViewCounterProps {
   slug: string
 }
 
 export function ViewCounter({ slug }: ViewCounterProps) {
+  const cachedViews = useViewStore(slug)
   const [views, setViews] = useState<number | null>(null)
   const hasFired = useRef(false)
-
-  // Read cached count before paint — prevents flash on repeat visits
-  useLayoutEffect(() => {
-    const cached = getCachedViews(slug)
-    if (cached !== null) setViews(cached)
-  }, [slug])
 
   useEffect(() => {
     if (hasFired.current) return
@@ -37,8 +33,8 @@ export function ViewCounter({ slug }: ViewCounterProps) {
   }, [slug])
 
   return (
-    <span className={views === null ? 'inline-block w-12' : undefined}>
-      {views !== null && formatViewCount(views)}
+    <span className={views === null && cachedViews === null ? 'inline-block w-12' : undefined}>
+      {(views ?? cachedViews) !== null && formatViewCount((views ?? cachedViews)!)}
     </span>
   )
 }

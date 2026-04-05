@@ -41,7 +41,7 @@ Requirements for milestone v1.7 Address Additional Concerns. Each maps to roadma
 - [ ] **RQ-01**: localStorage patterns in view-counter and listing-view-counts use useSyncExternalStore
 - [ ] **RQ-02**: matchMedia pattern in use-hero-animation uses useSyncExternalStore
 - [ ] **RQ-03**: Zero react-hooks/set-state-in-effect warnings from npm run lint
-- [ ] **RQ-04**: Animation orchestration effects in use-hero-animation preserved with explanatory suppression comments
+- [x] **RQ-04**: Animation orchestration effects in use-hero-animation preserved with explanatory suppression comments
 
 ### Verification
 
@@ -102,7 +102,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | RQ-01 | Phase 18 | Pending |
 | RQ-02 | Phase 18 | Pending |
 | RQ-03 | Phase 18 | Pending |
-| RQ-04 | Phase 18 | Pending |
+| RQ-04 | Phase 18 | Complete |
 | VER-01 | Phase 19 | Pending |
 | VER-02 | Phase 19 | Pending |
 | VER-03 | Phase 19 | Pending |

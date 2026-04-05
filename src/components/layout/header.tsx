@@ -15,21 +15,19 @@ const navItems = [
 ]
 
 export function Header() {
-  const [isOpen, setIsOpen] = useState(false)
+  const [menuPathname, setMenuPathname] = useState<string | null>(null)
   const pathname = usePathname()
   const buttonRef = useRef<HTMLButtonElement>(null)
   const prevIsOpenRef = useRef(false)
+
+  // Derived: menu is open only when it was toggled on the current pathname
+  const isOpen = menuPathname !== null && menuPathname === pathname
 
   const isActive = useCallback(
     (href: string) =>
       pathname === href || (href !== '/' && pathname.startsWith(href)),
     [pathname]
   )
-
-  // Auto-close on route change
-  useEffect(() => {
-    setIsOpen(false)
-  }, [pathname])
 
   // Scroll lock (iOS Safari safe: position fixed approach)
   useEffect(() => {
@@ -73,7 +71,7 @@ export function Header() {
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        setIsOpen(false)
+        setMenuPathname(null)
       }
     }
 
@@ -125,7 +123,7 @@ export function Header() {
         <button
           ref={buttonRef}
           type="button"
-          onClick={() => setIsOpen((prev) => !prev)}
+          onClick={() => setMenuPathname(prev => prev === pathname ? null : pathname)}
           aria-expanded={isOpen}
           aria-controls="mobile-menu"
           aria-label={isOpen ? 'Close navigation menu' : 'Open navigation menu'}
@@ -165,7 +163,7 @@ export function Header() {
             <Link
               key={item.href}
               href={item.href}
-              onClick={() => setIsOpen(false)}
+              onClick={() => setMenuPathname(null)}
               className={cn(
                 'font-display text-3xl font-bold motion-safe:transition-colors',
                 isActive(item.href)

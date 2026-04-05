@@ -1,7 +1,7 @@
 'use client'
 
-import { createContext, useContext, useEffect, useLayoutEffect, useState } from 'react'
-import { formatViewCount, getCachedViews, setCachedViews } from '@/lib/views'
+import { createContext, useCallback, useContext, useEffect, useState, useSyncExternalStore } from 'react'
+import { formatViewCount, setCachedViews } from '@/lib/views'
 import { POST_RUNES } from '@/components/runes/rune-config'
 
 const ViewCountsContext = createContext<Record<string, number | null>>({})
@@ -16,22 +16,34 @@ interface ListingViewCountsProps {
   children: React.ReactNode
 }
 
+function subscribeToStorage(callback: () => void) {
+  window.addEventListener('storage', callback)
+  return () => window.removeEventListener('storage', callback)
+}
+
 export function ListingViewCounts({ slugs, children }: ListingViewCountsProps) {
   const [counts, setCounts] = useState<Record<string, number | null>>({})
 
-  // Read cached counts before paint — instant display on return visits
-  useLayoutEffect(() => {
-    const cached: Record<string, number | null> = {}
-    let hasAny = false
-    for (const slug of slugs) {
-      const val = getCachedViews(slug)
-      if (val !== null) {
-        cached[slug] = val
-        hasAny = true
+  // Read cached counts via useSyncExternalStore — instant display on return visits
+  const getCachedSnapshot = useCallback(() => {
+    try {
+      const result: Record<string, number> = {}
+      let hasAny = false
+      for (const slug of slugs) {
+        const raw = localStorage.getItem(`views:${slug}`)
+        if (raw !== null) {
+          result[slug] = Number(raw)
+          hasAny = true
+        }
       }
+      return hasAny ? JSON.stringify(result) : null
+    } catch {
+      return null
     }
-    if (hasAny) setCounts(cached)
   }, [slugs])
+
+  const cachedSnapshot = useSyncExternalStore(subscribeToStorage, getCachedSnapshot, () => null)
+  const cachedCounts = cachedSnapshot ? JSON.parse(cachedSnapshot) as Record<string, number> : {}
 
   // Fetch batch counts from API
   useEffect(() => {
@@ -54,8 +66,10 @@ export function ListingViewCounts({ slugs, children }: ListingViewCountsProps) {
       })
   }, [slugs])
 
+  const mergedCounts = { ...cachedCounts, ...counts }
+
   return (
-    <ViewCountsContext value={counts}>
+    <ViewCountsContext value={mergedCounts}>
       {children}
     </ViewCountsContext>
   )

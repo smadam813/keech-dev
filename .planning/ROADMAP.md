@@ -55,7 +55,7 @@ See: `.planning/milestones/v1.6-ROADMAP.md` for full details.
 
 </details>
 
-### 🚧 v1.7 Address Additional Concerns (In Progress)
+### v1.7 Address Additional Concerns (In Progress)
 
 **Milestone Goal:** Harden CSP by eliminating `unsafe-eval`, centralize security via middleware, migrate syntax highlighting to CSS-variables theme, and clean up remaining lint/dependency/React quality concerns.
 
@@ -63,7 +63,7 @@ See: `.planning/milestones/v1.6-ROADMAP.md` for full details.
 - [x] **Phase 15: Middleware Infrastructure** - Centralize all security headers in src/middleware.ts (completed 2026-04-04)
 - [x] **Phase 16: MDX Migration** - Switch to s.markdown() and remove unsafe-eval from CSP (completed 2026-04-04)
 - [x] **Phase 17: Syntax Highlighting Theme Migration** - Move token colors to CSS variables in globals.css (completed 2026-04-04)
-- [ ] **Phase 18: React 19 Lint Cleanup** - Migrate localStorage/matchMedia patterns to useSyncExternalStore
+- [x] **Phase 18: React 19 Lint Cleanup** - Migrate localStorage/matchMedia patterns to useSyncExternalStore (completed 2026-04-05)
 - [ ] **Phase 19: Verification and Polish** - End-to-end validation of hardened CSP and zero lint issues
 
 ## Phase Details
@@ -128,7 +128,11 @@ Plans:
   2. Hero animation respects prefers-reduced-motion changes without page reload
   3. `npm run lint` produces zero `react-hooks/set-state-in-effect` warnings
   4. Hero animation reveal sequence still plays correctly (orchestration effects preserved with explanatory suppression comments)
-**Plans**: TBD
+**Plans:** 3/3 plans complete
+Plans:
+- [x] 18-01-PLAN.md -- Create useViewStore and useMediaQuery shared hooks
+- [x] 18-02-PLAN.md -- Consumer migration and zero lint warnings
+- [x] 18-03-PLAN.md -- Fix filter transition flash with useTransition (gap closure)
 
 ### Phase 19: Verification and Polish
 **Goal**: The entire site passes end-to-end validation under the hardened CSP with zero lint issues and full static generation preserved
@@ -165,5 +169,5 @@ Phases execute in numeric order: 14 → 15 → 16 → 17 → 18 → 19
 | 15. Middleware Infrastructure | v1.7 | 1/1 | Complete    | 2026-04-04 |
 | 16. MDX Migration | v1.7 | 2/2 | Complete    | 2026-04-04 |
 | 17. Syntax Highlighting Theme Migration | v1.7 | 1/1 | Complete    | 2026-04-04 |
-| 18. React 19 Lint Cleanup | v1.7 | 0/0 | Not started | - |
+| 18. React 19 Lint Cleanup | v1.7 | 3/3 | Complete   | 2026-04-05 |
 | 19. Verification and Polish | v1.7 | 0/0 | Not started | - |
