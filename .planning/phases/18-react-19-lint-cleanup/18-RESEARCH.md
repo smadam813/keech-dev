@@ -416,17 +416,19 @@ setRevealStage('bg-reveal')
 | A2 | The `storage` event not firing for same-tab writes is acceptable for view counter | Pattern 2 | View count won't update from localStorage after fetch+write in same tab -- but components already update via setState in the fetch callback, so this is fine |
 | A3 | Header derived-state approach handles same-page navigation correctly | Pattern 3/Pitfall 5 | Menu may not toggle on same-page clicks; need to test edge case |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **useFilteredList caller stability**
    - What we know: The ref pattern was added to avoid inline arrows defeating useMemo
    - What's unclear: Whether current callers pass stable callbacks or inline arrows
    - Recommendation: Check call sites during implementation; if inline arrows are used, wrap callers in useCallback or keep the ref but move access to an effect (less clean)
+   - **RESOLVED:** Both callers pass inline arrows (`(post) => post.tags`, `(project) => project.stack`); direct `getItemValues` in useMemo deps is acceptable — cheap computation over <100 items. Confirmed in Plan 02 Task 2.
 
 2. **ListingViewCounts batch pattern with useSyncExternalStore**
    - What we know: Single-slug `useViewStore` is straightforward; batch reads need careful `getSnapshot` design to avoid new-object references
    - What's unclear: Whether to refactor to per-slug hooks or keep batch pattern
    - Recommendation: Keep batch pattern in ListingViewCounts but replace only the useLayoutEffect read with useSyncExternalStore; the fetch-then-setState is async and doesn't trigger the lint warning
+   - **RESOLVED:** Keep batch pattern in ListingViewCounts; replace useLayoutEffect with useSyncExternalStore using JSON-serialized getSnapshot for stable Object.is comparison. Confirmed in Plan 02 Task 1.
 
 ## Sources
 
