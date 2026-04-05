@@ -25,7 +25,7 @@ export function FilteredProjectList({ projects, allStack }: FilteredProjectListP
     filteredItems: filteredProjects,
     activeFilters: activeStack,
     isFiltering,
-    isTransitioning,
+    isPending,
     filterCounts: stackCounts,
     handleToggle,
     handleClear,
@@ -58,7 +58,7 @@ export function FilteredProjectList({ projects, allStack }: FilteredProjectListP
         <div className={cn(
           'grid gap-6 md:grid-cols-2',
           'transition-opacity duration-200 filter-grid-fade',
-          isTransitioning ? 'opacity-0' : 'opacity-100'
+          isPending ? 'opacity-0' : 'opacity-100'
         )}>
           {filteredProjects.map((project) =>
             isFiltering ? (
