@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import proxy, { config } from '../../src/proxy'
+import proxy, { config } from './proxy'
 
 describe('security headers via proxy (MID-01, MID-02, MID-03)', () => {
   it('exports a proxy function', () => {
