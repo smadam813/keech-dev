@@ -104,7 +104,12 @@ Plans:
   3. lucide-react is at 1.x if it was not removed in Phase 20 (conditional on HYGN-02 outcome); if removed, DEPS-03 is marked N/A
   4. @vercel/analytics is at 2.x with no new CSP violations in the browser console
   5. `npm audit` reports zero vulnerabilities and `npm run lint` passes with zero errors/warnings
-**Plans**: TBD
+**Plans:** 4 plans
+Plans:
+- [ ] 21-01-PLAN.md — Apply minor/patch dependency updates (tailwindcss, tailwind-merge, @upstash/redis, rehype-pretty-code, @types/node, @types/react)
+- [ ] 21-02-PLAN.md — Upgrade shiki 3 to 4 with CSS-variables theme validation
+- [ ] 21-03-PLAN.md — Upgrade @vercel/analytics to 2.x
+- [ ] 21-04-PLAN.md — Upgrade lucide-react to 1.x with brand icon SVG replacements
 
 ### Phase 22: TypeScript 6 Upgrade
 **Goal**: The project compiles cleanly under TypeScript 6 with all tooling validated against the new compiler
@@ -155,6 +160,6 @@ Phases execute in numeric order: 20 → 21 → 22 → 23
 | 18. React 19 Lint Cleanup | v1.7 | 3/3 | Complete | 2026-04-05 |
 | 19. Verification and Polish | v1.7 | 1/1 | Complete | 2026-04-05 |
 | 20. Dead Code & Test Hygiene | v1.8 | 1/1 | Complete    | 2026-04-05 |
-| 21. Dependency Upgrades | v1.8 | 0/? | Not started | - |
+| 21. Dependency Upgrades | v1.8 | 0/4 | Not started | - |
 | 22. TypeScript 6 Upgrade | v1.8 | 0/? | Not started | - |
 | 23. Test Coverage & Code Quality | v1.8 | 0/? | Not started | - |
