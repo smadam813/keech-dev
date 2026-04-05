@@ -63,7 +63,7 @@ See: `.planning/milestones/v1.6-ROADMAP.md` for full details.
 - [x] **Phase 15: Middleware Infrastructure** - Centralize all security headers in src/middleware.ts (completed 2026-04-04)
 - [x] **Phase 16: MDX Migration** - Switch to s.markdown() and remove unsafe-eval from CSP (completed 2026-04-04)
 - [x] **Phase 17: Syntax Highlighting Theme Migration** - Move token colors to CSS variables in globals.css (completed 2026-04-04)
-- [ ] **Phase 18: React 19 Lint Cleanup** - Migrate localStorage/matchMedia patterns to useSyncExternalStore
+- [x] **Phase 18: React 19 Lint Cleanup** - Migrate localStorage/matchMedia patterns to useSyncExternalStore (completed 2026-04-05)
 - [ ] **Phase 19: Verification and Polish** - End-to-end validation of hardened CSP and zero lint issues
 
 ## Phase Details
@@ -165,5 +165,5 @@ Phases execute in numeric order: 14 → 15 → 16 → 17 → 18 → 19
 | 15. Middleware Infrastructure | v1.7 | 1/1 | Complete    | 2026-04-04 |
 | 16. MDX Migration | v1.7 | 2/2 | Complete    | 2026-04-04 |
 | 17. Syntax Highlighting Theme Migration | v1.7 | 1/1 | Complete    | 2026-04-04 |
-| 18. React 19 Lint Cleanup | v1.7 | 0/0 | Not started | - |
+| 18. React 19 Lint Cleanup | v1.7 | 2/2 | Complete    | 2026-04-05 |
 | 19. Verification and Polish | v1.7 | 0/0 | Not started | - |
