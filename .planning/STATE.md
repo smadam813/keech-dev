@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.8
 milestone_name: Validate & Address Concerns
-status: active
-stopped_at: null
-last_updated: "2026-04-05T17:00:00.000Z"
-last_activity: 2026-04-05
+status: planning
+stopped_at: Phase 20 context gathered
+last_updated: "2026-04-05T20:31:07.146Z"
+last_activity: 2026-04-05 — Roadmap created for v1.8 (4 phases, 14 requirements)
 progress:
   total_phases: 4
   completed_phases: 0
@@ -55,6 +55,7 @@ Progress: [░░░░░░░░░░░░] 0%
 
 Decisions are logged in PROJECT.md Key Decisions table.
 Research-informed decisions for v1.8:
+
 - ESLint 10 explicitly excluded (blocked by eslint-config-next peer deps)
 - shiki v4 + rehype-pretty-code 0.14.3 must upgrade as a coupled pair
 - tsconfig `types` array fix in Phase 20 pre-empts TS6 breaking change in Phase 22
@@ -86,6 +87,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-05
-Stopped at: Roadmap created for v1.8
-Resume file: —
+Last session: 2026-04-05T20:31:07.143Z
+Stopped at: Phase 20 context gathered
+Resume file: .planning/phases/20-dead-code-test-hygiene/20-CONTEXT.md
