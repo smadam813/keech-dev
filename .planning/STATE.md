@@ -4,10 +4,10 @@ milestone: v1.8
 milestone_name: Validate & Address Concerns
 status: active
 stopped_at: null
-last_updated: "2026-04-05T16:00:00.000Z"
+last_updated: "2026-04-05T17:00:00.000Z"
 last_activity: 2026-04-05
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** A polished, intentional developer portfolio — fast, visually distinctive, and well-crafted in every detail.
-**Current focus:** Defining requirements for v1.8
+**Current focus:** Phase 20 — Dead Code & Test Hygiene
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 20 of 23 (Dead Code & Test Hygiene) — first of 4 in v1.8
 Plan: —
-Status: Defining requirements
-Last activity: 2026-04-05 — Milestone v1.8 started
+Status: Ready to plan
+Last activity: 2026-04-05 — Roadmap created for v1.8 (4 phases, 14 requirements)
 
 Progress: [░░░░░░░░░░░░] 0%
 
@@ -54,6 +54,11 @@ Progress: [░░░░░░░░░░░░] 0%
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
+Research-informed decisions for v1.8:
+- ESLint 10 explicitly excluded (blocked by eslint-config-next peer deps)
+- shiki v4 + rehype-pretty-code 0.14.3 must upgrade as a coupled pair
+- tsconfig `types` array fix in Phase 20 pre-empts TS6 breaking change in Phase 22
+- HYGN-02/DEPS-03 conditional: if lucide-react removed, DEPS-03 is N/A
 
 ### Pending Todos
 
@@ -61,7 +66,7 @@ None.
 
 ### Blockers/Concerns
 
-None — all v1.7 concerns resolved.
+- ESLint 10 upgrade blocked upstream (eslint-config-next) — deferred, not actionable
 
 ### Quick Tasks Completed
 
@@ -82,5 +87,5 @@ None — all v1.7 concerns resolved.
 ## Session Continuity
 
 Last session: 2026-04-05
-Stopped at: Milestone v1.7 archived
+Stopped at: Roadmap created for v1.8
 Resume file: —

@@ -57,26 +57,26 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| HYGN-01 | — | Pending |
-| HYGN-02 | — | Pending |
-| HYGN-03 | — | Pending |
-| HYGN-04 | — | Pending |
-| DEPS-01 | — | Pending |
-| DEPS-02 | — | Pending |
-| DEPS-03 | — | Pending |
-| DEPS-04 | — | Pending |
-| DEPS-05 | — | Pending |
-| TEST-01 | — | Pending |
-| TEST-02 | — | Pending |
-| TEST-03 | — | Pending |
-| TEST-04 | — | Pending |
-| QUAL-01 | — | Pending |
+| HYGN-01 | Phase 20 | Pending |
+| HYGN-02 | Phase 20 | Pending |
+| HYGN-03 | Phase 20 | Pending |
+| HYGN-04 | Phase 20 | Pending |
+| DEPS-01 | Phase 21 | Pending |
+| DEPS-02 | Phase 21 | Pending |
+| DEPS-03 | Phase 21 | Pending |
+| DEPS-04 | Phase 21 | Pending |
+| DEPS-05 | Phase 22 | Pending |
+| TEST-01 | Phase 23 | Pending |
+| TEST-02 | Phase 23 | Pending |
+| TEST-03 | Phase 23 | Pending |
+| TEST-04 | Phase 23 | Pending |
+| QUAL-01 | Phase 23 | Pending |
 
 **Coverage:**
 - v1.8 requirements: 14 total
-- Mapped to phases: 0
-- Unmapped: 14 ⚠️
+- Mapped to phases: 14
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-05*
-*Last updated: 2026-04-05 after initial definition*
+*Last updated: 2026-04-05 after roadmap creation*
