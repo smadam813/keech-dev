@@ -99,6 +99,11 @@ A polished, intentional developer portfolio — fast, visually distinctive, and 
 
 ### Active
 
+- ✓ Orphaned CopyButton component and test deleted — v1.8
+- ✓ Security-headers test relocated to co-locate with src/proxy.ts — v1.8
+- ✓ vitest/globals added to tsconfig types, zero false tsc errors — v1.8
+- ✓ Error import shadowing fixed in error.test.tsx — v1.8
+
 ## Current Milestone: v1.8 Validate & Address Concerns
 
 **Goal:** Resolve remaining concerns from the codebase audit — dead code, test hygiene, dependency updates, and test coverage gaps.
@@ -222,4 +227,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-05 after v1.8 milestone start*
+*Last updated: 2026-04-05 after Phase 20 completion*
