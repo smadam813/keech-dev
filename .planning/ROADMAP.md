@@ -74,7 +74,7 @@ See: `.planning/milestones/v1.7-ROADMAP.md` for full details.
 
 **Milestone Goal:** Resolve remaining concerns from the codebase audit — dead code, test hygiene, dependency updates, and test coverage gaps.
 
-- [ ] **Phase 20: Dead Code & Test Hygiene** - Remove orphaned code, fix test co-location and tsconfig for accurate baselines
+- [x] **Phase 20: Dead Code & Test Hygiene** - Remove orphaned code, fix test co-location and tsconfig for accurate baselines (completed 2026-04-05)
 - [ ] **Phase 21: Dependency Upgrades** - Apply minor/patch and safe major dependency updates across the stack
 - [ ] **Phase 22: TypeScript 6 Upgrade** - Upgrade to TypeScript 6.x with migration tooling and full validation
 - [ ] **Phase 23: Test Coverage & Code Quality** - Fill test gaps for API routes, CodeBlockEnhancer, OG font; evaluate lint suppressions
@@ -90,9 +90,9 @@ See: `.planning/milestones/v1.7-ROADMAP.md` for full details.
   2. lucide-react is removed from package.json if CopyButton was its only consumer (conditional — if other consumers exist, dependency stays and is noted)
   3. security-headers.test.ts has been relocated to src/proxy.test.ts with corrected import path and passes
   4. `npx tsc --noEmit` reports zero errors across the entire codebase including test files
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 Plans:
-- [ ] 20-01-PLAN.md — Delete dead code, relocate test, fix tsconfig types and error.test.tsx shadowing
+- [x] 20-01-PLAN.md — Delete dead code, relocate test, fix tsconfig types and error.test.tsx shadowing
 
 ### Phase 21: Dependency Upgrades
 **Goal**: All non-blocked dependencies are at their current stable versions with the content pipeline and site fully validated
@@ -154,7 +154,7 @@ Phases execute in numeric order: 20 → 21 → 22 → 23
 | 17. Syntax Highlighting Theme Migration | v1.7 | 1/1 | Complete | 2026-04-04 |
 | 18. React 19 Lint Cleanup | v1.7 | 3/3 | Complete | 2026-04-05 |
 | 19. Verification and Polish | v1.7 | 1/1 | Complete | 2026-04-05 |
-| 20. Dead Code & Test Hygiene | v1.8 | 0/1 | Not started | - |
+| 20. Dead Code & Test Hygiene | v1.8 | 1/1 | Complete    | 2026-04-05 |
 | 21. Dependency Upgrades | v1.8 | 0/? | Not started | - |
 | 22. TypeScript 6 Upgrade | v1.8 | 0/? | Not started | - |
 | 23. Test Coverage & Code Quality | v1.8 | 0/? | Not started | - |
