@@ -1,7 +1,7 @@
 'use client'
 
 import { useSearchParams, usePathname } from 'next/navigation'
-import { useCallback, useMemo, useTransition } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 
 interface UseFilteredListOptions<T> {
   items: T[]
@@ -50,7 +50,7 @@ export function useFilteredList<T>(options: UseFilteredListOptions<T>): UseFilte
     return counts
   }, [items, allFilterValues, getItemValues])
 
-  const [isPending, startTransition] = useTransition()
+  const [isPending, setIsPending] = useState(false)
 
   // Write new filter set to URL via replaceState (no server re-render)
   const updateURL = useCallback(
@@ -62,8 +62,15 @@ export function useFilteredList<T>(options: UseFilteredListOptions<T>): UseFilte
         params.set(paramName, [...next].sort().join(','))
       }
       const query = params.toString()
-      startTransition(() => {
-        window.history.replaceState(null, '', query ? `${pathname}?${query}` : pathname)
+      // Set isPending synchronously — React batches this with the searchParams
+      // re-render from replaceState, so new content renders at opacity-0
+      setIsPending(true)
+      window.history.replaceState(null, '', query ? `${pathname}?${query}` : pathname)
+      // After paint, fade new content in
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setIsPending(false)
+        })
       })
     },
     [searchParams, pathname, paramName]

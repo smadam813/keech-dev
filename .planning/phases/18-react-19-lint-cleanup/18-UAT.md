@@ -3,7 +3,7 @@ status: complete
 phase: 18-react-19-lint-cleanup
 source: [18-01-SUMMARY.md, 18-02-SUMMARY.md]
 started: 2026-04-04T12:00:00Z
-updated: 2026-04-05T00:10:00Z
+updated: 2026-04-05T00:40:00Z
 ---
 
 ## Current Test
@@ -34,9 +34,7 @@ result: pass
 
 ### 6. Blog Filter Transitions
 expected: On the blog listing page, click a tag filter. The post list should transition smoothly to show filtered results (no jarring jump or flash).
-result: issue
-reported: "There is a flash when clicking a filter, at least to my eye."
-severity: minor
+result: pass
 
 ### 7. Zero ESLint Warnings
 expected: Run `npm run lint` in the terminal. Output should complete with zero warnings and zero errors.
@@ -49,20 +47,12 @@ result: pass
 ## Summary
 
 total: 8
-passed: 7
-issues: 1
+passed: 8
+issues: 0
 pending: 0
 skipped: 0
 blocked: 0
 
 ## Gaps
 
-- truth: "Blog filter transitions smoothly with no flash when clicking a tag filter"
-  status: failed
-  reason: "User reported: There is a flash when clicking a filter, at least to my eye."
-  severity: minor
-  test: 6
-  root_cause: ""
-  artifacts: []
-  missing: []
-  debug_session: ""
+[none]
