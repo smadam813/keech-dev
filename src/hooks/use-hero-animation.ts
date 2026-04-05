@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState, useEffect, useCallback, type RefObject } from 'react'
+import { useMediaQuery } from '@/hooks/use-media-query'
 
 type RevealStage = 'loading' | 'bg-reveal' | 'text-reveal'
 
@@ -19,7 +20,7 @@ export function useHeroAnimation({ imgRef }: UseHeroAnimationOptions): UseHeroAn
   const [imageLoaded, setImageLoaded] = useState(false)
   const [revealStage, setRevealStage] = useState<RevealStage>('loading')
   const hasPlayedRef = useRef(false)
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
+  const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
   const [glowsActive, setGlowsActive] = useState(false)
 
   // Path 1: onLoad fires for fresh image loads (after img.decode())
@@ -30,19 +31,10 @@ export function useHeroAnimation({ imgRef }: UseHeroAnimationOptions): UseHeroAn
   // Path 2: Check img.complete on mount for cached/bfcache images
   useEffect(() => {
     if (imgRef.current?.complete && imgRef.current.naturalWidth > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Sync with browser image cache: imgRef.current.complete is an external DOM property read on mount
       setImageLoaded(true)
     }
   }, [imgRef])
-
-  // Reduced-motion detection with live toggle support
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
-    setPrefersReducedMotion(mq.matches)
-
-    const handler = () => setPrefersReducedMotion(mq.matches)
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
-  }, [])
 
   // Reveal sequence orchestration
   useEffect(() => {
@@ -50,17 +42,20 @@ export function useHeroAnimation({ imgRef }: UseHeroAnimationOptions): UseHeroAn
     hasPlayedRef.current = true
 
     if (prefersReducedMotion) {
-      // Skip animation entirely -- CSS handles visibility via reduced-motion overrides
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Skip animation: instantly show content when user prefers reduced motion
       setRevealStage('text-reveal')
       return
     }
 
-    // Beat 1: Background blur-to-sharp (immediate)
+    // Intentional animation orchestration: reveal sequence uses sequential setState
+    // with setTimeout delays to coordinate CSS transitions. Not derivable state.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setRevealStage('bg-reveal')
 
     // Beat 2: Text fade-up (after blur transition + pause)
     // 350ms blur transition + 250ms pause = 600ms delay
     const timer = setTimeout(() => {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRevealStage('text-reveal')
     }, 600)
 
