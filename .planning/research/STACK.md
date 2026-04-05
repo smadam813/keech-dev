@@ -1,324 +1,216 @@
-# Technology Stack
+# Technology Stack: v1.8 Concerns Cleanup
 
-**Project:** keech.dev v1.7 - CSP Hardening, MDX Migration, Lint Cleanup
-**Researched:** 2026-04-03
-**Overall Confidence:** MEDIUM (MDX migration path has tradeoffs; syntax highlighting migration is well-documented)
+**Project:** keech.dev
+**Researched:** 2026-04-05
+**Focus:** Dependency upgrades, compatibility matrices, and TypeScript configuration fixes
 
-## Executive Summary
+## Upgrade Decision Matrix
 
-This milestone requires NO new npm dependencies for four of five workstreams. The MDX `new Function()` elimination is the only area requiring a new package (`@mdx-js/mdx`), and even that is conditional on a non-trivial architectural change. The syntax highlighting CSP fix uses Shiki's existing `@shikijs/transformers` package (already a transitive dependency of `shiki`). The middleware, `useSyncExternalStore`, and audit fixes are all achievable with existing dependencies or native React APIs.
+### Safe to Upgrade (Do It)
 
-The biggest finding: **nonce-based CSP is incompatible with static generation**. The site is fully statically generated and deployed to Vercel CDN. Nonces require per-request dynamic rendering, which would kill performance and CDN caching. The correct approach is middleware that applies static CSP headers (no nonces) but centralizes header management, combined with eliminating the *need* for `unsafe-eval` and `unsafe-inline` through code changes.
+| Package | Current | Target | Risk | Rationale |
+|---------|---------|--------|------|-----------|
+| `shiki` | 3.22.0 | 4.0.2 | LOW | Only removes deprecated API typos (`createdBundledHighlighter` -> `createBundledHighlighter`). `createCssVariablesTheme` is unaffected -- still available and unchanged. Requires Node >= 20 (project uses 22.21.0). |
+| `rehype-pretty-code` | 0.14.1 | 0.14.3 | LOW | Patch release that adds shiki 4 compatibility. Must upgrade alongside shiki 4. |
+| `lucide-react` | 0.563.0 | 1.7.0 | LOW | Breaking changes: removed UMD build (irrelevant for Next.js), removed brand icons (project uses Github/ExternalLink/ArrowLeft/Menu/X/ChevronDown -- none are brand icons), `aria-hidden=true` default (correct for decorative icon usage here). Named icon imports unchanged. |
+| `@vercel/analytics` | 1.6.1 | 2.0.1 | LOW | Breaking changes are license change (MPL-2.0 to MIT) and Nuxt module restructure. Neither affects a Next.js project. Drop-in upgrade. |
+| `typescript` | 5.9.3 | 6.0.2 | LOW-MEDIUM | Project tsconfig already uses `strict: true`, `module: esnext`, `moduleResolution: bundler`, `target: ES2022` -- all compatible with TS6. Key change: `types` defaults to `[]` instead of auto-enumerating `@types/*`. This pairs naturally with the Vitest globals fix. Migration tool available: `npx @andrewbranch/ts5to6`. |
+| `tailwindcss` | 4.1.18 | 4.2.2 | LOW | Minor version within v4. New utilities added but no breaking changes for existing CSS-first config with `@theme` directive. |
+| `@tailwindcss/postcss` | 4.1.18 | 4.2.2 | LOW | Tracks tailwindcss version. Upgrade together. |
+| `tailwind-merge` | 3.4.0 | 3.5.0 | LOW | Minor version. Additive changes only. |
+| `@upstash/redis` | 1.36.2 | 1.37.0 | LOW | Minor version. Additive changes only. |
+| `@types/node` | 25.1.0 | 25.5.2 | LOW | Type definition updates. No runtime impact. |
+| `@types/react` | 19.2.10 | 19.2.14 | LOW | Type definition updates. No runtime impact. |
 
-## Recommended Stack Changes
+### Do NOT Upgrade (Blocked)
 
-### New Dependencies
+| Package | Current | Latest | Risk | Rationale |
+|---------|---------|--------|------|-----------|
+| `eslint` | 9.39.2 | 10.2.0 | HIGH | `eslint-config-next` does NOT support ESLint 10 yet. Upstream plugins (`eslint-plugin-react`, `eslint-plugin-react-hooks`, `eslint-plugin-jsx-a11y`, `eslint-plugin-import`) have unresolved peer dependency conflicts. Next.js team tracking at vercel/next.js#89764, closed as "tracking upstream" with no fix shipped. Upgrading breaks the entire lint pipeline. |
 
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| `@shikijs/transformers` | ^4.0.2 | Convert Shiki inline styles to CSS classes | Eliminates `unsafe-inline` from `style-src` CSP. Uses `transformerStyleToClass` which operates on HAST-level hooks (`pre`, `tokens`), confirmed compatible with rehype plugins. Already a sub-dependency of `shiki` but needs direct installation for import access. |
+### Leave Alone (No Concern)
 
-### Dependencies to Update
+| Package | Current | Why |
+|---------|---------|-----|
+| `velite` | 0.3.1 (exact pin) | Pre-release 0.x. Pinned intentionally per v1.7 decision. Check changelog periodically but do not upgrade in this milestone. |
+| `eslint-config-next` | 16.2.2 | Already synced with next@16.2.2. Will need updating when ESLint 10 support ships. |
+| `next` | 16.2.2 | No upgrade concern flagged. |
+| `react` / `react-dom` | 19.2.4 | No upgrade concern flagged. |
 
-| Technology | From | To | Why |
-|------------|------|-----|-----|
-| `eslint-config-next` | ^16.1.6 | ^16.2.2 | Match `next@^16.2.2` to prevent rule drift |
+## Compatibility Matrix: Shiki + rehype-pretty-code
 
-### Dependencies to Pin
+This is the critical coupled upgrade. These two packages share an integration surface.
 
-| Technology | From | To | Why |
-|------------|------|-----|-----|
-| `velite` | ^0.3.1 | 0.3.1 | Pre-release (0.x.x) semver means minor bumps can break. Pin exact to prevent accidental upgrades. |
+| rehype-pretty-code | shiki 3.x | shiki 4.x |
+|--------------------|-----------|-----------|
+| 0.14.1 (current) | YES | NO |
+| 0.14.3 (target) | YES | YES |
 
-### No New Dependencies Needed
+**What the project uses from shiki:** `createCssVariablesTheme` imported from `shiki` in `velite.config.ts`. This function:
+- Is NOT deprecated in shiki 4
+- Is NOT one of the removed typo APIs
+- Takes the same parameters (`name`, `variablePrefix`, `variableDefaults`)
+- The project's existing `velite.config.ts` requires zero code changes
 
-| Capability | Why No Package Needed |
-|------------|----------------------|
-| Next.js middleware | Built into Next.js -- create `src/middleware.ts` |
-| `useSyncExternalStore` | Built into React 19 -- import from `react` |
-| npm audit fixes | `npm audit fix` resolves all 3 vulnerabilities via transitive updates |
-| ESLint disable comments | Configuration change only |
+**What shiki 4 actually removes:**
+1. `CreatedBundledHighlighterOptions` (typo) -> `CreateBundledHighlighterOptions` -- not used
+2. `createdBundledHighlighter` (typo) -> `createBundledHighlighter` -- not used
+3. `theme` option in `TwoslashFloatingVue` -> `themes` -- not used
+4. CSS class `twoslash-query-presisted` (typo) -> `twoslash-query-persisted` -- not used
 
-## Detailed Analysis by Workstream
+**Verdict:** Upgrade both together. No code changes needed in `velite.config.ts`.
 
-### 1. MDX Rendering: Eliminating `unsafe-eval`
+## Upgrade Execution Order
 
-**Current state:** Velite's `s.mdx()` compiles MDX to a function-body string at build time. `MDXContent` component executes it via `new Function(code)` at runtime, requiring `unsafe-eval` in CSP.
+Dependencies have compatibility chains. Execute in this order to isolate failures.
 
-**The core problem:** Velite intentionally outputs function-body strings (not importable modules). This is by design -- it avoids bundling component trees at build time, keeping output lean. The `new Function()` pattern IS Velite's recommended rendering approach.
-
-**Option A: Use `@mdx-js/mdx` `run()` function (RECOMMENDED)**
-- Install `@mdx-js/mdx` and use its `run()` function to execute the function-body string
-- `run()` internally uses `new Function()` -- BUT it provides a cleaner API and is the official MDX way to execute function-body output
-- **This does NOT eliminate `unsafe-eval`** -- it just wraps the same mechanism
-- Confidence: HIGH that it works, but does NOT solve the CSP goal
-
-**Option B: Switch to `@shikijs/rehype` + direct MDX file imports via `@next/mdx`**
-- Replace Velite's MDX pipeline entirely with `@next/mdx` which compiles MDX files to importable React components
-- Would eliminate `new Function()` entirely
-- **Breaks the entire Velite content pipeline** -- frontmatter, collections, type-safe schemas, TOC generation, excerpt extraction all depend on Velite
-- NOT recommended -- too much breakage for the CSP gain
-
-**Option C: Accept `unsafe-eval` with documented rationale (RECOMMENDED)**
-- The MDX content is author-controlled (not user-generated)
-- Build output is trusted (Velite compiles at build time, deployed via git push)
-- `unsafe-eval` is a weaker CSP but acceptable when content source is trusted
-- Document the security boundary clearly
-- Remove `unsafe-eval` only if/when Velite adds an alternative output format
-
-**Verdict:** Keep `new Function()` for now. The `unsafe-eval` directive is a pragmatic tradeoff for author-controlled content. No package solves this without replacing Velite. Focus CSP hardening efforts on the achievable wins (removing `unsafe-inline` from styles, adding middleware).
-
-**Confidence:** HIGH -- verified through Velite docs, MDX docs, and `@mdx-js/mdx` source analysis. All `function-body` execution paths use eval-equivalent mechanisms.
-
-### 2. Syntax Highlighting: Eliminating `unsafe-inline` from `style-src`
-
-**Current state:** `rehype-pretty-code` with `theme: 'github-dark-dimmed'` injects inline `style` attributes on every code token `<span>`, requiring `style-src 'unsafe-inline'`.
-
-**Solution: `transformerStyleToClass` from `@shikijs/transformers`**
-
-This is the Shiki maintainer-recommended approach (confirmed in [shiki#671](https://github.com/shikijs/shiki/issues/671) by Anthony Fu):
-
-```typescript
-import { transformerStyleToClass } from '@shikijs/transformers'
-
-const toClass = transformerStyleToClass({
-  classPrefix: '__shiki_',
-})
-```
-
-**How it works:**
-1. Replaces all inline `style` attributes with generated CSS class names
-2. Class names are deterministic hashes of the style values
-3. `toClass.getCSS()` returns the corresponding CSS rules
-4. The CSS is injected into a stylesheet (not inline), which is CSP-safe
-
-**Integration with Velite pipeline:**
-
-The transformer operates on HAST-level hooks (`pre` and `tokens`), NOT the `postprocess` hook. This is critical because `@shikijs/rehype` and `rehype-pretty-code` both operate on HAST -- the `postprocess` hook is never called in rehype pipelines. Since `transformerStyleToClass` uses `pre`/`tokens` hooks, it IS compatible.
-
-**Two sub-approaches for the rehype plugin:**
-
-| Approach | Plugin | Pros | Cons |
-|----------|--------|------|------|
-| A: Keep rehype-pretty-code | `rehype-pretty-code` | No migration, just add transformer | Need to verify transformer passthrough works with rehype-pretty-code's wrapper |
-| B: Switch to @shikijs/rehype | `@shikijs/rehype` | Direct Shiki integration, documented transformer support, Velite docs show this as option | Lose rehype-pretty-code's extra features (line highlighting markup, title blocks) |
-
-**Recommendation:** Try approach A first (add `transformerStyleToClass` to `rehype-pretty-code`'s `transformers` option). If incompatible, fall back to approach B (`@shikijs/rehype` which Velite documents as a supported alternative).
-
-**CSS extraction challenge:** `getCSS()` must be called after build-time compilation, and the CSS must be available in the page's stylesheet. Options:
-1. Generate a static CSS file during Velite build and import it in `globals.css`
-2. Use a Velite transform hook to write the CSS file
-3. Include the CSS as a `<style>` tag with a hash in CSP (less ideal)
-
-**Confidence:** HIGH for the transformer mechanism. MEDIUM for the build-time CSS extraction integration (needs implementation-phase validation).
-
-### 3. Next.js Middleware for Centralized Security Headers
-
-**Current state:** Security headers defined in `next.config.ts` `headers()` function. Works for static and dynamic routes but cannot generate per-request values (nonces).
-
-**Critical finding: Nonces are NOT viable for this site.**
-
-The site is fully statically generated (`generateStaticParams()` on all content pages). Nonce-based CSP requires `dynamic = 'force-dynamic'` on every page, which:
-- Kills CDN caching (every request hits the origin server)
-- Increases TTFB dramatically
-- Increases Vercel costs (serverless function invocations vs. static CDN)
-- Defeats the purpose of static generation
-
-This is confirmed by [Next.js CSP documentation](https://nextjs.org/docs/app/building-your-application/configuring/content-security-policy) and multiple community discussions.
-
-**Recommended approach: Middleware with static CSP headers**
-
-Create `src/middleware.ts` that:
-1. Sets all security headers (CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy)
-2. Uses static CSP directives (no nonces) -- hardened by removing `unsafe-inline` from `style-src`
-3. Centralizes header logic (remove from `next.config.ts headers()`)
-4. Can later add rate limiting, redirects, or other cross-cutting concerns
-
-```typescript
-// src/middleware.ts
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
-
-export function middleware(request: NextRequest) {
-  const response = NextResponse.next()
-  // Set security headers on response
-  response.headers.set('Content-Security-Policy', cspHeader)
-  response.headers.set('X-Frame-Options', 'DENY')
-  // ...
-  return response
-}
-
-export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
-}
-```
-
-**No new dependencies needed.** Middleware is a built-in Next.js feature.
-
-**Confidence:** HIGH -- well-documented Next.js pattern, no compatibility concerns with static generation (middleware runs at the edge before serving cached static pages on Vercel).
-
-### 4. `useSyncExternalStore` for localStorage and Media Queries
-
-**Current state:** Two patterns trigger React 19 lint warnings:
-- `useLayoutEffect` + `setState` for localStorage reads (view-counter.tsx, listing-view-counts.tsx)
-- `useEffect` + `setState` for `matchMedia` sync (use-hero-animation.ts)
-
-**Solution: React 19's built-in `useSyncExternalStore`**
-
-No new package needed. `useSyncExternalStore` is in React 19 core.
-
-**Pattern for localStorage:**
-```typescript
-import { useSyncExternalStore } from 'react'
-
-function useLocalStorageValue(key: string): string | null {
-  return useSyncExternalStore(
-    (callback) => {
-      window.addEventListener('storage', callback)
-      return () => window.removeEventListener('storage', callback)
-    },
-    () => localStorage.getItem(key),    // client snapshot
-    () => null                           // server snapshot (SSR-safe)
-  )
-}
-```
-
-**Pattern for matchMedia:**
-```typescript
-function usePrefersReducedMotion(): boolean {
-  return useSyncExternalStore(
-    (callback) => {
-      const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
-      mq.addEventListener('change', callback)
-      return () => mq.removeEventListener('change', callback)
-    },
-    () => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-    () => false  // server snapshot
-  )
-}
-```
-
-**Benefits:**
-- Eliminates `useLayoutEffect` + `setState` pattern (removes React 19 lint warnings)
-- SSR-safe via `getServerSnapshot` parameter (no `useLayoutEffect` SSR warning risk)
-- Semantically correct -- localStorage and matchMedia ARE external stores
-- Reduces lint warnings from 10 to ~5 (the remaining ones are animation orchestration effects that are correct as-is)
-
-**Confidence:** HIGH -- `useSyncExternalStore` is a stable React API, well-documented for exactly these patterns.
-
-### 5. npm Audit Vulnerability Fixes
-
-**Current vulnerabilities (3 packages, all transitive):**
-
-| Package | Severity | Via | Fix |
-|---------|----------|-----|-----|
-| `flatted` 3.3.3 | HIGH (DoS + prototype pollution) | `eslint` > `file-entry-cache` > `flat-cache` | `npm audit fix` updates to 3.4.2 |
-| `picomatch` 2.3.1 | HIGH (ReDoS + method injection) | `eslint-config-next` > `fast-glob` > `micromatch` | `npm audit fix` updates to 2.3.2 |
-| `picomatch` 4.0.3 | HIGH (same) | `vitest` > `tinyglobby` | `npm audit fix` updates to 4.0.4 |
-| `brace-expansion` 1.1.12/2.0.2 | MODERATE (DoS) | `eslint`/`typescript-eslint` | `npm audit fix` updates to 1.1.13/2.0.3 |
-
-**Verified:** `npm audit fix --dry-run` confirms all fixes are available via direct updates (no `--force` or `overrides` needed).
-
-**Action:** Run `npm audit fix`. No `package.json` overrides required.
-
-**Note:** Updating `eslint-config-next` to ^16.2.2 (workstream 3) may also resolve the `picomatch` vulnerability through `eslint-config-next` by pulling in a newer `fast-glob`.
-
-**Confidence:** HIGH -- verified with `npm audit fix --dry-run`.
-
-## Alternatives Considered
-
-| Category | Recommended | Alternative | Why Not |
-|----------|-------------|-------------|---------|
-| MDX rendering | Keep `new Function()` + `unsafe-eval` | `next-mdx-remote/rsc` | Broken with Next.js 15.2+ ([github#488](https://github.com/hashicorp/next-mdx-remote/issues/488)), would break on Next.js 16 |
-| MDX rendering | Keep `new Function()` | `safe-mdx` | Cannot use rehype plugins, no syntax highlighting support, would require rewriting entire content pipeline |
-| MDX rendering | Keep `new Function()` | `@next/mdx` direct imports | Would replace Velite entirely -- loses type-safe collections, frontmatter schemas, TOC, excerpts |
-| Syntax highlighting | `transformerStyleToClass` | Shiki `css-variables` theme | Still outputs inline `style` attributes (just with CSS variable values instead of colors) -- does NOT fix CSP |
-| Syntax highlighting | `transformerStyleToClass` | Nonce-based CSP for styles | Requires dynamic rendering, kills static generation |
-| CSP middleware | Static headers in middleware | Nonce-based middleware | Incompatible with static generation, kills CDN caching |
-| localStorage sync | `useSyncExternalStore` | Keep `useLayoutEffect` | Lint warnings persist, SSR-unsafe pattern |
-
-## What NOT to Add
-
-| Package | Why Not |
-|---------|---------|
-| `next-mdx-remote` | Broken with Next.js 15.2+, likely broken on 16.x |
-| `@next-safe/middleware` | Last updated for Next.js 12, uses Pages Router patterns |
-| `@next/mdx` | Would replace Velite, massive scope creep |
-| `safe-mdx` | Too limited (no rehype plugins, no syntax highlighting) |
-| `helmet` or `csp-header` | Overkill for static CSP; hand-written middleware is simpler |
-| `shiki` v4 | Major version bump available (4.0.2) but `rehype-pretty-code@0.14.1` may not support it yet; evaluate separately |
-
-## Installation
+### Batch 1: Minor/Patch Updates (Zero Risk)
 
 ```bash
-# New dependency
-npm install @shikijs/transformers
-
-# Update eslint-config-next to match next version
-npm install -D eslint-config-next@^16.2.2
-
-# Fix audit vulnerabilities (all transitive)
-npm audit fix
-
-# Pin velite exact version (edit package.json manually)
-# Change "velite": "^0.3.1" to "velite": "0.3.1"
+npm install tailwindcss@^4.2.2 @tailwindcss/postcss@^4.2.2 tailwind-merge@^3.5.0 @upstash/redis@^1.37.0
+npm install -D @types/node@^25.5.2 @types/react@^19.2.14
 ```
 
-## Integration Points with Existing Pipeline
+Verify: `npm run build && npm run test`
 
-### velite.config.ts Changes
+### Batch 2: Shiki + rehype-pretty-code (Coupled Pair)
 
-```typescript
-// Add transformer to rehype-pretty-code options
-import { transformerStyleToClass } from '@shikijs/transformers'
+These MUST upgrade together. rehype-pretty-code 0.14.3 declares shiki 4 peer compatibility.
 
-const shikiClassTransformer = transformerStyleToClass({
-  classPrefix: '__shiki_',
-})
-
-// In mdx.rehypePlugins:
-[rehypePrettyCode, {
-  theme: 'github-dark-dimmed',
-  keepBackground: true,
-  defaultLang: { block: 'typescript', inline: 'typescript' },
-  transformers: [shikiClassTransformer],
-}]
-
-// After build: shikiClassTransformer.getCSS() contains the stylesheet
+```bash
+npm install shiki@^4.0.2 rehype-pretty-code@^0.14.3
 ```
 
-### CSP Header Migration Path
+Verify: `npm run velite` (confirms syntax highlighting pipeline works), then `npm run build && npm run test`
 
+**What to validate:** Run `npm run velite` and inspect a compiled post's HTML output -- token `<span>` elements should still have CSS variable-based styling via class names. The `createCssVariablesTheme` in `velite.config.ts` needs zero changes.
+
+### Batch 3: lucide-react (Isolated)
+
+```bash
+npm install lucide-react@^1.7.0
 ```
-next.config.ts headers()  -->  src/middleware.ts
-  - Remove async headers() from next.config.ts
-  - Move all security headers to middleware
-  - Update CSP: remove 'unsafe-inline' from style-src (after transformer migration)
-  - Keep 'unsafe-eval' in script-src (MDX requirement, documented)
+
+Verify: `npm run build` (checks all icon imports resolve)
+
+**Consumers after CopyButton removal** (which is a separate concern):
+- `src/components/layout/header.tsx`: Menu, X
+- `src/components/layout/footer.tsx`: Github, Linkedin
+- `src/components/blog/mobile-toc.tsx`: ChevronDown
+- `src/components/projects/project-card.tsx`: Github, ExternalLink
+- `src/app/blog/[slug]/page.tsx`: ArrowLeft
+- `src/app/projects/[slug]/page.tsx`: ArrowLeft, Github, ExternalLink
+
+None are brand icons (Github is specifically retained in lucide v1). All named imports work identically. The only behavioral change is `aria-hidden="true"` defaulting on -- correct for these decorative usages.
+
+### Batch 4: @vercel/analytics (Isolated)
+
+```bash
+npm install @vercel/analytics@^2.0.1
 ```
+
+Verify: `npm run build` (no API changes for Next.js usage)
+
+### Batch 5: TypeScript 6 (Broadest Impact -- Upgrade Last)
+
+Upgrade last because it may surface new type errors that are easier to diagnose after other upgrades are stable.
+
+```bash
+npx @andrewbranch/ts5to6        # Run migration tool first -- audits tsconfig
+npm install -D typescript@^6.0.2
+```
+
+**Required tsconfig.json change:**
+
+```json
+{
+  "compilerOptions": {
+    "types": ["node", "vitest/globals"]
+  }
+}
+```
+
+Verify: `npx tsc --noEmit` (should show zero errors), then `npm run build && npm run test && npm run lint`
+
+## TypeScript 6 Impact Analysis
+
+### Why This Project Is Well-Positioned
+
+The existing `tsconfig.json` already aligns with TypeScript 6 defaults and requirements:
+
+| Setting | Current Value | TS6 Default | Impact |
+|---------|--------------|-------------|--------|
+| `strict` | `true` | `true` (new default) | None -- already set |
+| `target` | `ES2022` | `es2025` (new default) | None -- ES2022 still valid (minimum is ES2015) |
+| `module` | `esnext` | `esnext` (new default) | None -- already set |
+| `moduleResolution` | `bundler` | Varies | None -- explicitly supported |
+| `esModuleInterop` | `true` | Can no longer be `false` | None -- already `true` |
+| `isolatedModules` | `true` | Still supported | None |
+
+### What Needs Attention
+
+1. **`types` field (REQUIRED):** TS6 defaults `types` to `[]` instead of auto-enumerating `@types/*`. Must explicitly add `"node"` and `"vitest/globals"`. This is also the fix for the Vitest globals tsc error concern.
+
+2. **`noUncheckedSideEffectImports: true` (new default):** May flag bare `import './globals.css'` or similar side-effect-only imports if the file doesn't resolve. Verify with `tsc --noEmit` after upgrade.
+
+3. **Migration tool:** `npx @andrewbranch/ts5to6` automates mechanical changes. Run it first to see what it recommends before manually editing.
+
+### Removed Options (NOT Used By Project)
+
+These removals do not affect this project:
+- `--target es5` -- project uses ES2022
+- `--moduleResolution classic` / `node10` -- project uses `bundler`
+- `--module amd/umd/system/none` -- project uses `esnext`
+- `--outFile` -- not used
+- `--downlevelIteration` -- not used
+
+## Vitest Globals tsconfig Fix
+
+This resolves the "TypeScript: Test Files Report False tsc Errors" concern from CONCERNS.md.
+
+**Problem:** `npx tsc --noEmit` reports `TS2304 Cannot find name 'afterEach'` in `src/hooks/use-glow-positions.test.ts` and `src/hooks/use-hero-animation.test.ts` because Vitest globals are injected at runtime (via `globals: true` in `vitest.config.ts`) but TypeScript has no type declarations for them.
+
+**Fix:** Add `"vitest/globals"` to `compilerOptions.types` in `tsconfig.json`:
+
+```json
+{
+  "compilerOptions": {
+    "types": ["node", "vitest/globals"]
+  }
+}
+```
+
+**Why `"node"` must be included too:** When you set `types` explicitly, TypeScript ONLY loads the listed type packages. Omitting `"node"` would remove all Node.js type declarations (`process`, `Buffer`, `__dirname`, etc.), breaking non-test code.
+
+**With TypeScript 5 vs 6:** The fix is identical either way. TS5 auto-discovers `@types/*` when `types` is unset, but once you set it, behavior is the same as TS6. TS6 just makes the explicit declaration mandatory.
+
+**Note:** The `TS7009` and `TS2345` errors in `src/app/error.test.tsx` are a separate issue -- those are caused by passing `Error` objects where the component typing expects `{ error: Error; reset: () => void }` as props. That requires a code fix in the test file, not a tsconfig change.
 
 ## Confidence Assessment
 
-| Area | Confidence | Notes |
-|------|------------|-------|
-| Syntax highlighting (transformerStyleToClass) | HIGH | Shiki maintainer-recommended, HAST-compatible hooks confirmed |
-| Middleware (static CSP) | HIGH | Standard Next.js pattern, no nonce complexity |
-| useSyncExternalStore | HIGH | Stable React API, exact use case it was designed for |
-| npm audit fixes | HIGH | Verified with --dry-run |
-| MDX unsafe-eval removal | HIGH (that it CANNOT be removed) | All execution paths for Velite function-body output require eval-equivalent |
-| CSS extraction at build time | MEDIUM | getCSS() mechanism is clear but integration with Velite build pipeline needs validation |
+| Decision | Confidence | Source |
+|----------|------------|--------|
+| Shiki 4 + rehype-pretty-code 0.14.3 safe together | HIGH | Shiki v4 blog post, rehype-pretty-code GitHub releases |
+| `createCssVariablesTheme` unchanged in shiki 4 | HIGH | Shiki theme-colors docs, v4 blog post (not listed in removals) |
+| ESLint 10 blocked by eslint-config-next | HIGH | GitHub issue #91702 confirms unresolved peer deps |
+| TypeScript 6 safe for this tsconfig | HIGH | Official TS6 announcement; all project settings are supported |
+| lucide-react 1.0 safe for project icons | HIGH | Official version-1 guide; no brand icons or UMD usage |
+| @vercel/analytics 2.0 drop-in for Next.js | HIGH | GitHub releases; breaking changes only affect Nuxt |
+| Vitest globals fix via `types` field | HIGH | Standard Vitest documentation pattern |
+| Tailwind 4.1 -> 4.2 safe | MEDIUM | No documented breaking changes; CSS-first config unaffected |
+| `noUncheckedSideEffectImports` impact | LOW | New TS6 default; needs validation with `tsc --noEmit` |
 
 ## Sources
 
-- [Velite MDX documentation](https://velite.js.org/guide/using-mdx)
-- [Velite code highlighting documentation](https://velite.js.org/guide/code-highlighting)
-- [Shiki CSP inline styles issue #671](https://github.com/shikijs/shiki/issues/671)
-- [Shiki transformerStyleToClass PR #826](https://github.com/shikijs/shiki/pull/826)
-- [Shiki transformers documentation](https://shiki.style/packages/transformers)
-- [Shiki css-variables theme](https://shiki.style/guide/theme-colors)
-- [@shikijs/rehype documentation](https://shiki.style/packages/rehype)
-- [Next.js CSP guide](https://nextjs.org/docs/app/building-your-application/configuring/content-security-policy)
-- [next-mdx-remote RSC broken on Next.js 15.2+](https://github.com/hashicorp/next-mdx-remote/issues/488)
-- [MDX on-demand compilation guide](https://mdxjs.com/guides/mdx-on-demand/)
-- [safe-mdx repository](https://github.com/holocron-hq/safe-mdx)
-- [rehype-pretty-code documentation](https://rehype-pretty.pages.dev/)
+- [Shiki v4.0 Blog Post](https://shiki.style/blog/v4) -- breaking changes list, Node.js 20 requirement
+- [Shiki Migration Guide](https://shiki.style/guide/migrate) -- v3 to v4 section
+- [Shiki Theme Colors / createCssVariablesTheme](https://shiki.style/guide/theme-colors) -- confirms function availability
+- [TypeScript 6.0 Announcement](https://devblogs.microsoft.com/typescript/announcing-typescript-6-0/) -- breaking changes, new defaults, removed options
+- [TypeScript 5.x to 6.0 Migration Guide (community)](https://gist.github.com/privatenumber/3d2e80da28f84ee30b77d53e1693378f)
+- [ts5to6 Migration Tool](https://github.com/nicolo-ribaudo/ts5to6) -- `npx @andrewbranch/ts5to6`
+- [Lucide Version 1 Guide](https://lucide.dev/guide/version-1) -- breaking changes, brand icon removal
+- [ESLint v10 Migration](https://eslint.org/docs/latest/use/migrate-to-10.0.0) -- official migration docs
+- [eslint-config-next ESLint 10 Issue](https://github.com/vercel/next.js/issues/91702) -- blocked status
+- [rehype-pretty-code Releases](https://github.com/rehype-pretty/rehype-pretty-code/releases) -- shiki 4 compatibility in 0.14.3
+- [Vercel Analytics Releases](https://github.com/vercel/analytics/releases) -- v2.0 breaking changes
+- [Tailwind CSS Releases](https://github.com/tailwindlabs/tailwindcss/releases) -- 4.2 changelog

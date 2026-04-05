@@ -1,660 +1,426 @@
-# Architecture Patterns
+# Architecture: v1.8 Concern Resolution Integration
 
-**Domain:** CSP hardening, MDX migration, middleware, lint cleanup for existing Next.js 16 portfolio
-**Researched:** 2026-04-03
-**Supersedes:** v1.6 architecture research (2026-04-02)
+**Domain:** Codebase cleanup for Next.js 16 portfolio site
+**Researched:** 2026-04-05
+**Supersedes:** v1.7 architecture research (2026-04-03)
+**Confidence:** HIGH (all concerns are internal to the existing codebase; minimal external dependency risk)
 
-## Integration Overview
+## Overview
 
-This document answers four specific architecture questions about how new v1.7 features integrate with the existing keech.dev codebase. Each section identifies the exact integration points, new vs modified components, and build-order dependencies.
-
----
-
-## 1. Replacing `new Function()` MDX Execution While Keeping Velite
-
-### Current State
-
-Velite's `s.mdx()` compiles MDX at build time into a **function-body string** stored in `.velite/posts.json`. The compiled output starts with `const{Fragment:e,jsx:t,jsxs:i}=arguments[0]` -- it is a raw JavaScript function body expecting `react/jsx-runtime` passed via `arguments[0]`.
-
-`MDXContent` in `src/components/blog/mdx-content.tsx` (line 14) calls `new Function(code)` which constructs a function from this string, then invokes it with the jsx runtime to get a React component. This requires `'unsafe-eval'` in the CSP `script-src` directive.
-
-The site currently has 5 blog posts and 2 projects. The body field is approximately 30KB per post.
-
-### The Fundamental Constraint
-
-MDX produces JavaScript. Running JavaScript from a string requires either `eval`, `new Function`, dynamic `import()` of a file, or avoiding JavaScript entirely. The MDX maintainers have stated this explicitly in [Discussion #2322](https://github.com/orgs/mdx-js/discussions/2322): there is no way to "run" compiled MDX without some form of dynamic code execution.
-
-### Recommended Approach: Switch to `s.markdown()` with HTML Output
-
-**Confidence: MEDIUM**
-
-Switch from `s.mdx()` to `s.markdown()` in `velite.config.ts`. This produces an **HTML string** instead of a JavaScript function body. Render via `dangerouslySetInnerHTML` which is safe because:
-- All content is author-controlled (no user-generated content)
-- Content is compiled at build time by Velite with rehype plugins
-- The HTML is deterministic and committed as build output
-
-**What changes:**
-
-| File | Change | Type |
-|------|--------|------|
-| `velite.config.ts` | `s.mdx()` -> `s.markdown()` on both collections | Modify |
-| `src/components/blog/mdx-content.tsx` | Replace `new Function()` with `dangerouslySetInnerHTML={{ __html: code }}` | Modify (major rewrite) |
-| `src/components/blog/mdx-content.tsx` | Remove `'use client'` directive -- no longer needs client-side JS execution | Modify |
-| `src/components/blog/mdx-content.tsx` | Remove `react/jsx-runtime` import | Modify |
-| `src/components/blog/code-block.tsx` | Must become a DOM-based client enhancement (see below) | Modify |
-| `next.config.ts` or `src/middleware.ts` | Remove `'unsafe-eval'` from `script-src` | Modify |
-| `.velite/posts.json` | Body field changes from JS function string to HTML string | Auto-regenerated |
-
-**What you lose and how to recover it:**
-
-1. **Custom `<ul role="list">` and `<ol role="list">` overrides:** Currently passed via MDX `components` prop. With HTML output, add a custom rehype plugin to `velite.config.ts` that adds `role="list"` attributes at compile time. This is a 10-line plugin.
-
-2. **`<pre>` -> `CodeBlock` component mapping:** Currently the MDX component override system maps `pre` to `CodeBlock` at render time. With HTML output, two options:
-   - **Option A (preferred):** Use a rehype plugin to wrap each `<pre>` element in a `<div class="code-block-wrapper" data-code-block>` at compile time. Then a client component queries the container for `[data-code-block]` elements and injects copy buttons via a `useEffect` + DOM manipulation approach.
-   - **Option B:** Keep the HTML rendering as a server component and nest a thin client component that uses `useRef` + `useEffect` to find `<pre>` elements and append copy buttons to the DOM. This is essentially what many syntax-highlighting copy-button implementations do.
-
-**MDXContent after migration (simplified):**
-
-```typescript
-// No longer needs 'use client'
-interface MDXContentProps {
-  code: string  // Now HTML string, not JS function body
-}
-
-function MDXFallback() { /* unchanged */ }
-
-export function MDXContent({ code }: MDXContentProps) {
-  return (
-    <div
-      className="prose"
-      dangerouslySetInnerHTML={{ __html: code }}
-    />
-  )
-}
-```
-
-The copy button functionality moves to a separate client component:
-
-```typescript
-// src/components/blog/code-block-enhancer.tsx
-'use client'
-import { useEffect, useRef } from 'react'
-
-export function CodeBlockEnhancer({ children }: { children: React.ReactNode }) {
-  const containerRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!containerRef.current) return
-    const preElements = containerRef.current.querySelectorAll('pre')
-    // Inject copy buttons into DOM for each <pre>
-  }, [])
-
-  return <div ref={containerRef}>{children}</div>
-}
-```
-
-### Alternative Considered: `safe-mdx` Library
-
-**Confidence: LOW** -- not recommended.
-
-[safe-mdx](https://github.com/holocron-hq/safe-mdx) parses raw MDX strings into an AST and renders without eval. However, it expects raw MDX source, not Velite's compiled function-body output. Using it would mean bypassing Velite's compilation pipeline entirely, adding a runtime dependency for parsing, and losing all build-time rehype plugin processing. This defeats the purpose of keeping Velite.
-
-### Alternative Considered: Pre-compile to Static Files
-
-**Confidence: LOW** -- fragile.
-
-Write a post-Velite build step that takes each post's function-body string, executes it in Node.js via `renderToStaticMarkup()`, and writes HTML back. Preserves component overrides but adds build complexity, is fragile across React version changes, and is effectively doing at build time what `s.markdown()` already does natively.
-
-### Recommendation
-
-**Use `s.markdown()`.** The site uses zero MDX-specific features in content files -- no JSX components in posts, no imports, no expressions. The only "MDX features" are component overrides (`pre`, `ul`, `ol`) which can all be handled at the rehype level during compilation. This is the cleanest path to removing `unsafe-eval` with the least moving parts.
-
-### Integration Point with Existing Architecture
-
-The blog post page (`src/app/blog/[slug]/page.tsx`, line 108) passes `post.body` to `<MDXContent code={post.body} />`. The prop name stays the same but the value changes from "compiled JS function body" to "HTML string." The page component itself requires no changes. `generateStaticParams()` is unaffected. All other Velite collection fields (title, slug, toc, excerpt, tags, metadata) remain identical because they use separate schema functions (`s.toc()`, `s.excerpt()`, etc.) that are independent of `s.mdx()` vs `s.markdown()`.
+v1.8 resolves five categories of concerns from the codebase audit. Each integrates differently with the existing architecture. This document maps each concern to affected components, data flows, and a suggested build order based on dependencies.
 
 ---
 
-## 2. Middleware for Nonce-Based CSP Without Breaking Static Generation
+## 1. Shiki v4 + rehype-pretty-code Compatibility
 
-### Current State
-
-Security headers are set in `next.config.ts` via the `headers()` function (lines 19-31). This applies static CSP headers to all routes matching `/(.*).` The CSP includes `'unsafe-eval'` and `'unsafe-inline'`.
-
-No `src/middleware.ts` exists. Rate limiting is applied per-route in API handlers.
-
-### The Static Generation Constraint
-
-**Nonce-based CSP is fundamentally incompatible with fully static pages.** Nonces must be unique per request. Static pages are generated at build time and served from CDN cache with no per-request execution to generate or inject nonces.
-
-Forcing dynamic rendering via `export const dynamic = 'force-dynamic'` would destroy CDN caching and SSG performance benefits across the entire site.
-
-Next.js's `experimental.sri` (Subresource Integrity) is the hash-based alternative for static sites, but it is **webpack-only and does not work with Turbopack** ([Issue #66901](https://github.com/vercel/next.js/issues/66901)), which is the default bundler in Next.js 16. Not a viable path.
-
-### Recommended Approach: Middleware for Centralized Static CSP (No Nonces)
-
-**Confidence: HIGH**
-
-Use middleware to centralize all security header management in one place, replacing the `next.config.ts` `headers()` function. The CSP remains static (no nonces) but is managed from a single location that can be incrementally tightened as other migrations complete.
-
-**Benefits over current `headers()` approach:**
-1. Single location for all security headers
-2. Route-aware header customization (could apply different CSP to API routes vs pages)
-3. Colocates with rate limiting if that moves to middleware
-4. Foundation for future nonce-based CSP if the site ever moves to dynamic rendering
-
-**What changes:**
-
-| File | Change | Type |
-|------|--------|------|
-| `src/middleware.ts` | New file: sets security headers on all responses | New |
-| `next.config.ts` | Remove `headers()` function entirely | Modify |
-
-**Middleware implementation:**
-
-```typescript
-// src/middleware.ts
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
-
-export function middleware(request: NextRequest) {
-  const response = NextResponse.next()
-
-  const csp = [
-    "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com",
-    // 'unsafe-eval' removed after MDX migration
-    // 'unsafe-inline' stays in script-src for Next.js hydration scripts
-    "style-src 'self' 'unsafe-inline'",
-    // 'unsafe-inline' in style-src stays (Shiki inline styles, see Section 3)
-    "img-src 'self' data:",
-    "font-src 'self'",
-    "connect-src 'self' https://va.vercel-scripts.com",
-    "frame-ancestors 'none'",
-    "base-uri 'self'",
-    "form-action 'self'",
-  ].join('; ')
-
-  response.headers.set('Content-Security-Policy', csp)
-  response.headers.set('X-Frame-Options', 'DENY')
-  response.headers.set('X-Content-Type-Options', 'nosniff')
-  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
-
-  return response
-}
-
-export const config = {
-  matcher: [
-    // Skip static files, images, and Next.js internals
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
-  ],
-}
-```
-
-### Why `'unsafe-inline'` Remains in `script-src`
-
-Next.js injects inline `<script>` tags for hydration data and route prefetching. Without nonces, these cannot be individually whitelisted. The `'unsafe-inline'` directive in `script-src` must remain for any statically-generated Next.js site that does not use nonces. This is an accepted tradeoff documented in the [Next.js CSP guide](https://nextjs.org/docs/app/guides/content-security-policy).
-
-The key security win is removing `'unsafe-eval'` (via MDX migration), which blocks `eval()`, `new Function()`, and similar dynamic code execution.
-
-### Build Order Dependency: The CSP Chain
-
-The middleware CSP values depend on which other migrations are complete:
+### Current Architecture
 
 ```
-Step 1: Deploy middleware with CURRENT permissive CSP
-        (same values as next.config.ts headers, just moved to middleware)
-        
-Step 2: Complete MDX migration (s.markdown)
-        -> Remove 'unsafe-eval' from script-src in middleware
-        
-Step 3: Complete CSS-variables theme migration (if pursued)
-        -> Remove 'unsafe-inline' from style-src in middleware (only if inline styles fully eliminated)
+velite.config.ts
+  -> imports createCssVariablesTheme from 'shiki'
+  -> passes CSS-variables theme to rehype-pretty-code plugin
+  -> rehype-pretty-code uses shiki internally for tokenization
+  -> tokens rendered as <span> elements with CSS variable references (no hardcoded colors)
+  -> globals.css defines --shiki-* CSS custom properties for token colors
 ```
 
-**Middleware must be introduced first** with the current permissive CSP, then tightened incrementally. This avoids the risk of deploying a too-strict CSP that breaks the site before migrations are complete.
+### Integration Analysis
+
+**Shiki v3 -> v4 breaking changes are minimal** (HIGH confidence, from [official v4 blog post](https://shiki.style/blog/v4)):
+- Drops Node.js 18 support (project uses Node.js 20+, no impact)
+- Removes misspelled API names (`createdBundledHighlighter` -> `createBundledHighlighter`, `CreatedBundledHighlighterOptions` -> `CreateBundledHighlighterOptions`)
+- `createCssVariablesTheme` is NOT deprecated or removed -- still documented and supported on [shiki.style/guide/theme-colors](https://shiki.style/guide/theme-colors)
+- No changes to theme API, tokenization output, or CSS-variables approach
+
+**rehype-pretty-code 0.14.1 -> 0.14.3** supports shiki v4 (the library's lockfile shows shiki 4.0.1). This is a patch update within the same 0.14.x line, so the plugin API is stable.
+
+### Components Modified
+
+| File | Change | Type | Risk |
+|------|--------|------|------|
+| `package.json` | Bump `shiki` ^3.22.0 -> ^4.0.2, `rehype-pretty-code` ^0.14.1 -> ^0.14.3 | Modify | LOW |
+| `velite.config.ts` | No changes needed | None | None |
+| `src/app/globals.css` | No changes needed (--shiki-* variables unchanged) | None | None |
+
+### Validation
+
+```bash
+npm run build        # Velite compiles MDX with new shiki/rehype-pretty-code
+npm run test         # Existing tests pass
+npm run test:e2e     # Code copy E2E test validates syntax highlighting renders
+```
+
+Visual spot-check: load a blog post with code blocks, confirm token colors match github-dark-dimmed palette.
 
 ---
 
-## 3. Switching rehype-pretty-code from Inline Styles to CSS-Variables
+## 2. Relocate security-headers.test.ts to Co-locate with src/proxy.ts
 
-### Current State
+### Current Architecture
 
-`velite.config.ts` configures `rehype-pretty-code` with the `github-dark-dimmed` theme and `keepBackground: true`. Shiki injects **inline `style` attributes** on every `<span>` token inside code blocks with hardcoded hex colors like `style="color: #adbac7"`. This requires `style-src 'unsafe-inline'` in the CSP.
-
-The `CodeBlock` component (`src/components/blog/code-block.tsx`) wraps `<pre>` elements with a relative-positioned `<div>` and a `CopyButton`. It passes through all props to the underlying `<pre>` and is completely theme-independent -- it reads `textContent`, not style attributes.
-
-### The CSS-Variables Theme: What It Actually Does
-
-Shiki's `createCssVariablesTheme()` factory replaces hardcoded hex colors with CSS variable references. Instead of `style="color: #adbac7"`, tokens get `style="color: var(--shiki-foreground)"`. You define the actual colors in your stylesheet.
-
-**Critical detail: This still uses inline `style` attributes.** The `css-variables` theme does NOT eliminate inline styles. It replaces hardcoded values with variable references, but the `style` attribute itself remains on every token `<span>`. You still need `'unsafe-inline'` in `style-src`.
-
-### Can We Actually Remove `'unsafe-inline'` from `style-src`?
-
-To truly eliminate inline styles from Shiki output, you would need either:
-
-1. **A custom transformer** that post-processes Shiki output to replace `style` attributes with CSS classes based on token type. Shiki does not ship one natively. You would need to write a rehype plugin that strips `style="color: var(--shiki-X)"` and adds `class="shiki-X"` instead, then define all classes in CSS.
-
-2. **Switch to a completely different syntax highlighter** that outputs class-based markup (like `highlight.js` via `rehype-highlight`), but this loses Shiki's TextMate grammar accuracy.
-
-Neither option is trivial, and both add maintenance burden for marginal security benefit.
-
-### Pragmatic Recommendation: CSS-Variables Theme + Keep `'unsafe-inline'`
-
-**Confidence: HIGH**
-
-Switch to `createCssVariablesTheme()` for design system benefits (colors defined in CSS, easy to tweak) but **accept that `'unsafe-inline'` stays in `style-src`**. The security surface of CSS injection is much smaller than script injection, and for a site with no user-generated content, it is an acceptable tradeoff.
-
-**What changes:**
-
-| File | Change | Type |
-|------|--------|------|
-| `velite.config.ts` | Import `createCssVariablesTheme` from `shiki`, replace theme config | Modify |
-| `velite.config.ts` | Set `keepBackground: false` (background color will come from CSS) | Modify |
-| `src/app/globals.css` | Add Shiki CSS variable definitions matching `github-dark-dimmed` palette | Modify |
-
-**velite.config.ts change:**
-
-```typescript
-import { createCssVariablesTheme } from 'shiki'
-
-const codeTheme = createCssVariablesTheme({
-  name: 'css-variables',
-  variablePrefix: '--shiki-',
-  variableDefaults: {},
-  fontStyle: true,
-})
-
-// In mdx config:
-[rehypePrettyCode, {
-  theme: codeTheme,
-  keepBackground: false,
-  defaultLang: { block: 'typescript', inline: 'typescript' },
-}]
+```
+src/
+  proxy.ts                    # Security headers middleware (source)
+  lib/
+    security-headers.test.ts  # Tests for proxy.ts (mislocated, fragile import path)
 ```
 
-**globals.css additions:**
+The test imports `from '../../src/proxy'` -- a fragile relative path that traverses up from `src/lib/` then back into `src/`. The codebase convention is test files co-located with their source: `src/lib/format.ts` has `src/lib/format.test.ts`, `src/hooks/use-hero-animation.ts` has `src/hooks/use-hero-animation.test.ts`, etc.
 
-```css
-/* Shiki syntax highlighting -- github-dark-dimmed equivalent */
-[data-rehype-pretty-code-figure] pre {
-  --shiki-foreground: #adbac7;
-  --shiki-background: #22272e;
-  --shiki-token-constant: #6cb6ff;
-  --shiki-token-string: #96d0ff;
-  --shiki-token-comment: #768390;
-  --shiki-token-keyword: #f47067;
-  --shiki-token-parameter: #f69d50;
-  --shiki-token-function: #dcbdfb;
-  --shiki-token-string-expression: #96d0ff;
-  --shiki-token-punctuation: #adbac7;
-  --shiki-token-link: #6cb6ff;
-  background-color: var(--shiki-background);
-}
+### Integration Analysis
+
+This is a pure file move with import path update. No component boundaries, data flows, or APIs change. The 6 existing tests remain identical in content.
+
+### Components Modified
+
+| File | Change | Type | Risk |
+|------|--------|------|------|
+| `src/lib/security-headers.test.ts` | DELETE | Remove | None |
+| `src/proxy.test.ts` | CREATE (moved content, updated import) | New | None |
+
+### New File: `src/proxy.test.ts`
+
+The import changes from `from '../../src/proxy'` to `from './proxy'`. Test body is unchanged. The Vitest config includes `src/**/*.test.{ts,tsx}`, which covers `src/proxy.test.ts`.
+
+### Validation
+
+```bash
+npm run test  # Confirm 6 proxy tests still pass at new location
 ```
 
-**Note on variable granularity:** The `css-variables` theme is less granular than full TextMate themes. Where `github-dark-dimmed` might distinguish 40+ token scopes, the CSS-variables theme maps to roughly 10 CSS variables. Some tokens that had distinct colors will collapse to the same variable. The visual difference is minor for a blog's code samples.
+---
 
-### Impact on CodeBlock Component
+## 3. Remove CopyButton Without Breaking CodeBlockEnhancer
 
-**None.** The `CodeBlock` component is completely unaffected by the theme change. It wraps `<pre>` with a copy button using `querySelector('code')?.textContent` to extract text. No style attributes are read, written, or depended upon. The `CopyButton` component is also theme-independent.
+### Current Architecture
 
-If the MDX migration to `s.markdown()` happens (Section 1), then the `CodeBlock` component changes are driven by that migration, not the theme migration. The two changes are independent.
+```
+src/components/blog/
+  copy-button.tsx           # ORPHANED React component (uses lucide-react Check/Copy icons)
+  copy-button.test.tsx      # 3 tests for orphaned component
+  code-block-enhancer.tsx   # ACTIVE DOM-based copy button injection (inline SVGs)
+```
 
-### If You Want to Fully Eliminate Inline Styles (Optional, Lower Priority)
+**CopyButton** was the React component approach (pre-v1.7). It accepted a `getText` prop and rendered lucide-react `<Copy>` / `<Check>` icons. It was part of the `CodeBlock` component mapping in the old MDX `components` prop override system.
 
-**Confidence: LOW** -- significant effort for marginal gain.
+**CodeBlockEnhancer** replaced it in v1.7 when MDX moved to `dangerouslySetInnerHTML`. It uses DOM manipulation post-mount to inject copy buttons with inline SVG strings. These two components have **zero shared code or dependencies**.
 
-Write a custom rehype plugin that runs after `rehype-pretty-code`:
+### Integration Analysis
+
+CopyButton has no consumers (confirmed via grep -- only imported by its own test file and referenced in planning docs). Removing it is a pure deletion with no downstream effects on CodeBlockEnhancer.
+
+The removal also eliminates one `lucide-react` import site (`Check`, `Copy`), but `lucide-react` is still used by 6 other source files (`header.tsx`, `footer.tsx`, `mobile-toc.tsx`, `blog/[slug]/page.tsx`, `projects/[slug]/page.tsx`, `project-card.tsx`), so the dependency stays in `package.json`.
+
+### Components Modified
+
+| File | Change | Type | Risk |
+|------|--------|------|------|
+| `src/components/blog/copy-button.tsx` | DELETE | Remove | None -- no consumers |
+| `src/components/blog/copy-button.test.tsx` | DELETE | Remove | None -- tests orphaned component |
+
+### What NOT to Touch
+
+`src/components/blog/code-block-enhancer.tsx` requires no changes. It is completely independent -- uses inline SVG strings, not lucide-react imports.
+
+### Validation
+
+```bash
+npm run test   # Test count drops by 3 (copy-button tests removed), all remaining pass
+npm run build  # No import errors
+npm run lint   # No unused import warnings
+```
+
+---
+
+## 4. API Route Handler Tests for Next.js App Router
+
+### Current Architecture
+
+```
+src/app/api/views/
+  route.ts           # GET /api/views?slugs=a,b (batch fetch)
+  [slug]/
+    route.ts         # GET/POST /api/views/[slug] (single fetch/increment)
+
+Dependencies (already independently tested):
+  src/lib/redis.ts       # Redis client (Redis.fromEnv())
+  src/lib/validation.ts  # validateSlug(), validateSlugs()
+  src/lib/rate-limit.ts  # viewsRateLimit (sliding window)
+```
+
+The route handlers are App Router `route.ts` exports (`GET`, `POST` functions). They accept `Request` objects and return `Response.json()`. The handlers depend on `redis`, `validation`, and `rate-limit` modules.
+
+### Integration Analysis
+
+**Testing approach:** Direct handler invocation with mocked Redis. This is the standard pattern for Next.js App Router route handlers per [Next.js testing docs](https://nextjs.org/docs/app/guides/testing/vitest):
+
+1. Mock `@/lib/redis` (the `redis` object and its methods: `mget`, `get`, `set`, `incr`)
+2. Mock `@/lib/rate-limit` (the `viewsRateLimit.limit` method)
+3. Construct `Request` objects with appropriate URLs and headers
+4. Call the exported `GET`/`POST` functions directly
+5. Assert on `Response` status and JSON body
+
+**Key architectural detail:** In Next.js 16 App Router, the `params` argument is `Promise<{ slug: string }>` (async params). Tests must pass `{ params: Promise.resolve({ slug: 'test' }) }`.
+
+### New Components
+
+| File | Type | Purpose | Risk |
+|------|------|---------|------|
+| `src/app/api/views/route.test.ts` | CREATE | Tests for batch GET handler | None -- new tests only |
+| `src/app/api/views/[slug]/route.test.ts` | CREATE | Tests for single GET + POST handlers | None -- new tests only |
+
+### Test Coverage Map
+
+**`route.test.ts` (batch GET):**
+- Empty slugs param returns `{ counts: {} }`
+- Valid slugs returns counts from Redis mget
+- Invalid slug format returns 400
+- Batch size limit exceeded returns 400
+- Redis error returns 500
+
+**`[slug]/route.test.ts` (single GET + POST):**
+- GET with valid slug returns view count
+- GET with invalid slug returns 400
+- GET with Redis error returns 500
+- POST increments on first visit (dedup NX returns `'OK'`)
+- POST skips increment on repeat visit (dedup NX returns `null`)
+- POST with invalid slug returns 400
+- POST with rate limit exceeded returns 429
+- POST with Redis error returns 500
+
+### Mock Strategy
 
 ```typescript
-// rehype-strip-shiki-styles.ts
-import { visit } from 'unist-util-visit'
-
-export function rehypeStripShikiStyles() {
-  return (tree: any) => {
-    visit(tree, 'element', (node) => {
-      if (node.properties?.style) {
-        const style = node.properties.style as string
-        const match = style.match(/color:\s*var\(--shiki-([^)]+)\)/)
-        if (match) {
-          node.properties.className = [
-            ...(node.properties.className || []),
-            `shiki-${match[1]}`
-          ]
-          delete node.properties.style
-        }
-      }
-    })
+vi.mock('@/lib/redis', () => ({
+  redis: {
+    mget: vi.fn(),
+    get: vi.fn(),
+    set: vi.fn(),
+    incr: vi.fn(),
   }
-}
+}))
+
+vi.mock('@/lib/rate-limit', () => ({
+  viewsRateLimit: {
+    limit: vi.fn().mockResolvedValue({ success: true }),
+  }
+}))
 ```
 
-Then add corresponding CSS classes. This is doable but adds a custom plugin to maintain and test.
+The `crypto.createHash` used in the POST handler for IP hashing works natively in Node.js -- no mock needed.
+
+### Validation
+
+```bash
+npm run test  # New tests pass alongside existing suite (expect ~13 new tests)
+```
 
 ---
 
-## 4. Where `useSyncExternalStore` Fits in the Component Tree
+## 5. TypeScript 6 Impact on Existing Configuration
 
-### Current State
+### Current Architecture
 
-Three locations use `useLayoutEffect`/`useEffect` + `useState` to sync with external browser APIs, generating React 19 lint warnings:
+`tsconfig.json` settings:
+- `strict: true` (already set)
+- `target: "ES2022"` (explicit)
+- `module: "esnext"` (explicit)
+- `moduleResolution: "bundler"` (explicit)
+- `jsx: "react-jsx"` (explicit)
+- No explicit `types` array (auto-discovers `@types/*`)
+- `noEmit: true` (type-checking only, Next.js handles compilation)
 
-| Component | External Source | Current Pattern | Lint Warning |
-|-----------|----------------|-----------------|--------------|
-| `ViewCounter` (line 15) | `localStorage` | `useLayoutEffect` + `getCachedViews` + `setViews` | `set-state-in-effect` |
-| `ListingViewCounts` (line 23) | `localStorage` (multiple keys) | `useLayoutEffect` + loop + `setCounts` | `set-state-in-effect` |
-| `useHeroAnimation` (line 39) | `window.matchMedia` | `useEffect` + `setPrefersReducedMotion` + `addEventListener` | `set-state-in-effect` |
-| `useHeroAnimation` (line 54) | setTimeout-driven state | `useEffect` + `setRevealStage` | `set-state-in-effect` |
+### Integration Analysis
 
-The fourth warning (`setRevealStage` in the reveal sequence effect) is NOT a candidate for `useSyncExternalStore` because it is not subscribing to an external store -- it is orchestrating a timed animation sequence. That pattern is correct as-is and should have its lint warning suppressed with a comment.
+**TypeScript 6.0 breaking changes assessed against this project** (HIGH confidence, from [official announcement](https://devblogs.microsoft.com/typescript/announcing-typescript-6-0/) and [migration guide](https://gist.github.com/privatenumber/3d2e80da28f84ee30b77d53e1693378f)):
 
-### Architecture: Two Reusable Store Adapters
+| Change | Current Config | Impact |
+|--------|---------------|--------|
+| `strict` defaults to `true` | Already `true` | **None** |
+| `module` defaults to `esnext` | Already `"esnext"` | **None** |
+| `moduleResolution` defaults to `bundler` | Already `"bundler"` | **None** |
+| `target` defaults to `es2025` | Explicit `"ES2022"` | **None** -- explicit setting preserved |
+| `types` defaults to empty array | Not set (auto-discovers) | **BREAKING** |
+| `esModuleInterop` always `true` | Not explicitly set | **None** -- was already `true` via `strict` |
+| JS strict mode unconditional | ESM project, already strict | **None** |
+| `baseUrl` deprecated | Not used (paths are relative) | **None** |
 
-**Confidence: HIGH**
+**The one breaking change:** TypeScript 6 stops auto-discovering `@types/*` packages. The project has `@types/node`, `@types/react`, and `@types/react-dom` installed but does not list them in `compilerOptions.types`. After upgrading, `process`, `Buffer`, and React JSX types would not be found by `tsc`.
 
-Create two focused hooks in `src/lib/`:
+**Fix:** Add `"types": ["node"]` to `compilerOptions` in `tsconfig.json`. The `next` plugin handles React/JSX type augmentation. If `tsc --noEmit` still reports React type errors, add `"react"` and `"react-dom"` to the array.
 
-#### Adapter 1: `useLocalStorageSnapshot`
+**Vitest globals bonus:** The existing concern about `afterEach`/`describe` false positives in `npx tsc --noEmit` (10 errors in test files) can be addressed simultaneously. Since TypeScript 6 requires an explicit `types` array anyway, adding Vitest global declarations becomes natural. Options:
+1. Add a `vitest-globals.d.ts` file with `/// <reference types="vitest/globals" />`
+2. Or add `"vitest/globals"` to the `types` array (if Vitest supports this pattern)
 
-```typescript
-// src/lib/use-local-storage-snapshot.ts
-import { useSyncExternalStore } from 'react'
+### Components Modified
 
-function subscribe(callback: () => void) {
-  // 'storage' event fires when OTHER tabs change localStorage
-  window.addEventListener('storage', callback)
-  return () => window.removeEventListener('storage', callback)
-}
+| File | Change | Type | Risk |
+|------|--------|------|------|
+| `package.json` | Bump `typescript` ^5.9.3 -> ^6.0.2 | Modify | MEDIUM |
+| `tsconfig.json` | Add `"types": ["node"]` to compilerOptions | Modify | LOW |
+| `vitest-globals.d.ts` or tsconfig types | Add vitest globals type declarations | New or Modify | LOW |
 
-export function useLocalStorageSnapshot(key: string): string | null {
-  return useSyncExternalStore(
-    subscribe,
-    () => { try { return localStorage.getItem(key) } catch { return null } },
-    () => null  // SSR: no localStorage
-  )
-}
+### What About the `next` Plugin?
+
+The `next` tsconfig plugin (`"plugins": [{ "name": "next" }]`) handles React/JSX type augmentation in the IDE. The explicit `types` array should not interfere. However, `@types/react` and `@types/react-dom` may need to be listed if `tsc --noEmit` reports JSX errors after the upgrade. Test empirically.
+
+### Validation
+
+```bash
+npx tsc --noEmit    # Zero errors (currently has 10 false positives in test files)
+npm run build       # Next.js builds successfully
+npm run test        # All tests pass
+npm run lint        # No new lint errors
 ```
-
-#### Adapter 2: `usePrefersReducedMotion`
-
-```typescript
-// src/lib/use-prefers-reduced-motion.ts
-import { useSyncExternalStore } from 'react'
-
-const QUERY = '(prefers-reduced-motion: reduce)'
-
-function subscribe(callback: () => void) {
-  const mq = window.matchMedia(QUERY)
-  mq.addEventListener('change', callback)
-  return () => mq.removeEventListener('change', callback)
-}
-
-function getSnapshot(): boolean {
-  return window.matchMedia(QUERY).matches
-}
-
-export function usePrefersReducedMotion(): boolean {
-  return useSyncExternalStore(subscribe, getSnapshot, () => false)
-}
-```
-
-### Component Changes
-
-**ViewCounter (`src/components/blog/view-counter.tsx`):**
-
-Replace the `useLayoutEffect` block (lines 15-17) with:
-
-```typescript
-const cachedRaw = useLocalStorageSnapshot(`views:${slug}`)
-const cachedViews = cachedRaw !== null ? Number(cachedRaw) : null
-```
-
-Keep the `useEffect` for the POST request and `setViews`. The component still needs local state for the "fresh from API" value. The `useSyncExternalStore` handles the initial cached read; `useState` handles the API response.
-
-**ListingViewCounts (`src/components/blog/listing-view-counts.tsx`):**
-
-This is trickier because it reads multiple localStorage keys in a loop. Two options:
-
-- **Option A:** Call `useLocalStorageSnapshot` for each slug. But hooks cannot be called in a loop with dynamic count. This requires a different adapter that subscribes once and reads multiple keys.
-- **Option B (recommended):** Create a `useLocalStorageSnapshots(keys: string[])` variant that takes an array of keys and returns a record. Internally it uses a single `useSyncExternalStore` subscription with a `getSnapshot` that reads all keys.
-
-```typescript
-// Addition to use-local-storage-snapshot.ts
-export function useLocalStorageSnapshots(keys: string[]): Record<string, string | null> {
-  const stableKeys = JSON.stringify(keys)
-  return useSyncExternalStore(
-    subscribe,
-    () => {
-      const result: Record<string, string | null> = {}
-      for (const key of JSON.parse(stableKeys) as string[]) {
-        try { result[key] = localStorage.getItem(key) } catch { result[key] = null }
-      }
-      return result
-    },
-    () => {
-      const result: Record<string, string | null> = {}
-      for (const key of JSON.parse(stableKeys) as string[]) result[key] = null
-      return result
-    }
-  )
-}
-```
-
-**Note on referential stability:** `useSyncExternalStore` calls `getSnapshot` on every render and uses `Object.is` to compare results. The above returns a new object each time, which would trigger infinite re-renders. The `getSnapshot` function needs memoization or the result needs structural comparison. The pragmatic solution is to `JSON.stringify` the result and use a wrapper that parses it, or use `useRef` to cache the previous result and only return a new object when values actually change.
-
-**useHeroAnimation (`src/hooks/use-hero-animation.ts`):**
-
-Replace the matchMedia effect (lines 38-44) with:
-
-```typescript
-const prefersReducedMotion = usePrefersReducedMotion()
-```
-
-Remove the `useState` for `prefersReducedMotion` and the entire `useEffect` block that sets up the matchMedia listener. The hook return value keeps the same shape.
-
-The `setRevealStage` effects (lines 48-67, 72-75) are NOT external store subscriptions -- they are animation orchestration using `setTimeout`. These should remain as `useEffect` + `useState` with lint suppression comments explaining the intentional pattern.
-
-### Where in the Component Tree
-
-No component tree changes. The `useSyncExternalStore` hooks slot into existing client components without introducing new client boundaries:
-
-```
-Layout (server)
-  +-- Hero (client)
-  |     +-- useHeroAnimation
-  |           +-- usePrefersReducedMotion  <-- replaces matchMedia effect
-  |
-  +-- BlogPostPage (server)
-  |     +-- MDXContent (client -> possibly server after migration)
-  |     +-- ViewCounter (client)
-  |           +-- useLocalStorageSnapshot  <-- replaces useLayoutEffect
-  |
-  +-- BlogListPage (server)
-        +-- ListingViewCounts (client)
-              +-- useLocalStorageSnapshots  <-- replaces useLayoutEffect
-              +-- PostCardViewCount (client, via context)
-```
-
-### Subtlety: Write-Then-Read in View Counters
-
-View counter components write to localStorage after an API response (`setCachedViews`), then expect subsequent renders to reflect the new value. With `useSyncExternalStore`, the `storage` event only fires from **other tabs**, not the current window.
-
-**Solution:** After writing to localStorage, dispatch a synthetic `storage` event on the current window:
-
-```typescript
-export function setCachedViews(slug: string, count: number): void {
-  try {
-    const key = `views:${slug}`
-    localStorage.setItem(key, String(count))
-    // Notify current-tab subscribers
-    window.dispatchEvent(new StorageEvent('storage', { key }))
-  } catch { /* non-critical */ }
-}
-```
-
-This ensures the `useSyncExternalStore` subscription picks up the write from the same tab. Update `src/lib/views.ts` accordingly.
-
-### New and Modified Files
-
-| File | Type | Purpose |
-|------|------|---------|
-| `src/lib/use-local-storage-snapshot.ts` | New | `useSyncExternalStore` adapter for localStorage |
-| `src/lib/use-prefers-reduced-motion.ts` | New | `useSyncExternalStore` adapter for matchMedia |
-| `src/components/blog/view-counter.tsx` | Modify | Replace `useLayoutEffect` with snapshot hook |
-| `src/components/blog/listing-view-counts.tsx` | Modify | Replace `useLayoutEffect` with snapshots hook |
-| `src/hooks/use-hero-animation.ts` | Modify | Replace matchMedia effect with `usePrefersReducedMotion` |
-| `src/lib/views.ts` | Modify | Add `StorageEvent` dispatch to `setCachedViews` |
 
 ---
 
-## Build Order: The CSP Chain and Dependencies
-
-The four workstreams have a dependency chain:
+## Dependency Graph and Build Order
 
 ```
-Phase 1: Middleware
-  |  Move headers from next.config.ts to middleware.ts
-  |  Deploy with CURRENT permissive CSP (same values, new location)
-  |  No functional change, just centralizes management
-  |
-Phase 2: MDX Migration  
-  |  Switch s.mdx() -> s.markdown() in velite.config.ts
-  |  Rewrite MDXContent to render HTML
-  |  Adapt CodeBlock copy button to DOM-based approach
-  |  THEN: Remove 'unsafe-eval' from middleware CSP
-  |
-Phase 3: CSS-Variables Theme (optional)
-  |  Switch rehype-pretty-code theme to createCssVariablesTheme
-  |  Add CSS variable definitions to globals.css
-  |  Set keepBackground: false
-  |  NOTE: Does NOT enable removing 'unsafe-inline' from style-src
-  |        (inline style attributes still present, just with CSS var values)
-  |
-Phase 4: useSyncExternalStore (independent)
-  |  Can run in parallel with Phase 2 or 3
-  |  No CSP impact -- pure code quality improvement
-  |  Eliminates 6 of 10 React 19 lint warnings
+Independent concerns (no cross-dependencies):
+
+  [1] Remove CopyButton          (pure deletion, zero risk)
+  [2] Relocate proxy test        (pure file move, zero risk)
+
+Concerns with validation dependencies:
+
+  [3] Shiki v4 + rehype-pretty-code upgrade
+      -> Must validate syntax highlighting output before proceeding
+      -> Upgrade both together (shiki + rehype-pretty-code)
+
+  [4] TypeScript 6 upgrade
+      -> Touches tsconfig.json (shared by all compilation)
+      -> Should be done AFTER shiki/rehype upgrade to avoid debugging two things at once
+      -> Fixes test file false positives as a bonus
+
+  [5] API route handler tests
+      -> New test files only, no source changes
+      -> Best AFTER TypeScript 6 upgrade so new tests are written against final tsconfig
 ```
 
-**Phase 1 must come first** because it establishes the single location where CSP is managed. Without it, tightening CSP requires editing `next.config.ts` headers while also having middleware for other concerns -- a split-brain situation.
-
-**Phase 2 before Phase 3** because `unsafe-eval` removal is the significant security win. CSS-variables is a design-system improvement, not a CSP improvement.
-
-**Phase 4 is independent** of all CSP work and can be interleaved anywhere.
-
-### Critical Note on `'unsafe-inline'` in `script-src`
-
-After all migrations, the CSP will still contain `'unsafe-inline'` in `script-src` for Next.js hydration scripts. This is unavoidable without nonce-based CSP, which requires dynamic rendering. The final tightened CSP will be:
+### Recommended Build Order
 
 ```
-script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com
-style-src 'self' 'unsafe-inline'
+Phase 1: Safe deletions and moves (no source logic changes)
+  |- Remove CopyButton + copy-button.test.tsx
+  |- Move security-headers.test.ts -> proxy.test.ts
+
+Phase 2: Dependency upgrades
+  |- Shiki v4 + rehype-pretty-code 0.14.3
+  |- Minor/patch dependency updates (tailwindcss, tailwind-merge, @types/*, etc.)
+
+Phase 3: TypeScript 6 upgrade
+  |- Bump typescript to ^6.0.2
+  |- Add types array to tsconfig.json
+  |- Fix vitest globals type discovery
+  |- Validate with tsc --noEmit (target: zero errors)
+
+Phase 4: New test coverage
+  |- API route handler tests (batch GET, single GET, POST)
+  |- CodeBlockEnhancer tests (DOM mutation testing with jsdom)
+  |- OG image font path existence test
+
+Phase 5: Remaining cleanup
+  |- Evaluate react-hooks/set-state-in-effect suppressions
+  |- Address any issues surfaced by TypeScript 6 stricter checking
 ```
 
-This is a significant improvement over the current:
+**Rationale:** Deletions first (reduce noise, clean test counts), then upgrades (stabilize dependencies), then TypeScript (compiler changes affect everything), then new code (tests written against final stack). TypeScript 6 before new tests ensures new test files are validated by the updated compiler from the start.
 
-```
-script-src 'self' 'unsafe-eval' 'unsafe-inline' https://va.vercel-scripts.com
-style-src 'self' 'unsafe-inline'
-```
+---
 
-The removal of `'unsafe-eval'` is the material security improvement.
+## Anti-Patterns to Avoid
+
+### Anti-Pattern 1: Upgrading Shiki Without rehype-pretty-code
+**What:** Bumping shiki to v4 while keeping rehype-pretty-code at 0.14.1.
+**Why bad:** rehype-pretty-code 0.14.1 may have a shiki peer dependency pinned to ^3.x, causing peer dep warnings or subtle runtime incompatibilities.
+**Instead:** Upgrade both simultaneously: `shiki@^4.0.2` + `rehype-pretty-code@^0.14.3`.
+
+### Anti-Pattern 2: Adding Types Array Without Testing
+**What:** Adding `"types": ["node"]` to tsconfig without running `tsc --noEmit`.
+**Why bad:** May miss types that were auto-discovered before (e.g., `@testing-library/jest-dom` matchers, React JSX types).
+**Instead:** Run `tsc --noEmit` after adding the types array, fix any new errors iteratively.
+
+### Anti-Pattern 3: Writing Route Handler Tests That Hit Real Redis
+**What:** Not mocking `@/lib/redis` in API route tests.
+**Why bad:** Tests become flaky, require env vars (`UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`), and mutate production data.
+**Instead:** Always mock the redis module. Test handler logic (request parsing, response formatting, dedup flow), not the Redis client.
+
+### Anti-Pattern 4: Removing CopyButton Tests Without Planning CodeBlockEnhancer Coverage
+**What:** Deleting 3 copy-button tests without planning CodeBlockEnhancer tests.
+**Why bad:** Net loss of copy-button-related test coverage. The orphaned tests are misleading, but the gap should be filled.
+**Instead:** Schedule CodeBlockEnhancer tests in the same milestone (Phase 4 in the build order above).
+
+### Anti-Pattern 5: TypeScript 6 Upgrade Before Dependency Upgrades
+**What:** Upgrading TypeScript before updating `@types/node`, `@types/react`, `@types/react-dom`.
+**Why bad:** Older `@types` packages may have incompatibilities with TypeScript 6. If both break simultaneously, debugging is harder.
+**Instead:** Update `@types/*` packages as part of the minor/patch dependency sweep (Phase 2), then upgrade TypeScript (Phase 3).
 
 ---
 
 ## Component Boundaries Summary
 
-### New Components/Files
+### New Files
 
 | File | Type | Purpose |
 |------|------|---------|
-| `src/middleware.ts` | New | Centralized security headers |
-| `src/lib/use-local-storage-snapshot.ts` | New | `useSyncExternalStore` for localStorage |
-| `src/lib/use-prefers-reduced-motion.ts` | New | `useSyncExternalStore` for matchMedia |
-| `src/components/blog/code-block-enhancer.tsx` | New (if using s.markdown) | Client-side copy button injection for HTML-rendered code blocks |
+| `src/proxy.test.ts` | Test | Relocated proxy tests (co-located) |
+| `src/app/api/views/route.test.ts` | Test | Batch GET handler tests |
+| `src/app/api/views/[slug]/route.test.ts` | Test | Single GET + POST handler tests |
+| `vitest-globals.d.ts` (or tsconfig change) | Config | Vitest globals type declarations |
 
-### Modified Components
+### Deleted Files
+
+| File | Reason |
+|------|--------|
+| `src/components/blog/copy-button.tsx` | Orphaned by v1.7 MDX migration |
+| `src/components/blog/copy-button.test.tsx` | Tests for orphaned component |
+| `src/lib/security-headers.test.ts` | Relocated to `src/proxy.test.ts` |
+
+### Modified Files
 
 | File | Nature of Change |
 |------|-----------------|
-| `velite.config.ts` | `s.mdx()` -> `s.markdown()`, theme change, possible new rehype plugins |
-| `src/components/blog/mdx-content.tsx` | Major rewrite: HTML rendering instead of JS execution, possibly becomes server component |
-| `src/components/blog/code-block.tsx` | May need DOM-based approach or be replaced by `code-block-enhancer.tsx` |
-| `next.config.ts` | Remove `headers()` function |
-| `src/components/blog/view-counter.tsx` | Replace `useLayoutEffect` with `useSyncExternalStore` |
-| `src/components/blog/listing-view-counts.tsx` | Replace `useLayoutEffect` with `useSyncExternalStore` |
-| `src/hooks/use-hero-animation.ts` | Replace matchMedia effect with `usePrefersReducedMotion` |
-| `src/lib/views.ts` | Add `StorageEvent` dispatch to `setCachedViews` |
-| `src/app/globals.css` | Add Shiki CSS variable definitions |
+| `package.json` | Dependency version bumps (shiki, rehype-pretty-code, typescript, @types/*) |
+| `tsconfig.json` | Add `types` array for TypeScript 6 compatibility |
 
-### Unchanged Components
+### Unchanged Files
 
 | File | Why Unchanged |
 |------|--------------|
-| `src/app/blog/[slug]/page.tsx` | Still passes `post.body` to MDXContent; prop semantics shift but API shape identical |
-| `src/app/blog/page.tsx` | No MDX rendering on listing page |
-| `src/components/blog/copy-button.tsx` | Pure UI, no dependency on theme or MDX approach |
-| All `@/.velite` imports | Import path unchanged, non-body fields unchanged |
-| `src/app/sitemap.ts` | No MDX dependency |
-| `src/app/feed.xml/route.ts` | No MDX rendering |
+| `velite.config.ts` | `createCssVariablesTheme` API unchanged in shiki v4 |
+| `src/app/globals.css` | --shiki-* variables unchanged |
+| `src/proxy.ts` | Security headers middleware untouched |
+| `src/components/blog/code-block-enhancer.tsx` | Independent of CopyButton removal |
+| `src/components/blog/mdx-content.tsx` | No MDX pipeline changes in v1.8 |
+| All page components | No rendering changes |
 
 ---
 
 ## Scalability Considerations
 
-| Concern | Current (5 posts) | At 50 posts | At 500 posts |
-|---------|-------------------|-------------|--------------|
-| Middleware overhead | Negligible | Negligible | Negligible (header set only) |
-| `s.markdown()` HTML in JSON | ~30KB per body | ~300KB total | ~3MB total JSON, monitor build memory |
-| `useSyncExternalStore` subscriptions | 1-5 storage listeners | Same | Same (listing page is one component) |
-| CSS variable theme CSS | ~500 bytes | Same | Same |
-| Velite rebuild time | <2s | ~5s | ~15s, may need investigation |
+| Concern | Impact | Notes |
+|---------|--------|-------|
+| Shiki v4 bundle size | Negligible | Build-time only (Velite), not shipped to client |
+| TypeScript 6 build time | May improve slightly | Stricter defaults can enable more optimizations |
+| New test files | Adds ~15-20s to test suite | Acceptable for 3 new test files |
+| Dependency update frequency | Same as before | Patch/minor updates are low-risk going forward |
 
-No scaling concerns for any of these changes at foreseeable content volumes.
-
-## Anti-Patterns to Avoid
-
-### Anti-Pattern 1: Nonce-Based CSP on a Static Site
-
-**What:** Create middleware that generates nonces and injects them into every response.
-**Why bad:** Forces all pages to dynamic rendering, destroying CDN caching and static generation benefits. Every page request now invokes a serverless function.
-**Instead:** Use static CSP via middleware without nonces. Accept `'unsafe-inline'` for scripts as the tradeoff for keeping static generation.
-
-### Anti-Pattern 2: Removing `'unsafe-inline'` from `style-src` via CSS-Variables Theme Alone
-
-**What:** Switch to `createCssVariablesTheme`, assume inline styles are gone, remove `'unsafe-inline'`.
-**Why bad:** The CSS-variables theme still outputs inline `style` attributes. Only the values change from hardcoded to CSS variables. Removing `'unsafe-inline'` will break all code syntax highlighting.
-**Instead:** Keep `'unsafe-inline'` in `style-src`. If you must eliminate it, write a custom rehype plugin to strip `style` attributes and add classes (significant effort for marginal gain).
-
-### Anti-Pattern 3: Using `useSyncExternalStore` for Animation Orchestration
-
-**What:** Try to model the hero reveal sequence (setTimeout-based stage transitions) as an external store.
-**Why bad:** Animation orchestration is not an external store. It is internal component state driven by timers. Forcing it into `useSyncExternalStore` adds complexity without benefit.
-**Instead:** Keep `useEffect` + `setTimeout` + `useState` for animation staging. Suppress the lint warning with a comment explaining the intentional pattern.
-
-### Anti-Pattern 4: Running MDX `new Function()` in Middleware
-
-**What:** Try to pre-evaluate MDX in middleware and pass rendered HTML downstream.
-**Why bad:** Middleware runs at the edge with no access to React rendering. It cannot execute JSX. This is architecturally impossible.
-**Instead:** Switch to `s.markdown()` so the HTML is produced at Velite build time, not at request time.
+No scaling concerns for any of these changes.
 
 ## Sources
 
-- [Velite MDX Support](https://velite.js.org/guide/using-mdx) -- Velite's official MDX docs showing `new Function()` pattern
-- [Velite Markdown Support](https://velite.js.org/guide/using-markdown) -- `s.markdown()` alternative
-- [Velite Code Highlighting](https://velite.js.org/guide/code-highlighting) -- Rehype plugin integration
-- [MDX Discussion #2322](https://github.com/orgs/mdx-js/discussions/2322) -- MDX maintainers confirming no alternative to dynamic execution
-- [Next.js CSP Guide](https://nextjs.org/docs/app/guides/content-security-policy) -- Official nonce/hash CSP guidance
-- [Next.js SRI Issue #66901](https://github.com/vercel/next.js/issues/66901) -- SRI incompatible with Turbopack
-- [Shiki Theme Colors](https://shiki.style/guide/theme-colors) -- `createCssVariablesTheme` documentation
-- [Rehype Pretty Code](https://rehype-pretty.pages.dev/) -- Plugin documentation
-- [React useSyncExternalStore](https://react.dev/reference/react/useSyncExternalStore) -- Official React docs
-- [useSyncExternalStore with localStorage](https://dev.to/muhammed_fayazts_e35676/usesyncexternalstore-the-right-way-to-sync-react-with-localstorage-3c5f) -- Pattern examples
-- [safe-mdx](https://github.com/holocron-hq/safe-mdx) -- Evaluated and not recommended for this use case
-- [Next.js Discussion #54907](https://github.com/vercel/next.js/discussions/54907) -- Using nonces with Next.js limitations
+- [Shiki v4.0 Blog Post](https://shiki.style/blog/v4) -- breaking changes documentation (HIGH confidence)
+- [Shiki Migration Guide](https://shiki.style/guide/migrate) -- version-by-version migration paths (HIGH confidence)
+- [Shiki Theme Colors / CSS Variables](https://shiki.style/guide/theme-colors) -- createCssVariablesTheme documentation (HIGH confidence)
+- [TypeScript 6.0 Announcement](https://devblogs.microsoft.com/typescript/announcing-typescript-6-0/) -- official breaking changes (HIGH confidence)
+- [TypeScript 5.x to 6.0 Migration Guide](https://gist.github.com/privatenumber/3d2e80da28f84ee30b77d53e1693378f) -- community migration checklist (MEDIUM confidence)
+- [Next.js Vitest Testing Guide](https://nextjs.org/docs/app/guides/testing/vitest) -- official testing documentation (HIGH confidence)
+- [rehype-pretty-code](https://rehype-pretty.pages.dev/) -- plugin documentation (HIGH confidence)
+- [Next.js App Router Route Handlers](https://nextjs.org/docs/app/getting-started/route-handlers) -- API route handler documentation (HIGH confidence)
 
 ---
-*Architecture research for: keech.dev v1.7 CSP hardening milestone*
-*Researched: 2026-04-03*
+*Architecture research for: keech.dev v1.8 concerns cleanup milestone*
+*Researched: 2026-04-05*
