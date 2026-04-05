@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Address Additional Concerns
-status: executing
-stopped_at: Phase 19 context gathered
-last_updated: "2026-04-05T05:13:52.988Z"
+status: complete
+stopped_at: Milestone v1.7 archived
+last_updated: "2026-04-05T15:00:00.000Z"
 last_activity: 2026-04-05
 progress:
   total_phases: 6
@@ -18,25 +18,25 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-03)
+See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** A polished, intentional developer portfolio — fast, visually distinctive, and well-crafted in every detail.
-**Current focus:** Phase 19 — Verification and Polish
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Phase: 19
-Plan: Not started
-Status: Executing Phase 19
+Phase: —
+Plan: —
+Status: v1.7 complete, awaiting next milestone
 Last activity: 2026-04-05
 
-Progress: [████░░░░░░░░] 33% (v1.7: 2/6 phases)
+Progress: [████████████] 100% (v1.7: 6/6 phases)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 36 (20 from v1.3-v1.5 + 13 from v1.6)
+- Total plans completed: 45 (20 from v1.3-v1.5 + 13 from v1.6 + 9 from v1.7 + 3 quick-inline)
 - Quick tasks completed: 11
 
 **By Milestone:**
@@ -47,22 +47,13 @@ Progress: [████░░░░░░░░] 33% (v1.7: 2/6 phases)
 | v1.4 | 3 | 6 | 2 days |
 | v1.5 | 3 | 4 | 3 days |
 | v1.6 | 5 | 13 | 2 days |
-| Phase 14 P01 | 2min | 2 tasks | 2 files |
-| Phase 15 P01 | 2min | 3 tasks | 2 files |
-| Phase 18 P03 | 2min | 2 tasks | 4 files |
+| v1.7 | 6 | 9 | 3 days |
 
 ## Accumulated Context
 
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting v1.7:
-
-- `s.markdown()` over server-component MDX: cleanest path, eliminates `new Function()` entirely
-- Accept `unsafe-inline` in style-src: marginal security gain not worth effort; CSS-variables theme adopted for design system benefits
-- `unsafe-inline` stays in script-src: unavoidable without nonces (which break static generation)
-- [Phase 14]: Pin Velite to exact version (no caret) to prevent unexpected build breakage
-- [Phase 18]: Used useTransition isPending as direct opacity flag -- eliminates manual isTransitioning + useEffect + setTimeout entirely
 
 ### Pending Todos
 
@@ -70,9 +61,7 @@ None.
 
 ### Blockers/Concerns
 
-- Phase 16: rehype plugin for `role="list"` needs validation in `s.markdown()` mode
-- Phase 16: DOM-based copy button injection needs verification against rehype-pretty-code HTML structure
-- Phase 17: CSS-variables theme is coarser than github-dark-dimmed (~10 vars vs ~40 scopes) — visual check required
+None — all v1.7 concerns resolved.
 
 ### Quick Tasks Completed
 
@@ -92,6 +81,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-05T04:52:55.056Z
-Stopped at: Phase 19 context gathered
-Resume file: .planning/phases/19-verification-and-polish/19-CONTEXT.md
+Last session: 2026-04-05
+Stopped at: Milestone v1.7 archived
+Resume file: —
