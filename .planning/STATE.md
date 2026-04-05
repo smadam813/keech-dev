@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Address Additional Concerns
 status: executing
-stopped_at: Phase 18 context gathered
-last_updated: "2026-04-05T02:08:54.810Z"
+stopped_at: Completed 18-03-PLAN.md
+last_updated: "2026-04-05T04:31:00.302Z"
 last_activity: 2026-04-05
 progress:
   total_phases: 6
   completed_phases: 5
-  total_plans: 7
-  completed_plans: 7
+  total_plans: 8
+  completed_plans: 8
   percent: 100
 ---
 
@@ -49,6 +49,7 @@ Progress: [████░░░░░░░░] 33% (v1.7: 2/6 phases)
 | v1.6 | 5 | 13 | 2 days |
 | Phase 14 P01 | 2min | 2 tasks | 2 files |
 | Phase 15 P01 | 2min | 3 tasks | 2 files |
+| Phase 18 P03 | 2min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -61,6 +62,7 @@ Recent decisions affecting v1.7:
 - Accept `unsafe-inline` in style-src: marginal security gain not worth effort; CSS-variables theme adopted for design system benefits
 - `unsafe-inline` stays in script-src: unavoidable without nonces (which break static generation)
 - [Phase 14]: Pin Velite to exact version (no caret) to prevent unexpected build breakage
+- [Phase 18]: Used useTransition isPending as direct opacity flag -- eliminates manual isTransitioning + useEffect + setTimeout entirely
 
 ### Pending Todos
 
@@ -90,6 +92,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-05T01:37:20.128Z
-Stopped at: Phase 18 context gathered
-Resume file: .planning/phases/18-react-19-lint-cleanup/18-CONTEXT.md
+Last session: 2026-04-05T04:31:00.300Z
+Stopped at: Completed 18-03-PLAN.md
+Resume file: None
