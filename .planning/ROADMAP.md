@@ -133,7 +133,10 @@ Plans:
   3. CodeBlockEnhancer has unit tests covering copy button injection into pre elements and clipboard interaction
   4. An assertion test confirms the OG image font file exists at the expected path
   5. The 3 react-hooks/set-state-in-effect suppressions in use-hero-animation.ts and scroll-reveal.tsx are either refactored away or documented as intentional with rationale in a comment or decision log
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 23-01-PLAN.md — Unit tests for batch views and single slug API route handlers
+- [ ] 23-02-PLAN.md — CodeBlockEnhancer DOM mutation tests, OG font assertion, QUAL-01 lint suppression verification
 
 ## Progress
 
@@ -164,4 +167,4 @@ Phases execute in numeric order: 20 → 21 → 22 → 23
 | 20. Dead Code & Test Hygiene | v1.8 | 1/1 | Complete    | 2026-04-05 |
 | 21. Dependency Upgrades | v1.8 | 4/4 | Complete    | 2026-04-05 |
 | 22. TypeScript 6 Upgrade | v1.8 | 1/1 | Complete    | 2026-04-05 |
-| 23. Test Coverage & Code Quality | v1.8 | 0/? | Not started | - |
+| 23. Test Coverage & Code Quality | v1.8 | 0/2 | Not started | - |
