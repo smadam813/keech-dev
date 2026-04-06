@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { readFileSync, statSync } from 'node:fs'
+import { existsSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 
 const root = join(process.cwd())
@@ -243,5 +243,21 @@ describe("SEC-01: CSP script-src includes 'unsafe-inline'", () => {
     expect(middlewareSrc).toContain('X-Frame-Options')
     expect(middlewareSrc).toContain('X-Content-Type-Options')
     expect(middlewareSrc).toContain('Referrer-Policy')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Gap 9 — TEST-04: OG image font file exists for Satori rendering
+// ---------------------------------------------------------------------------
+describe('TEST-04: OG image font file exists at expected path', () => {
+  const fontPath = join(root, 'src/assets/fonts/Inter-Bold.ttf')
+
+  it('Inter-Bold.ttf font file exists for OG image generation', () => {
+    expect(existsSync(fontPath)).toBe(true)
+  })
+
+  it('font file has non-trivial size (> 100KB)', () => {
+    const stat = statSync(fontPath)
+    expect(stat.size).toBeGreaterThan(100_000)
   })
 })
