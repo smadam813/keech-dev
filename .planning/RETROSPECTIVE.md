@@ -134,6 +134,47 @@
 
 ---
 
+## Milestone: v1.8 — Validate & Address Concerns
+
+**Shipped:** 2026-04-06
+**Phases:** 4 | **Plans:** 8
+
+### What Was Built
+- Removed dead code (orphaned CopyButton) and co-located tests with source files
+- Upgraded 9 dependencies including shiki 4, @vercel/analytics 2.x, lucide-react 1.x
+- Upgraded TypeScript from 5.9.3 to 6.0.2 with zero source code changes
+- Added 22 unit tests (API route handlers, CodeBlockEnhancer DOM mutations, OG font assertion)
+- Verified lint suppressions as intentional with documented rationale
+
+### What Worked
+- **Dependency coupling awareness**: Research identified shiki + rehype-pretty-code as a coupled pair; upgrading together avoided breakage
+- **Zero-code major upgrades**: shiki 4, @vercel/analytics 2.x, and TypeScript 6 all required zero source changes — good architecture payoff from CSS-variables theme and clean abstractions
+- **Phase 20 tsconfig fix pre-empted TS6**: Adding vitest/globals to tsconfig types in Phase 20 happened to fix exactly the breaking change TS6 would have introduced
+- **Milestone audit caught stale checkboxes**: 9 REQUIREMENTS.md checkboxes were unchecked despite requirements being satisfied — audit surfaced this before archival
+
+### What Was Inefficient
+- **SUMMARY.md one-liner extraction still noisy**: CLI extracted an internal rule reference ("1. [Rule 3 - Blocking]") as an accomplishment — required manual cleanup in MILESTONES.md
+- **Nyquist validation still skipped**: All 4 phases have draft VALIDATION.md files but none completed Nyquist. Same gap as v1.7.
+- **REQUIREMENTS.md checkbox lag persists**: Despite noting this in v1.7 retro, checkboxes still weren't updated during phase transitions
+
+### Patterns Established
+- **Brand icon SVG pattern**: Custom SVG components replace removed third-party icons — stable across major version bumps
+- **Test co-location**: Test files live next to their source module (src/proxy.test.ts beside src/proxy.ts)
+- **DOM mutation testing**: Set up document.body.innerHTML before render, assert mutations after useEffect
+
+### Key Lessons
+1. **CSS-first architecture pays compound dividends** — CSS-variables theme meant shiki 4 was a zero-code upgrade; same pattern will likely hold for shiki 5+
+2. **TypeScript major upgrades can be trivial** — TS 5→6 with ts5to6 migration tool required zero changes. Clean tsconfig and modern patterns make upgrades painless
+3. **Dependency audits should batch minor/patch before majors** — doing DEPS-01 (minor/patch) first established a clean baseline for shiki 4 and lucide-react 1.x upgrades
+4. **REQUIREMENTS.md checkbox updates need to be part of phase transition** — three milestones in a row have had stale checkboxes caught only at audit time
+
+### Cost Observations
+- Model mix: ~60% opus (planning/execution), ~30% sonnet (research/verification agents), ~10% haiku
+- Sessions: ~4 sessions across 2 days
+- Notable: Fastest milestone by calendar time (2 days) with all 14 requirements satisfied
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -145,6 +186,7 @@
 | v1.5 | 3 | 3 | 4 | Fastest plans (~1-4 min each), clean audit |
 | v1.6 | 2 | 5 | 13 | Largest scope; audit-driven; first testing infrastructure |
 | v1.7 | 3 | 6 | 9 | Security hardening; eliminated unsafe-eval; React 19 migration |
+| v1.8 | 2 | 4 | 8 | Dependency upgrades; TS6; test coverage; zero dead code |
 
 ### Cumulative Quality
 
@@ -155,6 +197,7 @@
 | v1.5 | 13 | 0 | 0 | 0 |
 | v1.6 | 38 | 18 | 14 | 7 (deferred) |
 | v1.7 | 24 | 135 | 18 | 4 (minor doc items) |
+| v1.8 | 14 | 154 | 18 | 1 (esModuleInterop invariant) |
 
 ### Top Lessons (Verified Across Milestones)
 
