@@ -96,9 +96,6 @@ A polished, intentional developer portfolio — fast, visually distinctive, and 
 - ✓ All existing E2E tests pass with hardened CSP — v1.7
 - ✓ next build output shows all pages as Static — v1.7
 - ✓ Zero ESLint errors and zero warnings from npm run lint — v1.7
-
-### Active
-
 - ✓ Orphaned CopyButton component and test deleted — v1.8
 - ✓ Security-headers test relocated to co-locate with src/proxy.ts — v1.8
 - ✓ vitest/globals added to tsconfig types, zero false tsc errors — v1.8
@@ -114,17 +111,13 @@ A polished, intentional developer portfolio — fast, visually distinctive, and 
 - ✓ OG font file existence assertion added — v1.8
 - ✓ react-hooks/set-state-in-effect suppressions verified as intentional with inline rationale — v1.8
 
-## Current Milestone: v1.8 Validate & Address Concerns
+### Active
 
-**Goal:** Resolve remaining concerns from the codebase audit — dead code, test hygiene, dependency updates, and test coverage gaps.
+(None — planning next milestone)
 
-**Target features:**
-- Remove orphaned CopyButton component and its tests
-- Relocate security-headers.test.ts to co-locate with src/proxy.ts
-- Fix TypeScript false errors in test files
-- Evaluate and apply dependency updates (minor/patch + major assessment)
-- Fill test coverage gaps (API routes, CodeBlockEnhancer, OG font path)
-- Address react-hooks/set-state-in-effect suppressions if refactor is clean
+## Current State
+
+Shipped v1.8 Validate & Address Concerns (2026-04-06). All codebase audit concerns resolved.
 
 ### Out of Scope
 
@@ -150,22 +143,22 @@ A polished, intentional developer portfolio — fast, visually distinctive, and 
 
 ## Context
 
-Shipped v1.7 Address Additional Concerns with 24 requirements across security hardening, MDX migration, and React quality.
-Tech stack: Next.js 16, React 19, Tailwind CSS v4, Velite (s.markdown()), Upstash Redis.
-Codebase: ~4,900 LOC TypeScript + CSS across ~100 source files.
+Shipped v1.8 Validate & Address Concerns — dead code removed, all dependencies current, TypeScript 6, full test coverage.
+Tech stack: Next.js 16, React 19, Tailwind CSS v4, Velite (s.markdown()), Upstash Redis, TypeScript 6.0.2.
+Codebase: ~5,200 LOC TypeScript + CSS across ~100 source files.
 Hero section has load-gated two-beat reveal and 14 ambient rune glows.
 Blog posts display public view counts backed by Upstash Redis with IP deduplication.
 Blog and project listing pages support multi-select filtering with AND logic, count badges, URL persistence, and fade transitions.
 Security headers (CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy) served from src/proxy.ts middleware.
 CSP no longer requires `unsafe-eval` — MDX renders compile-time HTML via dangerouslySetInnerHTML.
-Syntax highlighting uses CSS-variables theme with 14 --shiki-* token variables in globals.css.
+Syntax highlighting uses shiki 4 CSS-variables theme with 14 --shiki-* token variables in globals.css.
 Branded error boundaries at three levels catch runtime errors gracefully.
 Othala rune favicon + dynamic OG images for social sharing.
 RSS feed at /feed.xml, sitemap with actual content dates.
 Test coverage: 154 Vitest unit tests + 18 Playwright E2E tests (16 active, 2 graceful skips).
 Collapsible sticky mobile TOC for blog post section navigation.
 Site is statically generated and deployed via git-push to Vercel.
-Zero npm audit vulnerabilities. Zero ESLint errors/warnings.
+Zero npm audit vulnerabilities. Zero ESLint errors/warnings. Zero dead code.
 
 ## Key Decisions
 
@@ -210,6 +203,13 @@ Zero npm audit vulnerabilities. Zero ESLint errors/warnings.
 | useSyncExternalStore for localStorage/matchMedia | Idiomatic React 19; eliminates set-state-in-effect warnings cleanly | ✓ Good |
 | useTransition for filter opacity transitions | Replaces manual isTransitioning/useEffect/setTimeout; eliminates 1-frame flash | ✓ Good |
 | Pin Velite to exact 0.3.1 (no caret) | Prevents unexpected build breakage from minor version changes | ✓ Good |
+| Retain lucide-react after CopyButton removal | 6 other consumers confirmed; only remove deps with zero importers | ✓ Good |
+| Co-locate test files next to source | src/proxy.test.ts beside src/proxy.ts; easier to find and maintain | ✓ Good |
+| Upgrade tailwindcss + @tailwindcss/postcss together | Avoids version mismatch build failures between paired packages | ✓ Good |
+| shiki 4 zero-code upgrade | createCssVariablesTheme API unchanged from v3; no migration needed | ✓ Good |
+| Brand icon SVG replacements for lucide-react 1.x | Custom GithubIcon/LinkedinIcon components replace removed brand icons | ✓ Good |
+| Accept Next.js re-adding esModuleInterop | Framework invariant; always-on in TS6 regardless of tsconfig | ✓ Good |
+| Verify lint suppressions rather than refactor | Animation orchestration effects require useEffect setState; documented as intentional | ✓ Good |
 
 ## Constraints
 
@@ -237,4 +237,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-06 after Phase 23 completion*
+*Last updated: 2026-04-06 after v1.8 milestone*

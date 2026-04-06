@@ -1,5 +1,22 @@
 # Milestones
 
+## v1.8 Validate & Address Concerns (Shipped: 2026-04-06)
+
+**Phases completed:** 4 phases, 8 plans, 15 tasks
+
+**Key accomplishments:**
+
+- Removed orphaned CopyButton files, relocated security-headers test to co-locate with proxy module, and fixed tsconfig/test shadowing for zero targeted tsc errors
+- Seven dependencies bumped to current stable minor/patch versions with zero build/test/lint/audit regressions
+- Upgraded shiki 3 to 4 with zero code changes -- CSS-variables theme and Velite content pipeline work identically
+- @vercel/analytics upgraded from 1.6.1 to 2.0.1 with zero code changes -- import path and CSP domain preserved
+- Brand icon SVG replacements (GithubIcon, LinkedinIcon) created and lucide-react upgraded from 0.563.0 to 1.7.0 with zero breaking changes
+- TypeScript upgraded from 5.9.3 to 6.0.2 with zero source code changes (esModuleInterop re-added by Next.js framework invariant)
+- Unit tests for both view-count API routes with mocked Redis covering 15 scenarios (batch + single slug)
+- 5 CodeBlockEnhancer DOM mutation tests, 2 OG font file assertions, and lint suppression verification (3 suppressions confirmed intentional)
+
+---
+
 ## v1.7 Address Additional Concerns (Shipped: 2026-04-05)
 
 **Phases completed:** 6 phases, 9 plans, 21 tasks
