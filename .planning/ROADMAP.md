@@ -77,7 +77,7 @@ See: `.planning/milestones/v1.7-ROADMAP.md` for full details.
 - [x] **Phase 20: Dead Code & Test Hygiene** - Remove orphaned code, fix test co-location and tsconfig for accurate baselines (completed 2026-04-05)
 - [x] **Phase 21: Dependency Upgrades** - Apply minor/patch and safe major dependency updates across the stack (completed 2026-04-05)
 - [x] **Phase 22: TypeScript 6 Upgrade** - Upgrade to TypeScript 6.x with migration tooling and full validation (completed 2026-04-05)
-- [ ] **Phase 23: Test Coverage & Code Quality** - Fill test gaps for API routes, CodeBlockEnhancer, OG font; evaluate lint suppressions
+- [x] **Phase 23: Test Coverage & Code Quality** - Fill test gaps for API routes, CodeBlockEnhancer, OG font; evaluate lint suppressions (completed 2026-04-06)
 
 ## Phase Details
 
@@ -133,10 +133,10 @@ Plans:
   3. CodeBlockEnhancer has unit tests covering copy button injection into pre elements and clipboard interaction
   4. An assertion test confirms the OG image font file exists at the expected path
   5. The 3 react-hooks/set-state-in-effect suppressions in use-hero-animation.ts and scroll-reveal.tsx are either refactored away or documented as intentional with rationale in a comment or decision log
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 Plans:
-- [ ] 23-01-PLAN.md — Unit tests for batch views and single slug API route handlers
-- [ ] 23-02-PLAN.md — CodeBlockEnhancer DOM mutation tests, OG font assertion, QUAL-01 lint suppression verification
+- [x] 23-01-PLAN.md — Unit tests for batch views and single slug API route handlers
+- [x] 23-02-PLAN.md — CodeBlockEnhancer DOM mutation tests, OG font assertion, QUAL-01 lint suppression verification
 
 ## Progress
 
@@ -167,4 +167,4 @@ Phases execute in numeric order: 20 → 21 → 22 → 23
 | 20. Dead Code & Test Hygiene | v1.8 | 1/1 | Complete    | 2026-04-05 |
 | 21. Dependency Upgrades | v1.8 | 4/4 | Complete    | 2026-04-05 |
 | 22. TypeScript 6 Upgrade | v1.8 | 1/1 | Complete    | 2026-04-05 |
-| 23. Test Coverage & Code Quality | v1.8 | 0/2 | Not started | - |
+| 23. Test Coverage & Code Quality | v1.8 | 2/2 | Complete    | 2026-04-06 |
