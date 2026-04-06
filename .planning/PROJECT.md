@@ -109,6 +109,10 @@ A polished, intentional developer portfolio — fast, visually distinctive, and 
 - ✓ lucide-react upgraded from 0.x to 1.x with brand icon SVG replacements — v1.8
 - ✓ Zero npm audit vulnerabilities maintained after all dependency upgrades — v1.8
 - ✓ TypeScript upgraded from 5.9.3 to 6.0.2 with zero source code changes — v1.8
+- ✓ API route handlers (batch + single slug) fully unit tested — v1.8
+- ✓ CodeBlockEnhancer DOM mutations unit tested (5 scenarios) — v1.8
+- ✓ OG font file existence assertion added — v1.8
+- ✓ react-hooks/set-state-in-effect suppressions verified as intentional with inline rationale — v1.8
 
 ## Current Milestone: v1.8 Validate & Address Concerns
 
@@ -158,7 +162,7 @@ Syntax highlighting uses CSS-variables theme with 14 --shiki-* token variables i
 Branded error boundaries at three levels catch runtime errors gracefully.
 Othala rune favicon + dynamic OG images for social sharing.
 RSS feed at /feed.xml, sitemap with actual content dates.
-Test coverage: 132 Vitest unit tests + 18 Playwright E2E tests (16 active, 2 graceful skips).
+Test coverage: 154 Vitest unit tests + 18 Playwright E2E tests (16 active, 2 graceful skips).
 Collapsible sticky mobile TOC for blog post section navigation.
 Site is statically generated and deployed via git-push to Vercel.
 Zero npm audit vulnerabilities. Zero ESLint errors/warnings.
@@ -233,4 +237,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-05 after Phase 21 completion*
+*Last updated: 2026-04-06 after Phase 23 completion*
