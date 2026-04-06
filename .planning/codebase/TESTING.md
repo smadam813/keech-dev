@@ -1,350 +1,317 @@
 # Testing Patterns
 
-**Analysis Date:** 2026-04-03
+**Analysis Date:** 2026-04-05
 
 ## Test Framework
 
-**Unit/Component Runner:**
-- Vitest 4.1.2
+**Unit/Integration Runner:**
+- Vitest 4.x
 - Config: `vitest.config.ts`
 - Environment: jsdom
-- Setup file: `vitest.setup.ts` (imports `@testing-library/jest-dom/vitest`)
+- Globals enabled (`globals: true`) — `describe`, `it`, `expect`, `vi`, `beforeEach`, etc. available without imports (but files still import explicitly from `vitest` for clarity)
+
+**Assertion Library:**
+- Vitest built-in + `@testing-library/jest-dom` (matchers like `toBeInTheDocument`, `toHaveAttribute`, `toHaveBeenCalledOnce`)
+- Setup file: `vitest.setup.ts` — single line: `import '@testing-library/jest-dom/vitest'`
+
+**Component Rendering:**
+- `@testing-library/react` v16 — `render`, `screen`, `fireEvent`, `waitFor`, `renderHook`, `act`
 
 **E2E Runner:**
-- Playwright 1.59.1
+- Playwright 1.59
 - Config: `playwright.config.ts`
-- Projects: `desktop-chromium` (Desktop Chrome), `mobile-chromium` (Pixel 5)
-- Web server: builds and starts app on `localhost:3000`
-
-**Assertion Libraries:**
-- Vitest built-in (`expect`, `describe`, `it`)
-- `@testing-library/jest-dom` for DOM matchers (`toBeInTheDocument`, `toHaveAttribute`)
-- `@testing-library/react` for render/screen/fireEvent
-- Playwright built-in assertions (`expect(locator).toBeVisible()`)
+- Two browser projects: `desktop-chromium` (Desktop Chrome) and `mobile-chromium` (Pixel 5)
+- Serial workers (`workers: 1`), no retries
+- Web server: builds and starts production app before tests
 
 **Run Commands:**
 ```bash
-npm run test          # vitest run (all unit/component tests)
-npm run test:e2e      # playwright test (all E2E specs)
+npm run test           # Vitest run (all unit tests once)
+npx vitest             # Vitest watch mode
+npm run test:e2e       # Playwright e2e (builds prod first)
 ```
 
 ## Test File Organization
 
-**Unit/Component Tests:**
-- Co-located with source files as `{module}.test.ts` or `{module}.test.tsx`
-- Pattern: `src/lib/format.test.ts` tests `src/lib/format.ts`
-- Pattern: `src/components/blog/copy-button.test.tsx` tests `src/components/blog/copy-button.tsx`
+**Unit tests:**
+- Co-located with source files in `src/`
+- Pattern: `[filename].test.ts` or `[filename].test.tsx`
+- Examples: `src/lib/format.test.ts`, `src/components/ui/filter-chip.test.tsx`, `src/hooks/use-media-query.test.ts`
+- Include pattern in `vitest.config.ts`: `src/**/*.test.{ts,tsx}`
 
-**E2E Tests:**
-- Separate `e2e/` directory at project root
-- Named as `{feature}.spec.ts`
+**E2E tests:**
+- Separate directory: `e2e/`
+- Pattern: `[feature].spec.ts`
+- Examples: `e2e/mobile-menu.spec.ts`, `e2e/code-copy.spec.ts`, `e2e/view-count.spec.ts`, `e2e/mobile-toc.spec.ts`
 
-**Current test files (17 unit/component + 4 E2E):**
-
-Unit/component:
-- `src/lib/format.test.ts` -- date formatting
-- `src/lib/validation.test.ts` -- slug validation
-- `src/lib/views.test.ts` -- view count formatting and localStorage cache
-- `src/lib/rune-glows.test.ts` -- glow position computation
-- `src/lib/rate-limit.test.ts` -- rate limiter configuration
-- `src/lib/security-headers.test.ts` -- security headers in next.config
-- `src/lib/seo-assets.test.ts` -- favicon, OG images, sitemap, RSS feed, project images
-- `src/hooks/use-hero-animation.test.ts` -- hero animation state machine
-- `src/hooks/use-filtered-list.test.ts` -- filter hook with URL sync
-- `src/hooks/use-glow-positions.test.ts` -- ResizeObserver-driven glow positioning
-- `src/components/blog/copy-button.test.tsx` -- keyboard accessibility, a11y
-- `src/components/blog/mdx-content.test.tsx` -- malformed MDX fallback rendering
-- `src/components/ui/filter-chip.test.tsx` -- toggle/link/display modes
-- `src/app/error.test.tsx` -- global error boundary
-- `src/app/global-error.test.tsx` -- root layout error boundary
-- `src/app/loading.test.tsx` -- all loading skeleton components
-- `src/app/blog/[slug]/error.test.tsx` -- blog post error boundary
-
-E2E:
-- `e2e/mobile-menu.spec.ts` -- mobile menu open/close, escape, navigation
-- `e2e/code-copy.spec.ts` -- code block copy button interaction
-- `e2e/mobile-toc.spec.ts` -- mobile table of contents expand/collapse, sticky, auto-collapse
-- `e2e/view-count.spec.ts` -- view count display on blog post
-
-## Vitest Configuration
-
-**File:** `vitest.config.ts`
-```typescript
-import { defineConfig } from 'vitest/config'
-import react from '@vitejs/plugin-react'
-import tsconfigPaths from 'vite-tsconfig-paths'
-
-export default defineConfig({
-  plugins: [tsconfigPaths(), react()],
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    include: ['src/**/*.test.{ts,tsx}'],
-    setupFiles: ['./vitest.setup.ts'],
-  },
-})
+**Directory layout:**
 ```
-
-**Key details:**
-- `tsconfigPaths()` enables `@/*` and `@/.velite` path aliases in tests
-- `react()` plugin enables JSX/TSX in test files
-- `globals: true` makes `describe`, `it`, `expect` available without imports (but tests still explicitly import them)
-- jsdom environment provides `document`, `localStorage`, `navigator`, `window`
-
-**Setup file:** `vitest.setup.ts`
-```typescript
-import '@testing-library/jest-dom/vitest'
+src/
+  lib/
+    format.ts
+    format.test.ts          # co-located
+  hooks/
+    use-filtered-list.ts
+    use-filtered-list.test.ts
+  components/
+    ui/
+      filter-chip.tsx
+      filter-chip.test.tsx
+  app/
+    api/views/
+      route.ts
+      route.test.ts
+e2e/
+  mobile-menu.spec.ts
+  code-copy.spec.ts
 ```
-This adds DOM matchers like `toBeInTheDocument()`, `toHaveAttribute()`, `toHaveClass()`.
-
-## Playwright Configuration
-
-**File:** `playwright.config.ts`
-```typescript
-export default defineConfig({
-  testDir: './e2e',
-  fullyParallel: true,
-  forbidOnly: !!process.env.CI,
-  retries: 0,
-  workers: 1,
-  reporter: 'list',
-  use: {
-    baseURL: 'http://localhost:3000',
-    trace: 'on-first-retry',
-  },
-  projects: [
-    { name: 'desktop-chromium', use: { ...devices['Desktop Chrome'] } },
-    { name: 'mobile-chromium', use: { ...devices['Pixel 5'] } },
-  ],
-  webServer: {
-    command: 'npm run build && npm run start',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120000,
-  },
-})
-```
-
-**Key details:**
-- Tests run against a production build (not dev server)
-- Single worker to avoid port conflicts
-- 2-minute timeout for build + start
-- Reuses existing server locally (set `reuseExistingServer: !process.env.CI`)
-- Mobile tests use `test.use({ ...devices['Pixel 5'] })` at the top of the spec file
 
 ## Test Structure
 
-**Unit Test Pattern:**
+**Suite organization:**
 ```typescript
-import { describe, it, expect } from 'vitest'
-import { formatDate } from './format'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
-describe('formatDate', () => {
-  it('formats ISO date to human-readable', () => {
-    expect(formatDate('2024-01-15')).toBe('January 15, 2024')
-  })
-
-  it('handles edge case', () => {
-    expect(formatDate('2024-02-29')).toBe('February 29, 2024')
-  })
-})
-```
-
-**Component Test Pattern:**
-```typescript
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
-import { CopyButton } from './copy-button'
-
-describe('CopyButton', () => {
-  it('has an accessible label for screen readers', () => {
-    render(<CopyButton getText={() => 'code'} />)
-    expect(screen.getByRole('button', { name: /copy code/i })).toBeInTheDocument()
-  })
-})
-```
-
-**Hook Test Pattern:**
-```typescript
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { renderHook, act } from '@testing-library/react'
-import { useRef } from 'react'
-import { useHeroAnimation } from './use-hero-animation'
-
-describe('useHeroAnimation', () => {
+describe('ModuleName', () => {
   beforeEach(() => {
-    vi.useFakeTimers()
-    vi.stubGlobal('matchMedia', vi.fn((query: string) => ({
-      matches: false,
-      media: query,
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-    })))
+    // setup
   })
 
   afterEach(() => {
-    vi.useRealTimers()
-    vi.unstubAllGlobals()
+    vi.unstubAllGlobals()  // always clean up stubs
   })
 
-  it('starts in loading stage', () => {
-    const { result } = renderHook(() => {
-      const imgRef = useRef<HTMLImageElement | null>(null)
-      return useHeroAnimation({ imgRef })
-    })
-    expect(result.current.revealStage).toBe('loading')
-  })
-
-  it('transitions after image load', async () => {
-    const { result } = renderHook(() => {
-      const imgRef = useRef<HTMLImageElement | null>(null)
-      return useHeroAnimation({ imgRef })
-    })
-    act(() => { result.current.handleLoad() })
-    await act(async () => { vi.advanceTimersByTime(600) })
-    expect(result.current.revealStage).toBe('text-reveal')
+  it('does the thing when condition', () => {
+    // arrange
+    // act
+    // assert
   })
 })
 ```
 
-**E2E Test Pattern:**
+**Nested describes for logical grouping:**
 ```typescript
-import { test, expect, devices } from '@playwright/test'
+describe('FilterChip', () => {
+  describe('toggle mode (onToggle provided)', () => {
+    it('renders a button with the label', () => { ... })
+    it('calls onToggle when clicked', () => { ... })
+  })
 
-test.use({ ...devices['Pixel 5'] })  // For mobile-specific tests
-
-test.describe('feature name', () => {
-  test('user interaction flow', async ({ page }) => {
-    await page.goto('/')
-    const element = page.getByRole('button', { name: /label/i })
-    await element.click()
-    await expect(element).toHaveAttribute('aria-expanded', 'true')
+  describe('link mode (href provided, no onToggle)', () => {
+    it('renders an anchor link', () => { ... })
   })
 })
 ```
+
+**Test ID annotations:**
+- Some test suites include a requirement ID in the describe label: `describe('GET /api/views/[slug] (TEST-02)', ...)`
+- These map to milestone requirement tracking — preserve this pattern when adding tests for documented requirements
+
+**Patterns:**
+- `beforeEach` for mock resets: `mockGet.mockReset()` — always reset mocks between tests
+- `afterEach` for global cleanup: `vi.unstubAllGlobals()` — never leave globals stubbed
+- `beforeEach(() => { vi.useFakeTimers() })` + `afterEach(() => { vi.useRealTimers() })` for timer-dependent tests
 
 ## Mocking
 
-**Framework:** Vitest `vi` module
+**Framework:** `vi` from Vitest
 
-**Module Mocks (`vi.mock`):**
+**Module mocking (hoisted):**
 ```typescript
-// Mock next/navigation
-vi.mock('next/navigation', () => ({
-  useSearchParams: () => ({ get: mockGet, toString: mockSearchParamsToString }),
-  usePathname: () => '/blog',
+// Module mock must appear before the import of the module under test
+const mockGet = vi.fn()
+vi.mock('@/lib/redis', () => ({
+  redis: { get: (...args: unknown[]) => mockGet(...args) },
 }))
 
-// Mock next/link as plain anchor
-vi.mock('next/link', () => ({
-  default: ({ href, children, className }) => <a href={href} className={className}>{children}</a>,
-}))
-
-// Mock internal modules
-vi.mock('@/lib/redis', () => ({ redis: {} }))
-vi.mock('./code-block', () => ({
-  CodeBlock: ({ children }) => <pre>{children}</pre>,
-}))
+// Then import the module under test AFTER the mock
+import { GET } from './route'
 ```
 
-**Global Stubs (`vi.stubGlobal`):**
+**Important:** `vi.mock()` is hoisted — declare mock functions with `const` before `vi.mock()`, then import the tested module after. This is the established pattern in all API route tests.
+
+**Global stubs:**
 ```typescript
-// Browser APIs not available in jsdom
-vi.stubGlobal('matchMedia', vi.fn((query) => ({
+// Stub browser globals not available in jsdom
+vi.stubGlobal('matchMedia', vi.fn((query: string) => ({
   matches: false,
   media: query,
   addEventListener: vi.fn(),
   removeEventListener: vi.fn(),
 })))
 
-vi.stubGlobal('ResizeObserver', MockResizeObserverClass)
-vi.stubGlobal('history', { replaceState: vi.fn() })
-```
+vi.stubGlobal('localStorage', {
+  getItem: vi.fn((key: string) => mockStorage.get(key) ?? null),
+  setItem: vi.fn((key: string, value: string) => mockStorage.set(key, value)),
+  // ...
+})
 
-**Clipboard Mock:**
-```typescript
-Object.defineProperty(navigator, 'clipboard', {
-  value: { writeText: vi.fn().mockResolvedValue(undefined) },
-  writable: true,
+// Always clean up
+afterEach(() => {
+  vi.unstubAllGlobals()
 })
 ```
 
-**Timer Mocks:**
+**Class mocks (for constructors like ResizeObserver):**
 ```typescript
-beforeEach(() => { vi.useFakeTimers() })
-afterEach(() => { vi.useRealTimers() })
-
-// Advance timers in act() for React state updates
-await act(async () => { vi.advanceTimersByTime(600) })
+class MockResizeObserver {
+  constructor(cb: ResizeObserverCallback) {
+    resizeObserverCallback = cb  // capture for later firing
+  }
+  observe = observeSpy
+  disconnect = disconnectSpy
+}
+vi.stubGlobal('ResizeObserver', MockResizeObserver)
 ```
 
-**Module Reset for Re-import:**
+**Next.js-specific mocks:**
 ```typescript
-beforeEach(() => { vi.resetModules() })
-// Then dynamic import:
-const { viewsRateLimit } = await import('./rate-limit')
+// next/link — mock as plain <a> for jsdom compatibility
+vi.mock('next/link', () => ({
+  default: ({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) => (
+    <a href={href} className={className}>{children}</a>
+  ),
+}))
+
+// next/navigation
+vi.mock('next/navigation', () => ({
+  useSearchParams: () => ({ get: mockGet, toString: mockSearchParamsToString }),
+  usePathname: () => '/blog',
+}))
 ```
 
-**What to Mock:**
-- `next/navigation` hooks (`useSearchParams`, `usePathname`)
-- `next/link` component (renders as plain `<a>` in jsdom)
-- Browser APIs: `matchMedia`, `ResizeObserver`, `navigator.clipboard`, `window.history`
-- Redis/external services: `@/lib/redis`, `@upstash/ratelimit`
-- Client components with browser-only deps when testing parents: `./code-block`
+**What to mock:**
+- External services: Redis (`@/lib/redis`), rate limiter (`@/lib/rate-limit`), Upstash SDK (`@upstash/ratelimit`)
+- Browser globals not in jsdom: `matchMedia`, `localStorage`, `ResizeObserver`, `history`
+- Next.js client-side modules in unit tests: `next/link`, `next/navigation`
+- Client components that use DOM APIs unavailable in jsdom (e.g., `CodeBlockEnhancer` mocked in `mdx-content.test.tsx`)
 
-**What NOT to Mock:**
+**What NOT to mock:**
+- Pure utility functions — test them directly (`formatDate`, `validateSlug`, `cn`)
 - The module under test itself
-- Pure utility functions (test real implementation)
-- React rendering (use @testing-library/react)
-- CSS classes (inspect via `className` property)
+- Standard Web APIs that jsdom provides (`fetch`, `Request`, `Response`, `URL`)
 
-## File-Based Assertion Pattern
+## Fixtures and Factories
 
-The `src/lib/seo-assets.test.ts` file uses a distinctive pattern: reading source files with `fs.readFileSync` and asserting on their contents. This avoids needing a Next.js runtime for testing ImageResponse, dynamic imports, etc.
+**Test data:** Defined inline at the top of test files as `const` arrays/objects
 
 ```typescript
-import { readFileSync, statSync } from 'node:fs'
+// From use-filtered-list.test.ts
+type TestItem = { id: string; tags: string[] }
+
+const items: TestItem[] = [
+  { id: 'a', tags: ['react', 'typescript'] },
+  { id: 'b', tags: ['react', 'css'] },
+]
+```
+
+**Helper factories:** Defined as functions within the test file when multiple tests share setup:
+```typescript
+function makeOptions(paramValue: string | null = null) {
+  mockGet.mockReturnValue(paramValue)
+  return { items, allFilterValues, getItemValues: (item: TestItem) => item.tags, paramName: 'tags' }
+}
+```
+
+**Location:** No separate fixtures directory — all test data is co-located in the test file.
+
+## Static Asset / Source File Tests
+
+The `src/lib/seo-assets.test.ts` pattern tests that source files and binary assets exist and contain expected content — using `fs.readFileSync`/`fs.statSync` directly. Use this approach when:
+- Testing that a file exports specific constants or patterns (OG image config)
+- Testing binary asset presence (favicon, font files)
+- Avoiding jsdom incompatibilities with complex Next.js modules (ImageResponse, dynamic imports)
+
+```typescript
+import { existsSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 
 const root = join(process.cwd())
 
-it('icon.svg contains the Othala rune path', () => {
-  const svg = readFileSync(join(root, 'src/app/icon.svg'), 'utf-8')
-  expect(svg).toContain('<path')
-  expect(svg).toContain('#E8B4B8')
-})
-
-it('exports generateStaticParams', () => {
-  const src = readFileSync(join(root, 'src/app/blog/[slug]/opengraph-image.tsx'), 'utf-8')
-  expect(src).toMatch(/export\s+(function|async\s+function)\s+generateStaticParams/)
+it('exports alt constant', () => {
+  const ogSrc = readFileSync(join(root, 'src/app/opengraph-image.tsx'), 'utf-8')
+  expect(ogSrc).toMatch(/export\s+const\s+alt\s*=/)
 })
 ```
 
-**Use this pattern when:**
-- Testing Next.js features that require the full runtime (ImageResponse, route handlers)
-- Verifying source-level contracts (exports, imports, content strings)
-- Checking binary asset existence and size
+## Coverage
 
-## E2E Patterns
+**Requirements:** No coverage threshold enforced in `vitest.config.ts`
 
-**Navigation via listing pages:**
-```typescript
-// Navigate to blog listing, then click into a post (avoids hardcoded slugs)
-await page.goto('/blog')
-const firstPost = page.locator('a[href^="/blog/"]').first()
-await firstPost.click()
-await page.waitForURL(/\/blog\/.+/)
+**View coverage:**
+```bash
+npx vitest --coverage
 ```
 
-**Graceful skip for content-dependent tests:**
+## Test Types
+
+**Unit tests (`src/**/*.test.{ts,tsx}`):**
+- Pure functions: `src/lib/format.test.ts`, `src/lib/validation.test.ts`, `src/lib/rune-glows.test.ts`
+- React hooks: `src/hooks/use-*.test.ts` — use `renderHook` + `act` from `@testing-library/react`
+- React components: `src/components/**/*.test.tsx` — use `render` + `screen` from `@testing-library/react`
+- API route handlers: `src/app/api/**/*.test.ts` — instantiate `NextRequest`/`Request`, call handlers directly, assert on `Response`
+- Middleware/proxy: `src/proxy.test.ts` — call function directly, assert on response headers
+
+**E2E tests (`e2e/*.spec.ts`):**
+- User flows against a real production build
+- Playwright `page` fixture for navigation and interaction
+- `page.route()` used to mock API responses when real services (Redis) are unavailable: see `e2e/view-count.spec.ts`
+- Device-level `test.use()` to override viewport: `test.use({ ...devices['Pixel 5'] })`
+- Graceful skip when content is not available: `test.skip(true, 'reason')`
+
+## Common Patterns
+
+**Async API route testing:**
 ```typescript
-if (await tocToggle.count() === 0) {
-  test.skip(true, 'No TOC on this blog post')
-  return
-}
+const request = new NextRequest('http://localhost/api/views/test-post', {
+  method: 'POST',
+  headers: { 'x-forwarded-for': '1.2.3.4' },
+})
+const response = await POST(request, makeParams('test-post'))
+const data = await response.json()
+
+expect(response.status).toBe(200)
+expect(data).toEqual({ slug: 'test-post', views: 1, deduplicated: false })
 ```
 
-**API route interception:**
+**Hook with fake timers:**
+```typescript
+beforeEach(() => { vi.useFakeTimers() })
+afterEach(() => { vi.useRealTimers() })
+
+it('transitions after delay', async () => {
+  const { result } = renderHook(() => useHeroAnimation({ imgRef }))
+
+  act(() => { result.current.handleLoad() })
+
+  await act(async () => { vi.advanceTimersByTime(600) })
+
+  expect(result.current.revealStage).toBe('text-reveal')
+})
+```
+
+**Component with fireEvent:**
+```typescript
+it('calls handler when clicked', () => {
+  const handleToggle = vi.fn()
+  render(<FilterChip label="react" onToggle={handleToggle} />)
+  fireEvent.click(screen.getByRole('button'))
+  expect(handleToggle).toHaveBeenCalledOnce()
+})
+```
+
+**Error path testing:**
+```typescript
+it('returns 500 on Redis error', async () => {
+  mockGet.mockRejectedValue(new Error('Connection refused'))
+  const response = await GET(request, makeParams('test-post'))
+  const data = await response.json()
+  expect(response.status).toBe(500)
+  expect(data).toEqual({ error: 'Failed to fetch view count' })
+})
+```
+
+**E2E with API interception:**
 ```typescript
 await page.route('**/api/views/**', async (route) => {
   await route.fulfill({
@@ -355,80 +322,20 @@ await page.route('**/api/views/**', async (route) => {
 })
 ```
 
-**Mobile viewport setup:**
+**Dynamic import with module reset (for config tests):**
 ```typescript
-import { devices } from '@playwright/test'
-test.use({ ...devices['Pixel 5'] })
-```
+beforeEach(() => {
+  vi.resetModules()
+  mockConstructor.mockClear()
+})
 
-**Clipboard permissions:**
-```typescript
-test('copies code', async ({ page, context }) => {
-  await context.grantPermissions(['clipboard-read', 'clipboard-write'])
-  // ...
+it('is configured with sliding window', async () => {
+  const { Ratelimit } = await import('@upstash/ratelimit')
+  await import('./rate-limit')
+  expect(Ratelimit.slidingWindow).toHaveBeenCalledWith(10, '60 s')
 })
 ```
 
-## Test Naming Convention
-
-**Unit tests:** `describe('functionName', () => { it('verb phrase describing behavior', ...) })`
-- Examples: `it('formats ISO date to human-readable')`, `it('rejects a slug with special characters')`
-
-**Component tests:** `describe('ComponentName', () => { ... })` or `describe('ComponentName mode (context)', () => { ... })`
-- Examples: `describe('CopyButton keyboard accessibility (A11Y-01)')`, `describe('FilterChip toggle mode')`
-
-**Traceability tags:** Some describe blocks include requirement IDs in parentheses:
-- `(A11Y-01)`, `(SEC-01)`, `(SEC-02)`, `(SEC-06)`, `(SEO-01)` through `(SEO-06)`, `(CLN-02)`
-- These trace back to concern/gap IDs from planning documents
-
-**E2E tests:** `test.describe('feature name', () => { test('user action and expected result', ...) })`
-- Examples: `test('toggles open and closed')`, `test('copies code and shows copied state')`
-
-## Coverage
-
-**Requirements:** No coverage thresholds enforced
-**Coverage tooling:** Vitest supports it but no `--coverage` script is configured
-**`.gitignore`** includes `/coverage` entry (ready for when coverage is added)
-
-## Test Types
-
-**Unit Tests:**
-- Pure functions: `format.ts`, `validation.ts`, `views.ts`, `rune-glows.ts`
-- Configuration verification: `rate-limit.test.ts`, `security-headers.test.ts`
-- Asset/source verification: `seo-assets.test.ts`
-
-**Component Tests:**
-- Render + assert on DOM: `copy-button.test.tsx`, `filter-chip.test.tsx`, `mdx-content.test.tsx`
-- Error boundaries: `error.test.tsx`, `global-error.test.tsx`, `blog/[slug]/error.test.tsx`
-- Loading skeletons: `loading.test.tsx`
-
-**Hook Tests:**
-- State machine behavior: `use-hero-animation.test.ts`
-- Filter logic with URL sync: `use-filtered-list.test.ts`
-- ResizeObserver integration: `use-glow-positions.test.ts`
-
-**E2E Tests:**
-- Interactive flows: mobile menu, code copy, mobile TOC
-- API-dependent rendering: view counts (with route interception)
-- Cross-device: mobile tests use Pixel 5 viewport
-
-## Additional Quality Layers
-
-**Layer 1: TypeScript Strict Mode** (`tsconfig.json` with `strict: true`)
-- Catches type mismatches, null access, import errors
-
-**Layer 2: ESLint** (`eslint.config.mjs`)
-- React hooks rules, Next.js patterns, jsx-a11y accessibility
-
-**Layer 3: Velite Schema Validation** (`velite.config.ts`)
-- Validates all MDX frontmatter against Zod schemas at build time
-- Run standalone: `npm run velite`
-
-**Layer 4: Next.js Build**
-- Server/client boundary violations, invalid metadata, hydration issues
-
-**Deployment:** Git-push to Vercel runs `velite && next build`. No CI pipeline -- tests must be run manually before push.
-
 ---
 
-*Testing analysis: 2026-04-03*
+*Testing analysis: 2026-04-05*

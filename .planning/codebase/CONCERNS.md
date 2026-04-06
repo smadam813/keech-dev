@@ -2,139 +2,140 @@
 
 **Analysis Date:** 2026-04-05
 
-## v1.7 Milestone Summary
+## Tech Debt
 
-v1.7 resolved the majority of concerns flagged in the 2026-04-03 audit. The following were addressed across phases 15–19:
+**Velite pinned at pre-release 0.3.1:**
+- Issue: Velite is locked to exact version `"0.3.1"` (no caret) because it is a 0.x pre-release. Caret was explicitly removed in v1.7 phase 14. The v1.8 dependency upgrade milestone intentionally skipped upgrading it.
+- Files: `package.json` line 42
+- Impact: No semver range protection; manual upgrade required to receive bug fixes or new features. If a critical fix lands in 0.3.2+, it will not be adopted automatically.
+- Fix approach: Monitor Velite changelog. When a stable 1.0.0 releases or a critical fix lands, evaluate upgrade manually with full build validation (`npm run velite && npm run build && npm run test`).
 
-**Resolved:**
-- **Security: CSP `unsafe-eval`** — MDX now compiled to static HTML by Velite at build time; `new Function()` execution eliminated. `unsafe-eval` removed from CSP. The CSP is now applied via `src/proxy.ts` (a Next.js middleware-like export) rather than `next.config.ts`.
-- **Security: Dependency vulnerabilities** — `npm audit` reports 0 vulnerabilities (previously 3: 2 high, 1 moderate).
-- **Linting: `eslint-config-next` version mismatch** — `eslint-config-next` updated to `^16.2.2` to match `next`.
-- **Linting: 4 ESLint errors on `<a>` tags** — `eslint-disable-next-line` comments with explanations added to all affected files (`src/app/error.tsx`, `src/app/global-error.tsx`, `src/app/blog/[slug]/error.tsx`, `src/components/blog/mdx-content.tsx`).
-- **Code quality: React 19 lint warnings on view counter** — `useViewStore` now uses `useSyncExternalStore` for localStorage reads; `useLayoutEffect` + `setState` pattern eliminated in `src/components/blog/listing-view-counts.tsx`.
-- **Security: No middleware** — `src/proxy.ts` implements security headers centrally with CSP, X-Frame-Options, X-Content-Type-Options, and Referrer-Policy.
-- **Housekeeping: Worktree artifacts** — `.claude/worktrees/` now contains only the directory shell (4 KB), no bloated agent directories.
+**`dangerouslySetInnerHTML` rendering compiled MDX:**
+- Issue: Velite compiles MDX to HTML which is injected via `dangerouslySetInnerHTML={{ __html: html }}`. This is intentional (avoids Shiki transformer hydration issues with `new Function()`) but bypasses React's XSS protection for content.
+- Files: `src/components/blog/mdx-content.tsx` line 30
+- Impact: If a malicious MDX file were committed, it would render arbitrary HTML/JS. Risk is low because only the author can commit content, but the pipeline is fully trusted.
+- Fix approach: Content is author-controlled so risk is accepted. Document the trust assumption explicitly. No fix needed unless the content pipeline accepts external input.
 
-**Partially resolved:**
-- **Security: CSP `unsafe-inline` for styles** — still present in `src/proxy.ts` (line 6). The CSS-variables theme approach eliminates inline `style` attributes from syntax highlighting tokens, which was the original driver, but `unsafe-inline` remains in `style-src` for Tailwind compatibility.
-- **React 19 lint warnings** — count reduced. Two `react-hooks/set-state-in-effect` suppression comments remain in `src/hooks/use-hero-animation.ts` (lines 34, 45) and one in `src/components/ui/scroll-reveal.tsx` (line 18). These are intentional external-system sync patterns, not bugs. Downgraded to warnings in `eslint.config.mjs`.
+**DOM mutation approach in `CodeBlockEnhancer`:**
+- Issue: Copy buttons are injected imperatively via DOM manipulation inside a `useEffect` after mount, bypassing React's reconciliation. The component queries `.prose` globally rather than scoping to a ref.
+- Files: `src/components/blog/code-block-enhancer.tsx`
+- Impact: Fragile selector coupling (`.prose` class name must stay in sync). If a blog post page is re-mounted (fast-navigation, strict mode), the `enhanced.current` ref guard prevents re-enhancement correctly, but the approach would break if `.prose` is ever renamed or if multiple `.prose` containers appear on a single page.
+- Fix approach: Accept as-is for now given the single-page-per-post constraint. If `.prose` is ever refactored, update the querySelector in `code-block-enhancer.tsx` line 25 simultaneously.
 
----
-
-## Moderate Severity
-
-### Security: CSP Still Requires `unsafe-inline` for Styles
-
-- Issue: `style-src 'unsafe-inline'` remains in the CSP defined in `src/proxy.ts` (line 6). While the switch to CSS-variables syntax highlighting eliminated per-token inline styles from rehype-pretty-code, Tailwind CSS v4's runtime behavior and the broader ecosystem still require `unsafe-inline` in practice.
-- Files: `src/proxy.ts` (line 6), `velite.config.ts` (rehype-pretty-code plugin)
-- Impact: `unsafe-inline` for styles reduces protection against CSS injection attacks. Lower severity than `unsafe-eval` but still a CSP weakening.
-- Fix approach: Investigate nonce-based CSP for styles. The `src/proxy.ts` middleware architecture is now in place to support nonce generation per request. This would allow replacing `unsafe-inline` with `nonce-{value}`.
-
-### Dead Code: `CopyButton` Component Orphaned by MDX Migration
-
-- Issue: `src/components/blog/copy-button.tsx` is a React `CopyButton` component that is no longer used anywhere in the application. After the MDX migration (phase 16), code block enhancement moved to `src/components/blog/code-block-enhancer.tsx`, which injects buttons imperatively via DOM manipulation.
-- Files: `src/components/blog/copy-button.tsx`, `src/components/blog/copy-button.test.tsx`
-- Impact: Dead production code that is actively tested (3 tests in `copy-button.test.tsx` all pass) but the component has no consumer. The test counts inflate the coverage numbers without providing real protection. Maintenance burden if lucide-react icons change.
-- Fix approach: Remove `src/components/blog/copy-button.tsx` and `src/components/blog/copy-button.test.tsx`. The `CodeBlockEnhancer` in `src/components/blog/code-block-enhancer.tsx` now owns copy button functionality using inline SVGs.
-
-### Test File: `security-headers.test.ts` Tests a Non-Existent Module Path
-
-- Issue: `src/lib/security-headers.test.ts` imports from `../../src/proxy` (line 2) — a relative path starting from within `src/lib/` that resolves to `src/proxy.ts`. This works today but the path is fragile: moving either file breaks the import. The test also has a mismatched name — it lives in `src/lib/` but describes a `proxy` module.
-- Files: `src/lib/security-headers.test.ts` (line 2)
-- Impact: All 6 tests pass, but the test file's location and import path are inconsistent with the rest of the test organization pattern (tests co-located with source). If `src/proxy.ts` is renamed or moved, these tests silently stop running.
-- Fix approach: Move the test to `src/proxy.test.ts` (co-located with source) and update the import to `'./proxy'`. Or rename `security-headers.test.ts` to `proxy.test.ts` in place and fix the import.
-
-### Dependency: Major Version Updates Available
-
-- Issue: Several packages have major version bumps available that may introduce breaking changes:
-  - `@vercel/analytics` at `1.6.1`, latest `2.0.1` (major)
-  - `shiki` at `3.22.0`, latest `4.0.2` (major)
-  - `typescript` at `5.9.3`, latest `6.0.2` (major)
-  - `lucide-react` at `0.563.0`, latest `1.7.0` (major)
-  - `eslint` at `9.39.2`, latest `10.2.0` (major)
-- Files: `package.json`
-- Impact: Major versions may introduce breaking API changes. `shiki` v4 may affect `rehype-pretty-code` integration (custom CSS-variables theme in `velite.config.ts`). TypeScript 6 may introduce stricter checks. `lucide-react` icon API changes could break `CopyButton` or other icon consumers.
-- Fix approach: Evaluate each upgrade separately in a branch. Priority: `shiki` and `rehype-pretty-code` should be upgraded together since they share a compatibility matrix. `typescript` upgrade should be tested with `npx tsc --noEmit`.
+**`Suspense` boundaries used without fallback props:**
+- Issue: `<Suspense>` wraps `FilteredPostList` and `FilteredProjectList` but passes no `fallback` prop, resulting in `undefined` fallback (renders nothing while suspended).
+- Files: `src/app/blog/page.tsx` line 23, `src/app/projects/page.tsx` line 25
+- Impact: If the wrapped component suspends, users see a blank region rather than a loading skeleton. The components are unlikely to suspend in practice (no async data in client components) but the omission is fragile.
+- Fix approach: Add `fallback={<LoadingSkeleton />}` or at minimum `fallback={null}` to document intent. The existing `loading.tsx` files provide route-level skeletons.
 
 ---
 
-## Minor Severity
+## Security Considerations
 
-### TypeScript: Test Files Report False tsc Errors
+**`'unsafe-inline'` in CSP `script-src`:**
+- Risk: The Content-Security-Policy in `src/proxy.ts` includes `'unsafe-inline'` in `script-src`, negating much of the XSS protection CSP provides for scripts. This is documented as a known gap (test SEC-01 in `src/lib/seo-assets.test.ts` asserts it is present rather than absent).
+- Files: `src/proxy.ts` lines 3–13
+- Current mitigation: `unsafe-eval` is explicitly absent; frame-ancestors is set to 'none'; all other sources are self-restricted. The `<meta>` approach or nonce-based CSP would allow removing `unsafe-inline`.
+- Recommendations: Evaluate nonce-based CSP or `strict-dynamic` to remove `unsafe-inline`. This is a known trade-off for the current site complexity level.
 
-- Issue: Running `npx tsc --noEmit` reports 10 errors in test files: 4x `TS7009` and 4x `TS2345` in `src/app/error.test.tsx`, and 1x `TS2304 Cannot find name 'afterEach'` in each of `src/hooks/use-glow-positions.test.ts` and `src/hooks/use-hero-animation.test.ts`.
-- Files: `src/app/error.test.tsx`, `src/hooks/use-glow-positions.test.ts`, `src/hooks/use-hero-animation.test.ts`
-- Impact: These are expected false positives — Vitest globals (`afterEach`, etc.) are not in tsconfig, and `error.test.tsx` passes actual `Error` objects where the component type expects them. Tests pass correctly under `npm run test`. However, tsc errors in test files can mask real errors during CI checks.
-- Fix approach: Add `"@vitest/globals"` to tsconfig `compilerOptions.types` (or add a `vitest.d.ts` declaration file) to resolve the `afterEach` errors. For `error.test.tsx`, review the render call pattern — the component should receive `{ error: new Error('...'), reset: () => {} }` as a prop object, not as two separate arguments.
+**IP extraction trusts `x-forwarded-for` without validation:**
+- Risk: The view-count POST handler reads the first value of `x-forwarded-for` without verifying it is the actual client IP. A user could spoof this header to bypass IP-based deduplication.
+- Files: `src/app/api/views/[slug]/route.ts` lines 44–45
+- Current mitigation: Rate limiting via `@upstash/ratelimit` is applied before the dedup check. View counts are non-critical UI. Deduplication is a convenience, not a security control.
+- Recommendations: On Vercel, `x-forwarded-for` is populated reliably by the infrastructure. Current approach is acceptable. For additional hardness, use `request.ip` (Vercel's trusted header) if it becomes available in the Next.js 16 Route Handler API.
 
-### Code Quality: `react-hooks/set-state-in-effect` Warnings Remain (3 instances)
+**Draft posts accessible via direct URL:**
+- Risk: The blog listing page (`src/app/blog/page.tsx`) filters out `draft: true` posts. However, `src/app/blog/[slug]/page.tsx` does not guard against drafts — it only calls `notFound()` if the slug is absent from the compiled `posts` array.
+- Files: `src/app/blog/[slug]/page.tsx` lines 48–53, `src/app/blog/page.tsx` line 15
+- Current mitigation: Velite includes all posts (including drafts) in the compiled `.velite/` output so the slug lookup succeeds. `generateStaticParams()` also returns all slugs including drafts, so draft pages are statically generated and publicly accessible.
+- Recommendations: Add a draft guard: `if (!post || post.draft) notFound()` in the post page. Apply the same guard to `generateStaticParams()` to exclude draft slugs from static generation.
 
-- Issue: ESLint emits `react-hooks/set-state-in-effect` warnings (downgraded from errors) for intentional patterns in `src/hooks/use-hero-animation.ts` (lines 34, 45) and `src/components/ui/scroll-reveal.tsx` (line 18). All three are suppressed with `eslint-disable-next-line` comments explaining the intent.
-- Files: `src/hooks/use-hero-animation.ts`, `src/components/ui/scroll-reveal.tsx`
-- Impact: Suppression comments are in place with explanations. These are working patterns (DOM cache reads, reduced-motion sync) that React 19's stricter analysis cannot distinguish from bugs. Low noise since they are properly documented.
-- Fix approach: No immediate action. If a future refactor touches these hooks, consider converting the image cache check in `use-hero-animation.ts` to a layout effect with `useSyncExternalStore` for consistency with the view store pattern.
-
-### Performance: OG Image Font Loading Uses `readFile`
-
-- Issue: Both OG image routes use `readFile(join(process.cwd(), 'src/assets/fonts/Inter-Bold.ttf'))` for font loading. This is a Turbopack workaround.
-- Files: `src/app/opengraph-image.tsx` (line 10), `src/app/blog/[slug]/opengraph-image.tsx` (lines 15–17)
-- Impact: Works in production but prevents edge runtime deployment (`node:fs` unavailable at the edge). If the build output directory structure changes or the assets path moves, OG images break silently — no test coverage for the font loading path.
-- Fix approach: Low priority. Monitor Turbopack's support for font loading in OG image routes. Consider adding a test that asserts the font file exists at the expected path (similar to the favicon assertions in `src/lib/seo-assets.test.ts`).
-
-### Dependency: Velite Pre-Release (0.x.x), Pinned
-
-- Issue: `velite` is pinned at exact version `0.3.1` (no caret). Semver 0.x conventions allow breaking changes on minor version bumps.
-- Files: `package.json` (line 42: `"velite": "0.3.1"`)
-- Impact: Exact pin prevents accidental upgrades, which is the right call for a 0.x dependency. However, security patches or bug fixes in newer Velite versions will not be applied automatically.
-- Fix approach: Periodically check Velite changelog for `0.3.x` patch releases. Upgrade in isolation since the `.velite/` import alias and collection schemas are tightly coupled to the Velite API.
-
-### Dependency: Minor Updates Deferred
-
-- Issue: Several packages have newer wanted versions available that have not been updated:
-  - `tailwindcss` + `@tailwindcss/postcss`: `4.1.18` → `4.2.2`
-  - `rehype-pretty-code`: `0.14.1` → `0.14.3`
-  - `tailwind-merge`: `3.4.0` → `3.5.0`
-  - `@upstash/redis`: `1.36.2` → `1.37.0`
-  - `@types/node`: `25.1.0` → `25.5.2`
-  - `@types/react`: `19.2.10` → `19.2.14`
-- Files: `package.json`
-- Impact: Minor and patch updates are generally safe but deferred maintenance can accumulate. `tailwindcss 4.2.2` and `rehype-pretty-code 0.14.3` are most relevant since they touch the rendering pipeline.
-- Fix approach: Run `npm update` and verify with `npm run build && npm run test`. The CSS-variables theme integration with `rehype-pretty-code` should be validated after any rehype-pretty-code update.
+**`navigator.clipboard` failure is unhandled:**
+- Risk: The copy button in `CodeBlockEnhancer` calls `await navigator.clipboard.writeText(text)` without a try/catch. Clipboard API requires a secure context (HTTPS) and user focus — it will silently throw on HTTP or in some browser extensions.
+- Files: `src/components/blog/code-block-enhancer.tsx` lines 49–60
+- Current mitigation: Production is served over HTTPS via Vercel, so failure cases are rare.
+- Recommendations: Wrap in try/catch and show a failure state on the button (or fall back to `execCommand`).
 
 ---
 
-## Scaling Considerations
+## Performance Bottlenecks
 
-### Content Volume
+**Hero rune glow positions recomputed on every resize:**
+- Problem: `useGlowPositions` uses a `ResizeObserver` on the hero section and recomputes all 14 rune overlay positions via `computeGlowPositions()` on every observation callback.
+- Files: `src/hooks/use-glow-positions.ts` lines 20–35, `src/lib/rune-glows.ts` lines 49–73
+- Cause: ResizeObserver fires rapidly during window resize. Each callback recomputes floating-point math across all 14 runes and triggers a React state update.
+- Improvement path: Debounce the ResizeObserver callback. A 100ms debounce would eliminate visual jank from excessive re-renders during resize without affecting perceived quality.
 
-- Current state: 6 blog posts, 2 projects
-- Concern: All posts and projects are loaded as full collections via Velite into memory at build time. At 500+ posts with full HTML body content, build memory usage could spike.
-- Files: `velite.config.ts`, all listing pages importing from `@/.velite`
-- Scaling path: Not a near-term concern. Monitor build duration and memory as content grows. Pagination or incremental builds would be needed at significant scale.
-
-### Redis Key Growth
-
-- Current state: Each unique IP+slug combination creates a dedup key (24h TTL). Each post slug creates a permanent view count key. Rate limit keys expire via sliding window.
-- Concern: Dedup keys self-clean. View count keys grow linearly with post count. At current volume (6 posts), negligible.
-- Files: `src/app/api/views/[slug]/route.ts`, `src/lib/rate-limit.ts`
-- Scaling path: Upstash free tier allows 10K commands/day. Well within limits at current content volume.
+**E2E tests require full `npm run build` before running:**
+- Problem: The Playwright config (`playwright.config.ts` line 9) runs `npm run build && npm run start` as the webServer command, meaning every `npm run test:e2e` invocation triggers a full build.
+- Files: `playwright.config.ts`
+- Cause: E2E tests run against the production build. `reuseExistingServer: !process.env.CI` mitigates this locally only if a server is already running.
+- Improvement path: Document the workflow for local e2e iteration (keep dev server running, point playwright at it) or add a `test:e2e:dev` script using `npm run dev`.
 
 ---
 
-## Test Coverage Assessment
+## Fragile Areas
 
-### Current State
+**Hero animation sequence uses hardcoded `setTimeout` values:**
+- Files: `src/hooks/use-hero-animation.ts` lines 56–58, 65–67
+- Why fragile: The 600ms and 500ms delays are hardcoded constants that must stay in sync with CSS transition durations in `globals.css`. If either is changed independently, the animation will overlap or gap.
+- Safe modification: Change both the CSS transition duration and the corresponding `setTimeout` value in `use-hero-animation.ts` together. The values are:  `bg-reveal` transition (350ms) + pause (250ms) = 600ms, then text reveal to glow cascade = 500ms.
+- Test coverage: Covered by `src/hooks/use-hero-animation.test.ts` for state transitions, but CSS timing is untested.
 
-19 test files, 135 tests passing. Coverage spans:
-- **Unit tests (Vitest):** Error boundaries, loading skeleton, copy button (orphaned — see concerns above), MDX content, filter chip, hooks (filtered list, glow positions, hero animation, media query, view store), lib utilities (format, rate limit, rune glows, security headers via proxy, SEO assets, validation, views)
-- **E2E tests (Playwright):** Mobile menu, code copy, view count, mobile TOC
+**Rune glow position coordinates hardcoded to 2560×1429 image dimensions:**
+- Files: `src/lib/rune-glows.ts` lines 11–12, `src/components/hero.tsx`
+- Why fragile: `IMG_W = 2560` and `IMG_H = 1429` are hardcoded constants matching the specific hero image. If `hero.webp` is replaced, all 14 `(imgX, imgY)` coordinates in `RUNE_GLOWS` and the two constants must be updated manually.
+- Safe modification: Replace hero image and all rune coordinates together. The `computeGlowPositions()` math is correct given accurate inputs.
+- Test coverage: `src/hooks/use-glow-positions.test.ts` mocks the constants, so tests will not catch coordinate drift.
 
-### Gaps
+**`CodeBlockEnhancer` uses a module-level ref guard instead of instance guard:**
+- Files: `src/components/blog/code-block-enhancer.tsx` lines 15–19
+- Why fragile: `const enhanced = useRef(false)` is an instance-level ref, which is correct for a single mounted instance. However, because the component returns `null` and has no visible output, its re-mount behavior depends on the parent not unmounting it unexpectedly. In React Strict Mode (development), effects fire twice — the guard prevents double-enhancement correctly via the `useRef`, but this is non-obvious.
+- Safe modification: Do not add `key` prop to `<CodeBlockEnhancer />`. Do not wrap it in conditional rendering.
 
-- **API route handlers** — `src/app/api/views/route.ts` and `src/app/api/views/[slug]/route.ts` have no unit tests. Validation and rate limiting utilities are tested, but the route handler integration (request parsing, Redis interaction, response formatting, dedup logic) is not covered.
-- **Page components** — `src/app/blog/page.tsx`, `src/app/projects/page.tsx`, `src/app/about/page.tsx` have no component tests. Server components are harder to unit test but listing filter logic in `src/components/blog/filtered-post-list.tsx` and `src/components/projects/filtered-project-list.tsx` is not independently tested.
-- **OG image font loading** — `src/app/opengraph-image.tsx` and `src/app/blog/[slug]/opengraph-image.tsx` font file existence is not verified by any test. A future font path change would fail silently in production.
-- **`CodeBlockEnhancer`** — `src/components/blog/code-block-enhancer.tsx` has no tests. It uses DOM mutation to inject copy buttons after mount, which is testable with jsdom but currently uncovered. Meanwhile, the orphaned `CopyButton` component has 3 tests.
+---
+
+## Test Coverage Gaps
+
+**No tests for page components or layout components:**
+- What's not tested: `src/app/layout.tsx`, `src/app/page.tsx`, `src/app/blog/page.tsx`, `src/app/blog/[slug]/page.tsx`, `src/app/projects/page.tsx`, `src/app/projects/[slug]/page.tsx`, `src/app/about/page.tsx`, `src/components/layout/header.tsx`, `src/components/layout/footer.tsx`
+- Files: All paths listed above
+- Risk: Rendering regressions, metadata changes, and routing changes would go undetected by unit tests. E2E tests in `e2e/` provide some coverage for navigation and key flows, but only for a subset of scenarios.
+- Priority: Medium — page components are primarily composition and pass-through. The most testable behavior (filtering, view counts, animations) has dedicated hook and component tests.
+
+**No unit tests for content-rendering components:**
+- What's not tested: `src/components/blog/post-card.tsx`, `src/components/blog/toc.tsx`, `src/components/blog/mobile-toc.tsx`, `src/components/blog/view-counter.tsx`, `src/components/blog/listing-view-counts.tsx`, `src/components/blog/filtered-post-list.tsx`, `src/components/projects/filtered-project-list.tsx`, `src/components/projects/project-card.tsx`
+- Files: All paths listed above
+- Risk: Prop contract changes, conditional rendering bugs, and accessibility regressions would go unnoticed. `ViewCounter` and `ListingViewCounts` have moderately complex async/cache logic that is currently only tested via E2E.
+- Priority: Medium — `ViewCounter` and `ListingViewCounts` are highest priority given their async complexity and localStorage interaction.
+
+**No coverage enforcement:**
+- What's not tested: No coverage threshold is configured in `vitest.config.ts`.
+- Files: `vitest.config.ts`
+- Risk: Coverage can silently decline as new features are added. There is no automated signal when a file drops below an acceptable threshold.
+- Priority: Low for a personal site — the existing test suite is reasonably thorough for the highest-complexity modules.
+
+---
+
+## Dependencies at Risk
+
+**Velite 0.3.1 (pre-release, exact pin):**
+- Risk: Pre-release software with no stability guarantees. No minor/patch updates are automatically received.
+- Impact: Content pipeline breaks if Node.js or a transitive dependency introduces an incompatibility with Velite's exact pinned version.
+- Migration plan: Monitor for Velite 1.0 stable release. Evaluate upgrade with full pipeline validation. No immediate action needed.
+
+**eslint 9.x vs 10.x:**
+- Risk: ESLint 10.x is current latest (per `npm outdated` output). The project is on 9.x via `eslint-config-next` peer dependency.
+- Impact: Lint rule additions/changes in ESLint 10 are not received. Low risk for a stable config.
+- Migration plan: Defer until `eslint-config-next` bumps its peer dependency to ESLint 10.
+
+---
+
+## Missing Critical Features
+
+**No admin protection for draft posts:**
+- Problem: Posts marked `draft: true` in frontmatter are excluded from listings and sitemap, but their statically-generated pages are publicly accessible via direct URL (see Security section above).
+- Blocks: Publishing drafts without them being discoverable requires either URL obscurity (current, not enforced) or a runtime notFound guard.
 
 ---
 
