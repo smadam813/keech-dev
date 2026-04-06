@@ -9,10 +9,10 @@ Requirements for v1.8 Validate & Address Concerns. Each maps to roadmap phases.
 
 ### Dead Code & Test Hygiene
 
-- [ ] **HYGN-01**: Remove orphaned CopyButton component (src/components/blog/copy-button.tsx) and its test file
-- [ ] **HYGN-02**: Remove lucide-react dependency if CopyButton was its only consumer
-- [ ] **HYGN-03**: Relocate security-headers.test.ts to src/proxy.test.ts with corrected import path
-- [ ] **HYGN-04**: Add `vitest/globals` to tsconfig compilerOptions.types to resolve false tsc errors in test files
+- [x] **HYGN-01**: Remove orphaned CopyButton component (src/components/blog/copy-button.tsx) and its test file
+- [x] **HYGN-02**: Remove lucide-react dependency if CopyButton was its only consumer
+- [x] **HYGN-03**: Relocate security-headers.test.ts to src/proxy.test.ts with corrected import path
+- [x] **HYGN-04**: Add `vitest/globals` to tsconfig compilerOptions.types to resolve false tsc errors in test files
 
 ### Dependency Updates
 
@@ -20,18 +20,18 @@ Requirements for v1.8 Validate & Address Concerns. Each maps to roadmap phases.
 - [x] **DEPS-02**: Upgrade shiki 3→4 together with rehype-pretty-code, validate CSS-variables theme
 - [x] **DEPS-03**: Upgrade lucide-react to 1.x (if not removed by HYGN-02)
 - [x] **DEPS-04**: Upgrade @vercel/analytics to 2.x, verify no CSP domain changes needed
-- [ ] **DEPS-05**: Upgrade TypeScript to 6.x, run ts5to6 migration tool, validate with tsc --noEmit
+- [x] **DEPS-05**: Upgrade TypeScript to 6.x, run ts5to6 migration tool, validate with tsc --noEmit
 
 ### Test Coverage
 
-- [ ] **TEST-01**: Unit tests for GET /api/views (batch fetch) route handler with mocked Redis
-- [ ] **TEST-02**: Unit tests for GET/POST /api/views/[slug] route handler (fetch, increment, dedup, rate limit)
-- [ ] **TEST-03**: Unit tests for CodeBlockEnhancer DOM mutation (copy button injection, clipboard interaction)
-- [ ] **TEST-04**: Assertion test that OG image font file exists at expected path
+- [x] **TEST-01**: Unit tests for GET /api/views (batch fetch) route handler with mocked Redis
+- [x] **TEST-02**: Unit tests for GET/POST /api/views/[slug] route handler (fetch, increment, dedup, rate limit)
+- [x] **TEST-03**: Unit tests for CodeBlockEnhancer DOM mutation (copy button injection, clipboard interaction)
+- [x] **TEST-04**: Assertion test that OG image font file exists at expected path
 
 ### Code Quality
 
-- [ ] **QUAL-01**: Evaluate 3 react-hooks/set-state-in-effect suppressions (use-hero-animation.ts lines 34/45, scroll-reveal.tsx line 18) and refactor if cleaner alternative exists
+- [x] **QUAL-01**: Evaluate 3 react-hooks/set-state-in-effect suppressions (use-hero-animation.ts lines 34/45, scroll-reveal.tsx line 18) and refactor if cleaner alternative exists
 
 ## Future Requirements
 
@@ -57,20 +57,20 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| HYGN-01 | Phase 20 | Pending |
-| HYGN-02 | Phase 20 | Pending |
-| HYGN-03 | Phase 20 | Pending |
-| HYGN-04 | Phase 20 | Pending |
+| HYGN-01 | Phase 20 | Complete |
+| HYGN-02 | Phase 20 | Complete |
+| HYGN-03 | Phase 20 | Complete |
+| HYGN-04 | Phase 20 | Complete |
 | DEPS-01 | Phase 21 | Complete |
 | DEPS-02 | Phase 21 | Complete |
 | DEPS-03 | Phase 21 | Complete |
 | DEPS-04 | Phase 21 | Complete |
-| DEPS-05 | Phase 22 | Pending |
-| TEST-01 | Phase 23 | Pending |
-| TEST-02 | Phase 23 | Pending |
-| TEST-03 | Phase 23 | Pending |
-| TEST-04 | Phase 23 | Pending |
-| QUAL-01 | Phase 23 | Pending |
+| DEPS-05 | Phase 22 | Complete |
+| TEST-01 | Phase 23 | Complete |
+| TEST-02 | Phase 23 | Complete |
+| TEST-03 | Phase 23 | Complete |
+| TEST-04 | Phase 23 | Complete |
+| QUAL-01 | Phase 23 | Complete |
 
 **Coverage:**
 - v1.8 requirements: 14 total
@@ -79,4 +79,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-04-05*
-*Last updated: 2026-04-05 after roadmap creation*
+*Last updated: 2026-04-06 after milestone audit — all 14 requirements complete*
