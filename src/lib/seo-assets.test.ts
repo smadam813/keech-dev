@@ -91,9 +91,9 @@ describe('SEO-03: per-post opengraph-image.tsx exports default + generateStaticP
     'utf-8'
   )
 
-  it('imports posts from @/.velite', () => {
-    expect(postOgSrc).toContain("from '@/.velite'")
-    expect(postOgSrc).toContain('posts')
+  it('imports publishedPosts from @/lib/posts', () => {
+    expect(postOgSrc).toContain("from '@/lib/posts'")
+    expect(postOgSrc).toContain('publishedPosts')
   })
 
   it('exports size constant with 1200x630 dimensions', () => {
@@ -110,8 +110,8 @@ describe('SEO-03: per-post opengraph-image.tsx exports default + generateStaticP
     expect(postOgSrc).toMatch(/export\s+(function|async\s+function)\s+generateStaticParams/)
   })
 
-  it('looks up post title via post?.title', () => {
-    expect(postOgSrc).toContain('post?.title')
+  it('looks up post title via post.title (narrowed after notFound guard)', () => {
+    expect(postOgSrc).toContain('post.title')
   })
 })
 
@@ -169,8 +169,9 @@ describe('SEO-05: RSS feed route is well-formed', () => {
     expect(feedSrc).toContain('rel="self"')
   })
 
-  it('filters out draft posts', () => {
-    expect(feedSrc).toContain('!p.draft')
+  it('filters out draft posts via publishedPosts helper', () => {
+    expect(feedSrc).toContain("from '@/lib/posts'")
+    expect(feedSrc).toContain('publishedPosts')
   })
 
   it('returns Content-Type application/xml', () => {

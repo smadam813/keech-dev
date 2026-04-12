@@ -113,11 +113,18 @@ A polished, intentional developer portfolio — fast, visually distinctive, and 
 
 ### Active
 
-(None — planning next milestone)
+## Current Milestone: v1.8.1 Address Missed Concerns
+
+**Goal:** Close the three CONCERNS.md items that were out of scope during v1.8 but are genuinely worth acting on.
+
+**Target features:**
+- Draft post guard — exclude `draft: true` posts from dynamic routes and `generateStaticParams()`
+- `test:e2e:dev` script — dev-server-backed E2E workflow for fast local iteration
+- Clipboard failure handling — wrap copy-button write in `try/catch` with user-visible failure state
 
 ## Current State
 
-Shipped v1.8 Validate & Address Concerns (2026-04-06). All codebase audit concerns resolved.
+Started v1.8.1 Address Missed Concerns (2026-04-11). Small cleanup patch on v1.8.
 
 ### Out of Scope
 
@@ -237,4 +244,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-06 after v1.8 milestone*
+*Last updated: 2026-04-12 — v1.8.1 Phase 24 complete (draft guard, dev E2E script, clipboard failure handling)*

@@ -1,9 +1,9 @@
-import { posts } from '@/.velite'
+import { publishedPosts } from '@/lib/posts'
 
 export function GET() {
-  const publishedPosts = posts
-    .filter(p => !p.draft)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  const sortedPosts = [...publishedPosts].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  )
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
@@ -12,9 +12,9 @@ export function GET() {
     <link>https://keech.dev</link>
     <description>Blog posts by Adam Keech</description>
     <language>en-us</language>
-    <lastBuildDate>${new Date(publishedPosts[0]?.date ?? Date.now()).toUTCString()}</lastBuildDate>
+    <lastBuildDate>${new Date(sortedPosts[0]?.date ?? Date.now()).toUTCString()}</lastBuildDate>
     <atom:link href="https://keech.dev/feed.xml" rel="self" type="application/rss+xml"/>
-    ${publishedPosts.map(post => `
+    ${sortedPosts.map(post => `
     <item>
       <title><![CDATA[${post.title}]]></title>
       <link>https://keech.dev/blog/${post.slug}</link>

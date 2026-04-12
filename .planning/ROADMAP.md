@@ -8,6 +8,7 @@
 - ✅ **v1.6 Address Concerns** — Phases 9-13 (shipped 2026-04-03)
 - ✅ **v1.7 Address Additional Concerns** — Phases 14-19 (shipped 2026-04-05)
 - ✅ **v1.8 Validate & Address Concerns** — Phases 20-23 (shipped 2026-04-06)
+- 🚧 **v1.8.1 Address Missed Concerns** — Phase 24 (in progress)
 
 ## Phases
 
@@ -82,6 +83,28 @@ See: `.planning/milestones/v1.8-ROADMAP.md` for full details.
 
 </details>
 
+### v1.8.1 Address Missed Concerns (in progress)
+
+- [x] **Phase 24: Audit Gap Closures** — Close the three CONCERNS.md items missed by v1.8 (draft guard, dev-server E2E script, clipboard failure handling) (completed 2026-04-12)
+
+## Phase Details
+
+### Phase 24: Audit Gap Closures
+**Goal**: Close the three CONCERNS.md items that were out of scope during v1.8 so the audit backlog is fully resolved
+**Depends on**: v1.8 (shipped)
+**Requirements**: GAP-01, GAP-02, GAP-03
+**Success Criteria** (what must be TRUE):
+  1. Visiting `/blog/<slug>` for a post with `draft: true` in frontmatter returns the site's 404 page instead of rendering the draft content
+  2. `next build` output does not include any draft-slug routes — `generateStaticParams()` filters them out so drafts are not prerendered
+  3. Running `npm run test:e2e:dev` executes the Playwright suite against `npm run dev` (no `next build` required), enabling fast local E2E iteration
+  4. When `navigator.clipboard.writeText` rejects, the code-block copy button surfaces a visible failure state (no unhandled promise rejection, no silent swallow) and the existing success path still works
+  5. Unit tests cover the clipboard failure path in `CodeBlockEnhancer` (new scenario added alongside the existing 5), keeping DOM-mutation test coverage complete
+**Plans**: 3 plans
+Plans:
+- [x] 24-01-draft-guard-PLAN.md — Extract publishedPosts helper and wire through all 5 call sites (GAP-01)
+- [x] 24-02-dev-e2e-script-PLAN.md — Add env-var ternary to Playwright config and test:e2e:dev script (GAP-02)
+- [x] 24-03-clipboard-failure-PLAN.md — Add try/catch + xIcon + aria-live to clipboard handler and failure test (GAP-03)
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -109,3 +132,4 @@ See: `.planning/milestones/v1.8-ROADMAP.md` for full details.
 | 21. Dependency Upgrades | v1.8 | 4/4 | Complete | 2026-04-05 |
 | 22. TypeScript 6 Upgrade | v1.8 | 1/1 | Complete | 2026-04-05 |
 | 23. Test Coverage & Code Quality | v1.8 | 2/2 | Complete | 2026-04-06 |
+| 24. Audit Gap Closures | v1.8.1 | 3/3 | Complete    | 2026-04-12 |
