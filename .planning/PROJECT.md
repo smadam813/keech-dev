@@ -110,21 +110,18 @@ A polished, intentional developer portfolio — fast, visually distinctive, and 
 - ✓ CodeBlockEnhancer DOM mutations unit tested (5 scenarios) — v1.8
 - ✓ OG font file existence assertion added — v1.8
 - ✓ react-hooks/set-state-in-effect suppressions verified as intentional with inline rationale — v1.8
+- ✓ Draft posts excluded from all routes via publishedPosts helper — v1.8.1
+- ✓ notFound() guard on OG image route prevents draft card rendering — v1.8.1
+- ✓ test:e2e:dev script runs Playwright against Turbopack dev server — v1.8.1
+- ✓ Clipboard copy button catches writeText rejection with visible failure state — v1.8.1
+- ✓ aria-live='polite' on copy button enables screen reader announcements — v1.8.1
+- ✓ 157 unit tests (including clipboard failure path) — v1.8.1
 
 ### Active
 
-## Current Milestone: v1.8.1 Address Missed Concerns
-
-**Goal:** Close the three CONCERNS.md items that were out of scope during v1.8 but are genuinely worth acting on.
-
-**Target features:**
-- Draft post guard — exclude `draft: true` posts from dynamic routes and `generateStaticParams()`
-- `test:e2e:dev` script — dev-server-backed E2E workflow for fast local iteration
-- Clipboard failure handling — wrap copy-button write in `try/catch` with user-visible failure state
-
 ## Current State
 
-Started v1.8.1 Address Missed Concerns (2026-04-11). Small cleanup patch on v1.8.
+Shipped v1.8.1 Address Missed Concerns (2026-04-11). All audit gaps resolved: draft guard, dev E2E script, clipboard failure handling. No active milestone.
 
 ### Out of Scope
 
@@ -150,7 +147,7 @@ Started v1.8.1 Address Missed Concerns (2026-04-11). Small cleanup patch on v1.8
 
 ## Context
 
-Shipped v1.8 Validate & Address Concerns — dead code removed, all dependencies current, TypeScript 6, full test coverage.
+Shipped v1.8.1 Address Missed Concerns — audit backlog fully resolved (draft guard, dev E2E script, clipboard failure handling).
 Tech stack: Next.js 16, React 19, Tailwind CSS v4, Velite (s.markdown()), Upstash Redis, TypeScript 6.0.2.
 Codebase: ~5,200 LOC TypeScript + CSS across ~100 source files.
 Hero section has load-gated two-beat reveal and 14 ambient rune glows.
@@ -162,7 +159,7 @@ Syntax highlighting uses shiki 4 CSS-variables theme with 14 --shiki-* token var
 Branded error boundaries at three levels catch runtime errors gracefully.
 Othala rune favicon + dynamic OG images for social sharing.
 RSS feed at /feed.xml, sitemap with actual content dates.
-Test coverage: 154 Vitest unit tests + 18 Playwright E2E tests (16 active, 2 graceful skips).
+Test coverage: 157 Vitest unit tests + 18 Playwright E2E tests (16 active, 2 graceful skips).
 Collapsible sticky mobile TOC for blog post section navigation.
 Site is statically generated and deployed via git-push to Vercel.
 Zero npm audit vulnerabilities. Zero ESLint errors/warnings. Zero dead code.
@@ -244,4 +241,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-12 — v1.8.1 Phase 24 complete (draft guard, dev E2E script, clipboard failure handling)*
+*Last updated: 2026-04-11 — v1.8.1 shipped (draft guard, dev E2E script, clipboard failure handling)*
