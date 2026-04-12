@@ -1,10 +1,10 @@
 import type { MetadataRoute } from 'next'
-import { posts, projects } from '@/.velite'
+import { projects } from '@/.velite'
+import { publishedPosts } from '@/lib/posts'
 
 const BASE_URL = 'https://keech.dev'
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const publishedPosts = posts.filter(p => !p.draft)
 
   const latestPostDate = publishedPosts.reduce((latest, p) => {
     const d = new Date(p.updated || p.date)
