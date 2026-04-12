@@ -10,14 +10,15 @@
     "research": true,
     "plan_check": true,
     "verifier": true,
-    "auto_advance": false,
+    "auto_advance": true,
     "nyquist_validation": true,
     "ui_phase": true,
     "ui_safety_gate": true,
     "text_mode": false,
     "research_before_questions": true,
     "skip_discuss": false,
-    "use_worktrees": true
+    "use_worktrees": true,
+    "_auto_chain_active": true
   },
   "git": {
     "branching_strategy": "none",
