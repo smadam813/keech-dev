@@ -85,7 +85,7 @@ See: `.planning/milestones/v1.8-ROADMAP.md` for full details.
 
 ### v1.8.1 Address Missed Concerns (in progress)
 
-- [ ] **Phase 24: Audit Gap Closures** — Close the three CONCERNS.md items missed by v1.8 (draft guard, dev-server E2E script, clipboard failure handling)
+- [x] **Phase 24: Audit Gap Closures** — Close the three CONCERNS.md items missed by v1.8 (draft guard, dev-server E2E script, clipboard failure handling) (completed 2026-04-12)
 
 ## Phase Details
 
@@ -101,9 +101,9 @@ See: `.planning/milestones/v1.8-ROADMAP.md` for full details.
   5. Unit tests cover the clipboard failure path in `CodeBlockEnhancer` (new scenario added alongside the existing 5), keeping DOM-mutation test coverage complete
 **Plans**: 3 plans
 Plans:
-- [ ] 24-01-draft-guard-PLAN.md — Extract publishedPosts helper and wire through all 5 call sites (GAP-01)
-- [ ] 24-02-dev-e2e-script-PLAN.md — Add env-var ternary to Playwright config and test:e2e:dev script (GAP-02)
-- [ ] 24-03-clipboard-failure-PLAN.md — Add try/catch + xIcon + aria-live to clipboard handler and failure test (GAP-03)
+- [x] 24-01-draft-guard-PLAN.md — Extract publishedPosts helper and wire through all 5 call sites (GAP-01)
+- [x] 24-02-dev-e2e-script-PLAN.md — Add env-var ternary to Playwright config and test:e2e:dev script (GAP-02)
+- [x] 24-03-clipboard-failure-PLAN.md — Add try/catch + xIcon + aria-live to clipboard handler and failure test (GAP-03)
 
 ## Progress
 
@@ -132,4 +132,4 @@ Plans:
 | 21. Dependency Upgrades | v1.8 | 4/4 | Complete | 2026-04-05 |
 | 22. TypeScript 6 Upgrade | v1.8 | 1/1 | Complete | 2026-04-05 |
 | 23. Test Coverage & Code Quality | v1.8 | 2/2 | Complete | 2026-04-06 |
-| 24. Audit Gap Closures | v1.8.1 | 0/3 | Not started | — |
+| 24. Audit Gap Closures | v1.8.1 | 3/3 | Complete    | 2026-04-12 |
