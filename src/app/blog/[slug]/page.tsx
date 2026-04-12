@@ -1,4 +1,4 @@
-import { posts } from '@/.velite'
+import { publishedPosts } from '@/lib/posts'
 import { notFound } from 'next/navigation'
 import { MDXContent } from '@/components/blog/mdx-content'
 import { TableOfContents } from '@/components/blog/toc'
@@ -16,12 +16,12 @@ interface PostPageProps {
 }
 
 export async function generateStaticParams() {
-  return posts.map(post => ({ slug: post.slug }))
+  return publishedPosts.map(post => ({ slug: post.slug }))
 }
 
 export async function generateMetadata({ params }: PostPageProps): Promise<Metadata> {
   const { slug } = await params
-  const post = posts.find(p => p.slug === slug)
+  const post = publishedPosts.find(p => p.slug === slug)
 
   if (!post) {
     return {
@@ -46,7 +46,7 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
 
 export default async function PostPage({ params }: PostPageProps) {
   const { slug } = await params
-  const post = posts.find(p => p.slug === slug)
+  const post = publishedPosts.find(p => p.slug === slug)
 
   if (!post) {
     notFound()

@@ -1,7 +1,8 @@
 import { ImageResponse } from 'next/og'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { posts } from '@/.velite'
+import { notFound } from 'next/navigation'
+import { publishedPosts } from '@/lib/posts'
 import { formatDate } from '@/lib/format'
 
 export const alt = 'Blog post'
@@ -10,14 +11,17 @@ export const contentType = 'image/png'
 
 export default async function Image({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const post = posts.find(p => p.slug === slug)
+  const post = publishedPosts.find(p => p.slug === slug)
+  if (!post) {
+    notFound()
+  }
 
   const interBold = await readFile(
     join(process.cwd(), 'src/assets/fonts/Inter-Bold.ttf')
   )
 
-  const title = post?.title ?? 'Blog Post'
-  const date = post?.date ? formatDate(post.date) : ''
+  const title = post.title
+  const date = post.date ? formatDate(post.date) : ''
 
   return new ImageResponse(
     (
@@ -112,5 +116,5 @@ export default async function Image({ params }: { params: Promise<{ slug: string
 }
 
 export function generateStaticParams() {
-  return posts.map(post => ({ slug: post.slug }))
+  return publishedPosts.map(post => ({ slug: post.slug }))
 }
