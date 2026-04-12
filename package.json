@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "velite": "velite",
     "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:e2e:dev": "PW_DEV_SERVER=1 playwright test"
   },
   "repository": {
     "type": "git",
