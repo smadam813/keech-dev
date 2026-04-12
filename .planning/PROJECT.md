@@ -244,4 +244,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-11 — v1.8.1 milestone started*
+*Last updated: 2026-04-12 — v1.8.1 Phase 24 complete (draft guard, dev E2E script, clipboard failure handling)*
