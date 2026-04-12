@@ -33,10 +33,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| GAP-01 | TBD | Pending |
-| GAP-02 | TBD | Pending |
-| GAP-03 | TBD | Pending |
+| GAP-01 | Phase 24 | Pending |
+| GAP-02 | Phase 24 | Pending |
+| GAP-03 | Phase 24 | Pending |
 
 ---
 
-*Last updated: 2026-04-11 — v1.8.1 milestone defined*
+*Last updated: 2026-04-11 — v1.8.1 roadmap created, Phase 24 covers all requirements*
