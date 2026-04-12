@@ -59,4 +59,34 @@ describe('CodeBlockEnhancer (TEST-03)', () => {
     const groups = document.querySelectorAll('.group')
     expect(groups.length).toBe(1)
   })
+
+  it('shows failure state when clipboard writeText rejects', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const rejection = new Error('Clipboard denied')
+    ;(navigator.clipboard.writeText as ReturnType<typeof vi.fn>)
+      .mockRejectedValueOnce(rejection)
+
+    render(<CodeBlockEnhancer />)
+    const button = document.querySelector('button[aria-label="Copy code"]') as HTMLButtonElement
+    expect(button).not.toBeNull()
+    button.click()
+
+    // Wait for the catch block to execute and update DOM
+    await waitFor(() => {
+      expect(button.getAttribute('aria-label')).toBe('Copy failed')
+    })
+    expect(button.innerHTML).toContain('M18 6 6 18')
+    expect(consoleErrorSpy).toHaveBeenCalledWith('Clipboard write failed:', rejection)
+
+    // Wait for the 2000ms revert timer
+    await waitFor(
+      () => {
+        expect(button.getAttribute('aria-label')).toBe('Copy code')
+      },
+      { timeout: 2500 }
+    )
+    expect(button.innerHTML).toContain('M4 16')
+
+    consoleErrorSpy.mockRestore()
+  })
 })
