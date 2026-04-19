@@ -12,18 +12,36 @@
 
 ## Execution status (2026-04-19)
 
-Pre-work + Tasks 1–20 shipped on `re-design`. Stopped after Task 20 at user request. Remaining: Tasks 21–28 (project detail, prose, code blocks, footer + MDXFallback sweep, error/404/loading sweep, hero conditional check, unit-test verification, e2e smoke + final build).
+All tasks (pre-work through Task 28) shipped on `re-design`. Branch is ahead of `origin/re-design` by 31 commits; next step is PR to `preview`.
 
-Head commit after Task 20 fixes: `d93ebf1` (`fix(post): outer section not article, encode tag href, drop redundant toc sticky`).
+Head commit: `4d9a0f4` (`fix(redesign): copy-button hover, drop empty project TOC aside, sweep route loading skeletons`).
+
+Session 2 (Tasks 21–28) commits:
+- `9d4feac` feat(project): slab panel project detail
+- `e436004` fix(project): section not article, FilterChip stack, shared CATEGORY_LABEL
+- `c6cfe6f` style(prose): dark body typography
+- `d30993e` style(code): gold-accent code blocks + copy button
+- `c20a702` style(chrome): nocturnal footer + MDX fallback
+- `ab9881b` style(errors): dark-palette sweep across error boundaries + loading + 404
+- `4d9a0f4` fix(redesign): copy-button hover, drop empty project TOC aside, sweep route loading skeletons
 
 Notable follow-ups that landed during execution:
 - Task 9 added a `backdrop-filter` `@supports` fallback and extended the `inert` effect to cover `.site-header__brand` so focus cannot escape the open mobile-menu dialog (commit `ad5fe02`).
 - Task 20 fixed a nested-`<article>` semantics issue, `encodeURIComponent` on tag hrefs, and removed a redundant `sticky top-24` on the TOC (commit `d93ebf1`).
+- Task 21 fix commit (`e436004`) corrected nested `<article>`, replaced span-based stack chips with `FilterChip variant="sm"` (palette parity with project card), and extracted `CATEGORY_LABEL` to `src/lib/project-categories.ts`.
+- Task 28 final review fix (`4d9a0f4`) restored copy-button hover lift, dropped empty `<aside>` from project detail (phantom 240px rail at 900–1024px), and swept three route-scoped loading skeletons (`blog/loading.tsx`, `blog/[slug]/loading.tsx`, `projects/loading.tsx`) that were outside T25's original file list.
 
-Known deferred items:
+Verification (final):
+- `npm run lint` — clean
+- `npm run test -- --run` — 165/165 pass
+- `npm run build` — 27/27 static pages, zero warnings
+- `npx playwright test` — 16 pass / 2 skipped
+
+Known deferred items (carried forward, not blocking ship):
 - `.chip--sm` still uses `!important` to outrank Tailwind utilities (Task 8 review flag; plan-level choice).
 - `--chip-bg/--chip-fg/--chip-border` custom properties set on every chip are not yet consumed by any CSS selector (Task 8 premature API surface; revisit when a `:hover` rule needs them).
-- Hero still gets inset by `.site-main` padding on `/` between Task 4 and an eventual Hero bleed fix; Task 26 is the conditional visual check that would catch this if legibility fails.
+- Hero still inset by `.site-main` padding on `/` — Task 26 visual check did not force a change; revisit if a Hero bleed fix is added.
+- Minor tokenization wins not taken: footer `rgba(13,33,40,0.55)` literal, `.project-card__eyebrow` reused outside a `.project-card`, repeated `'2px solid var(--color-accent-gold)'` pattern across five error surfaces (could become `.panel--error`).
 
 ---
 
@@ -2500,7 +2518,7 @@ git commit -m "feat(post): slab panel + sticky TOC + mono meta row for post deta
 
 Same slab + sticky-TOC layout. Adds category eyebrow, italic Norse tagline, stack chips (all, no 6-cap), action buttons for demo/github.
 
-- [ ] **Step 21.1: Rewrite**
+- [x] **Step 21.1: Rewrite**
 
 ```tsx
 import { projects } from '@/.velite'
@@ -2659,7 +2677,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
 
 Remove the `<FilterChip label="" className="hidden" />` placeholder line before committing — it was a drafting artifact. Final file should not contain that line.
 
-- [ ] **Step 21.2: Remove the placeholder line**
+- [x] **Step 21.2: Remove the placeholder line**
 
 Open the file in your editor and delete the one line:
 ```tsx
@@ -2667,7 +2685,7 @@ Open the file in your editor and delete the one line:
 ```
 (If you already kept it out, skip.)
 
-- [ ] **Step 21.3: Build**
+- [x] **Step 21.3: Build**
 
 Run:
 ```bash
@@ -2675,7 +2693,7 @@ npm run build
 ```
 Expected: PASS.
 
-- [ ] **Step 21.4: Commit**
+- [x] **Step 21.4: Commit**
 
 ```bash
 git add src/app/projects/[slug]/page.tsx
@@ -2691,7 +2709,7 @@ git commit -m "feat(project): slab panel with category eyebrow, tagline, stack c
 
 Rewrites the prose subsystem for dark text, gold h2 underline, gold-accent blockquote, Ansuz list bullets in gold, image treatment for dark bg.
 
-- [ ] **Step 22.1: Replace the existing `.prose` block**
+- [x] **Step 22.1: Replace the existing `.prose` block**
 
 In `src/app/globals.css`, find the `/* Prose Styles (Blog Typography) */` header and replace the entire `@layer components { .prose { ... } ... }` block (everything from `.prose {` opening through the closing `}` of the last media query) with:
 
@@ -2825,7 +2843,7 @@ In `src/app/globals.css`, find the `/* Prose Styles (Blog Typography) */` header
 }
 ```
 
-- [ ] **Step 22.2: Commit**
+- [x] **Step 22.2: Commit**
 
 ```bash
 git add src/app/globals.css
@@ -2842,7 +2860,7 @@ git commit -m "style(prose): dark body typography with gold h2 rule and Ansuz bu
 
 Spec: drop the 3px black border + shadow-brutal on the code figure. Add a 3px gold left accent bar on `--color-surface-lo`. Title bar gets gold fg on `--color-bg-deep` fill. Shiki `--shiki-*` tokens untouched.
 
-- [ ] **Step 23.1: Update code-block styles**
+- [x] **Step 23.1: Update code-block styles**
 
 In `src/app/globals.css`, replace:
 
@@ -2903,7 +2921,7 @@ span[data-rehype-pretty-code-figure] code {
 }
 ```
 
-- [ ] **Step 23.2: Update copy button colors**
+- [x] **Step 23.2: Update copy button colors**
 
 In `src/components/blog/code-block-enhancer.tsx`, replace:
 
@@ -2925,7 +2943,7 @@ button.style.background = 'var(--color-surface-hi)'
 button.style.color = 'var(--color-ink)'
 ```
 
-- [ ] **Step 23.3: Build**
+- [x] **Step 23.3: Build**
 
 Run:
 ```bash
@@ -2933,7 +2951,7 @@ npm run build
 ```
 Expected: PASS.
 
-- [ ] **Step 23.4: Commit**
+- [x] **Step 23.4: Commit**
 
 ```bash
 git add src/app/globals.css src/components/blog/code-block-enhancer.tsx
@@ -2952,7 +2970,7 @@ Footer currently uses `bg-foreground text-background`. With the aliases, `foregr
 
 MDXFallback uses `bg-surface border-foreground shadow-brutal bg-accent text-white` — all reading oddly on the new palette.
 
-- [ ] **Step 24.1: Rewrite `src/components/layout/footer.tsx`**
+- [x] **Step 24.1: Rewrite `src/components/layout/footer.tsx`**
 
 ```tsx
 import Link from 'next/link'
@@ -3007,7 +3025,7 @@ export function Footer() {
 }
 ```
 
-- [ ] **Step 24.2: Rewrite MDXFallback in `src/components/blog/mdx-content.tsx`**
+- [x] **Step 24.2: Rewrite MDXFallback in `src/components/blog/mdx-content.tsx`**
 
 Replace the `MDXFallback` function with:
 
@@ -3038,7 +3056,7 @@ function MDXFallback() {
 }
 ```
 
-- [ ] **Step 24.3: Commit**
+- [x] **Step 24.3: Commit**
 
 ```bash
 git add src/components/layout/footer.tsx src/components/blog/mdx-content.tsx
@@ -3058,7 +3076,7 @@ git commit -m "style(chrome): nocturnal footer + MDX fallback panel"
 
 Each of these uses the brutalist pink chrome. Because they may render when state is partially broken, keep them self-sufficient (no Tailwind class dependence where it matters) — but they should still read on the dark palette. These are small files; sweep any hard-coded color (`border-black`, `shadow-brutal`, `bg-surface`, `bg-accent text-white`, `text-foreground`) into the nocturnal vocabulary.
 
-- [ ] **Step 25.1: Inspect each file and patch in place**
+- [x] **Step 25.1: Inspect each file and patch in place**
 
 For each of the files above, open and verify:
 - Hard-coded `border-[3px] border-black` → `border-2` with `borderColor: 'var(--color-accent-gold)'` inline style (or `.btn` class where appropriate).
@@ -3074,7 +3092,7 @@ ls src/app/blog/[slug]/error.tsx
 ```
 If it exists, apply the same sweep.
 
-- [ ] **Step 25.2: Build**
+- [x] **Step 25.2: Build**
 
 Run:
 ```bash
@@ -3082,7 +3100,7 @@ npm run build
 ```
 Expected: PASS.
 
-- [ ] **Step 25.3: Commit**
+- [x] **Step 25.3: Commit**
 
 ```bash
 git add src/app/error.tsx src/app/global-error.tsx src/app/not-found.tsx src/app/loading.tsx src/app/blog/[slug]/error.tsx
@@ -3100,7 +3118,7 @@ git commit -m "style(errors): dark-palette sweep across error boundaries + loadi
 
 The hero currently reads `text-accent-light` on `.dev`. `--color-accent-light` now aliases to `--color-accent` (mint-teal). That is fine but the direct white title still pops on the darker rune-glow-dimmed hero. No code changes are required unless the result visually fails the walkthrough.
 
-- [ ] **Step 26.1: Visual confirm — no code change expected**
+- [x] **Step 26.1: Visual confirm — no code change expected**
 
 Run:
 ```bash
@@ -3110,7 +3128,7 @@ Open `/`. Expected: hero title reads "keech" in white with ".dev" in mint-teal. 
 
 Stop the dev server.
 
-- [ ] **Step 26.2: (Conditional) Commit**
+- [x] **Step 26.2: (Conditional) Commit**
 
 Only if a real change was made. Otherwise skip this commit.
 
@@ -3124,7 +3142,7 @@ Only if a real change was made. Otherwise skip this commit.
 
 The existing tests mostly assert structure/roles (FilterChip aria, MDXContent fallback behavior, scroll-reveal observer, view-counter fetch). None of them assert on color tokens by name. Verify.
 
-- [ ] **Step 27.1: Run unit tests**
+- [x] **Step 27.1: Run unit tests**
 
 Run:
 ```bash
@@ -3132,11 +3150,11 @@ npm run test -- --run
 ```
 Expected: PASS.
 
-- [ ] **Step 27.2: If anything fails, patch the source (not the test)**
+- [x] **Step 27.2: If anything fails, patch the source (not the test)**
 
 Read the failure output. If a test is asserting behavior that the redesign legitimately changed (e.g., a specific CSS class name), update the test to the new class name — but only after confirming the behavior itself (aria, role, visible text) hasn't regressed.
 
-- [ ] **Step 27.3: Commit (only if tests were touched)**
+- [x] **Step 27.3: Commit (only if tests were touched)**
 
 ```bash
 git add <changed-test-files>
@@ -3149,7 +3167,7 @@ git commit -m "test: update assertions for nocturnal palette tokens"
 
 **Files:** none — verification only.
 
-- [ ] **Step 28.1: Run Playwright smoke**
+- [x] **Step 28.1: Run Playwright smoke**
 
 Run:
 ```bash
@@ -3157,7 +3175,7 @@ npx playwright test --reporter=line
 ```
 Expected: PASS on all of `code-copy`, `mobile-menu`, `mobile-toc`, `view-count`. If an environment issue prevents browsers from launching, note it in the handoff but keep moving.
 
-- [ ] **Step 28.2: Dev server walkthrough (manual)**
+- [x] **Step 28.2: Dev server walkthrough (manual)**
 
 Run:
 ```bash
@@ -3175,7 +3193,7 @@ Walk each route and confirm:
 
 Stop the dev server.
 
-- [ ] **Step 28.3: Final build**
+- [x] **Step 28.3: Final build**
 
 Run:
 ```bash
@@ -3184,7 +3202,7 @@ npm run build
 ```
 Expected: both PASS with zero new warnings.
 
-- [ ] **Step 28.4: Final commit only if sweep fixes were needed**
+- [x] **Step 28.4: Final commit only if sweep fixes were needed**
 
 If the walkthrough surfaces any visual issues, fix them in focused follow-up commits before declaring done.
 
@@ -3192,7 +3210,7 @@ If the walkthrough surfaces any visual issues, fix them in focused follow-up com
 
 ## Self-review checklist (run before handoff)
 
-- [ ] Every spec section has a task:
+- [x] Every spec section has a task:
   - Palette tokens → Task 3
   - Tag palette → Task 1
   - Fonts → Task 2
@@ -3215,10 +3233,10 @@ If the walkthrough surfaces any visual issues, fix them in focused follow-up com
   - Footer / MDX fallback → Task 24
   - Error boundaries / 404 / loading → Task 25
   - Tests / build verification → Task 27 + Task 28
-- [ ] No placeholder text ("TBD", "implement later", "add appropriate X") anywhere.
-- [ ] Types / prop names are consistent: `FilterChip` exports `variant?: 'default' | 'sm' | 'clear'` and both listing pages + the two cards + the project-detail stack chips reference it only by those names.
-- [ ] Rune imports come from existing `rune-config.ts` (`ELDER_FUTHARK`, `NAV_RUNES`, `POST_RUNES`, `BLOG_RUNES`, `PROJECT_RUNES`). No new rune mappings invented.
-- [ ] MDX wiring uses the current `MDXContent` API: `<MDXContent html={post.body} />` and `<MDXContent html={project.body} />`. Spec's `code={post.code}` phrasing is an artifact — the live component reads `html`.
+- [x] No placeholder text ("TBD", "implement later", "add appropriate X") anywhere.
+- [x] Types / prop names are consistent: `FilterChip` exports `variant?: 'default' | 'sm' | 'clear'` and both listing pages + the two cards + the project-detail stack chips reference it only by those names.
+- [x] Rune imports come from existing `rune-config.ts` (`ELDER_FUTHARK`, `NAV_RUNES`, `POST_RUNES`, `BLOG_RUNES`, `PROJECT_RUNES`). No new rune mappings invented.
+- [x] MDX wiring uses the current `MDXContent` API: `<MDXContent html={post.body} />` and `<MDXContent html={project.body} />`. Spec's `code={post.code}` phrasing is an artifact — the live component reads `html`.
 
 ---
 
