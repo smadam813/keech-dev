@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Analytics } from '@vercel/analytics/next';
 import { norse, inter, jetBrainsMono } from "@/lib/fonts";
+import { AmbientBackground } from "@/components/layout/ambient-background";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import "./globals.css";
@@ -50,7 +51,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${norse.variable} ${inter.variable} ${jetBrainsMono.variable}`}>
-      <body className="min-h-dvh flex flex-col">
+      <body className="flex flex-col">
+        <AmbientBackground />
         <Header />
         <main className="site-main flex-1 flex flex-col pt-16">
           {children}

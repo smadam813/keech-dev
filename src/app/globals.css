@@ -228,6 +228,63 @@
     --glow-opacity: 0.5;
   }
 
+  /* Ambient background — fixed full-bleed watermark */
+  .ambient {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-color: var(--color-bg);
+    overflow: hidden;
+  }
+
+  .ambient__art {
+    position: absolute;
+    inset: 0;
+    background-image: url('/images/hero.webp');
+    background-size: cover;
+    background-position: center;
+    filter: saturate(0.85);
+  }
+
+  .ambient__wash {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(14, 28, 33, 0.55);
+    mix-blend-mode: multiply;
+  }
+
+  .ambient__gradient {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      180deg,
+      rgba(20, 38, 45, 0.55) 0%,
+      rgba(20, 38, 45, 0.35) 40%,
+      rgba(18, 34, 40, 0.65) 100%
+    );
+  }
+
+  .ambient__vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      ellipse 120% 80% at 50% 40%,
+      transparent 0%,
+      transparent 40%,
+      rgba(10, 20, 24, 0.6) 100%
+    );
+  }
+
+  .ambient__grain {
+    position: absolute;
+    inset: 0;
+    opacity: 0.06;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    background-size: 160px 160px;
+  }
+
   /* Respect user motion preferences */
   @media (prefers-reduced-motion: reduce) {
 
