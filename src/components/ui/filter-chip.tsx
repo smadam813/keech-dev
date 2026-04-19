@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import { paletteFor } from '@/lib/tag-palette'
 
 interface FilterChipProps {
   label: string
@@ -8,52 +9,86 @@ interface FilterChipProps {
   onToggle?: () => void
   count?: number
   className?: string
+  variant?: 'default' | 'sm' | 'clear'
 }
 
-export function FilterChip({ label, href, active, onToggle, count, className }: FilterChipProps) {
-  const baseClasses = 'inline-block px-2 py-0.5 text-xs font-mono font-bold border-2 border-black'
+function chipStyle(label: string, active?: boolean, variant: FilterChipProps['variant'] = 'default') {
+  const hue = paletteFor(label)
+  const base = {
+    '--chip-bg': hue.bg,
+    '--chip-fg': hue.fg,
+    '--chip-border': hue.border,
+  } as React.CSSProperties
 
-  // Toggle button mode (for filter bar)
+  if (active) {
+    return {
+      ...base,
+      backgroundColor: hue.fg,
+      color: 'var(--color-bg-deep)',
+      borderColor: hue.fg,
+    }
+  }
+
+  if (variant === 'clear') {
+    return {
+      backgroundColor: 'transparent',
+      color: 'var(--color-ink-dim)',
+      borderColor: 'var(--color-hair-strong)',
+    }
+  }
+
+  return {
+    ...base,
+    backgroundColor: hue.bg,
+    color: hue.fg,
+    borderColor: hue.border,
+  }
+}
+
+export function FilterChip({
+  label, href, active, onToggle, count, className, variant = 'default',
+}: FilterChipProps) {
+  const sizeCls = variant === 'sm' ? 'chip--sm' : ''
+  const baseCls = cn(
+    'chip inline-flex items-center gap-1 rounded-full border font-mono font-medium',
+    'px-3 py-1 text-xs uppercase tracking-[0.08em]',
+    'transition-transform transition-colors duration-[160ms]',
+    sizeCls,
+    className,
+  )
+
+  const style = chipStyle(label, active, variant)
+
   if (onToggle) {
     return (
       <button
         type="button"
         aria-pressed={active}
         onClick={onToggle}
-        className={cn(
-          baseClasses,
-          'transition-all duration-150 cursor-pointer',
-          active
-            ? 'bg-accent text-white shadow-brutal-hover translate-x-[2px] translate-y-[2px]'
-            : 'bg-accent/10 shadow-brutal hover:bg-accent/20 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-brutal-hover',
-          className
-        )}
+        className={cn(baseCls, 'hover:-translate-y-[1px] cursor-pointer')}
+        style={style}
       >
-        {label}
-        {count !== undefined && (
-          <span className="ml-1 opacity-60">({count})</span>
-        )}
+        <span>{label}</span>
+        {count !== undefined && <span className="opacity-60">({count})</span>}
       </button>
     )
   }
 
-  // Link mode (for blog post detail tag links)
   if (href) {
     return (
       <Link
         href={href}
-        className={cn(
-          baseClasses,
-          'bg-accent/10',
-          'hover:shadow-brutal-hover hover:translate-x-[1px] hover:translate-y-[1px] transition-all duration-150',
-          className
-        )}
+        className={cn(baseCls, 'hover:-translate-y-[1px]')}
+        style={style}
       >
         {label}
       </Link>
     )
   }
 
-  // Display-only mode
-  return <span className={cn(baseClasses, 'bg-accent/10', className)}>{label}</span>
+  return (
+    <span className={baseCls} style={style}>
+      {label}
+    </span>
+  )
 }
