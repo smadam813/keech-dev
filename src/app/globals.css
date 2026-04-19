@@ -214,17 +214,17 @@
   }
 
   .rune-glow--amber {
-    background: radial-gradient(circle, rgba(217, 164, 65, 0.69) 0%, rgba(217, 164, 65, 0) 70%);
+    background: radial-gradient(circle, rgba(217, 164, 65, 0.55) 0%, rgba(217, 164, 65, 0) 70%);
     --glow-opacity: 0.5;
   }
 
   .rune-glow--teal {
-    background: radial-gradient(circle, rgba(79, 191, 191, 0.69) 0%, rgba(79, 191, 191, 0) 70%);
+    background: radial-gradient(circle, rgba(79, 191, 191, 0.55) 0%, rgba(79, 191, 191, 0) 70%);
     --glow-opacity: 0.5;
   }
 
   .rune-glow--gold {
-    background: radial-gradient(circle, rgba(232, 213, 149, 0.69) 0%, rgba(232, 213, 149, 0) 70%);
+    background: radial-gradient(circle, rgba(232, 213, 149, 0.55) 0%, rgba(232, 213, 149, 0) 70%);
     --glow-opacity: 0.5;
   }
 
