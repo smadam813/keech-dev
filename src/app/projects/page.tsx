@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import { projects } from '@/.velite'
 import { FilteredProjectList } from '@/components/projects/filtered-project-list'
-
+import { NAV_RUNES } from '@/components/runes/rune-config'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -10,18 +10,22 @@ export const metadata: Metadata = {
 }
 
 export default function ProjectsPage() {
-  // Sort: featured first, then by date (newest first)
   const sortedProjects = [...projects].sort((a, b) => {
     if (a.featured && !b.featured) return -1
     if (!a.featured && b.featured) return 1
     return new Date(b.date).getTime() - new Date(a.date).getTime()
   })
-
   const allStack = [...new Set(sortedProjects.flatMap(p => p.stack))].sort()
 
   return (
-    <section className="w-full mx-auto max-w-7xl px-6 pt-12 pb-16">
-      <h1 className="font-display text-4xl md:text-5xl font-bold mb-10">Projects</h1>
+    <section className="w-full mx-auto" style={{ maxWidth: 'var(--page-max)' }}>
+      <h1 className="page-title">
+        <span aria-hidden="true" className="page-title__rune">{NAV_RUNES['/projects'].char}</span>
+        Projects
+      </h1>
+      <p className="home-lede" style={{ marginTop: 0 }}>
+        Selected work — side projects, open-source bits, and things I ship when nobody asked.
+      </p>
       <Suspense>
         <FilteredProjectList projects={sortedProjects} allStack={allStack} />
       </Suspense>
