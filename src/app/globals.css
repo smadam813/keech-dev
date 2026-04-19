@@ -352,19 +352,21 @@
 
 @layer components {
 
-  /* Code block container - neobrutalist styling */
+  /* Code block container - nocturnal styling */
   figure[data-rehype-pretty-code-figure] {
-    @apply my-6 overflow-hidden rounded-lg;
-    border: 3px solid var(--color-foreground);
-    box-shadow: var(--shadow-brutal);
+    @apply my-6 overflow-hidden;
     position: relative;
+    border-radius: 6px;
+    border-left: 3px solid var(--color-accent-gold);
+    background: var(--color-surface-lo);
   }
 
   /* Language badge / title bar */
   [data-rehype-pretty-code-title] {
     @apply px-4 py-2 font-mono text-sm font-bold;
-    background-color: var(--color-foreground);
-    color: var(--color-background);
+    background-color: var(--color-bg-deep);
+    color: var(--color-accent-gold);
+    border-bottom: 1px solid var(--color-hair);
   }
 
   /* Pre element inside figure */
@@ -411,18 +413,12 @@
     border-left: 2px solid var(--color-accent);
   }
 
-  /* Inline code (not in code blocks) */
-  :not(pre)>code {
-    @apply p-0.5 rounded font-mono text-sm;
-    background-color: var(--color-surface);
-    border: 1px solid var(--color-foreground);
-  }
-
   /* Inline code processed by rehype-pretty-code */
   span[data-rehype-pretty-code-figure] code {
     @apply p-0.5 rounded font-mono text-sm;
-    background-color: rgba(0, 0, 0, 0.69) !important;
-    border: 1px solid var(--color-foreground);
+    background-color: var(--color-surface-lo) !important;
+    border: 1px solid var(--color-hair-strong);
+    color: var(--color-accent-gold);
   }
 
   /* Remove [data-line] padding inside inline code — the 16px px-4 is for fenced blocks only */
