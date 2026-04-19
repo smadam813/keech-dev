@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { Hero } from '@/components/hero'
 import { LatestWriting } from '@/components/home/latest-writing'
 import { ELDER_FUTHARK } from '@/components/runes/rune-config'
 
@@ -10,25 +9,28 @@ export const metadata: Metadata = {
 
 export default function Home() {
   return (
-    <>
-      <Hero />
-      <section className="home-below-hero">
-        <p className="home-lede">
-          Notes on engineering, AI, and what it means to build software while
-          the discipline itself is being rewritten.
-        </p>
-        <div className="home-ctas">
-          <Link href="/blog" className="btn btn--primary">
-            <span aria-hidden="true" className="btn__rune">{ELDER_FUTHARK.ansuz.char}</span>
-            Read the blog
-          </Link>
-          <Link href="/projects" className="btn btn--ghost">
-            <span aria-hidden="true" className="btn__rune">{ELDER_FUTHARK.kenaz.char}</span>
-            See projects
-          </Link>
-        </div>
-        <LatestWriting />
-      </section>
-    </>
+    <section className="home-below-hero">
+      <p className="eyebrow">
+        A notebook at the threshold of a new craft
+      </p>
+      <h1 className="display" style={{ marginTop: 20 }}>
+        keech<span className="text-accent-light">.dev</span>
+      </h1>
+      <p className="home-lede">
+        Notes on engineering, AI, and what it means to build software while
+        the discipline itself is being rewritten.
+      </p>
+      <div className="home-ctas">
+        <Link href="/blog" className="btn btn--primary">
+          <span aria-hidden="true" className="btn__rune">{ELDER_FUTHARK.ansuz.char}</span>
+          Read the blog
+        </Link>
+        <Link href="/projects" className="btn btn--ghost">
+          <span aria-hidden="true" className="btn__rune">{ELDER_FUTHARK.kenaz.char}</span>
+          See projects
+        </Link>
+      </div>
+      <LatestWriting />
+    </section>
   )
 }

@@ -2,7 +2,6 @@
 
 import { createContext, useCallback, useContext, useEffect, useState, useSyncExternalStore } from 'react'
 import { formatViewCount, setCachedViews } from '@/lib/views'
-import { POST_RUNES } from '@/components/runes/rune-config'
 
 const ViewCountsContext = createContext<Record<string, number | null>>({})
 
@@ -84,12 +83,5 @@ export function PostCardViewCount({ slug }: { slug: string }) {
 
   if (views == null) return null
 
-  return (
-    <>
-      <span aria-hidden="true" className="text-accent font-display font-bold">
-        {POST_RUNES.separator.char}
-      </span>
-      <span>{formatViewCount(views)}</span>
-    </>
-  )
+  return <span>{formatViewCount(views)}</span>
 }

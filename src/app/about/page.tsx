@@ -5,7 +5,7 @@ import { NAV_RUNES, ELDER_FUTHARK } from '@/components/runes/rune-config'
 
 export const metadata: Metadata = {
   title: 'About',
-  description: 'Adam Keech builds for the web, leads engineering teams, and writes about AI tooling, developer experience, and what he learns along the way.',
+  description: 'Adam Keech is an engineering leader who writes about the craft of building software in a moment where the craft itself is shifting.',
 }
 
 export default function AboutPage() {
@@ -28,42 +28,42 @@ export default function AboutPage() {
           />
         </div>
 
-        <div>
+        <div className="about__body">
           <p className="about__lede">
-            I build things, tinker, and sometimes write about what I learn along the way.
+            I&apos;m an engineering leader who spends too much time in the
+            terminal and not enough time asleep.
+          </p>
+          <p>
+            I write about the craft of building software in a moment where the
+            craft itself is shifting under our feet. Agents, AI-assisted review,
+            spec-driven development, and what any of it means for the humans
+            still doing the work.
+          </p>
+          <p>
+            I currently lead platform and developer-experience teams. These
+            days I tinker with all sorts of emerging concepts, and try to
+            make sense of where the work is going.
           </p>
 
-          <div className="prose">
-            <p>
-              Right now that means leading engineering teams through the AI tooling
-              transition and trying to figure out what actually works versus what just
-              feels productive. I spend a lot of time with AI-assisted development, not
-              because I think it solves everything, but because we are still figuring out
-              where it fits. I want to write about my journey as we figure it out together.
-            </p>
-
-            <p>
-              Outside of work, I chase side projects, read about Norse mythology, and
-              play too many games. D&amp;D on the tabletop, Marvel Rivals, and World of
-              Warcraft. This site is where all of that lives — projects, posts, and
-              whatever I am currently exploring.
-            </p>
-          </div>
-
-          <ul className="about__list" style={{ ['--rune' as string]: `"${ELDER_FUTHARK.ansuz.char}"` }}>
-            <li>Writes about engineering, AI tooling, and what sticks.</li>
-            <li style={{ ['--rune' as string]: `"${ELDER_FUTHARK.kenaz.char}"` }}>
-              Builds side projects to learn in public.
+          <ul className="about__list">
+            <li>
+              <span aria-hidden="true" className="about__rune">{ELDER_FUTHARK.ansuz.char}</span>
+              Writes here, roughly weekly.
             </li>
-            <li style={{ ['--rune' as string]: `"${ELDER_FUTHARK.raidho.char}"` }}>
-              Currently exploring the AI-assisted workflow space.
+            <li>
+              <span aria-hidden="true" className="about__rune">{ELDER_FUTHARK.kenaz.char}</span>
+              Builds tooling for agent-driven PDLCs.
+            </li>
+            <li>
+              <span aria-hidden="true" className="about__rune">{ELDER_FUTHARK.raidho.char}</span>
+              Available for advisory work, selectively.
             </li>
           </ul>
 
-          <div style={{ marginTop: 28 }}>
+          <div className="about__contact">
             <Link href="/feed.xml" className="btn btn--ghost">
               <span aria-hidden="true" className="btn__rune">{ELDER_FUTHARK.sowilo.char}</span>
-              Subscribe via RSS
+              RSS feed
             </Link>
           </div>
         </div>
