@@ -45,27 +45,27 @@ Server components by default. Client components (`'use client'`) are used only w
 
 ### Styling
 
-Tailwind CSS v4 with **CSS-first configuration** — all design tokens live in `src/app/globals.css` via `@theme` directive. There is no `tailwind.config.js`. The neobrutalist visual identity uses:
+Tailwind CSS v4 with **CSS-first configuration** — all design tokens live in `src/app/globals.css` via `@theme` directive. There is no `tailwind.config.js`. The **nocturnal petrol** visual identity uses:
 
-- Hard-offset shadows (`--shadow-brutal: 4px 4px 0 0 #000`)
-- Bold borders (`--border-brutal: 3px`)
-- Dusty rose background, teal accents, black foreground
-- Single theme only (no dark mode) — the palette is the brand
+- Deep petrol canvas (`--color-bg: #122a32`), gold + teal accents, ivory ink
+- Brutalist cards (`--shadow-brutal`, `--border-brutal: 3px`) layered over ambient watermark
+- Dark-only palette (no light mode) — the palette is the brand
+- Per-tag pastel hues via `paletteFor()` in `src/lib/tag-palette.ts` (hash-indexed into `TAG_HUE_PALETTE`) — used by FilterChip and post-card meta
 
 ### Rune Design Language
 
 Elder Futhark runes are used as a thematic design element throughout the site — not just decoration but part of the brand identity:
 
 - **Navigation**: Each route has a mapped rune (Othala → Home, Ansuz → Blog, Kenaz → Projects, Mannaz → About) defined in `src/components/runes/rune-config.ts`
-- **Hero**: 14 rune glows positioned over the hero image with breathing animations. Positioning data in `src/lib/rune-glows.ts` uses 0–1 fraction coordinates, computed against `object-fit: cover` scaling via `computeGlowPositions()`
+- **Ambient background**: `src/components/layout/ambient-background.tsx` is a fixed full-bleed watermark (hero.webp + color wash + gradient + vignette + 14 rune glows + grain) mounted once in `layout.tsx` behind every route. Glow positions in `src/lib/rune-glows.ts` use 0–1 fraction coords, computed against `object-fit: cover` scaling via `computeGlowPositions()`. Ambient variant (`rune-glow--ambient`) breathes but skips the entrance cascade
 - **Animation timing**: Rune breathing durations use non-round values (5.0s–7.5s) to prevent visual synchronization
 - Runes are colored by aett grouping: Freyr (amber), Hagal (teal), Tyr (gold)
 
 ### Animation Patterns
 
 - **Reduced-motion**: Checked on mount via `prefers-reduced-motion` media query and listened for changes; all animations respect this
-- **Hero reveal sequence**: Orchestrated with setTimeout — image blur→sharp, then text fade-up, then rune glow cascade
 - **Scroll reveal**: `ScrollReveal` component wraps elements with single-fire IntersectionObserver (threshold 0.1)
+- **Rune breathing**: Ambient rune glows use non-round breath durations (5.0s–7.5s) via `--breath-duration` CSS var; no entrance cascade on ambient variant
 - **Scroll lock**: Uses `position: fixed` approach (iOS Safari safe, unlike `overflow: hidden`)
 
 ### View Counting
@@ -111,7 +111,7 @@ Content pages use `generateStaticParams()` for full static generation. SEO handl
 
 ### Fonts
 
-Norse custom WOFF2 (headings/display) and Inter (body) configured in `src/lib/fonts.ts`. Font CSS variables: `--font-display` (Norse), `--font-body` (Inter).
+Norse custom WOFF2 (headings/display), Inter (body), and JetBrains Mono (meta/code/eyebrow) configured in `src/lib/fonts.ts`. Font CSS variables: `--font-display` (Norse), `--font-body` (Inter), `--font-mono` (JetBrains Mono).
 
 ## Blog Writing Skill
 
