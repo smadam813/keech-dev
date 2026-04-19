@@ -38,24 +38,25 @@ export function FilteredPostList({ posts, allTags }: FilteredPostListProps) {
     paramName: 'tags',
   })
 
-  // Stable slugs for view count fetching (all posts, not filtered)
   const allSlugs = useMemo(() => posts.map((p) => p.slug), [posts])
 
   return (
     <ListingViewCounts slugs={allSlugs}>
-      <FilterBar
-        items={allTags}
-        activeItems={activeTags}
-        onToggle={handleToggle}
-        onClear={handleClear}
-        counts={tagCounts}
-        renderChip={({ item, active, onToggle, count }) => (
-          <FilterChip key={item} label={item} active={active} onToggle={onToggle} count={count} />
-        )}
-        label="Filter by tag"
-      />
+      <div className="tag-bar">
+        <FilterBar
+          items={allTags}
+          activeItems={activeTags}
+          onToggle={handleToggle}
+          onClear={handleClear}
+          counts={tagCounts}
+          renderChip={({ item, active, onToggle, count }) => (
+            <FilterChip key={item} label={item} active={active} onToggle={onToggle} count={count} />
+          )}
+          label="Filter by tag"
+        />
+      </div>
       {isFiltering && (
-        <p className="text-sm font-mono text-muted mb-4">
+        <p className="filter-status">
           Showing {filteredPosts.length} of {posts.length} posts
         </p>
       )}
@@ -77,12 +78,10 @@ export function FilteredPostList({ posts, allTags }: FilteredPostListProps) {
         </div>
       ) : (
         <div className="text-center py-12">
-          <p className="text-muted text-lg mb-4">No posts match the selected tags.</p>
-          <button
-            type="button"
-            onClick={handleClear}
-            className="px-3 py-1 text-sm font-mono font-bold border-2 border-black bg-white shadow-brutal hover:shadow-brutal-hover hover:translate-x-[1px] hover:translate-y-[1px] transition-all duration-150"
-          >
+          <p className="filter-status" style={{ marginBottom: 16 }}>
+            No posts match the selected tags.
+          </p>
+          <button type="button" onClick={handleClear} className="btn btn--ghost">
             Clear filters
           </button>
         </div>
