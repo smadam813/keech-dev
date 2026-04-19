@@ -40,7 +40,8 @@ export function CodeBlockEnhancer() {
       const button = document.createElement('button')
       button.className = [
         'absolute right-2 top-2 p-2 rounded border opacity-0',
-        'group-hover:opacity-100 focus-visible:opacity-100 transition-opacity',
+        'group-hover:opacity-100 focus-visible:opacity-100 transition-all',
+        'hover:-translate-y-[1px]',
       ].join(' ')
       button.style.borderColor = 'var(--color-hair-strong)'
       button.style.background = 'var(--color-surface-hi)'

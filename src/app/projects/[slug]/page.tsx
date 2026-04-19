@@ -48,9 +48,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
         <span>All projects</span>
       </Link>
 
-      <div className="post-detail__grid">
-        <div>
-          <article className="post-detail__main">
+      <article className="post-detail__main">
             {project.category && (
               <div
                 className="project-card__eyebrow"
@@ -122,10 +120,6 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
               <MDXContent html={project.body} />
             </div>
           </article>
-        </div>
-
-        <aside className="post-detail__toc hidden lg:block" />
-      </div>
     </section>
   )
 }
