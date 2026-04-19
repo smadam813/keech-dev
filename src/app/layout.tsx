@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Analytics } from '@vercel/analytics/next';
-import { norse, inter } from "@/lib/fonts";
+import { norse, inter, jetBrainsMono } from "@/lib/fonts";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import "./globals.css";
@@ -49,7 +49,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${norse.variable} ${inter.variable}`}>
+    <html lang="en" className={`${norse.variable} ${inter.variable} ${jetBrainsMono.variable}`}>
       <body className="min-h-dvh flex flex-col">
         <Header />
         <main className="flex-1 flex flex-col pt-16">

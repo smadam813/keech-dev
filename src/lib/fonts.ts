@@ -1,5 +1,5 @@
 import localFont from "next/font/local";
-import { Inter } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 
 export const norse = localFont({
   src: [
@@ -24,5 +24,12 @@ export const inter = Inter({
   variable: "--font-body",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+  display: "swap",
+});
+
+export const jetBrainsMono = JetBrains_Mono({
+  variable: "--font-mono",
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
   display: "swap",
 });
