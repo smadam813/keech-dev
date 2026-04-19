@@ -6,15 +6,24 @@ interface MDXContentProps {
 
 function MDXFallback() {
   return (
-    <div className="border-[3px] border-foreground bg-surface p-8 shadow-brutal text-center my-8">
+    <div
+      className="text-center my-8"
+      style={{
+        border: '2px solid var(--color-accent-gold)',
+        background: 'var(--color-surface-hi)',
+        boxShadow: 'var(--shadow-brutal)',
+        padding: '32px',
+        borderRadius: 4,
+        color: 'var(--color-ink)',
+      }}
+    >
       <h2 className="font-display text-2xl mb-4">This post couldn&apos;t be displayed</h2>
-      <p className="text-muted mb-6">Something went wrong while rendering this content.</p>
+      <p style={{ color: 'var(--color-ink-dim)' }} className="mb-6">
+        Something went wrong while rendering this content.
+      </p>
       {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- plain <a> intentional: client-side routing may be broken in error state */}
-      <a
-        href="/blog"
-        className="inline-block border-[3px] border-foreground bg-accent text-white px-6 py-2 font-semibold shadow-brutal hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
-      >
-        Back to Blog
+      <a href="/blog" className="btn btn--primary">
+        Back to blog
       </a>
     </div>
   )
