@@ -18,6 +18,7 @@ export function Header() {
   const [menuPathname, setMenuPathname] = useState<string | null>(null)
   const pathname = usePathname()
   const buttonRef = useRef<HTMLButtonElement>(null)
+  const brandRef = useRef<HTMLAnchorElement>(null)
   const prevIsOpenRef = useRef(false)
 
   const isOpen = menuPathname !== null && menuPathname === pathname
@@ -50,9 +51,18 @@ export function Header() {
 
   useEffect(() => {
     const main = document.querySelector('main')
-    if (isOpen) main?.setAttribute('inert', '')
-    else main?.removeAttribute('inert')
-    return () => { main?.removeAttribute('inert') }
+    const brand = brandRef.current
+    if (isOpen) {
+      main?.setAttribute('inert', '')
+      brand?.setAttribute('inert', '')
+    } else {
+      main?.removeAttribute('inert')
+      brand?.removeAttribute('inert')
+    }
+    return () => {
+      main?.removeAttribute('inert')
+      brand?.removeAttribute('inert')
+    }
   }, [isOpen])
 
   useEffect(() => {
@@ -70,7 +80,7 @@ export function Header() {
   return (
     <header className="site-header">
       <div className="site-header__inner">
-        <Link href="/" className="site-header__brand" aria-label="keech.dev home">
+        <Link href="/" className="site-header__brand" aria-label="keech.dev home" ref={brandRef}>
           <span aria-hidden="true" className="site-header__brand-rune">
             {ELDER_FUTHARK.othala.char}
           </span>

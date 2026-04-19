@@ -889,6 +889,7 @@
     position: fixed;
     top: 0; left: 0; right: 0;
     z-index: 50;
+    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
     background-color: rgba(13, 33, 40, 0.72);
     border-bottom: 1px solid var(--color-hair);
@@ -975,6 +976,7 @@
     position: fixed;
     top: 64px; left: 0; right: 0;
     background: rgba(13, 33, 40, 0.92);
+    -webkit-backdrop-filter: blur(12px);
     backdrop-filter: blur(12px);
     border-top: 1px solid var(--color-hair);
     border-bottom: 1px solid var(--color-hair);
@@ -997,4 +999,9 @@
   }
 
   .site-mobile-menu__link--active { color: var(--color-accent); }
+
+  @supports not ((backdrop-filter: blur(10px)) or (-webkit-backdrop-filter: blur(10px))) {
+    .site-header { background-color: var(--color-bg-deep); }
+    .site-mobile-menu { background-color: var(--color-bg-deep); }
+  }
 }
