@@ -4,6 +4,7 @@ import { ExternalLink, BookOpen } from 'lucide-react'
 import { GithubIcon } from '@/components/icons/brand-icons'
 import { FilterChip } from '@/components/ui/filter-chip'
 import { ELDER_FUTHARK } from '@/components/runes/rune-config'
+import { CATEGORY_LABEL } from '@/lib/project-categories'
 
 interface ProjectCardProps {
   project: {
@@ -16,12 +17,6 @@ interface ProjectCardProps {
     category?: 'side-project' | 'professional' | 'open-source'
     image?: { src: string }
   }
-}
-
-const CATEGORY_LABEL: Record<NonNullable<ProjectCardProps['project']['category']>, string> = {
-  'side-project': 'Side project',
-  'professional': 'Professional',
-  'open-source':  'Open source',
 }
 
 export function ProjectCard({ project }: ProjectCardProps) {

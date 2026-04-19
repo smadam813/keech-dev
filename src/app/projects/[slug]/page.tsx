@@ -4,6 +4,8 @@ import { MDXContent } from '@/components/blog/mdx-content'
 import { ArrowLeft, ExternalLink } from 'lucide-react'
 import { GithubIcon } from '@/components/icons/brand-icons'
 import { ELDER_FUTHARK } from '@/components/runes/rune-config'
+import { FilterChip } from '@/components/ui/filter-chip'
+import { CATEGORY_LABEL } from '@/lib/project-categories'
 import Link from 'next/link'
 import Image from 'next/image'
 import type { Metadata } from 'next'
@@ -11,12 +13,6 @@ import type { Metadata } from 'next'
 interface ProjectPageProps {
   params: Promise<{ slug: string }>
 }
-
-const CATEGORY_LABEL = {
-  'side-project': 'Side project',
-  'professional': 'Professional',
-  'open-source':  'Open source',
-} as const
 
 export async function generateStaticParams() {
   return projects.map(project => ({ slug: project.slug }))
@@ -46,7 +42,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   if (!project) notFound()
 
   return (
-    <article className="w-full mx-auto" style={{ maxWidth: 'var(--page-max)' }}>
+    <section className="w-full mx-auto" style={{ maxWidth: 'var(--page-max)' }}>
       <Link href="/projects" className="back-link">
         <ArrowLeft size={14} />
         <span>All projects</span>
@@ -79,21 +75,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
             {project.stack.length > 0 && (
               <div className="tag-bar" style={{ marginBottom: 20 }}>
                 {project.stack.map((tech) => (
-                  <span
-                    key={tech}
-                    className="chip chip--sm"
-                    style={{
-                      fontFamily: 'var(--font-mono)',
-                      border: '1px solid var(--color-hair-strong)',
-                      background: 'var(--color-surface-lo)',
-                      color: 'var(--color-ink-dim)',
-                      padding: '2px 10px',
-                      borderRadius: 999,
-                      fontSize: 11,
-                    }}
-                  >
-                    {tech}
-                  </span>
+                  <FilterChip key={tech} label={tech} variant="sm" />
                 ))}
               </div>
             )}
@@ -144,6 +126,6 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
 
         <aside className="post-detail__toc hidden lg:block" />
       </div>
-    </article>
+    </section>
   )
 }
