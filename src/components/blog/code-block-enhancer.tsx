@@ -39,10 +39,13 @@ export function CodeBlockEnhancer() {
       // Create copy button
       const button = document.createElement('button')
       button.className = [
-        'absolute right-2 top-2 p-2 rounded border-2 border-black bg-surface',
-        'opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity',
-        'hover:bg-accent hover:text-background',
+        'absolute right-2 top-2 p-2 rounded border opacity-0',
+        'group-hover:opacity-100 focus-visible:opacity-100 transition-all',
+        'hover:-translate-y-[1px]',
       ].join(' ')
+      button.style.borderColor = 'var(--color-hair-strong)'
+      button.style.background = 'var(--color-surface-hi)'
+      button.style.color = 'var(--color-ink)'
       button.setAttribute('aria-label', 'Copy code')
       button.setAttribute('aria-live', 'polite')
       button.innerHTML = copyIcon

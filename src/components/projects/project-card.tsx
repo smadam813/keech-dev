@@ -1,8 +1,10 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { ExternalLink } from 'lucide-react'
+import { ExternalLink, BookOpen } from 'lucide-react'
 import { GithubIcon } from '@/components/icons/brand-icons'
 import { FilterChip } from '@/components/ui/filter-chip'
+import { ELDER_FUTHARK } from '@/components/runes/rune-config'
+import { CATEGORY_LABEL } from '@/lib/project-categories'
 
 interface ProjectCardProps {
   project: {
@@ -12,24 +14,24 @@ interface ProjectCardProps {
     stack: string[]
     github?: string
     demo?: string
+    category?: 'side-project' | 'professional' | 'open-source'
     image?: { src: string }
   }
 }
 
 export function ProjectCard({ project }: ProjectCardProps) {
+  const shownStack = project.stack.slice(0, 6)
+  const extraStack = project.stack.length - shownStack.length
+
   return (
-    <Link
-      href={`/projects/${project.slug}`}
-      className="block group"
-    >
-      <article
-        className="h-full flex flex-col bg-surface border-[3px] border-black shadow-brutal
-                   hover:shadow-brutal-hover hover:translate-x-[2px] hover:translate-y-[2px]
-                   transition-all duration-150"
-      >
-        {/* Optional image */}
+    <Link href={`/projects/${project.slug}`} className="block group h-full">
+      <article className={`card project-card ${project.image ? 'card--img' : ''}`}>
+        <span aria-hidden="true" className="project-card__badge">
+          {ELDER_FUTHARK.kenaz.char}
+        </span>
+
         {project.image && (
-          <div className="aspect-video relative border-b-[3px] border-black overflow-hidden">
+          <div className="project-card__image">
             <Image
               src={project.image.src}
               alt={`${project.title} screenshot`}
@@ -40,46 +42,37 @@ export function ProjectCard({ project }: ProjectCardProps) {
           </div>
         )}
 
-        {/* Content */}
-        <div className="flex-1 p-6 flex flex-col">
-          <header className="mb-3">
-            <h2 className="font-display text-xl font-bold group-hover:text-accent transition-colors">
-              {project.title}
-            </h2>
+        <div className="project-card__body">
+          {project.category && (
+            <div className="project-card__eyebrow">
+              {CATEGORY_LABEL[project.category]}
+            </div>
+          )}
+          <header>
+            <h2 className="card__title">{project.title}</h2>
           </header>
 
-          <p className="text-foreground/80 mb-4 line-clamp-2 flex-1">
-            {project.description}
-          </p>
+          <p className="card__excerpt">{project.description}</p>
 
-          {/* Tech stack badges (first 4) */}
-          {project.stack.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mb-4">
-              {project.stack.slice(0, 4).map((tech) => (
-                <FilterChip key={tech} label={tech} />
+          {shownStack.length > 0 && (
+            <div className="project-card__stack">
+              {shownStack.map((tech) => (
+                <FilterChip key={tech} label={tech} variant="sm" />
               ))}
-              {project.stack.length > 4 && (
-                <span className="text-xs text-muted self-center">
-                  +{project.stack.length - 4}
-                </span>
+              {extraStack > 0 && (
+                <span className="project-card__stack-more">+{extraStack}</span>
               )}
             </div>
           )}
 
-          {/* Quick link indicators */}
-          <div className="flex items-center gap-4 text-sm text-muted">
-            {project.github && (
-              <span className="flex items-center gap-1">
-                <GithubIcon size={14} />
-                <span>Code</span>
-              </span>
-            )}
+          <div className="project-card__actions">
             {project.demo && (
-              <span className="flex items-center gap-1">
-                <ExternalLink size={14} />
-                <span>Demo</span>
-              </span>
+              <span><ExternalLink size={14} /><span>Live</span></span>
             )}
+            {project.github && (
+              <span><GithubIcon size={14} /><span>Source</span></span>
+            )}
+            <span><BookOpen size={14} /><span>Read</span></span>
           </div>
         </div>
       </article>

@@ -9,13 +9,28 @@ interface TocProps {
 }
 
 export function TableOfContents({ entries }: TocProps) {
-  if (entries.length === 0) {
-    return null
-  }
+  if (entries.length === 0) return null
 
   return (
-    <nav className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-auto">
-      <h2 className="font-display text-lg font-bold mb-4">Contents</h2>
+    <nav
+      className="max-h-[calc(100vh-8rem)] overflow-auto"
+      style={{
+        fontFamily: 'var(--font-mono)',
+        color: 'var(--color-ink-dim)',
+      }}
+    >
+      <div
+        className="mb-3"
+        style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: 11,
+          letterSpacing: '0.14em',
+          textTransform: 'uppercase',
+          color: 'var(--color-accent-gold)',
+        }}
+      >
+        Contents
+      </div>
       <TocList entries={[{ title: 'Introduction', url: '#', items: [] }, ...entries]} />
     </nav>
   )
@@ -23,18 +38,17 @@ export function TableOfContents({ entries }: TocProps) {
 
 export function TocList({ entries, depth = 0 }: { entries: TocEntry[]; depth?: number }) {
   return (
-    <ul className={depth > 0 ? 'ml-4' : ''}>
+    <ul className={depth > 0 ? 'ml-4' : ''} style={{ listStyle: 'none', padding: 0 }}>
       {entries.map((entry) => (
-        <li key={entry.url} className="my-2">
+        <li key={entry.url} className="my-1.5">
           <a
             href={entry.url}
-            className="text-muted hover:text-foreground transition-colors"
+            className="transition-colors"
+            style={{ color: 'var(--color-ink-dim)', fontSize: 13, lineHeight: 1.5 }}
           >
             {entry.title}
           </a>
-          {entry.items.length > 0 && (
-            <TocList entries={entry.items} depth={depth + 1} />
-          )}
+          {entry.items.length > 0 && <TocList entries={entry.items} depth={depth + 1} />}
         </li>
       ))}
     </ul>

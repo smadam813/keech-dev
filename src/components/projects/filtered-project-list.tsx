@@ -15,6 +15,7 @@ interface FilteredProjectListProps {
     stack: string[]
     github?: string
     demo?: string
+    category?: 'side-project' | 'professional' | 'open-source'
     image?: { src: string }
   }>
   allStack: string[]
@@ -38,19 +39,21 @@ export function FilteredProjectList({ projects, allStack }: FilteredProjectListP
 
   return (
     <>
-      <FilterBar
-        items={allStack}
-        activeItems={activeStack}
-        onToggle={handleToggle}
-        onClear={handleClear}
-        counts={stackCounts}
-        renderChip={({ item, active, onToggle, count }) => (
-          <FilterChip key={item} label={item} active={active} onToggle={onToggle} count={count} />
-        )}
-        label="Filter by technology"
-      />
+      <div className="tag-bar">
+        <FilterBar
+          items={allStack}
+          activeItems={activeStack}
+          onToggle={handleToggle}
+          onClear={handleClear}
+          counts={stackCounts}
+          renderChip={({ item, active, onToggle, count }) => (
+            <FilterChip key={item} label={item} active={active} onToggle={onToggle} count={count} />
+          )}
+          label="Filter by technology"
+        />
+      </div>
       {isFiltering && (
-        <p className="text-sm font-mono text-muted mb-4">
+        <p className="filter-status">
           Showing {filteredProjects.length} of {projects.length} projects
         </p>
       )}
@@ -72,14 +75,10 @@ export function FilteredProjectList({ projects, allStack }: FilteredProjectListP
         </div>
       ) : (
         <div className="text-center py-12">
-          <p className="text-muted text-lg mb-4">
+          <p className="filter-status" style={{ marginBottom: 16 }}>
             No projects match the selected technologies.
           </p>
-          <button
-            type="button"
-            onClick={handleClear}
-            className="px-3 py-1 text-sm font-mono font-bold border-2 border-black bg-white shadow-brutal hover:shadow-brutal-hover hover:translate-x-[1px] hover:translate-y-[1px] transition-all duration-150"
-          >
+          <button type="button" onClick={handleClear} className="btn btn--ghost">
             Clear filters
           </button>
         </div>

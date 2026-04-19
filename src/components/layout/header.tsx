@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { Menu, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { NAV_RUNES } from '@/components/runes/rune-config'
+import { NAV_RUNES, ELDER_FUTHARK } from '@/components/runes/rune-config'
 
 const navItems = [
   { href: '/', label: 'Home' },
@@ -18,9 +18,9 @@ export function Header() {
   const [menuPathname, setMenuPathname] = useState<string | null>(null)
   const pathname = usePathname()
   const buttonRef = useRef<HTMLButtonElement>(null)
+  const brandRef = useRef<HTMLAnchorElement>(null)
   const prevIsOpenRef = useRef(false)
 
-  // Derived: menu is open only when it was toggled on the current pathname
   const isOpen = menuPathname !== null && menuPathname === pathname
 
   const isActive = useCallback(
@@ -29,7 +29,6 @@ export function Header() {
     [pathname]
   )
 
-  // Scroll lock (iOS Safari safe: position fixed approach)
   useEffect(() => {
     if (isOpen) {
       const scrollY = window.scrollY
@@ -50,68 +49,57 @@ export function Header() {
     }
   }, [isOpen])
 
-  // Focus management via inert attribute on main content
   useEffect(() => {
     const main = document.querySelector('main')
-
+    const brand = brandRef.current
     if (isOpen) {
       main?.setAttribute('inert', '')
+      brand?.setAttribute('inert', '')
     } else {
       main?.removeAttribute('inert')
+      brand?.removeAttribute('inert')
     }
-
     return () => {
       main?.removeAttribute('inert')
+      brand?.removeAttribute('inert')
     }
   }, [isOpen])
 
-  // Escape key handler
   useEffect(() => {
     if (!isOpen) return
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setMenuPathname(null)
-      }
-    }
-
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMenuPathname(null) }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
   }, [isOpen])
 
-  // Focus restoration: return focus to hamburger button when menu closes
   useEffect(() => {
-    if (prevIsOpenRef.current && !isOpen) {
-      buttonRef.current?.focus()
-    }
+    if (prevIsOpenRef.current && !isOpen) buttonRef.current?.focus()
     prevIsOpenRef.current = isOpen
   }, [isOpen])
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-background border-b-[3px] border-foreground">
-      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-        <span className="font-display font-bold text-2xl">
-          keech
-          <span className="text-accent">.dev</span>
-        </span>
+    <header className="site-header">
+      <div className="site-header__inner">
+        <Link href="/" className="site-header__brand" aria-label="keech.dev home" ref={brandRef}>
+          <span aria-hidden="true" className="site-header__brand-rune">
+            {ELDER_FUTHARK.othala.char}
+          </span>
+          <span>
+            keech<span className="site-header__brand-dot">.dev</span>
+          </span>
+        </Link>
 
-        {/* Desktop navigation */}
-        <nav className="hidden md:flex gap-8">
+        <nav className="site-nav" aria-label="Primary">
           {navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               className={cn(
-                'font-display font-bold text-lg motion-safe:transition-colors',
-                isActive(item.href)
-                  ? 'text-accent'
-                  : 'text-foreground hover:text-accent'
+                'site-nav__link',
+                isActive(item.href) && 'site-nav__link--active',
               )}
             >
-              <span
-                aria-hidden="true"
-                className="font-display font-bold text-base opacity-60 mr-1.5 inline-block align-baseline"
-              >
+              <span aria-hidden="true" className="site-nav__rune">
                 {NAV_RUNES[item.href as keyof typeof NAV_RUNES]?.char}
               </span>
               {item.label}
@@ -119,7 +107,6 @@ export function Header() {
           ))}
         </nav>
 
-        {/* Mobile hamburger button */}
         <button
           ref={buttonRef}
           type="button"
@@ -127,54 +114,34 @@ export function Header() {
           aria-expanded={isOpen}
           aria-controls="mobile-menu"
           aria-label={isOpen ? 'Close navigation menu' : 'Open navigation menu'}
-          className={cn(
-            'md:hidden p-2 border-[3px] border-foreground bg-surface',
-            'shadow-brutal hover:shadow-brutal-hover',
-            'hover:translate-x-[2px] hover:translate-y-[2px]',
-            'transition-all duration-150'
-          )}
+          className="site-hamburger"
         >
-          {isOpen ? (
-            <X className="w-6 h-6" aria-hidden="true" />
-          ) : (
-            <Menu className="w-6 h-6" aria-hidden="true" />
-          )}
+          {isOpen ? <X className="w-5 h-5" aria-hidden="true" /> : <Menu className="w-5 h-5" aria-hidden="true" />}
         </button>
       </div>
 
-      {/* Mobile menu overlay */}
       <div
         id="mobile-menu"
         role="dialog"
         aria-modal="true"
         aria-label="Navigation menu"
         className={cn(
-          'fixed top-16 left-0 right-0 bg-foreground text-background',
-          'border-t-[3px] border-b-[3px] border-foreground',
-          'transition-all duration-300 ease-in-out',
-          'md:hidden',
-          isOpen
-            ? 'opacity-100 visible'
-            : 'opacity-0 invisible'
+          'site-mobile-menu md:hidden',
+          isOpen ? 'opacity-100 visible' : 'opacity-0 invisible',
         )}
       >
-        <nav className="flex flex-col items-center gap-8 py-12">
+        <nav className="site-mobile-menu__nav">
           {navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               onClick={() => setMenuPathname(null)}
               className={cn(
-                'font-display text-3xl font-bold motion-safe:transition-colors',
-                isActive(item.href)
-                  ? 'text-accent'
-                  : 'text-background hover:text-accent'
+                'site-mobile-menu__link',
+                isActive(item.href) && 'site-mobile-menu__link--active',
               )}
             >
-              <span
-                aria-hidden="true"
-                className="font-display font-bold text-xl opacity-50 mr-2 inline-block align-baseline"
-              >
+              <span aria-hidden="true" className="site-nav__rune">
                 {NAV_RUNES[item.href as keyof typeof NAV_RUNES]?.char}
               </span>
               {item.label}

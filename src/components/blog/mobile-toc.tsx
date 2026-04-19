@@ -18,13 +18,23 @@ export function MobileToc({ entries }: MobileTocProps) {
   }
 
   return (
-    <div className={cn(
-      'lg:hidden mb-8',
-      'sticky top-16 z-40 bg-background -mx-6 px-6 pt-2',
-    )}>
-      <div className={cn(
-        'border-[3px] border-foreground shadow-brutal bg-surface',
-      )}>
+    <div
+      className={cn(
+        'lg:hidden mb-8',
+        'sticky top-16 z-40 -mx-6 px-6 pt-2',
+      )}
+      style={{ backgroundColor: 'rgba(13,33,40,0.88)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
+    >
+      <div
+        className="rounded-[4px]"
+        style={{
+          border: '2px solid var(--color-accent-gold)',
+          background: 'var(--color-surface-hi)',
+          boxShadow: 'var(--shadow-brutal)',
+          backdropFilter: 'blur(6px)',
+          WebkitBackdropFilter: 'blur(6px)',
+        }}
+      >
         <button
           onClick={() => setIsOpen((prev) => !prev)}
           aria-expanded={isOpen}

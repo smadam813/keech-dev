@@ -22,15 +22,9 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: PostPageProps): Promise<Metadata> {
   const { slug } = await params
   const post = publishedPosts.find(p => p.slug === slug)
-
-  if (!post) {
-    return {
-      title: 'Post Not Found'
-    }
-  }
+  if (!post) return { title: 'Post Not Found' }
 
   const description = post.description || (post.excerpt?.slice(0, 160) ?? '')
-
   return {
     title: post.title,
     description,
@@ -47,73 +41,57 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
 export default async function PostPage({ params }: PostPageProps) {
   const { slug } = await params
   const post = publishedPosts.find(p => p.slug === slug)
-
-  if (!post) {
-    notFound()
-  }
+  if (!post) notFound()
 
   const formattedDate = formatDate(post.date)
   const formattedUpdated = post.updated ? formatDate(post.updated) : null
 
   return (
-    <article className="w-full mx-auto max-w-6xl px-6 pt-12 pb-16">
-      {/* Back link */}
-      <Link
-        href="/blog"
-        className="inline-flex items-center gap-2 text-muted hover:text-foreground transition-colors mb-8"
-      >
-        <ArrowLeft size={16} />
-        <span>All Blog Posts</span>
+    <section className="w-full mx-auto" style={{ maxWidth: 'var(--page-max)' }}>
+      <Link href="/blog" className="back-link">
+        <ArrowLeft size={14} />
+        <span>All blog posts</span>
       </Link>
 
-      {/* Mobile table of contents - visible below lg breakpoint */}
       <MobileToc entries={post.toc} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_16rem] gap-12 lg:gap-16">
-        {/* Main content */}
+      <div className="post-detail__grid">
         <div>
-          <header className="mb-10">
-            <h1 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
-              {post.title}
-            </h1>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-muted mb-4">
-              <time dateTime={post.date}>{formattedDate}</time>
-              <span aria-hidden="true" className="text-accent font-display font-bold">
-                {POST_RUNES.separator.char}
-              </span>
-              <span>{post.readingTime} min read</span>
-              <span aria-hidden="true" className="text-accent font-display font-bold">
-                {POST_RUNES.separator.char}
-              </span>
-              <ViewCounter slug={slug} />
-              {formattedUpdated && (
-                <>
-                  <span aria-hidden="true" className="text-accent font-display font-bold">
-                    {POST_RUNES.separator.char}
-                  </span>
-                  <span>Updated {formattedUpdated}</span>
-                </>
-              )}
-            </div>
-            {post.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {post.tags.map((tag) => (
-                  <FilterChip key={tag} label={tag} href={`/blog?tags=${tag}`} />
-                ))}
+          <article className="post-detail__main">
+            <header>
+              <h1 className="post-detail__title">{post.title}</h1>
+              <div className="post-detail__meta">
+                <time dateTime={post.date}>{formattedDate}</time>
+                <span aria-hidden="true" className="post-detail__meta-sep">{POST_RUNES.separator.char}</span>
+                <span>{post.readingTime} min read</span>
+                <span aria-hidden="true" className="post-detail__meta-sep">{POST_RUNES.separator.char}</span>
+                <ViewCounter slug={slug} />
+                {formattedUpdated && (
+                  <>
+                    <span aria-hidden="true" className="post-detail__meta-sep">{POST_RUNES.separator.char}</span>
+                    <span>Updated {formattedUpdated}</span>
+                  </>
+                )}
               </div>
-            )}
-          </header>
+              {post.tags.length > 0 && (
+                <div className="tag-bar" style={{ marginTop: 4, marginBottom: 20 }}>
+                  {post.tags.map((tag) => (
+                    <FilterChip key={tag} label={tag} href={`/blog?tags=${encodeURIComponent(tag)}`} variant="sm" />
+                  ))}
+                </div>
+              )}
+            </header>
 
-          <div className="prose">
-            <MDXContent html={post.body} />
-          </div>
+            <div className="prose">
+              <MDXContent html={post.body} />
+            </div>
+          </article>
         </div>
 
-        {/* Sidebar with TOC - hidden on mobile */}
-        <aside className="hidden lg:block">
+        <aside className="post-detail__toc hidden lg:block">
           <TableOfContents entries={post.toc} />
         </aside>
       </div>
-    </article>
+    </section>
   )
 }

@@ -1,9 +1,11 @@
 import { projects } from '@/.velite'
 import { notFound } from 'next/navigation'
 import { MDXContent } from '@/components/blog/mdx-content'
-import { FilterChip } from '@/components/ui/filter-chip'
 import { ArrowLeft, ExternalLink } from 'lucide-react'
 import { GithubIcon } from '@/components/icons/brand-icons'
+import { ELDER_FUTHARK } from '@/components/runes/rune-config'
+import { FilterChip } from '@/components/ui/filter-chip'
+import { CATEGORY_LABEL } from '@/lib/project-categories'
 import Link from 'next/link'
 import Image from 'next/image'
 import type { Metadata } from 'next'
@@ -19,15 +21,9 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: ProjectPageProps): Promise<Metadata> {
   const { slug } = await params
   const project = projects.find(p => p.slug === slug)
-
-  if (!project) {
-    return {
-      title: 'Project Not Found'
-    }
-  }
+  if (!project) return { title: 'Project Not Found' }
 
   const description = project.description.slice(0, 160)
-
   return {
     title: project.title,
     description,
@@ -43,90 +39,87 @@ export async function generateMetadata({ params }: ProjectPageProps): Promise<Me
 export default async function ProjectPage({ params }: ProjectPageProps) {
   const { slug } = await params
   const project = projects.find(p => p.slug === slug)
-
-  if (!project) {
-    notFound()
-  }
+  if (!project) notFound()
 
   return (
-    <article className="w-full mx-auto max-w-4xl px-6 pt-12 pb-16">
-      {/* Back link */}
-      <Link
-        href="/projects"
-        className="inline-flex items-center gap-2 text-muted hover:text-foreground transition-colors mb-8"
-      >
-        <ArrowLeft size={16} />
-        <span>All Projects</span>
+    <section className="w-full mx-auto" style={{ maxWidth: 'var(--page-max)' }}>
+      <Link href="/projects" className="back-link">
+        <ArrowLeft size={14} />
+        <span>All projects</span>
       </Link>
 
-      {/* Header */}
-      <header className="mb-10">
-        <h1 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
-          {project.title}
-        </h1>
-        <p className="text-lg text-muted mb-6">
-          {project.description}
-        </p>
-
-        {/* Tech stack badges (all items) */}
-        {project.stack.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-6">
-            {project.stack.map((tech) => (
-              <FilterChip key={tech} label={tech} />
-            ))}
-          </div>
-        )}
-
-        {/* Action buttons */}
-        <div className="flex flex-wrap gap-3">
-          {project.github && (
-            <a
-              href={project.github}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2 font-bold
-                         bg-surface border-[3px] border-black shadow-brutal
-                         hover:shadow-brutal-hover hover:translate-x-[2px] hover:translate-y-[2px]
-                         transition-all duration-150"
+      <article className="post-detail__main">
+            {project.category && (
+              <div
+                className="project-card__eyebrow"
+                style={{ marginBottom: 12 }}
+              >
+                {CATEGORY_LABEL[project.category]}
+              </div>
+            )}
+            <h1 className="post-detail__title">{project.title}</h1>
+            <p
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontStyle: 'italic',
+                fontSize: 20,
+                color: 'var(--color-ink-dim)',
+                margin: '10px 0 20px',
+              }}
             >
-              <GithubIcon size={18} />
-              <span>View Code</span>
-            </a>
-          )}
-          {project.demo && (
-            <a
-              href={project.demo}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2 font-bold
-                         bg-accent text-white border-[3px] border-black shadow-brutal
-                         hover:shadow-brutal-hover hover:translate-x-[2px] hover:translate-y-[2px]
-                         transition-all duration-150"
-            >
-              <ExternalLink size={18} />
-              <span>Live Demo</span>
-            </a>
-          )}
-        </div>
-      </header>
+              {project.description}
+            </p>
 
-      {/* Optional screenshot */}
-      {project.image && (
-        <div className="mb-10 relative aspect-video border-[3px] border-black shadow-brutal overflow-hidden">
-          <Image
-            src={project.image.src}
-            alt={`${project.title} screenshot`}
-            fill
-            sizes="(max-width: 1200px) 100vw, 1200px"
-            className="object-cover"
-          />
-        </div>
-      )}
+            {project.stack.length > 0 && (
+              <div className="tag-bar" style={{ marginBottom: 20 }}>
+                {project.stack.map((tech) => (
+                  <FilterChip key={tech} label={tech} variant="sm" />
+                ))}
+              </div>
+            )}
 
-      {/* MDX body content */}
-      <div className="prose prose-projects">
-        <MDXContent html={project.body} />
-      </div>
-    </article>
+            <div className="home-ctas" style={{ margin: '16px 0 28px' }}>
+              {project.demo && (
+                <a href={project.demo} target="_blank" rel="noopener noreferrer" className="btn btn--ghost">
+                  <span aria-hidden="true" className="btn__rune">{ELDER_FUTHARK.sowilo.char}</span>
+                  <ExternalLink size={14} />
+                  <span>Live demo</span>
+                </a>
+              )}
+              {project.github && (
+                <a href={project.github} target="_blank" rel="noopener noreferrer" className="btn btn--ghost">
+                  <span aria-hidden="true" className="btn__rune">{ELDER_FUTHARK.algiz.char}</span>
+                  <GithubIcon size={14} />
+                  <span>Source</span>
+                </a>
+              )}
+            </div>
+
+            {project.image && (
+              <div
+                style={{
+                  position: 'relative',
+                  aspectRatio: '16 / 9',
+                  marginBottom: 24,
+                  border: '1px solid var(--color-hair-strong)',
+                  borderRadius: 6,
+                  overflow: 'hidden',
+                }}
+              >
+                <Image
+                  src={project.image.src}
+                  alt={`${project.title} screenshot`}
+                  fill
+                  sizes="(max-width: 1200px) 100vw, 1200px"
+                  className="object-cover"
+                />
+              </div>
+            )}
+
+            <div className="prose prose-projects">
+              <MDXContent html={project.body} />
+            </div>
+          </article>
+    </section>
   )
 }

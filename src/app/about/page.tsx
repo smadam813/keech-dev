@@ -1,54 +1,71 @@
 import { Metadata } from 'next'
 import Image from 'next/image'
+import Link from 'next/link'
+import { NAV_RUNES, ELDER_FUTHARK } from '@/components/runes/rune-config'
 
 export const metadata: Metadata = {
   title: 'About',
-  description: 'Adam Keech builds for the web, leads engineering teams, and writes about AI tooling, developer experience, and what he learns along the way.',
+  description: 'Adam Keech is an engineering leader who writes about the craft of building software in a moment where the craft itself is shifting.',
 }
 
 export default function AboutPage() {
   return (
-    <section className="w-full mx-auto max-w-4xl px-6 pt-12 pb-16">
-      <div className="flex flex-col md:flex-row gap-8 items-start">
-        {/* Photo section */}
-        <div className="shrink-0 self-center md:self-start">
-          <div className="relative w-48 aspect-[3/4] md:w-56 border-[3px] border-black shadow-brutal overflow-hidden">
-            <Image
-              src="/images/headshot.webp"
-              alt="Adam Keech"
-              width={384}
-              height={512}
-              className="w-full h-full object-cover"
-              priority
-            />
-          </div>
+    <section className="w-full mx-auto" style={{ maxWidth: 'var(--page-max)' }}>
+      <h1 className="page-title">
+        <span aria-hidden="true" className="page-title__rune">{NAV_RUNES['/about'].char}</span>
+        About
+      </h1>
+
+      <div className="about__grid">
+        <div className="about__portrait">
+          <Image
+            src="/images/headshot.webp"
+            alt="Adam Keech"
+            fill
+            sizes="(max-width: 760px) 70vw, 260px"
+            className="object-cover"
+            priority
+          />
         </div>
 
-        {/* Bio section */}
-        <div className="flex-1">
-          <h1 className="font-display text-4xl font-bold mb-6">About</h1>
+        <div className="about__body">
+          <p className="about__lede">
+            I&apos;m an engineering leader who spends too much time in the
+            terminal and not enough time asleep.
+          </p>
+          <p>
+            I write about the craft of building software in a moment where the
+            craft itself is shifting under our feet. Agents, AI-assisted review,
+            spec-driven development, and what any of it means for the humans
+            still doing the work.
+          </p>
+          <p>
+            I currently lead platform and developer-experience teams. These
+            days I tinker with all sorts of emerging concepts, and try to
+            make sense of where the work is going.
+          </p>
 
-          <div className="prose">
-            <p>
-              I build things, tinker, and sometimes write about what I learn along the way.
-            </p>
+          <ul className="about__list">
+            <li>
+              <span aria-hidden="true" className="about__rune">{ELDER_FUTHARK.ansuz.char}</span>
+              Writes here, roughly weekly.
+            </li>
+            <li>
+              <span aria-hidden="true" className="about__rune">{ELDER_FUTHARK.kenaz.char}</span>
+              Builds tooling for agent-driven PDLCs.
+            </li>
+            <li>
+              <span aria-hidden="true" className="about__rune">{ELDER_FUTHARK.raidho.char}</span>
+              Available for advisory work, selectively.
+            </li>
+          </ul>
 
-            <p>
-              Right now that means leading engineering teams through the AI tooling
-              transition and trying to figure out what actually works versus what just
-              feels productive. I spend a lot of time with AI-assisted development, not
-              because I think it solves everything, but because I think we are still
-              figuring out where it fits. I want to write about my journey as we figure it out together.
-            </p>
-
-            <p>
-              Outside of work, I chase side projects, read about Norse
-              mythology, and play too many games. D&amp;D on the tabletop, Marvel
-              Rivals, and World of Warcraft. This site is where all of that lives, from projects and posts
-              to whatever I am currently exploring.
-            </p>
+          <div className="about__contact">
+            <Link href="/feed.xml" className="btn btn--ghost">
+              <span aria-hidden="true" className="btn__rune">{ELDER_FUTHARK.sowilo.char}</span>
+              RSS feed
+            </Link>
           </div>
-
         </div>
       </div>
     </section>
