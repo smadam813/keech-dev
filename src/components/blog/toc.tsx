@@ -13,7 +13,7 @@ export function TableOfContents({ entries }: TocProps) {
 
   return (
     <nav
-      className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-auto"
+      className="max-h-[calc(100vh-8rem)] overflow-auto"
       style={{
         fontFamily: 'var(--font-mono)',
         color: 'var(--color-ink-dim)',

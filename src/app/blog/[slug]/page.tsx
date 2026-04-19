@@ -47,7 +47,7 @@ export default async function PostPage({ params }: PostPageProps) {
   const formattedUpdated = post.updated ? formatDate(post.updated) : null
 
   return (
-    <article className="w-full mx-auto" style={{ maxWidth: 'var(--page-max)' }}>
+    <section className="w-full mx-auto" style={{ maxWidth: 'var(--page-max)' }}>
       <Link href="/blog" className="back-link">
         <ArrowLeft size={14} />
         <span>All blog posts</span>
@@ -76,7 +76,7 @@ export default async function PostPage({ params }: PostPageProps) {
               {post.tags.length > 0 && (
                 <div className="tag-bar" style={{ marginTop: 4, marginBottom: 20 }}>
                   {post.tags.map((tag) => (
-                    <FilterChip key={tag} label={tag} href={`/blog?tags=${tag}`} variant="sm" />
+                    <FilterChip key={tag} label={tag} href={`/blog?tags=${encodeURIComponent(tag)}`} variant="sm" />
                   ))}
                 </div>
               )}
@@ -92,6 +92,6 @@ export default async function PostPage({ params }: PostPageProps) {
           <TableOfContents entries={post.toc} />
         </aside>
       </div>
-    </article>
+    </section>
   )
 }
