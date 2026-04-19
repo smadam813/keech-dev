@@ -52,7 +52,7 @@ export default function RootLayout({
     <html lang="en" className={`${norse.variable} ${inter.variable} ${jetBrainsMono.variable}`}>
       <body className="min-h-dvh flex flex-col">
         <Header />
-        <main className="flex-1 flex flex-col pt-16">
+        <main className="site-main flex-1 flex flex-col pt-16">
           {children}
         </main>
         <Footer />
