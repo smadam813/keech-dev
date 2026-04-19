@@ -10,15 +10,30 @@
 
 **Source of truth for any ambiguous detail:** the design spec in `docs/superpowers/specs/2026-04-18-nocturnal-redesign-design.md`.
 
+## Execution status (2026-04-19)
+
+Pre-work + Tasks 1–20 shipped on `re-design`. Stopped after Task 20 at user request. Remaining: Tasks 21–28 (project detail, prose, code blocks, footer + MDXFallback sweep, error/404/loading sweep, hero conditional check, unit-test verification, e2e smoke + final build).
+
+Head commit after Task 20 fixes: `d93ebf1` (`fix(post): outer section not article, encode tag href, drop redundant toc sticky`).
+
+Notable follow-ups that landed during execution:
+- Task 9 added a `backdrop-filter` `@supports` fallback and extended the `inert` effect to cover `.site-header__brand` so focus cannot escape the open mobile-menu dialog (commit `ad5fe02`).
+- Task 20 fixed a nested-`<article>` semantics issue, `encodeURIComponent` on tag hrefs, and removed a redundant `sticky top-24` on the TOC (commit `d93ebf1`).
+
+Known deferred items:
+- `.chip--sm` still uses `!important` to outrank Tailwind utilities (Task 8 review flag; plan-level choice).
+- `--chip-bg/--chip-fg/--chip-border` custom properties set on every chip are not yet consumed by any CSS selector (Task 8 premature API surface; revisit when a `:hover` rule needs them).
+- Hero still gets inset by `.site-main` padding on `/` between Task 4 and an eventual Hero bleed fix; Task 26 is the conditional visual check that would catch this if legibility fails.
+
 ---
 
 ## Pre-work: read and confirm baseline
 
-- [ ] **Step 0.1: Read the design spec end-to-end**
+- [x] **Step 0.1: Read the design spec end-to-end**
 
 Read: `docs/superpowers/specs/2026-04-18-nocturnal-redesign-design.md`
 
-- [ ] **Step 0.2: Verify current branch**
+- [x] **Step 0.2: Verify current branch**
 
 Run:
 ```bash
@@ -27,7 +42,7 @@ git rev-parse --abbrev-ref HEAD
 ```
 Expected: clean working tree, branch is `re-design`.
 
-- [ ] **Step 0.3: Verify baseline build works**
+- [x] **Step 0.3: Verify baseline build works**
 
 Run:
 ```bash
@@ -47,7 +62,7 @@ Expected: all three succeed. If they don't, stop and fix before touching the red
 
 Pure function module. Hashes a tag string to one of six pastel hues, returns a stable `{ name, bg, fg, border }` per tag.
 
-- [ ] **Step 1.1: Write the failing test**
+- [x] **Step 1.1: Write the failing test**
 
 Write `src/lib/tag-palette.test.ts`:
 
@@ -103,7 +118,7 @@ describe('tag-palette', () => {
 })
 ```
 
-- [ ] **Step 1.2: Run the test, confirm it fails**
+- [x] **Step 1.2: Run the test, confirm it fails**
 
 Run:
 ```bash
@@ -111,7 +126,7 @@ npx vitest run src/lib/tag-palette.test.ts
 ```
 Expected: FAIL — `src/lib/tag-palette` does not exist.
 
-- [ ] **Step 1.3: Implement `src/lib/tag-palette.ts`**
+- [x] **Step 1.3: Implement `src/lib/tag-palette.ts`**
 
 Write `src/lib/tag-palette.ts`:
 
@@ -143,7 +158,7 @@ export function paletteFor(tag: string): TagHue {
 }
 ```
 
-- [ ] **Step 1.4: Run the test, confirm it passes**
+- [x] **Step 1.4: Run the test, confirm it passes**
 
 Run:
 ```bash
@@ -151,7 +166,7 @@ npx vitest run src/lib/tag-palette.test.ts
 ```
 Expected: PASS.
 
-- [ ] **Step 1.5: Commit**
+- [x] **Step 1.5: Commit**
 
 ```bash
 git add src/lib/tag-palette.ts src/lib/tag-palette.test.ts
@@ -168,7 +183,7 @@ git commit -m "feat(style): add per-tag hue palette utility"
 
 Spec: add `jetBrainsMono` via `next/font/google`, expose `--font-mono`, wire into `<html>` className alongside `norse` and `inter`.
 
-- [ ] **Step 2.1: Update `src/lib/fonts.ts`**
+- [x] **Step 2.1: Update `src/lib/fonts.ts`**
 
 Replace the whole file with:
 
@@ -210,7 +225,7 @@ export const jetBrainsMono = JetBrains_Mono({
 });
 ```
 
-- [ ] **Step 2.2: Wire the new font variable into `src/app/layout.tsx`**
+- [x] **Step 2.2: Wire the new font variable into `src/app/layout.tsx`**
 
 Update the import and the `<html>` className.
 
@@ -232,7 +247,7 @@ to:
 <html lang="en" className={`${norse.variable} ${inter.variable} ${jetBrainsMono.variable}`}>
 ```
 
-- [ ] **Step 2.3: Verify build**
+- [x] **Step 2.3: Verify build**
 
 Run:
 ```bash
@@ -240,7 +255,7 @@ npm run build
 ```
 Expected: PASS. Next.js compiles a new JetBrains Mono font entry with no warnings.
 
-- [ ] **Step 2.4: Commit**
+- [x] **Step 2.4: Commit**
 
 ```bash
 git add src/lib/fonts.ts src/app/layout.tsx
@@ -256,7 +271,7 @@ git commit -m "feat(style): load JetBrains Mono font as --font-mono"
 
 Swap the dusty-rose tokens for the petrol palette. Keep semantic names where possible so Tailwind utilities like `bg-background`, `text-foreground`, `text-accent` keep working through this transitional step.
 
-- [ ] **Step 3.1: Replace the `@theme` block**
+- [x] **Step 3.1: Replace the `@theme` block**
 
 In `src/app/globals.css`, replace the block that currently starts with `@theme {` and runs through the closing `}` (lines 3–25 in the baseline) with:
 
@@ -306,7 +321,7 @@ In `src/app/globals.css`, replace the block that currently starts with `@theme {
 
 Leave the `@theme inline { --font-display ... --font-body ... }` block alone for now (it is updated in Task 4).
 
-- [ ] **Step 3.2: Verify build**
+- [x] **Step 3.2: Verify build**
 
 Run:
 ```bash
@@ -314,7 +329,7 @@ npm run build
 ```
 Expected: PASS. The site is now very visually broken (dark tokens behind light surfaces), but nothing should fail to compile.
 
-- [ ] **Step 3.3: Commit**
+- [x] **Step 3.3: Commit**
 
 ```bash
 git add src/app/globals.css
@@ -331,7 +346,7 @@ git commit -m "style(theme): switch design tokens to nocturnal petrol palette"
 
 Add `--font-mono` to the `@theme inline` block so `font-mono` Tailwind utilities pick up JetBrains Mono. Set the body background to the new bg token. Give `<main>` the page-max horizontal padding and `z-index: 1` so content floats above the ambient background that lands in Task 5.
 
-- [ ] **Step 4.1: Extend `@theme inline`**
+- [x] **Step 4.1: Extend `@theme inline`**
 
 In `src/app/globals.css`, replace the existing block:
 
@@ -350,7 +365,7 @@ with:
 }
 ```
 
-- [ ] **Step 4.2: Update the `@layer base` html + body rules**
+- [x] **Step 4.2: Update the `@layer base` html + body rules**
 
 In `src/app/globals.css`, replace the `html { ... }` rule inside `@layer base` with:
 
@@ -372,7 +387,7 @@ body {
 
 Keep the existing `h1`–`h6` rules and Norse typography tuning inside `@layer base` unchanged.
 
-- [ ] **Step 4.3: Add a `.site-main` utility**
+- [x] **Step 4.3: Add a `.site-main` utility**
 
 Still inside `src/app/globals.css`, add a new block under `@layer components` (can go right after the `@keyframes` section but before the `.animate-fade-in-up` rule):
 
@@ -388,7 +403,7 @@ Still inside `src/app/globals.css`, add a new block under `@layer components` (c
 }
 ```
 
-- [ ] **Step 4.4: Wire `site-main` on `<main>`**
+- [x] **Step 4.4: Wire `site-main` on `<main>`**
 
 In `src/app/layout.tsx`, change:
 ```tsx
@@ -399,7 +414,7 @@ to:
 <main className="site-main flex-1 flex flex-col pt-16">
 ```
 
-- [ ] **Step 4.5: Verify build**
+- [x] **Step 4.5: Verify build**
 
 Run:
 ```bash
@@ -407,7 +422,7 @@ npm run build
 ```
 Expected: PASS.
 
-- [ ] **Step 4.6: Commit**
+- [x] **Step 4.6: Commit**
 
 ```bash
 git add src/app/globals.css src/app/layout.tsx
@@ -425,7 +440,7 @@ git commit -m "style(layout): wire mono font var, dark html/body, site-main gutt
 
 Fixed full-bleed layered watermark: hero image, color wash, gradient wash, vignette, film grain. Server component. Mounts once as first child of `<body>`, sits at `z-index: 0`, `aria-hidden`, `pointer-events: none`.
 
-- [ ] **Step 5.1: Add ambient styles to `globals.css`**
+- [x] **Step 5.1: Add ambient styles to `globals.css`**
 
 Inside `@layer components` in `src/app/globals.css`, add:
 
@@ -487,7 +502,7 @@ Inside `@layer components` in `src/app/globals.css`, add:
 }
 ```
 
-- [ ] **Step 5.2: Create `src/components/layout/ambient-background.tsx`**
+- [x] **Step 5.2: Create `src/components/layout/ambient-background.tsx`**
 
 ```tsx
 // Fixed full-bleed watermark: hero art + color wash + gradient + vignette + grain.
@@ -505,7 +520,7 @@ export function AmbientBackground() {
 }
 ```
 
-- [ ] **Step 5.3: Mount it in `src/app/layout.tsx`**
+- [x] **Step 5.3: Mount it in `src/app/layout.tsx`**
 
 Add the import alongside the others:
 ```tsx
@@ -526,7 +541,7 @@ Make `<AmbientBackground />` the very first child of `<body>`, before `<Header /
 </body>
 ```
 
-- [ ] **Step 5.4: Walkthrough**
+- [x] **Step 5.4: Walkthrough**
 
 Run:
 ```bash
@@ -534,7 +549,7 @@ npm run dev
 ```
 Open `http://localhost:3000/blog`. Expected: hero image is visible behind the (still-broken) blog listing, with the color wash, gradient, vignette, and a faint grain. Scroll — ambient stays fixed. Stop the dev server (`Ctrl+C`).
 
-- [ ] **Step 5.5: Commit**
+- [x] **Step 5.5: Commit**
 
 ```bash
 git add src/components/layout/ambient-background.tsx src/app/layout.tsx src/app/globals.css
@@ -550,7 +565,7 @@ git commit -m "feat(layout): add fixed ambient hero watermark behind all routes"
 
 Spec: inner alphas drop from `0.69` to `0.55` to compensate for the darker bg. `--glow-opacity: 0.5` stays. Hex values unchanged.
 
-- [ ] **Step 6.1: Update the three gradients**
+- [x] **Step 6.1: Update the three gradients**
 
 In `src/app/globals.css`, replace the three existing `.rune-glow--amber / --teal / --gold` rules with:
 
@@ -571,7 +586,7 @@ In `src/app/globals.css`, replace the three existing `.rune-glow--amber / --teal
 }
 ```
 
-- [ ] **Step 6.2: Commit**
+- [x] **Step 6.2: Commit**
 
 ```bash
 git add src/app/globals.css
@@ -587,7 +602,7 @@ git commit -m "style(hero): drop rune-glow alpha from 0.69 to 0.55 for dark bg"
 
 Adds the reusable visual primitives the page-level tasks consume later: page title, eyebrow pill, section head, button variants, tag bar, post-detail grid, about grid, home-below-hero wrapper, back-link style.
 
-- [ ] **Step 7.1: Append component rules**
+- [x] **Step 7.1: Append component rules**
 
 Inside `@layer components` in `src/app/globals.css`, add (toward the bottom, before the prose section):
 
@@ -888,7 +903,7 @@ Inside `@layer components` in `src/app/globals.css`, add (toward the bottom, bef
 }
 ```
 
-- [ ] **Step 7.2: Verify build**
+- [x] **Step 7.2: Verify build**
 
 Run:
 ```bash
@@ -896,7 +911,7 @@ npm run build
 ```
 Expected: PASS.
 
-- [ ] **Step 7.3: Commit**
+- [x] **Step 7.3: Commit**
 
 ```bash
 git add src/app/globals.css
@@ -913,7 +928,7 @@ git commit -m "style(globals): add page-title, eyebrow, section-head, btn, grid 
 
 Use `paletteFor(label)` to hash each tag to a hue. Keep the three modes (toggle / link / display). Add `chip--sm` and `chip--clear` variants. Preserve `aria-pressed`, `role=button`, and the count badge — the existing unit tests must keep passing untouched.
 
-- [ ] **Step 8.1: Replace `src/components/ui/filter-chip.tsx`**
+- [x] **Step 8.1: Replace `src/components/ui/filter-chip.tsx`**
 
 ```tsx
 import Link from 'next/link'
@@ -1018,7 +1033,7 @@ Also add this at the bottom of `src/app/globals.css` in `@layer components` to g
 .chip--sm { padding: 2px 8px !important; font-size: 11px !important; }
 ```
 
-- [ ] **Step 8.2: Run existing unit tests**
+- [x] **Step 8.2: Run existing unit tests**
 
 Run:
 ```bash
@@ -1028,7 +1043,7 @@ Expected: PASS — the existing tests assert roles, `aria-pressed`, count text, 
 
 If any assertion fails, fix the source (don't dilute the test). The one realistic failure mode is if the `(5)` count is wrapped differently — in this implementation it is still a direct child `<span>` so `getByText('(5)')` will keep matching.
 
-- [ ] **Step 8.3: Visual check via dev server**
+- [x] **Step 8.3: Visual check via dev server**
 
 Run:
 ```bash
@@ -1036,7 +1051,7 @@ npm run dev
 ```
 Open `/blog`. Expected: tag chips render as small rounded pills in pastel hues (rose / mint / amber / lavender / teal / clay) on the dark background. Active chips fill with their hue and use near-black text. Stop the server.
 
-- [ ] **Step 8.4: Commit**
+- [x] **Step 8.4: Commit**
 
 ```bash
 git add src/components/ui/filter-chip.tsx src/app/globals.css
@@ -1053,7 +1068,7 @@ git commit -m "feat(chip): per-tag pastel hue via paletteFor, pill shape, sm + c
 
 Glassy blurred shell that floats over the ambient bg. Desktop keeps nav-rune chars with the label. Mobile menu uses a dark translucent sheet, not the inverted scheme.
 
-- [ ] **Step 9.1: Add header rules to `globals.css`**
+- [x] **Step 9.1: Add header rules to `globals.css`**
 
 Inside `@layer components`:
 
@@ -1172,7 +1187,7 @@ Inside `@layer components`:
 .site-mobile-menu__link--active { color: var(--color-accent); }
 ```
 
-- [ ] **Step 9.2: Rewrite `src/components/layout/header.tsx`**
+- [x] **Step 9.2: Rewrite `src/components/layout/header.tsx`**
 
 Replace the file content with:
 
@@ -1323,7 +1338,7 @@ export function Header() {
 }
 ```
 
-- [ ] **Step 9.3: Run the existing mobile-menu e2e (optional but cheap)**
+- [x] **Step 9.3: Run the existing mobile-menu e2e (optional but cheap)**
 
 Run:
 ```bash
@@ -1331,7 +1346,7 @@ npx playwright test e2e/mobile-menu.spec.ts --reporter=line
 ```
 Expected: PASS. The aria attributes, labels, and menu dialog role are preserved. If it's environment-failing for unrelated reasons (no browsers installed, etc.), note it and continue.
 
-- [ ] **Step 9.4: Commit**
+- [x] **Step 9.4: Commit**
 
 ```bash
 git add src/components/layout/header.tsx src/app/globals.css
@@ -1348,7 +1363,7 @@ git commit -m "feat(header): glassy nocturnal shell with Othala wordmark"
 
 Translucent dark surface, 2px gold border, 6px hard-offset shadow, collapse-on-hover motion. Jera rune separators in the meta row. Keep `PostCardViewCount`, `FilterChip`, `formatDate` wiring intact.
 
-- [ ] **Step 10.1: Add card rules to `globals.css`**
+- [x] **Step 10.1: Add card rules to `globals.css`**
 
 Inside `@layer components`:
 
@@ -1421,7 +1436,7 @@ Inside `@layer components`:
 }
 ```
 
-- [ ] **Step 10.2: Rewrite `src/components/blog/post-card.tsx`**
+- [x] **Step 10.2: Rewrite `src/components/blog/post-card.tsx`**
 
 ```tsx
 import Link from 'next/link'
@@ -1474,7 +1489,7 @@ export function PostCard({ post }: PostCardProps) {
 }
 ```
 
-- [ ] **Step 10.3: Build + dev walkthrough**
+- [x] **Step 10.3: Build + dev walkthrough**
 
 Run:
 ```bash
@@ -1482,7 +1497,7 @@ npm run build
 ```
 Expected: PASS.
 
-- [ ] **Step 10.4: Commit**
+- [x] **Step 10.4: Commit**
 
 ```bash
 git add src/components/blog/post-card.tsx src/app/globals.css
@@ -1499,7 +1514,7 @@ git commit -m "feat(post-card): dark brutalist surface with gold border + jera m
 
 Same Brutalist card frame as PostCard plus: optional `category` eyebrow, a Kenaz rune badge in the corner, first-6 stack entries with `+N` overflow, and a Live/Source/Read hover affordance row. Retain optional top image.
 
-- [ ] **Step 11.1: Append project-card rules to `globals.css`**
+- [x] **Step 11.1: Append project-card rules to `globals.css`**
 
 ```css
 .project-card { position: relative; overflow: hidden; padding: 0; }
@@ -1563,7 +1578,7 @@ Same Brutalist card frame as PostCard plus: optional `category` eyebrow, a Kenaz
 .group:hover .project-card__actions { color: var(--color-accent); }
 ```
 
-- [ ] **Step 11.2: Rewrite `src/components/projects/project-card.tsx`**
+- [x] **Step 11.2: Rewrite `src/components/projects/project-card.tsx`**
 
 ```tsx
 import Link from 'next/link'
@@ -1654,7 +1669,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
 }
 ```
 
-- [ ] **Step 11.3: Build check**
+- [x] **Step 11.3: Build check**
 
 Run:
 ```bash
@@ -1662,7 +1677,7 @@ npm run build
 ```
 Expected: PASS.
 
-- [ ] **Step 11.4: Commit**
+- [x] **Step 11.4: Commit**
 
 ```bash
 git add src/components/projects/project-card.tsx src/app/globals.css
@@ -1678,7 +1693,7 @@ git commit -m "feat(project-card): dark brutalist with kenaz badge, category eye
 
 Server component. Reads `posts` from `@/.velite`, filters out drafts, sorts by date desc, slices 3, renders a `.section-head` + 3-col `PostCard` grid.
 
-- [ ] **Step 12.1: Create the component**
+- [x] **Step 12.1: Create the component**
 
 ```tsx
 import Link from 'next/link'
@@ -1724,7 +1739,7 @@ export function LatestWriting() {
 }
 ```
 
-- [ ] **Step 12.2: Commit**
+- [x] **Step 12.2: Commit**
 
 ```bash
 git add src/components/home/latest-writing.tsx
@@ -1738,7 +1753,7 @@ git commit -m "feat(home): add LatestWriting server component"
 **Files:**
 - Modify: `src/app/page.tsx`
 
-- [ ] **Step 13.1: Rewrite**
+- [x] **Step 13.1: Rewrite**
 
 ```tsx
 import type { Metadata } from 'next'
@@ -1777,7 +1792,7 @@ export default function Home() {
 }
 ```
 
-- [ ] **Step 13.2: Build check**
+- [x] **Step 13.2: Build check**
 
 Run:
 ```bash
@@ -1785,7 +1800,7 @@ npm run build
 ```
 Expected: PASS. Home now has lede + CTAs + "Latest writing" below the hero.
 
-- [ ] **Step 13.3: Commit**
+- [x] **Step 13.3: Commit**
 
 ```bash
 git add src/app/page.tsx
@@ -1802,7 +1817,7 @@ git commit -m "feat(home): add lede, CTAs, and LatestWriting section below hero"
 
 Replace the `<h1>` with `.page-title` + Ansuz rune. Wrap the filter row in `.tag-bar`. Dark-theme the empty state.
 
-- [ ] **Step 14.1: Update `src/app/blog/page.tsx`**
+- [x] **Step 14.1: Update `src/app/blog/page.tsx`**
 
 ```tsx
 import { Suspense } from 'react'
@@ -1839,7 +1854,7 @@ export default function BlogPage() {
 }
 ```
 
-- [ ] **Step 14.2: Update `src/components/blog/filtered-post-list.tsx` empty-state + status classes**
+- [x] **Step 14.2: Update `src/components/blog/filtered-post-list.tsx` empty-state + status classes**
 
 Replace the `isFiltering` paragraph and the empty-state block. Final file body (changes are only in the two identified regions):
 
@@ -1937,7 +1952,7 @@ export function FilteredPostList({ posts, allTags }: FilteredPostListProps) {
 }
 ```
 
-- [ ] **Step 14.3: Commit**
+- [x] **Step 14.3: Commit**
 
 ```bash
 git add src/app/blog/page.tsx src/components/blog/filtered-post-list.tsx
@@ -1952,7 +1967,7 @@ git commit -m "feat(blog): nocturnal listing page with page-title, tag-bar, dark
 - Modify: `src/app/projects/page.tsx`
 - Modify: `src/components/projects/filtered-project-list.tsx` (empty-state/status only)
 
-- [ ] **Step 15.1: Update `src/app/projects/page.tsx`**
+- [x] **Step 15.1: Update `src/app/projects/page.tsx`**
 
 ```tsx
 import { Suspense } from 'react'
@@ -1991,7 +2006,7 @@ export default function ProjectsPage() {
 }
 ```
 
-- [ ] **Step 15.2: Update `src/components/projects/filtered-project-list.tsx`**
+- [x] **Step 15.2: Update `src/components/projects/filtered-project-list.tsx`**
 
 Replace the file with the same treatment applied to the blog list (tag-bar wrapper, `.filter-status`, `.btn--ghost` clear):
 
@@ -2086,7 +2101,7 @@ export function FilteredProjectList({ projects, allStack }: FilteredProjectListP
 }
 ```
 
-- [ ] **Step 15.3: Commit**
+- [x] **Step 15.3: Commit**
 
 ```bash
 git add src/app/projects/page.tsx src/components/projects/filtered-project-list.tsx
@@ -2102,7 +2117,7 @@ git commit -m "feat(projects): nocturnal listing with kenaz page-title and dark 
 
 The `Clear all` button inside FilterBar currently uses `bg-white border-black`. Replace with `.btn--ghost` so it reads on the dark bg.
 
-- [ ] **Step 16.1: Replace the button**
+- [x] **Step 16.1: Replace the button**
 
 ```tsx
 {hasActive && (
@@ -2117,7 +2132,7 @@ The `Clear all` button inside FilterBar currently uses `bg-white border-black`. 
 )}
 ```
 
-- [ ] **Step 16.2: Commit**
+- [x] **Step 16.2: Commit**
 
 ```bash
 git add src/components/ui/filter-bar.tsx
@@ -2131,7 +2146,7 @@ git commit -m "style(filter-bar): dark clear-all button to match nocturnal palet
 **Files:**
 - Modify: `src/app/about/page.tsx`
 
-- [ ] **Step 17.1: Rewrite**
+- [x] **Step 17.1: Rewrite**
 
 ```tsx
 import { Metadata } from 'next'
@@ -2211,7 +2226,7 @@ export default function AboutPage() {
 
 Note: the `--rune` CSS var pattern above sets the `content` glyph per list item (via `.about__list li::before { content: var(--rune, '\16A8') }` from Task 7). The default Ansuz falls through for the first item.
 
-- [ ] **Step 17.2: Build check**
+- [x] **Step 17.2: Build check**
 
 Run:
 ```bash
@@ -2219,7 +2234,7 @@ npm run build
 ```
 Expected: PASS. Visit `/about` in dev.
 
-- [ ] **Step 17.3: Commit**
+- [x] **Step 17.3: Commit**
 
 ```bash
 git add src/app/about/page.tsx
@@ -2235,7 +2250,7 @@ git commit -m "feat(about): mannaz page-title, portrait grid, rune bullets, rss 
 
 Structure (prepended Introduction entry, sticky) is already correct. Retune colors only.
 
-- [ ] **Step 18.1: Update**
+- [x] **Step 18.1: Update**
 
 ```tsx
 export interface TocEntry {
@@ -2296,7 +2311,7 @@ export function TocList({ entries, depth = 0 }: { entries: TocEntry[]; depth?: n
 }
 ```
 
-- [ ] **Step 18.2: Commit**
+- [x] **Step 18.2: Commit**
 
 ```bash
 git add src/components/blog/toc.tsx
@@ -2312,7 +2327,7 @@ git commit -m "style(toc): mono tune for nocturnal palette"
 
 The sticky mobile TOC currently uses `bg-background`, `bg-surface`, `border-foreground`, `shadow-brutal` — all now resolve to dark tokens through the back-compat aliases but the black border no longer reads. Swap to the gold-accent card language.
 
-- [ ] **Step 19.1: Update the card container**
+- [x] **Step 19.1: Update the card container**
 
 Replace:
 ```tsx
@@ -2343,7 +2358,7 @@ with:
 ```
 and add `style={{ backgroundColor: 'rgba(13,33,40,0.88)', backdropFilter: 'blur(8px)' }}` to that outer `<div>`.
 
-- [ ] **Step 19.2: Commit**
+- [x] **Step 19.2: Commit**
 
 ```bash
 git add src/components/blog/mobile-toc.tsx
@@ -2359,7 +2374,7 @@ git commit -m "style(mobile-toc): swap neobrutalist pink chrome for nocturnal gl
 
 Two-col grid with slab panel + sticky TOC. Norse title, mono meta row, linkable tag chips. `ViewCounter` and `MobileToc` stay.
 
-- [ ] **Step 20.1: Rewrite**
+- [x] **Step 20.1: Rewrite**
 
 ```tsx
 import { publishedPosts } from '@/lib/posts'
@@ -2461,7 +2476,7 @@ export default async function PostPage({ params }: PostPageProps) {
 }
 ```
 
-- [ ] **Step 20.2: Build + view a post**
+- [x] **Step 20.2: Build + view a post**
 
 Run:
 ```bash
@@ -2469,7 +2484,7 @@ npm run build
 ```
 Expected: PASS.
 
-- [ ] **Step 20.3: Commit**
+- [x] **Step 20.3: Commit**
 
 ```bash
 git add src/app/blog/[slug]/page.tsx
