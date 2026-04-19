@@ -1,27 +1,45 @@
 @import "tailwindcss";
 
 @theme {
-  /* Cosmic neobrutalist palette */
-  --color-background: #E8B4B8;
-  --color-foreground: #000000;
-  --color-accent: #2D8B8B;
-  --color-accent-hover: #3AA3A3;
-  --color-accent-light: #4FBFBF;
-  --color-surface: #F5E6E8;
-  --color-muted: #4A4A4A;
+  /* ── Nocturnal petrol palette ─────────────────────────────────────── */
+  --color-bg:          #122a32;
+  --color-bg-deep:     #0d2128;
+  --color-surface:     rgba(22, 46, 54, 0.68);
+  --color-surface-hi:  rgba(28, 56, 64, 0.78);
+  --color-surface-lo:  rgba(18, 38, 44, 0.55);
 
-  /* Hard offset shadows - neobrutalist signature */
-  --shadow-brutal: 4px 4px 0 0 #000000;
-  --shadow-brutal-lg: 6px 6px 0 0 #000000;
-  --shadow-brutal-hover: 2px 2px 0 0 #000000;
+  --color-ink:         #e8ecec;
+  --color-ink-dim:     #a5b5ba;
+  --color-ink-fade:    #7a8e94;
 
-  /* Border widths */
-  --border-brutal: 3px;
-  --border-brutal-lg: 4px;
+  --color-hair:        rgba(232, 236, 236, 0.10);
+  --color-hair-strong: rgba(232, 236, 236, 0.18);
 
-  /* Animations */
+  --color-accent:      #8dcbbc;   /* mint-teal */
+  --color-accent-warm: #e4a4ac;   /* rose */
+  --color-accent-gold: #e0bc79;   /* runic gold */
+
+  /* ── Back-compat aliases so existing utility classes keep resolving ─ */
+  --color-background:    var(--color-bg);
+  --color-foreground:    var(--color-ink);
+  --color-accent-hover:  var(--color-accent-gold);
+  --color-accent-light:  var(--color-accent);
+  --color-muted:         var(--color-ink-dim);
+
+  /* ── Brutalist shadows / borders ──────────────────────────────────── */
+  --shadow-brutal:       6px 6px 0 0 rgba(0, 0, 0, 0.55);
+  --shadow-brutal-lg:    6px 6px 0 0 rgba(0, 0, 0, 0.55);
+  --shadow-brutal-hover: 2px 2px 0 0 rgba(0, 0, 0, 0.55);
+  --border-brutal:       2px;
+  --border-brutal-lg:    2px;
+
+  /* ── Radii / layout ───────────────────────────────────────────────── */
+  --radius:    10px;
+  --radius-sm: 6px;
+  --page-max:  1200px;
+
+  /* ── Animations ───────────────────────────────────────────────────── */
   --animate-fade-in-up: fadeInUp 0.5s ease-out forwards;
-
 }
 
 @theme inline {
