@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { posts } from '@/.velite'
 import { PostCard } from '@/components/blog/post-card'
+import { ListingViewCounts } from '@/components/blog/listing-view-counts'
 import { POST_RUNES } from '@/components/runes/rune-config'
 
 export function LatestWriting() {
@@ -20,22 +21,24 @@ export function LatestWriting() {
         <h2 className="section-head__title">Latest writing</h2>
         <Link href="/blog" className="section-head__more">All posts →</Link>
       </div>
-      <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {latest.map(post => (
-          <PostCard
-            key={post.slug}
-            post={{
-              title: post.title,
-              slug: post.slug,
-              date: post.date,
-              description: post.description,
-              excerpt: post.excerpt,
-              tags: post.tags,
-              readingTime: post.readingTime,
-            }}
-          />
-        ))}
-      </div>
+      <ListingViewCounts slugs={latest.map(p => p.slug)}>
+        <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {latest.map(post => (
+            <PostCard
+              key={post.slug}
+              post={{
+                title: post.title,
+                slug: post.slug,
+                date: post.date,
+                description: post.description,
+                excerpt: post.excerpt,
+                tags: post.tags,
+                readingTime: post.readingTime,
+              }}
+            />
+          ))}
+        </div>
+      </ListingViewCounts>
     </section>
   )
 }
