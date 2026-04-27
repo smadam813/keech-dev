@@ -9,7 +9,7 @@ tags:
   - trpc
   - typescript
   - api-design
-draft: true
+draft: false
 ---
 
 **I spent three months maintaining hand-written TypeScript types for 40+ REST endpoints before I accepted the obvious: the types were always out of sync with the actual responses.** tRPC eliminated that entire class of bug by sharing types between client and server at build time. This post covers the migration, the parts that went smoothly, and the parts that made me reconsider.

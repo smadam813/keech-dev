@@ -45,8 +45,8 @@ Present the research synthesis summary to the user via `AskUserQuestion` with on
 > "What visual style should the image generation prompts use?"
 
 Options:
-- "Neobrutalist (site default)" (description: "Dusty rose background, teal accents, black borders/shadows, flat colors. Matches keech.dev's design system.")
-- "Psychedelic Cosmic" (description: "Void black background, bold flat colors (dusty rose, electric blue, gold, neon green), strong graphic outlines, no gradients.")
+- "Nocturnal Petrol (site default)" (description: "Deep petrol canvas, mint-teal and runic-gold accents, ivory ink, brutalist 2px borders with hard offset shadows. Optional Elder Futhark rune motifs. Matches keech.dev's nocturnal redesign.")
+- "Psychedelic Cosmic" (description: "Void black background, bold flat colors (rose, electric blue, gold, neon green), strong graphic outlines, no gradients.")
 
 ## Step 5: Spawn the writer subagent
 
