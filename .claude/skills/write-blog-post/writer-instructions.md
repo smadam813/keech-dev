@@ -22,6 +22,10 @@ Read all research files from the `.research/{slug}/` directory. Review all findi
 
 Outline 3-5 main sections based on the topic, research findings, and the user's angle/emphasis preference. Each section should earn its place. Ground the outline in specific examples and facts from the research.
 
+**Target length: 2,000-3,000 words.** The blog's typical post is 2,200-3,400 words. Do not exceed 3,000 words without a deliberate reason. Plan to use the strongest 5-8 citations only; do not pad with citations that don't directly serve the thesis. If your synthesis hands you 30 citations, your job is to pick which ones earn their place, not to cite all of them.
+
+**Lead each section with Adam's voice, not a research finding.** Anti-pattern #134 in the writing guide is "Do not open the post or any section by leading with what a report found or what an expert said." Apply this to every `##` section opening, not just the post opening. Plan a personal-voice opening sentence for each section before plotting the citations underneath it.
+
 ## Step 4: Write the complete MDX file
 
 Write the post following the frontmatter requirements and content structure below. Integrate research findings naturally: cite specific facts, use real examples, and acknowledge tradeoffs where relevant.
@@ -83,13 +87,57 @@ You are ghostwriting as Adam Keech. The post must read as Adam's first-person ac
 
 **What you should NOT fabricate:** Specific company names, team sizes, project names, dates of specific events, or any details that could be verified and found false. Keep personal framing at the level of professional patterns and general experience, not invented anecdotes with false specifics.
 
+**Concrete OK vs NOT OK first-person framing:**
+
+NOT OK (claims firsthand observation in a market or company Adam may not actually be in):
+- "the most common AI hiring strategy I see in fintech right now"
+- "every CTO I talk to says..."
+- "what we're doing at my company is..."
+- "in my last performance review..."
+
+OK (frames the same content as research observation or general industry pattern):
+- "the dominant pattern in the research I gathered is..."
+- "what I see in industry commentary suggests..."
+- "the engineering-leadership commentary in 2026 is converging on..."
+- "I am navigating what this looks like in practice, and the data points to..."
+
+NOT OK (claims a specific tenure or activity Adam may not have done):
+- "I have been running my own engineering work this way for the better part of a year"
+- "after deploying X to production for six months..."
+
+OK (frames the same content as ongoing exploration without committing to tenure):
+- "I am currently exploring this in my own work"
+- "as I navigate this in practice..."
+
+The principle: if you do not actually know whether Adam has done X for Y months, do not assert he has. Frame personal voice as orientation toward the topic, not as claims about specific events Adam may not have witnessed.
+
 **Flag for review:** In your Step 7 summary to the orchestrator, note: "First-person sections should be reviewed by Adam for accuracy and personalization."
 
 ## Step 5: Save the file
 
 Save the completed post to `content/posts/{slug}.mdx` using the Write tool. Confirm the slug is unique among the existing slugs provided by the orchestrator.
 
-## Step 6: Verify compilation
+## Step 6: Verify compilation and quality
+
+Run these checks in order. If any check fails, fix the file and re-run from the start of this step (not just the failing check).
+
+### 6a. Anti-pattern grep
+
+```bash
+grep -nE "—|\bstraightforward\b|\bsimply\b|\bfoo\b|\bbar\b|\bbaz\b" content/posts/{slug}.mdx
+```
+
+If anything matches, fix it before proceeding. Emdashes are forbidden in keech.dev posts (use comma, period, colon, or parens). "Straightforward" and "simply" dismiss complexity. Foo/bar/baz are unrealistic placeholder names. Re-run the grep after fixing to confirm zero matches.
+
+### 6b. Word count check
+
+```bash
+wc -w content/posts/{slug}.mdx
+```
+
+If the count exceeds 3,000 words, **do not pad** and **do not justify the bloat**. Cut the weakest sections, drop tangential citations, and keep only load-bearing evidence. The blog's voice is concise. Re-run the check after cutting.
+
+### 6c. Velite compile
 
 Run `npm run velite` to confirm the post compiles without errors. If it fails:
 - Read the error output carefully.
@@ -102,8 +150,11 @@ Run `npm run velite` to confirm the post compiles without errors. If it fails:
 Return a brief summary to the orchestrator containing:
 - The file path where the post was saved
 - The post title
+- The final word count
 - A one-line overview of each section
 - Compilation status (pass/fail, and error details if failed)
+- Confirmation that the anti-pattern grep returned zero matches
+- Which first-person sections need Adam's review (those where you used general framing he should refine with real specifics)
 
 ## Quality Checklist
 

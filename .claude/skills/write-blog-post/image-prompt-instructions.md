@@ -27,6 +27,8 @@ For each identified section, write a detailed image generation prompt incorporat
 - Reference the style tokens and palette described below
 - Be self-contained (an image generation tool should need nothing beyond the prompt)
 
+**In-image text constraint (NON-NEGOTIABLE):** Any text that will appear inside the generated image (chart titles, axis labels, callouts, bracket annotations, headers, legend entries) must use language that appears verbatim in the post body or in the cited source materials. Do not invent dramatic editorial labels for visual punch. If the post calls it "generational divergence", the chart annotation is "GENERATIONAL DIVERGENCE", not "THE AGE CLEAVAGE". If the post uses "AI productivity gain by seniority", that is the chart title. The image must be defensible against fact-checking by a reader who has only the post.
+
 ### Style References
 
 **Nocturnal Petrol (site default):**

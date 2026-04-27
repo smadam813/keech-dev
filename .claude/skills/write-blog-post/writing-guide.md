@@ -24,7 +24,24 @@ Right: "I have been burned by context loss between agent sessions enough times t
 
 The pattern: personal context first, then the external source as corroboration or contrast. Readers came to keech.dev for Adam's perspective. The research supports the perspective; it does not replace it.
 
-**Test:** Does the opening paragraph contain a first-person sentence before any external citation? If not, restructure it.
+### Firsthand observation vs. research framing
+
+When ghostwriting Adam's voice, do not invent firsthand observations Adam may not have made. Frame personal voice as orientation toward the topic, not as claims about specific events.
+
+NOT OK (invented firsthand observation):
+- "the most common AI hiring strategy I see in fintech right now"
+- "what we're doing at my company is..."
+- "every CTO I talk to says..."
+- "after running this for the better part of a year..."
+
+OK (research-framed personal orientation):
+- "the dominant pattern in the research I gathered is..."
+- "what I see in industry commentary suggests..."
+- "I am navigating what this looks like in practice, and..."
+
+The line: Adam can say "I think X" because that is his judgment. He cannot say "I see X happening at companies in market Y" unless he actually observes that. The writer agent does not know which is which, so default to the safer framing.
+
+**Test:** Does the opening paragraph of the post AND every `##` section's opening sentence contain a first-person framing before any external citation? If not, restructure.
 
 ## 3. Frontload Value
 
