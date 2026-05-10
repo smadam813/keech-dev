@@ -1,6 +1,5 @@
 'use client'
 
-import { useCallback } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { Menu, X } from 'lucide-react'
@@ -19,11 +18,8 @@ export function Header() {
   const pathname = usePathname()
   const { isOpen, toggle, close, buttonRef, brandRef } = useMenuState()
 
-  const isActive = useCallback(
-    (href: string) =>
-      pathname === href || (href !== '/' && pathname.startsWith(href)),
-    [pathname]
-  )
+  const isActive = (href: string) =>
+    pathname === href || (href !== '/' && pathname.startsWith(href))
 
   return (
     <header className="site-header">
