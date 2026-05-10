@@ -8,17 +8,10 @@ import { PostCard } from './post-card'
 import { ListingViewCounts } from './listing-view-counts'
 import { ScrollReveal } from '@/components/ui/scroll-reveal'
 import { cn } from '@/lib/utils'
+import type { Post } from '@/lib/posts'
 
 interface FilteredPostListProps {
-  posts: Array<{
-    title: string
-    slug: string
-    date: string
-    description?: string
-    excerpt: string
-    tags: string[]
-    readingTime: number
-  }>
+  posts: Post[]
   allTags: string[]
 }
 

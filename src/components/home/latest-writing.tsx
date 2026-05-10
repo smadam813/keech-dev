@@ -24,18 +24,7 @@ export function LatestWriting() {
       <ListingViewCounts slugs={latest.map(p => p.slug)}>
         <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {latest.map(post => (
-            <PostCard
-              key={post.slug}
-              post={{
-                title: post.title,
-                slug: post.slug,
-                date: post.date,
-                description: post.description,
-                excerpt: post.excerpt,
-                tags: post.tags,
-                readingTime: post.readingTime,
-              }}
-            />
+            <PostCard key={post.slug} post={post} />
           ))}
         </div>
       </ListingViewCounts>
