@@ -1,13 +1,13 @@
-import { ELDER_FUTHARK, type Rune } from './rune-config'
+import { DIVIDER_RUNES } from '@/lib/runes'
 import { cn } from '@/lib/utils'
 
 interface RuneDividerProps {
-  rune?: Rune
+  rune?: string
   className?: string
 }
 
 export function RuneDivider({
-  rune = ELDER_FUTHARK.dagaz,
+  rune = DIVIDER_RUNES.default,
   className,
 }: RuneDividerProps) {
   return (
@@ -20,7 +20,7 @@ export function RuneDivider({
         aria-hidden="true"
         className="font-display font-bold text-2xl text-accent select-none leading-none"
       >
-        {rune.char}
+        {rune}
       </span>
       <div className="flex-1 h-[2px] bg-foreground" />
     </div>

@@ -5,7 +5,7 @@ import { TableOfContents } from '@/components/blog/toc'
 import { MobileToc } from '@/components/blog/mobile-toc'
 import { FilterChip } from '@/components/ui/filter-chip'
 import { ViewCounter } from '@/lib/post-view-count/client'
-import { POST_RUNES } from '@/components/runes/rune-config'
+import { POST_RUNES } from '@/lib/runes'
 import { formatDate } from '@/lib/format'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
@@ -62,13 +62,13 @@ export default async function PostPage({ params }: PostPageProps) {
               <h1 className="post-detail__title">{post.title}</h1>
               <div className="post-detail__meta">
                 <time dateTime={post.date}>{formattedDate}</time>
-                <span aria-hidden="true" className="post-detail__meta-sep">{POST_RUNES.separator.char}</span>
+                <span aria-hidden="true" className="post-detail__meta-sep">{POST_RUNES.separator}</span>
                 <span>{post.readingTime} min read</span>
-                <span aria-hidden="true" className="post-detail__meta-sep">{POST_RUNES.separator.char}</span>
+                <span aria-hidden="true" className="post-detail__meta-sep">{POST_RUNES.separator}</span>
                 <ViewCounter slug={slug} />
                 {formattedUpdated && (
                   <>
-                    <span aria-hidden="true" className="post-detail__meta-sep">{POST_RUNES.separator.char}</span>
+                    <span aria-hidden="true" className="post-detail__meta-sep">{POST_RUNES.separator}</span>
                     <span>Updated {formattedUpdated}</span>
                   </>
                 )}

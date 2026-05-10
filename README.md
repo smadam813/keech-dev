@@ -44,10 +44,10 @@ src/
 │   ├── layout/                 # Header (hamburger nav), Footer
 │   ├── blog/                   # PostCard, MDXContent, CodeBlock, TOC
 │   ├── projects/               # ProjectCard, TechBadge
-│   ├── runes/                  # RuneDivider, rune-config
+│   ├── runes/                  # RuneDivider
 │   ├── ui/                     # ScrollReveal (Intersection Observer)
 │   └── hero.tsx                # Hero section with rune glow overlay
-└── lib/                        # cn(), font config, rune-glows
+└── lib/                        # cn(), font config, runes, rune-glows
 
 content/
 ├── posts/*.mdx                 # Blog posts

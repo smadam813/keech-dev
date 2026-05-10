@@ -383,6 +383,36 @@
     padding-left: 0 !important;
     padding-right: 0 !important;
   }
+
+  /* Copy button — injected by rehype-copy-button at build time */
+  .code-block__copy {
+    position: absolute;
+    right: 0.5rem;
+    top: 0.5rem;
+    padding: 0.5rem;
+    border-radius: 4px;
+    border: 1px solid var(--color-hair-strong);
+    background: var(--color-surface-hi);
+    color: var(--color-ink);
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.2s;
+    cursor: pointer;
+  }
+
+  .code-block:hover .code-block__copy,
+  .code-block__copy:focus-visible {
+    opacity: 1;
+  }
+
+  .code-block__copy:hover {
+    transform: translateY(-1px);
+  }
+
+  /* State machine: hide all icons, then reveal the one matching data-state */
+  .code-block__copy > svg { display: none; }
+  .code-block__copy[data-state="idle"] .code-block__icon-copy { display: block; }
+  .code-block__copy[data-state="success"] .code-block__icon-check { display: block; }
+  .code-block__copy[data-state="error"] .code-block__icon-x { display: block; }
 }
 
 /* ==========================================================================

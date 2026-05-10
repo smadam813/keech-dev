@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import { FilteredPostList } from '@/components/blog/filtered-post-list'
 import { publishedPosts } from '@/lib/posts'
-import { BLOG_RUNES } from '@/components/runes/rune-config'
+import { BLOG_RUNES } from '@/lib/runes'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -18,7 +18,7 @@ export default function BlogPage() {
   return (
     <section className="w-full mx-auto" style={{ maxWidth: 'var(--page-max)' }}>
       <h1 className="page-title">
-        <span aria-hidden="true" className="page-title__rune">{BLOG_RUNES.bullet.char}</span>
+        <span aria-hidden="true" className="page-title__rune">{BLOG_RUNES.bullet}</span>
         Blog
       </h1>
       <p className="home-lede" style={{ marginTop: 0 }}>
