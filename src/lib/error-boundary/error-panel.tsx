@@ -41,7 +41,7 @@ export function ErrorPanel({ error, reset, navigateTo, fullViewport }: ErrorPane
               Try Again
             </button>
           )}
-          {/* plain <a> intentional: client-side routing may be broken in error state */}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- plain <a> intentional: client-side routing may be broken in error state */}
           <a
             href={navigateTo.href}
             className="btn btn--primary"
