@@ -96,15 +96,14 @@ interface PostViewCountProps {
   record?: boolean
 }
 
-export function PostViewCount({ slug, record: shouldRecord }: PostViewCountProps) {
+export function PostViewCount({ slug, record }: PostViewCountProps) {
   const context = useContext(ViewCountsContext)
-  const hasProvider = context !== NO_PROVIDER
 
-  if (hasProvider) {
-    return <ContextConsumer slug={slug} counts={context as Record<string, number | null>} />
+  if (context === NO_PROVIDER) {
+    return <StandaloneCounter slug={slug} record={record} />
   }
 
-  return <StandaloneCounter slug={slug} record={shouldRecord} />
+  return <ContextConsumer slug={slug} counts={context} />
 }
 
 function ContextConsumer({ slug, counts }: { slug: string; counts: Record<string, number | null> }) {
