@@ -1,118 +1,35 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+## Environment
 
-## Commands
+No CI/CD — deployment is git-push to Vercel.
 
-```bash
-npm run dev       # Velite --watch & Next.js Turbopack (two parallel processes)
-npm run build     # velite && next build (sequential — Velite must complete first)
-npm run lint      # ESLint flat config (core-web-vitals + typescript; 3 React 19 rules downgraded to warn)
-npm run test      # Vitest unit tests
-npm run test:e2e  # Playwright end-to-end tests
-npm run start     # Serve production build
-npm run velite    # Run Velite content compilation alone (useful for debugging content issues)
-```
+Required env vars: `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` (view counting via Upstash Redis).
 
-No CI/CD pipelines exist — deployment is git-push to Vercel.
+`npx tsc --noEmit` shows false errors in test files because Vitest globals aren't in tsconfig — use `npm run test` to validate.
 
 ## Architecture
 
-Personal portfolio/blog at keech.dev. Next.js 16 App Router with React 19, Tailwind CSS v4, and Velite for MDX content.
+Personal portfolio/blog at keech.dev. Next.js 16 App Router, React 19, Tailwind CSS v4, Velite for MDX content.
 
 ### Content Pipeline
 
-MDX files in `content/posts/` and `content/projects/` are compiled by Velite at build time into type-safe collections in `.velite/` (gitignored, regenerated on every build). Import via `@/.velite`:
+MDX in `content/posts/` and `content/projects/` is compiled by Velite into `.velite/` (gitignored). Velite runs as a separate prebuild step (not a webpack plugin) because Turbopack doesn't support custom webpack plugins.
 
-```typescript
-import { posts, projects } from '@/.velite'
-```
+Compiled MDX is executed via `new Function()` in `MDXContent` to avoid Shiki transformer hydration issues.
 
-Velite runs as a **separate prebuild step** (not a webpack plugin) because Turbopack doesn't support custom webpack plugins. The `velite.config.ts` defines two collections with Zod schemas, rehype-slug for heading IDs, and rehype-pretty-code with `github-dark-dimmed` theme.
+### Visual Identity
 
-Compiled MDX is executed at runtime via `new Function()` in `MDXContent` — the `<pre>` element is overridden with a `CodeBlock` wrapper that adds a copy button. This avoids Shiki transformer hydration issues.
+**Nocturnal petrol** — dark-only palette with no light mode; the palette is the brand. Tailwind v4 uses CSS-first configuration (no `tailwind.config.js`); design tokens live in `src/app/globals.css`.
 
-**Post frontmatter** (required: `title`, `slug`, `date`; optional: `updated`, `description`, `tags`, `draft`). **Project frontmatter** (required: `title`, `slug`, `description`, `date`; optional: `updated`, `featured`, `stack`, `github`, `demo`, `category`, `image`). Full schemas in `velite.config.ts`.
+Elder Futhark runes are a brand element, not decoration. Each nav route maps to a rune (Othala → Home, Ansuz → Blog, Kenaz → Projects, Mannaz → About). Ambient rune glows use non-round breath durations (5.0s–7.5s) to prevent visual synchronization.
 
-### Path Aliases
+### Design Decisions
 
-- `@/*` → `./src/*`
-- `@/.velite` → `./.velite` (generated content collections)
-
-### Component Model
-
-Server components by default. Client components (`'use client'`) are used only where browser APIs are needed (state, IntersectionObserver, clipboard, localStorage, keyboard events). The `inert` attribute is used for focus management in the mobile menu instead of JavaScript focus traps.
-
-### Styling
-
-Tailwind CSS v4 with **CSS-first configuration** — all design tokens live in `src/app/globals.css` via `@theme` directive. There is no `tailwind.config.js`. The **nocturnal petrol** visual identity uses:
-
-- Deep petrol canvas (`--color-bg: #122a32`), gold + teal accents, ivory ink
-- Brutalist cards (`--shadow-brutal`, `--border-brutal: 3px`) layered over ambient watermark
-- Dark-only palette (no light mode) — the palette is the brand
-- Per-tag pastel hues via `paletteFor()` in `src/lib/tag-palette.ts` (hash-indexed into `TAG_HUE_PALETTE`) — used by FilterChip and post-card meta
-
-### Rune Design Language
-
-Elder Futhark runes are used as a thematic design element throughout the site — not just decoration but part of the brand identity:
-
-- **Navigation**: Each route has a mapped rune (Othala → Home, Ansuz → Blog, Kenaz → Projects, Mannaz → About) defined in `src/components/runes/rune-config.ts`
-- **Ambient background**: `src/components/layout/ambient-background.tsx` is a fixed full-bleed watermark (hero.webp + color wash + gradient + vignette + 14 rune glows + grain) mounted once in `layout.tsx` behind every route. Glow positions in `src/lib/rune-glows.ts` use 0–1 fraction coords, computed against `object-fit: cover` scaling via `computeGlowPositions()`. Ambient variant (`rune-glow--ambient`) breathes but skips the entrance cascade
-- **Animation timing**: Rune breathing durations use non-round values (5.0s–7.5s) to prevent visual synchronization
-- Runes are colored by aett grouping: Freyr (amber), Hagal (teal), Tyr (gold)
-
-### Animation Patterns
-
-- **Reduced-motion**: Checked on mount via `prefers-reduced-motion` media query and listened for changes; all animations respect this
-- **Scroll reveal**: `ScrollReveal` component wraps elements with single-fire IntersectionObserver (threshold 0.1)
-- **Rune breathing**: Ambient rune glows use non-round breath durations (5.0s–7.5s) via `--breath-duration` CSS var; no entrance cascade on ambient variant
-- **Scroll lock**: Uses `position: fixed` approach (iOS Safari safe, unlike `overflow: hidden`)
-
-### View Counting
-
-Blog post views are tracked via Upstash Redis with two API routes:
-
-- `GET /api/views?slugs=a,b` — batch fetch counts for listing pages
-- `GET/POST /api/views/[slug]` — single post fetch/increment with IP-based deduplication (SHA-256 hashed, 24h TTL)
-
-Client components use localStorage as a read-through cache to prevent flash on repeat visits. `ListingViewCounts` provides a React context for batch counts on listing pages; `ViewCounter` handles single-post pages. View counts are non-critical UI — all fetches fail silently.
-
-Environment variables required: `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` (used by `Redis.fromEnv()` in `src/lib/redis.ts`).
-
-### Testing
-
-Vitest for unit tests (`vitest.config.ts`), Playwright for e2e (`playwright.config.ts`). Unit tests live alongside source files as `*.test.ts(x)`. E2e specs in `e2e/`. Coverage includes error boundaries, hooks, lib utilities, and UI components.
-
-`vitest.config.ts` enables `globals: true` so tests use `describe`/`it`/`expect` without imports. Running `npx tsc --noEmit` will show false errors in test files (`afterEach` not found, etc.) — these are expected since Vitest globals aren't in tsconfig. Use `npm run test` to validate test correctness.
-
-### Error Handling
-
-- `error.tsx` — route-level error boundary (also `blog/[slug]/error.tsx` for post pages)
-- `global-error.tsx` — root error boundary
-- `not-found.tsx` — 404 page
-- `loading.tsx` — loading skeleton
-
-Error boundaries use plain `<a>` tags (not `next/link`) intentionally — client-side routing may be broken when the error boundary is showing. Each `<a>` tag has an `eslint-disable-next-line @next/next/no-html-link-for-pages` comment to suppress the false-positive lint error. The same applies to `MDXFallback` in `mdx-content.tsx`.
-
-### Security Hardening
-
-`next.config.ts` sets security headers on all routes: Content-Security-Policy (self-only with eval for MDX), X-Frame-Options DENY, X-Content-Type-Options nosniff, Referrer-Policy strict-origin-when-cross-origin.
-
-API routes use input validation (`src/lib/validation.ts` — slug format + batch size limits) and rate limiting via `@upstash/ratelimit` on the view-count POST endpoint.
-
-### Static Generation & SEO
-
-Content pages use `generateStaticParams()` for full static generation. SEO handled by `sitemap.ts`, `robots.ts`, and `opengraph-image.tsx` (dynamic OG image generation) in app root. RSS feed at `src/app/feed.xml/route.ts`. Vercel Web Analytics is included in the root layout.
-
-### Utilities
-
-- `cn()` in `src/lib/utils.ts` — clsx + tailwind-merge for combining Tailwind classes without conflicts. Used throughout all components.
-- `formatDate()` in `src/lib/format.ts` — shared date formatter (UTC-normalized `Intl.DateTimeFormat`). Use instead of inline `toLocaleDateString()` or `new Intl.DateTimeFormat()`.
-
-### Fonts
-
-Norse custom WOFF2 (headings/display), Inter (body), and JetBrains Mono (meta/code/eyebrow) configured in `src/lib/fonts.ts`. Font CSS variables: `--font-display` (Norse), `--font-body` (Inter), `--font-mono` (JetBrains Mono).
+- View counts are non-critical UI — all fetches fail silently
+- Error boundaries use plain `<a>` tags (not `next/link`) because client-side routing may be broken in error states
+- iOS scroll lock uses `position: fixed` (not `overflow: hidden`)
 
 ## Blog Writing Skill
 
-The `.claude/skills/write-blog-post/` skill orchestrates end-to-end blog post creation: spawns 2–3 `blog-researcher` subagents in parallel, synthesizes research, writes MDX, generates image prompts, and validates with `npm run velite`. Writing principles are in `.claude/skills/write-blog-post/writing-guide.md` — specificity over abstraction, frontload value, conversational tone, no emdashes or emojis.
+`.claude/skills/write-blog-post/` orchestrates blog post creation. Writing principles in `.claude/skills/write-blog-post/writing-guide.md` — specificity over abstraction, frontload value, conversational tone, no emdashes or emojis.
