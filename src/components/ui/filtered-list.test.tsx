@@ -134,4 +134,21 @@ describe('FilteredList', () => {
     fireEvent.click(screen.getByRole('button', { name: /clear filters/i }))
     expect(window.history.replaceState).toHaveBeenCalledWith(null, '', '/blog')
   })
+
+  it('ignores empty segments from malformed URL params', () => {
+    renderList('react,,typescript,')
+    expect(screen.getByTestId('item-a')).toBeInTheDocument()
+    expect(screen.queryByTestId('item-b')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('item-c')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('item-d')).not.toBeInTheDocument()
+  })
+
+  it('writes filter values sorted alphabetically to URL', () => {
+    mockSearchParamsToString.mockReturnValue('tags=typescript')
+    renderList('typescript')
+    fireEvent.click(screen.getByRole('button', { name: /^css/i }))
+    const url = (window.history.replaceState as ReturnType<typeof vi.fn>).mock.calls[0][2] as string
+    const params = new URLSearchParams(url.split('?')[1])
+    expect(params.get('tags')).toBe('css,typescript')
+  })
 })

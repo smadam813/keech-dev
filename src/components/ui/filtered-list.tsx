@@ -6,7 +6,16 @@ import { FilterBar } from '@/components/ui/filter-bar'
 import { FilterChip } from '@/components/ui/filter-chip'
 import { ScrollReveal } from '@/components/ui/scroll-reveal'
 import { cn } from '@/lib/utils'
-import { serializeFilters, parseFilters } from '@/lib/filter-url'
+
+function serializeFilters(filters: Set<string>): string | null {
+  if (filters.size === 0) return null
+  return [...filters].sort().join(',')
+}
+
+function parseFilters(value: string | null): Set<string> {
+  if (!value) return new Set()
+  return new Set(value.split(',').filter(Boolean))
+}
 
 interface FilteredListProps<T> {
   items: T[]
