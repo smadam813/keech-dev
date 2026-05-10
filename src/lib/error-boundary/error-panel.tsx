@@ -1,5 +1,6 @@
 'use client'
 
+import { cn } from '@/lib/utils'
 import { classifyError, selectStrategy } from './classify'
 
 interface ErrorPanelProps {
@@ -16,7 +17,7 @@ export function ErrorPanel({ error, reset, navigateTo, fullViewport }: ErrorPane
   const strategy = selectStrategy(category)
 
   return (
-    <div className={`${fullViewport ? 'min-h-dvh' : 'min-h-[calc(100dvh-4rem)]'} flex items-center justify-center px-6`}>
+    <div className={cn(fullViewport ? 'min-h-dvh' : 'min-h-[calc(100dvh-4rem)]', 'flex items-center justify-center px-6')}>
       <div
         className="text-center p-8"
         style={{
