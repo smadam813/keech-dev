@@ -1,4 +1,4 @@
-import { redis } from '@/lib/redis'
+import { read } from '@/lib/post-view-count/server'
 import { validateSlugs } from '@/lib/validation'
 
 export const dynamic = 'force-dynamic'
@@ -18,14 +18,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const keys = slugs.map((slug) => `views:${slug}`)
-    const values = await redis.mget<(number | null)[]>(...keys)
-
-    const counts: Record<string, number> = {}
-    slugs.forEach((slug, i) => {
-      counts[slug] = values[i] ?? 0
-    })
-
+    const counts = await read(slugs)
     return Response.json({ counts })
   } catch (error) {
     console.error('[views] Redis error:', error)

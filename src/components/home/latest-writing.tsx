@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { posts } from '@/.velite'
 import { PostCard } from '@/components/blog/post-card'
-import { ListingViewCounts } from '@/components/blog/listing-view-counts'
+import { ListingViewCounts } from '@/lib/post-view-count/client'
 import { POST_RUNES } from '@/components/runes/rune-config'
 
 export function LatestWriting() {

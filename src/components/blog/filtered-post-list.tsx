@@ -5,7 +5,7 @@ import { FilterBar } from '@/components/ui/filter-bar'
 import { FilterChip } from '@/components/ui/filter-chip'
 import { useFilteredList } from '@/hooks/use-filtered-list'
 import { PostCard } from './post-card'
-import { ListingViewCounts } from './listing-view-counts'
+import { ListingViewCounts } from '@/lib/post-view-count/client'
 import { ScrollReveal } from '@/components/ui/scroll-reveal'
 import { cn } from '@/lib/utils'
 

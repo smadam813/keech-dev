@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { FilterChip } from '@/components/ui/filter-chip'
 import { POST_RUNES } from '@/components/runes/rune-config'
-import { PostCardViewCount } from './listing-view-counts'
+import { PostCardViewCount } from '@/lib/post-view-count/client'
 import { formatDate } from '@/lib/format'
 
 interface PostCardProps {

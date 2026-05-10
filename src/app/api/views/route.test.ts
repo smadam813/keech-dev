@@ -1,15 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-const mockMget = vi.fn()
-vi.mock('@/lib/redis', () => ({
-  redis: { mget: (...args: unknown[]) => mockMget(...args) },
+const { mockRead } = vi.hoisted(() => ({
+  mockRead: vi.fn(),
+}))
+
+vi.mock('@/lib/post-view-count/server', () => ({
+  read: (...args: unknown[]) => mockRead(...args),
 }))
 
 import { GET } from './route'
 
-describe('GET /api/views (TEST-01)', () => {
+describe('GET /api/views', () => {
   beforeEach(() => {
-    mockMget.mockReset()
+    mockRead.mockReset()
   })
 
   it('returns empty counts for empty slugs param', async () => {
@@ -19,11 +22,11 @@ describe('GET /api/views (TEST-01)', () => {
 
     expect(response.status).toBe(200)
     expect(data).toEqual({ counts: {} })
-    expect(mockMget).not.toHaveBeenCalled()
+    expect(mockRead).not.toHaveBeenCalled()
   })
 
-  it('returns counts for valid slugs from redis mget', async () => {
-    mockMget.mockResolvedValue([10, 5])
+  it('returns counts for valid slugs', async () => {
+    mockRead.mockResolvedValue({ 'post-a': 10, 'post-b': 5 })
 
     const request = new Request('http://localhost/api/views?slugs=post-a,post-b')
     const response = await GET(request)
@@ -31,11 +34,11 @@ describe('GET /api/views (TEST-01)', () => {
 
     expect(response.status).toBe(200)
     expect(data).toEqual({ counts: { 'post-a': 10, 'post-b': 5 } })
-    expect(mockMget).toHaveBeenCalledWith('views:post-a', 'views:post-b')
+    expect(mockRead).toHaveBeenCalledWith(['post-a', 'post-b'])
   })
 
-  it('defaults null redis values to 0', async () => {
-    mockMget.mockResolvedValue([42, null])
+  it('defaults null redis values to 0 (handled by module)', async () => {
+    mockRead.mockResolvedValue({ 'has-views': 42, 'no-views': 0 })
 
     const request = new Request('http://localhost/api/views?slugs=has-views,no-views')
     const response = await GET(request)
@@ -65,7 +68,7 @@ describe('GET /api/views (TEST-01)', () => {
   })
 
   it('returns 500 on Redis error', async () => {
-    mockMget.mockRejectedValue(new Error('Connection refused'))
+    mockRead.mockRejectedValue(new Error('Connection refused'))
 
     const request = new Request('http://localhost/api/views?slugs=test-post')
     const response = await GET(request)
