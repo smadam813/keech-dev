@@ -11,7 +11,8 @@
     "velite": "velite",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "test:e2e:dev": "PW_DEV_SERVER=1 playwright test"
+    "test:e2e:dev": "PW_DEV_SERVER=1 playwright test",
+    "sandcastle": "npx tsx .sandcastle/main.mts"
   },
   "repository": {
     "type": "git",
@@ -43,6 +44,7 @@
     "velite": "0.3.1"
   },
   "devDependencies": {
+    "@ai-hero/sandcastle": "^0.5.10",
     "@playwright/test": "^1.59.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
