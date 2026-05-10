@@ -4,7 +4,7 @@ import { MDXContent } from '@/components/blog/mdx-content'
 import { TableOfContents } from '@/components/blog/toc'
 import { MobileToc } from '@/components/blog/mobile-toc'
 import { FilterChip } from '@/components/ui/filter-chip'
-import { ViewCounter } from '@/lib/post-view-count/client'
+import { PostViewCount } from '@/lib/post-view-count/client'
 import { POST_RUNES } from '@/lib/runes'
 import { formatDate } from '@/lib/format'
 import { ArrowLeft } from 'lucide-react'
@@ -65,7 +65,7 @@ export default async function PostPage({ params }: PostPageProps) {
                 <span aria-hidden="true" className="post-detail__meta-sep">{POST_RUNES.separator}</span>
                 <span>{post.readingTime} min read</span>
                 <span aria-hidden="true" className="post-detail__meta-sep">{POST_RUNES.separator}</span>
-                <ViewCounter slug={slug} />
+                <PostViewCount slug={slug} record />
                 {formattedUpdated && (
                   <>
                     <span aria-hidden="true" className="post-detail__meta-sep">{POST_RUNES.separator}</span>

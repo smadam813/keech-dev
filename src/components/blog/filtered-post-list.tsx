@@ -3,7 +3,7 @@
 import { useMemo } from 'react'
 import { FilteredList } from '@/components/ui/filtered-list'
 import { PostCard } from './post-card'
-import { ListingViewCounts } from '@/lib/post-view-count/client'
+import { ViewCountProvider } from '@/lib/post-view-count/client'
 import type { Post } from '@/lib/posts'
 
 interface FilteredPostListProps {
@@ -15,7 +15,7 @@ export function FilteredPostList({ posts, allTags }: FilteredPostListProps) {
   const allSlugs = useMemo(() => posts.map((p) => p.slug), [posts])
 
   return (
-    <ListingViewCounts slugs={allSlugs}>
+    <ViewCountProvider slugs={allSlugs}>
       <FilteredList
         items={posts}
         allFilterValues={allTags}
@@ -28,6 +28,6 @@ export function FilteredPostList({ posts, allTags }: FilteredPostListProps) {
         getKey={(post) => post.slug}
         renderItem={(post) => <PostCard post={post} />}
       />
-    </ListingViewCounts>
+    </ViewCountProvider>
   )
 }

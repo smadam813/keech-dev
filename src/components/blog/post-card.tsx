@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { FilterChip } from '@/components/ui/filter-chip'
 import { POST_RUNES } from '@/lib/runes'
-import { PostCardViewCount } from '@/lib/post-view-count/client'
+import { PostViewCount } from '@/lib/post-view-count/client'
 import { formatDate } from '@/lib/format'
 import type { Post } from '@/lib/posts'
 
@@ -22,7 +22,7 @@ export function PostCard({ post }: PostCardProps) {
             <span aria-hidden="true" className="card__meta-sep">{POST_RUNES.separator}</span>
             <span>{post.readingTime} min read</span>
             <span aria-hidden="true" className="card__meta-sep">{POST_RUNES.separator}</span>
-            <PostCardViewCount slug={post.slug} />
+            <PostViewCount slug={post.slug} />
           </div>
         </header>
 

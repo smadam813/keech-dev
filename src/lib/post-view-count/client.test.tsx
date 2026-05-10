@@ -1,105 +1,22 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { renderHook, render, screen, act, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 
-describe('formatCount', () => {
-  it('pluralizes zero as views', async () => {
-    const { formatCount } = await import('./client')
-    expect(formatCount(0)).toBe('0 views')
-  })
-
-  it('uses singular for exactly 1', async () => {
-    const { formatCount } = await import('./client')
-    expect(formatCount(1)).toBe('1 view')
-  })
-
-  it('formats large numbers with locale separators', async () => {
-    const { formatCount } = await import('./client')
-    expect(formatCount(1234)).toBe('1,234 views')
-  })
-
-  it('handles very large numbers', async () => {
-    const { formatCount } = await import('./client')
-    expect(formatCount(1000000)).toBe('1,000,000 views')
-  })
-})
-
-describe('usePostViewCount', () => {
+function mockLocalStorage() {
   const mockStorage = new Map<string, string>()
+  vi.stubGlobal('localStorage', {
+    getItem: vi.fn((key: string) => mockStorage.get(key) ?? null),
+    setItem: vi.fn((key: string, value: string) => mockStorage.set(key, value)),
+    removeItem: vi.fn((key: string) => mockStorage.delete(key)),
+    clear: vi.fn(() => mockStorage.clear()),
+    length: 0,
+    key: vi.fn(() => null),
+  })
+  return mockStorage
+}
 
+describe('PostViewCount', () => {
   beforeEach(() => {
-    mockStorage.clear()
-    vi.stubGlobal('localStorage', {
-      getItem: vi.fn((key: string) => mockStorage.get(key) ?? null),
-      setItem: vi.fn((key: string, value: string) => mockStorage.set(key, value)),
-      removeItem: vi.fn((key: string) => mockStorage.delete(key)),
-      clear: vi.fn(() => mockStorage.clear()),
-      length: 0,
-      key: vi.fn(() => null),
-    })
-  })
-
-  afterEach(() => {
-    vi.unstubAllGlobals()
-  })
-
-  it('returns null when localStorage has no entry', async () => {
-    const { usePostViewCount } = await import('./client')
-    const { result } = renderHook(() => usePostViewCount('nonexistent'))
-    expect(result.current).toBe(null)
-  })
-
-  it('returns cached numeric value', async () => {
-    mockStorage.set('views:my-post', '42')
-    const { usePostViewCount } = await import('./client')
-    const { result } = renderHook(() => usePostViewCount('my-post'))
-    expect(result.current).toBe(42)
-  })
-
-  it('returns null during SSR', async () => {
-    const { usePostViewCount } = await import('./client')
-    const { result } = renderHook(() => usePostViewCount('missing'))
-    expect(result.current).toBe(null)
-  })
-
-  it('returns null when localStorage throws', async () => {
-    vi.stubGlobal('localStorage', {
-      getItem: vi.fn(() => { throw new DOMException('SecurityError') }),
-      setItem: vi.fn(),
-      removeItem: vi.fn(),
-      clear: vi.fn(),
-      length: 0,
-      key: vi.fn(() => null),
-    })
-
-    const { usePostViewCount } = await import('./client')
-    const { result } = renderHook(() => usePostViewCount('any'))
-    expect(result.current).toBe(null)
-  })
-
-  it('updates when storage event fires (cross-tab sync)', async () => {
-    const { usePostViewCount } = await import('./client')
-    const { result } = renderHook(() => usePostViewCount('sync-post'))
-    expect(result.current).toBe(null)
-
-    mockStorage.set('views:sync-post', '99')
-    act(() => {
-      window.dispatchEvent(new StorageEvent('storage'))
-    })
-
-    expect(result.current).toBe(99)
-  })
-})
-
-describe('ViewCounter', () => {
-  beforeEach(() => {
-    vi.stubGlobal('localStorage', {
-      getItem: vi.fn(() => null),
-      setItem: vi.fn(),
-      removeItem: vi.fn(),
-      clear: vi.fn(),
-      length: 0,
-      key: vi.fn(() => null),
-    })
+    mockLocalStorage()
   })
 
   afterEach(() => {
@@ -107,67 +24,132 @@ describe('ViewCounter', () => {
     vi.restoreAllMocks()
   })
 
-  it('fires POST and displays returned view count', async () => {
+  it('fetches independently when no provider is present', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ slug: 'solo', views: 42 }),
+    }))
+
+    const { PostViewCount } = await import('./client')
+    render(<PostViewCount slug="solo" />)
+
+    await waitFor(() => {
+      expect(screen.getByText('42 views')).toBeDefined()
+    })
+
+    expect(fetch).toHaveBeenCalledWith('/api/views/solo', undefined)
+  })
+
+  it('reads from ViewCountProvider context when present', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ counts: { 'ctx-post': 99 } }),
+    }))
+
+    const { ViewCountProvider, PostViewCount } = await import('./client')
+    render(
+      <ViewCountProvider slugs={['ctx-post']}>
+        <PostViewCount slug="ctx-post" />
+      </ViewCountProvider>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('99 views')).toBeDefined()
+    })
+  })
+
+  it('records a view via POST when record prop is true', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ views: 7 }),
     }))
 
-    const { ViewCounter } = await import('./client')
-    render(<ViewCounter slug="test-post" />)
+    const { PostViewCount } = await import('./client')
+    render(<PostViewCount slug="detail-post" record />)
 
     await waitFor(() => {
       expect(screen.getByText('7 views')).toBeDefined()
     })
 
-    expect(fetch).toHaveBeenCalledWith('/api/views/test-post', { method: 'POST' })
+    expect(fetch).toHaveBeenCalledWith('/api/views/detail-post', { method: 'POST' })
   })
 
-  it('caches result in localStorage after POST', async () => {
-    const setItem = vi.fn()
-    vi.stubGlobal('localStorage', {
-      getItem: vi.fn(() => null),
-      setItem,
-      removeItem: vi.fn(),
-      clear: vi.fn(),
-      length: 0,
-      key: vi.fn(() => null),
-    })
+  it('caches result in localStorage after fetch', async () => {
+    const storage = mockLocalStorage()
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ views: 15 }),
+      json: () => Promise.resolve({ slug: 'cached', views: 15 }),
     }))
 
-    const { ViewCounter } = await import('./client')
-    render(<ViewCounter slug="cached-post" />)
+    const { PostViewCount } = await import('./client')
+    render(<PostViewCount slug="cached" />)
 
     await waitFor(() => {
-      expect(setItem).toHaveBeenCalledWith('views:cached-post', '15')
+      expect(storage.get('views:cached')).toBe('15')
+    })
+  })
+
+  it('shows cached value while fetching', async () => {
+    const storage = mockLocalStorage()
+    storage.set('views:warm', '50')
+
+    let resolveJson: (v: unknown) => void
+    const jsonPromise = new Promise(r => { resolveJson = r })
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => jsonPromise,
+    }))
+
+    const { PostViewCount } = await import('./client')
+    render(<PostViewCount slug="warm" />)
+
+    expect(screen.getByText('50 views')).toBeDefined()
+
+    resolveJson!({ slug: 'warm', views: 55 })
+    await waitFor(() => {
+      expect(screen.getByText('55 views')).toBeDefined()
     })
   })
 
   it('fails silently on fetch error', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('Network error')))
 
-    const { ViewCounter } = await import('./client')
-    const { container } = render(<ViewCounter slug="broken" />)
+    const { PostViewCount } = await import('./client')
+    const { container } = render(<PostViewCount slug="broken" />)
 
     await waitFor(() => {
       expect(container.querySelector('span')).toBeDefined()
     })
   })
+
+  it('renders placeholder width when no count available', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockImplementation(() => new Promise(() => {})))
+
+    const { PostViewCount } = await import('./client')
+    const { container } = render(<PostViewCount slug="loading" />)
+
+    const span = container.querySelector('span')
+    expect(span?.className).toContain('w-12')
+  })
+
+  it('renders singular for exactly 1 view', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ slug: 'one', views: 1 }),
+    }))
+
+    const { PostViewCount } = await import('./client')
+    render(<PostViewCount slug="one" />)
+
+    await waitFor(() => {
+      expect(screen.getByText('1 view')).toBeDefined()
+    })
+  })
 })
 
-describe('ListingViewCounts + PostCardViewCount', () => {
+describe('ViewCountProvider', () => {
   beforeEach(() => {
-    vi.stubGlobal('localStorage', {
-      getItem: vi.fn(() => null),
-      setItem: vi.fn(),
-      removeItem: vi.fn(),
-      clear: vi.fn(),
-      length: 0,
-      key: vi.fn(() => null),
-    })
+    mockLocalStorage()
   })
 
   afterEach(() => {
@@ -175,18 +157,18 @@ describe('ListingViewCounts + PostCardViewCount', () => {
     vi.restoreAllMocks()
   })
 
-  it('fetches batch counts and provides them to PostCardViewCount', async () => {
+  it('batch-fetches counts and provides them to PostViewCount children', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ counts: { 'post-a': 10, 'post-b': 5 } }),
     }))
 
-    const { ListingViewCounts, PostCardViewCount } = await import('./client')
+    const { ViewCountProvider, PostViewCount } = await import('./client')
     render(
-      <ListingViewCounts slugs={['post-a', 'post-b']}>
-        <PostCardViewCount slug="post-a" />
-        <PostCardViewCount slug="post-b" />
-      </ListingViewCounts>
+      <ViewCountProvider slugs={['post-a', 'post-b']}>
+        <PostViewCount slug="post-a" />
+        <PostViewCount slug="post-b" />
+      </ViewCountProvider>
     )
 
     await waitFor(() => {
@@ -197,17 +179,17 @@ describe('ListingViewCounts + PostCardViewCount', () => {
     expect(fetch).toHaveBeenCalledWith('/api/views?slugs=post-a,post-b')
   })
 
-  it('renders nothing for slug with no count', async () => {
+  it('renders nothing for slug with no count in context', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ counts: {} }),
     }))
 
-    const { ListingViewCounts, PostCardViewCount } = await import('./client')
+    const { ViewCountProvider, PostViewCount } = await import('./client')
     const { container } = render(
-      <ListingViewCounts slugs={['missing']}>
-        <PostCardViewCount slug="missing" />
-      </ListingViewCounts>
+      <ViewCountProvider slugs={['missing']}>
+        <PostViewCount slug="missing" />
+      </ViewCountProvider>
     )
 
     await waitFor(() => {
@@ -216,29 +198,37 @@ describe('ListingViewCounts + PostCardViewCount', () => {
   })
 
   it('caches batch results to localStorage', async () => {
-    const setItem = vi.fn()
-    vi.stubGlobal('localStorage', {
-      getItem: vi.fn(() => null),
-      setItem,
-      removeItem: vi.fn(),
-      clear: vi.fn(),
-      length: 0,
-      key: vi.fn(() => null),
-    })
+    const storage = mockLocalStorage()
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ counts: { 'slug-x': 33 } }),
     }))
 
-    const { ListingViewCounts, PostCardViewCount } = await import('./client')
+    const { ViewCountProvider, PostViewCount } = await import('./client')
     render(
-      <ListingViewCounts slugs={['slug-x']}>
-        <PostCardViewCount slug="slug-x" />
-      </ListingViewCounts>
+      <ViewCountProvider slugs={['slug-x']}>
+        <PostViewCount slug="slug-x" />
+      </ViewCountProvider>
     )
 
     await waitFor(() => {
-      expect(setItem).toHaveBeenCalledWith('views:slug-x', '33')
+      expect(storage.get('views:slug-x')).toBe('33')
     })
+  })
+
+  it('shows cached values from localStorage while batch-fetching', async () => {
+    const storage = mockLocalStorage()
+    storage.set('views:cached-slug', '77')
+
+    vi.stubGlobal('fetch', vi.fn().mockImplementation(() => new Promise(() => {})))
+
+    const { ViewCountProvider, PostViewCount } = await import('./client')
+    render(
+      <ViewCountProvider slugs={['cached-slug']}>
+        <PostViewCount slug="cached-slug" />
+      </ViewCountProvider>
+    )
+
+    expect(screen.getByText('77 views')).toBeDefined()
   })
 })

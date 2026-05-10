@@ -4,7 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState, us
 
 const CACHE_PREFIX = 'views:'
 
-export function formatCount(count: number): string {
+function formatCount(count: number): string {
   return `${count.toLocaleString()} ${count === 1 ? 'view' : 'views'}`
 }
 
@@ -28,53 +28,21 @@ function subscribeToStorage(callback: () => void) {
   return () => window.removeEventListener('storage', callback)
 }
 
-export function usePostViewCount(slug: string): number | null {
+function usePostViewCount(slug: string): number | null {
   const getSnapshot = useCallback(() => getCached(slug), [slug])
   return useSyncExternalStore(subscribeToStorage, getSnapshot, () => null)
 }
 
-interface ViewCounterProps {
-  slug: string
-}
+const NO_PROVIDER = Symbol('no-provider')
+type ContextValue = Record<string, number | null> | typeof NO_PROVIDER
+const ViewCountsContext = createContext<ContextValue>(NO_PROVIDER)
 
-export function ViewCounter({ slug }: ViewCounterProps) {
-  const cachedViews = usePostViewCount(slug)
-  const [views, setViews] = useState<number | null>(null)
-  const hasFired = useRef(false)
-
-  useEffect(() => {
-    if (hasFired.current) return
-    hasFired.current = true
-
-    fetch(`/api/views/${slug}`, { method: 'POST' })
-      .then((res) => {
-        if (!res.ok) throw new Error(`View count failed: ${res.status}`)
-        return res.json()
-      })
-      .then((data) => {
-        setViews(data.views)
-        setCache(slug, data.views)
-      })
-      .catch(() => {})
-  }, [slug])
-
-  const displayCount = views ?? cachedViews
-
-  return (
-    <span className={displayCount === null ? 'inline-block w-12' : undefined}>
-      {displayCount !== null && formatCount(displayCount)}
-    </span>
-  )
-}
-
-const ViewCountsContext = createContext<Record<string, number | null>>({})
-
-interface ListingViewCountsProps {
+interface ViewCountProviderProps {
   slugs: string[]
   children: React.ReactNode
 }
 
-export function ListingViewCounts({ slugs, children }: ListingViewCountsProps) {
+export function ViewCountProvider({ slugs, children }: ViewCountProviderProps) {
   const [counts, setCounts] = useState<Record<string, number | null>>({})
 
   const getCachedSnapshot = useCallback(() => {
@@ -123,15 +91,53 @@ export function ListingViewCounts({ slugs, children }: ListingViewCountsProps) {
   )
 }
 
-interface PostCardViewCountProps {
+interface PostViewCountProps {
   slug: string
+  record?: boolean
 }
 
-export function PostCardViewCount({ slug }: PostCardViewCountProps) {
-  const counts = useContext(ViewCountsContext)
+export function PostViewCount({ slug, record }: PostViewCountProps) {
+  const context = useContext(ViewCountsContext)
+
+  if (context === NO_PROVIDER) {
+    return <StandaloneCounter slug={slug} record={record} />
+  }
+
+  return <ContextConsumer slug={slug} counts={context} />
+}
+
+function ContextConsumer({ slug, counts }: { slug: string; counts: Record<string, number | null> }) {
   const views = counts[slug] ?? null
-
   if (views == null) return null
-
   return <span>{formatCount(views)}</span>
+}
+
+function StandaloneCounter({ slug, record }: { slug: string; record?: boolean }) {
+  const cachedViews = usePostViewCount(slug)
+  const [views, setViews] = useState<number | null>(null)
+  const hasFired = useRef(false)
+
+  useEffect(() => {
+    if (hasFired.current) return
+    hasFired.current = true
+
+    fetch(`/api/views/${slug}`, record ? { method: 'POST' } : undefined)
+      .then((res) => {
+        if (!res.ok) throw new Error(`View count failed: ${res.status}`)
+        return res.json()
+      })
+      .then((data) => {
+        setViews(data.views)
+        setCache(slug, data.views)
+      })
+      .catch(() => {})
+  }, [slug, record])
+
+  const displayCount = views ?? cachedViews
+
+  return (
+    <span className={displayCount === null ? 'inline-block w-12' : undefined}>
+      {displayCount !== null && formatCount(displayCount)}
+    </span>
+  )
 }
