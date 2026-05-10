@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { publishedPosts } from '@/lib/posts'
 import { PostCard } from '@/components/blog/post-card'
-import { ListingViewCounts } from '@/lib/post-view-count/client'
+import { ViewCountProvider } from '@/lib/post-view-count/client'
 import { POST_RUNES } from '@/lib/runes'
 
 export function LatestWriting() {
@@ -20,13 +20,13 @@ export function LatestWriting() {
         <h2 className="section-head__title">Latest writing</h2>
         <Link href="/blog" className="section-head__more">All posts →</Link>
       </div>
-      <ListingViewCounts slugs={latest.map(p => p.slug)}>
+      <ViewCountProvider slugs={latest.map(p => p.slug)}>
         <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {latest.map(post => (
             <PostCard key={post.slug} post={post} />
           ))}
         </div>
-      </ListingViewCounts>
+      </ViewCountProvider>
     </section>
   )
 }
