@@ -2,10 +2,10 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import ErrorPage from './error'
 
-describe('Error boundary (global)', () => {
-  it('renders a branded error heading', () => {
+describe('Error boundary (app)', () => {
+  it('renders a heading from the error classification strategy', () => {
     render(<ErrorPage error={new Error('boom')} reset={() => {}} />)
-    expect(screen.getByRole('heading', { name: /something went wrong/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading')).toBeInTheDocument()
   })
 
   it('renders an escape link that navigates to /', () => {
@@ -21,12 +21,20 @@ describe('Error boundary (global)', () => {
     expect(reset).toHaveBeenCalledOnce()
   })
 
-  it('does not use a Next.js Link for the escape href (plain anchor)', () => {
+  it('uses plain <a> tag for the escape href (not Next.js Link)', () => {
     render(<ErrorPage error={new Error('boom')} reset={() => {}} />)
-    // next/link renders as <a> in test env too, but the component uses plain <a href="/">
-    // Verify the link element is a native anchor (not wrapped in any special component)
     const link = screen.getByRole('link', { name: /go home/i })
     expect(link.tagName.toLowerCase()).toBe('a')
     expect(link).toHaveAttribute('href', '/')
+  })
+
+  it('discriminates errors: content errors show content-specific heading', () => {
+    render(<ErrorPage error={new Error('MDX compilation failed')} reset={() => {}} />)
+    expect(screen.getByRole('heading', { name: /content/i })).toBeInTheDocument()
+  })
+
+  it('discriminates errors: service errors show service-specific heading', () => {
+    render(<ErrorPage error={new Error('Redis connection refused')} reset={() => {}} />)
+    expect(screen.getByRole('heading', { name: /temporarily/i })).toBeInTheDocument()
   })
 })

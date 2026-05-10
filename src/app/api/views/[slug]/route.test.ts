@@ -1,39 +1,32 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
 
-const mockGet = vi.fn()
-const mockSet = vi.fn()
-const mockIncr = vi.fn()
-const mockRateLimit = vi.fn()
-
-vi.mock('@/lib/redis', () => ({
-  redis: {
-    get: (...args: unknown[]) => mockGet(...args),
-    set: (...args: unknown[]) => mockSet(...args),
-    incr: (...args: unknown[]) => mockIncr(...args),
-  },
+const { mockRecord, mockRead } = vi.hoisted(() => ({
+  mockRecord: vi.fn(),
+  mockRead: vi.fn(),
 }))
 
-vi.mock('@/lib/rate-limit', () => ({
-  viewsRateLimit: {
-    limit: (...args: unknown[]) => mockRateLimit(...args),
+vi.mock('@/lib/post-view-count/server', () => ({
+  record: (...args: unknown[]) => mockRecord(...args),
+  read: (...args: unknown[]) => mockRead(...args),
+  RateLimitError: class RateLimitError extends Error {
+    constructor() { super('Rate limit exceeded'); this.name = 'RateLimitError' }
   },
 }))
 
 import { GET, POST } from './route'
+import { RateLimitError } from '@/lib/post-view-count/server'
 
 const makeParams = (slug: string) => ({ params: Promise.resolve({ slug }) })
 
-describe('GET /api/views/[slug] (TEST-02)', () => {
+describe('GET /api/views/[slug]', () => {
   beforeEach(() => {
-    mockGet.mockReset()
-    mockSet.mockReset()
-    mockIncr.mockReset()
-    mockRateLimit.mockReset()
+    mockRecord.mockReset()
+    mockRead.mockReset()
   })
 
   it('returns views for a valid slug', async () => {
-    mockGet.mockResolvedValue(42)
+    mockRead.mockResolvedValue({ 'test-post': 42 })
 
     const request = new NextRequest('http://localhost/api/views/test-post')
     const response = await GET(request, makeParams('test-post'))
@@ -43,8 +36,8 @@ describe('GET /api/views/[slug] (TEST-02)', () => {
     expect(data).toEqual({ slug: 'test-post', views: 42 })
   })
 
-  it('returns 0 views when redis value is null', async () => {
-    mockGet.mockResolvedValue(null)
+  it('returns 0 views when count is zero', async () => {
+    mockRead.mockResolvedValue({ 'test-post': 0 })
 
     const request = new NextRequest('http://localhost/api/views/test-post')
     const response = await GET(request, makeParams('test-post'))
@@ -64,7 +57,7 @@ describe('GET /api/views/[slug] (TEST-02)', () => {
   })
 
   it('returns 500 on Redis error', async () => {
-    mockGet.mockRejectedValue(new Error('Connection refused'))
+    mockRead.mockRejectedValue(new Error('Connection refused'))
 
     const request = new NextRequest('http://localhost/api/views/test-post')
     const response = await GET(request, makeParams('test-post'))
@@ -75,18 +68,14 @@ describe('GET /api/views/[slug] (TEST-02)', () => {
   })
 })
 
-describe('POST /api/views/[slug] (TEST-02)', () => {
+describe('POST /api/views/[slug]', () => {
   beforeEach(() => {
-    mockGet.mockReset()
-    mockSet.mockReset()
-    mockIncr.mockReset()
-    mockRateLimit.mockReset()
+    mockRecord.mockReset()
+    mockRead.mockReset()
   })
 
   it('increments view count on first visit', async () => {
-    mockRateLimit.mockResolvedValue({ success: true })
-    mockSet.mockResolvedValue('OK')
-    mockIncr.mockResolvedValue(1)
+    mockRecord.mockResolvedValue({ views: 1, deduplicated: false })
 
     const request = new NextRequest('http://localhost/api/views/test-post', {
       method: 'POST',
@@ -97,18 +86,11 @@ describe('POST /api/views/[slug] (TEST-02)', () => {
 
     expect(response.status).toBe(200)
     expect(data).toEqual({ slug: 'test-post', views: 1, deduplicated: false })
-    expect(mockSet).toHaveBeenCalledWith(
-      expect.stringContaining('dedup:test-post:'),
-      '1',
-      { ex: 86400, nx: true }
-    )
-    expect(mockIncr).toHaveBeenCalledWith('views:test-post')
+    expect(mockRecord).toHaveBeenCalledWith('test-post', '1.2.3.4')
   })
 
   it('returns current count without incrementing on repeat visit', async () => {
-    mockRateLimit.mockResolvedValue({ success: true })
-    mockSet.mockResolvedValue(null)
-    mockGet.mockResolvedValue(42)
+    mockRecord.mockResolvedValue({ views: 42, deduplicated: true })
 
     const request = new NextRequest('http://localhost/api/views/test-post', {
       method: 'POST',
@@ -119,11 +101,10 @@ describe('POST /api/views/[slug] (TEST-02)', () => {
 
     expect(response.status).toBe(200)
     expect(data).toEqual({ slug: 'test-post', views: 42, deduplicated: true })
-    expect(mockIncr).not.toHaveBeenCalled()
   })
 
   it('returns 429 when rate limited', async () => {
-    mockRateLimit.mockResolvedValue({ success: false })
+    mockRecord.mockRejectedValue(new RateLimitError())
 
     const request = new NextRequest('http://localhost/api/views/test-post', {
       method: 'POST',
@@ -149,8 +130,7 @@ describe('POST /api/views/[slug] (TEST-02)', () => {
   })
 
   it('returns 500 on Redis error in POST', async () => {
-    mockRateLimit.mockResolvedValue({ success: true })
-    mockSet.mockRejectedValue(new Error('Connection refused'))
+    mockRecord.mockRejectedValue(new Error('Connection refused'))
 
     const request = new NextRequest('http://localhost/api/views/test-post', {
       method: 'POST',
