@@ -3,17 +3,10 @@ import { FilterChip } from '@/components/ui/filter-chip'
 import { POST_RUNES } from '@/components/runes/rune-config'
 import { PostCardViewCount } from '@/lib/post-view-count/client'
 import { formatDate } from '@/lib/format'
+import type { Post } from '@/lib/posts'
 
 interface PostCardProps {
-  post: {
-    title: string
-    slug: string
-    date: string
-    description?: string
-    excerpt: string
-    tags: string[]
-    readingTime: number
-  }
+  post: Post
 }
 
 export function PostCard({ post }: PostCardProps) {

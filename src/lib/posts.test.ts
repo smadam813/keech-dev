@@ -11,6 +11,7 @@ vi.mock('@/.velite', () => ({
 
 // Import AFTER the mock so the helper sees the mocked posts
 import { publishedPosts } from './posts'
+import type { Post } from './posts'
 
 describe('publishedPosts (GAP-01)', () => {
   it('excludes all entries with draft: true', () => {
@@ -27,5 +28,26 @@ describe('publishedPosts (GAP-01)', () => {
 
   it('returns exactly 2 published entries from the 4-entry fixture', () => {
     expect(publishedPosts).toHaveLength(2)
+  })
+})
+
+describe('Post type re-export', () => {
+  it('exposes Post type with expected fields', () => {
+    const post: Post = {
+      title: 'Test',
+      slug: 'test',
+      date: '2024-01-01',
+      tags: [],
+      draft: false,
+      toc: [],
+      metadata: { readingTime: 1, wordCount: 100 },
+      excerpt: 'test',
+      body: '',
+      permalink: '/blog/test',
+      readingTime: 1,
+    }
+    expect(post.title).toBe('Test')
+    expect(post.slug).toBe('test')
+    expect(post.readingTime).toBe(1)
   })
 })

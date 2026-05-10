@@ -1,12 +1,11 @@
 import Link from 'next/link'
-import { posts } from '@/.velite'
+import { publishedPosts } from '@/lib/posts'
 import { PostCard } from '@/components/blog/post-card'
 import { ListingViewCounts } from '@/lib/post-view-count/client'
 import { POST_RUNES } from '@/components/runes/rune-config'
 
 export function LatestWriting() {
-  const latest = [...posts]
-    .filter(p => !p.draft)
+  const latest = [...publishedPosts]
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 3)
 
@@ -24,18 +23,7 @@ export function LatestWriting() {
       <ListingViewCounts slugs={latest.map(p => p.slug)}>
         <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {latest.map(post => (
-            <PostCard
-              key={post.slug}
-              post={{
-                title: post.title,
-                slug: post.slug,
-                date: post.date,
-                description: post.description,
-                excerpt: post.excerpt,
-                tags: post.tags,
-                readingTime: post.readingTime,
-              }}
-            />
+            <PostCard key={post.slug} post={post} />
           ))}
         </div>
       </ListingViewCounts>
