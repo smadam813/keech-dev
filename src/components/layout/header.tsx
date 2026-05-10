@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useCallback } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { Menu, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { NAV_RUNES } from '@/lib/runes'
+import { useMenuState } from '@/hooks/use-menu-state'
 
 const navItems = [
   { href: '/', label: 'Home' },
@@ -15,67 +16,14 @@ const navItems = [
 ]
 
 export function Header() {
-  const [menuPathname, setMenuPathname] = useState<string | null>(null)
   const pathname = usePathname()
-  const buttonRef = useRef<HTMLButtonElement>(null)
-  const brandRef = useRef<HTMLAnchorElement>(null)
-  const prevIsOpenRef = useRef(false)
-
-  const isOpen = menuPathname !== null && menuPathname === pathname
+  const { isOpen, toggle, close, buttonRef, brandRef } = useMenuState()
 
   const isActive = useCallback(
     (href: string) =>
       pathname === href || (href !== '/' && pathname.startsWith(href)),
     [pathname]
   )
-
-  useEffect(() => {
-    if (isOpen) {
-      const scrollY = window.scrollY
-      document.body.style.position = 'fixed'
-      document.body.style.top = `-${scrollY}px`
-      document.body.style.left = '0'
-      document.body.style.right = '0'
-      document.body.style.overflow = 'hidden'
-
-      return () => {
-        document.body.style.position = ''
-        document.body.style.top = ''
-        document.body.style.left = ''
-        document.body.style.right = ''
-        document.body.style.overflow = ''
-        window.scrollTo(0, scrollY)
-      }
-    }
-  }, [isOpen])
-
-  useEffect(() => {
-    const main = document.querySelector('main')
-    const brand = brandRef.current
-    if (isOpen) {
-      main?.setAttribute('inert', '')
-      brand?.setAttribute('inert', '')
-    } else {
-      main?.removeAttribute('inert')
-      brand?.removeAttribute('inert')
-    }
-    return () => {
-      main?.removeAttribute('inert')
-      brand?.removeAttribute('inert')
-    }
-  }, [isOpen])
-
-  useEffect(() => {
-    if (!isOpen) return
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMenuPathname(null) }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
-  }, [isOpen])
-
-  useEffect(() => {
-    if (prevIsOpenRef.current && !isOpen) buttonRef.current?.focus()
-    prevIsOpenRef.current = isOpen
-  }, [isOpen])
 
   return (
     <header className="site-header">
@@ -110,7 +58,7 @@ export function Header() {
         <button
           ref={buttonRef}
           type="button"
-          onClick={() => setMenuPathname(prev => prev === pathname ? null : pathname)}
+          onClick={toggle}
           aria-expanded={isOpen}
           aria-controls="mobile-menu"
           aria-label={isOpen ? 'Close navigation menu' : 'Open navigation menu'}
@@ -135,7 +83,7 @@ export function Header() {
             <Link
               key={item.href}
               href={item.href}
-              onClick={() => setMenuPathname(null)}
+              onClick={close}
               className={cn(
                 'site-mobile-menu__link',
                 isActive(item.href) && 'site-mobile-menu__link--active',
