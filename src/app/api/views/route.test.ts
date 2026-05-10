@@ -37,7 +37,7 @@ describe('GET /api/views', () => {
     expect(mockRead).toHaveBeenCalledWith(['post-a', 'post-b'])
   })
 
-  it('defaults null redis values to 0 (handled by module)', async () => {
+  it('defaults missing redis values to 0', async () => {
     mockRead.mockResolvedValue({ 'has-views': 42, 'no-views': 0 })
 
     const request = new Request('http://localhost/api/views?slugs=has-views,no-views')

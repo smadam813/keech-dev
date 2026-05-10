@@ -35,10 +35,10 @@ export async function record(slug: string, ip: string): Promise<{ views: number;
   if (dedupResult === 'OK') {
     const viewCount = await redis.incr(`${VIEWS_PREFIX}${slug}`)
     return { views: viewCount, deduplicated: false }
-  } else {
-    const views = await redis.get<number>(`${VIEWS_PREFIX}${slug}`) ?? 0
-    return { views, deduplicated: true }
   }
+
+  const views = await redis.get<number>(`${VIEWS_PREFIX}${slug}`) ?? 0
+  return { views, deduplicated: true }
 }
 
 export async function read(slugs: string | string[]): Promise<Record<string, number>> {

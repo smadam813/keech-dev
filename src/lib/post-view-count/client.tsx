@@ -33,7 +33,11 @@ export function usePostViewCount(slug: string): number | null {
   return useSyncExternalStore(subscribeToStorage, getSnapshot, () => null)
 }
 
-export function ViewCounter({ slug }: { slug: string }) {
+interface ViewCounterProps {
+  slug: string
+}
+
+export function ViewCounter({ slug }: ViewCounterProps) {
   const cachedViews = usePostViewCount(slug)
   const [views, setViews] = useState<number | null>(null)
   const hasFired = useRef(false)
@@ -54,9 +58,11 @@ export function ViewCounter({ slug }: { slug: string }) {
       .catch(() => {})
   }, [slug])
 
+  const displayCount = views ?? cachedViews
+
   return (
-    <span className={views === null && cachedViews === null ? 'inline-block w-12' : undefined}>
-      {(views ?? cachedViews) !== null && formatCount((views ?? cachedViews)!)}
+    <span className={displayCount === null ? 'inline-block w-12' : undefined}>
+      {displayCount !== null && formatCount(displayCount)}
     </span>
   )
 }
@@ -117,7 +123,11 @@ export function ListingViewCounts({ slugs, children }: ListingViewCountsProps) {
   )
 }
 
-export function PostCardViewCount({ slug }: { slug: string }) {
+interface PostCardViewCountProps {
+  slug: string
+}
+
+export function PostCardViewCount({ slug }: PostCardViewCountProps) {
   const counts = useContext(ViewCountsContext)
   const views = counts[slug] ?? null
 
