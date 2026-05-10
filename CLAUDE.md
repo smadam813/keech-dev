@@ -33,3 +33,17 @@ Elder Futhark runes are a brand element, not decoration. Each nav route maps to 
 ## Blog Writing Skill
 
 `.claude/skills/write-blog-post/` orchestrates blog post creation. Writing principles in `.claude/skills/write-blog-post/writing-guide.md` — specificity over abstraction, frontload value, conversational tone, no emdashes or emojis.
+
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues at `smadam813/keech-dev` via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Canonical names (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
