@@ -1,4 +1,6 @@
-import { CodeBlockEnhancer } from './code-block-enhancer'
+'use client'
+
+import type { MouseEvent } from 'react'
 
 interface MDXContentProps {
   html: string
@@ -29,15 +31,43 @@ function MDXFallback() {
   )
 }
 
+async function handleCopyClick(button: HTMLButtonElement) {
+  const figure = button.closest('.code-block')
+  if (!figure) return
+
+  const code = figure.querySelector('pre code')
+  const text = code?.textContent || figure.querySelector('pre')?.textContent || ''
+  if (!text) return
+
+  try {
+    await navigator.clipboard.writeText(text)
+    button.dataset.state = 'success'
+    button.setAttribute('aria-label', 'Copied!')
+  } catch (err) {
+    console.error('Clipboard write failed:', err)
+    button.dataset.state = 'error'
+    button.setAttribute('aria-label', 'Copy failed')
+  }
+
+  setTimeout(() => {
+    button.dataset.state = 'idle'
+    button.setAttribute('aria-label', 'Copy code')
+  }, 2000)
+}
+
+function handleClick(e: MouseEvent<HTMLDivElement>) {
+  const target = e.target as HTMLElement
+  const button = target.closest('.code-block__copy') as HTMLButtonElement | null
+  if (!button) return
+  handleCopyClick(button)
+}
+
 export function MDXContent({ html }: MDXContentProps) {
   if (!html) {
     return <MDXFallback />
   }
 
   return (
-    <>
-      <div dangerouslySetInnerHTML={{ __html: html }} />
-      <CodeBlockEnhancer />
-    </>
+    <div onClick={handleClick} dangerouslySetInnerHTML={{ __html: html }} />
   )
 }

@@ -22,7 +22,7 @@ Compiled MDX is executed via `new Function()` in `MDXContent` to avoid Shiki tra
 
 **Nocturnal petrol** — dark-only palette with no light mode; the palette is the brand. Tailwind v4 uses CSS-first configuration (no `tailwind.config.js`); design tokens live in `src/app/globals.css`.
 
-Elder Futhark runes are a brand element, not decoration. Each nav route maps to a rune (Othala → Home, Ansuz → Blog, Kenaz → Projects, Mannaz → About). Ambient rune glows use non-round breath durations (5.0s–7.5s) to prevent visual synchronization.
+Elder Futhark runes are a brand element, not decoration. Route-to-rune mappings and section context maps live in `src/lib/runes.ts`. Ambient rune glows and breath durations are encoded in `src/lib/rune-glows.ts`.
 
 ### Design Decisions
 

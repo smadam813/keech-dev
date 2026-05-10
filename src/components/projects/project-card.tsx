@@ -3,7 +3,7 @@ import Image from 'next/image'
 import { ExternalLink, BookOpen } from 'lucide-react'
 import { GithubIcon } from '@/components/icons/brand-icons'
 import { FilterChip } from '@/components/ui/filter-chip'
-import { ELDER_FUTHARK } from '@/components/runes/rune-config'
+import { PROJECT_RUNES } from '@/lib/runes'
 import { CATEGORY_LABEL } from '@/lib/project-categories'
 
 interface ProjectCardProps {
@@ -27,7 +27,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
     <Link href={`/projects/${project.slug}`} className="block group h-full">
       <article className={`card project-card ${project.image ? 'card--img' : ''}`}>
         <span aria-hidden="true" className="project-card__badge">
-          {ELDER_FUTHARK.kenaz.char}
+          {PROJECT_RUNES.bullet}
         </span>
 
         {project.image && (

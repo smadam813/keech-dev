@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import { MDXContent } from '@/components/blog/mdx-content'
 import { ArrowLeft, ExternalLink } from 'lucide-react'
 import { GithubIcon } from '@/components/icons/brand-icons'
-import { ELDER_FUTHARK } from '@/components/runes/rune-config'
+import { PROJECT_RUNES } from '@/lib/runes'
 import { FilterChip } from '@/components/ui/filter-chip'
 import { CATEGORY_LABEL } from '@/lib/project-categories'
 import Link from 'next/link'
@@ -81,14 +81,14 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
             <div className="home-ctas" style={{ margin: '16px 0 28px' }}>
               {project.demo && (
                 <a href={project.demo} target="_blank" rel="noopener noreferrer" className="btn btn--ghost">
-                  <span aria-hidden="true" className="btn__rune">{ELDER_FUTHARK.sowilo.char}</span>
+                  <span aria-hidden="true" className="btn__rune">{PROJECT_RUNES.liveDemo}</span>
                   <ExternalLink size={14} />
                   <span>Live demo</span>
                 </a>
               )}
               {project.github && (
                 <a href={project.github} target="_blank" rel="noopener noreferrer" className="btn btn--ghost">
-                  <span aria-hidden="true" className="btn__rune">{ELDER_FUTHARK.algiz.char}</span>
+                  <span aria-hidden="true" className="btn__rune">{PROJECT_RUNES.source}</span>
                   <GithubIcon size={14} />
                   <span>Source</span>
                 </a>

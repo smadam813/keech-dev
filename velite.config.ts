@@ -4,6 +4,7 @@ import rehypeSlug from 'rehype-slug'
 import { createCssVariablesTheme } from 'shiki'
 import type { Root } from 'hast'
 import { visit } from 'unist-util-visit'
+import { rehypeCopyButton } from './lib/rehype-copy-button'
 
 /**
  * CSS-variables theme for syntax highlighting.
@@ -104,6 +105,7 @@ export default defineConfig({
           }
         }
       ],
+      rehypeCopyButton,
       rehypeListRole
     ]
   }

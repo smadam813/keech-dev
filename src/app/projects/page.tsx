@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import { projects } from '@/.velite'
 import { FilteredProjectList } from '@/components/projects/filtered-project-list'
-import { NAV_RUNES } from '@/components/runes/rune-config'
+import { NAV_RUNES } from '@/lib/runes'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -20,7 +20,7 @@ export default function ProjectsPage() {
   return (
     <section className="w-full mx-auto" style={{ maxWidth: 'var(--page-max)' }}>
       <h1 className="page-title">
-        <span aria-hidden="true" className="page-title__rune">{NAV_RUNES['/projects'].char}</span>
+        <span aria-hidden="true" className="page-title__rune">{NAV_RUNES['/projects']}</span>
         Projects
       </h1>
       <p className="home-lede" style={{ marginTop: 0 }}>

@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { Menu, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { NAV_RUNES, ELDER_FUTHARK } from '@/components/runes/rune-config'
+import { NAV_RUNES } from '@/lib/runes'
 
 const navItems = [
   { href: '/', label: 'Home' },
@@ -82,7 +82,7 @@ export function Header() {
       <div className="site-header__inner">
         <Link href="/" className="site-header__brand" aria-label="keech.dev home" ref={brandRef}>
           <span aria-hidden="true" className="site-header__brand-rune">
-            {ELDER_FUTHARK.othala.char}
+            {NAV_RUNES['/']}
           </span>
           <span>
             keech<span className="site-header__brand-dot">.dev</span>
@@ -100,7 +100,7 @@ export function Header() {
               )}
             >
               <span aria-hidden="true" className="site-nav__rune">
-                {NAV_RUNES[item.href as keyof typeof NAV_RUNES]?.char}
+                {NAV_RUNES[item.href as keyof typeof NAV_RUNES]}
               </span>
               {item.label}
             </Link>
@@ -142,7 +142,7 @@ export function Header() {
               )}
             >
               <span aria-hidden="true" className="site-nav__rune">
-                {NAV_RUNES[item.href as keyof typeof NAV_RUNES]?.char}
+                {NAV_RUNES[item.href as keyof typeof NAV_RUNES]}
               </span>
               {item.label}
             </Link>

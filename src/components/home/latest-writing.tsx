@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { publishedPosts } from '@/lib/posts'
 import { PostCard } from '@/components/blog/post-card'
 import { ListingViewCounts } from '@/lib/post-view-count/client'
-import { POST_RUNES } from '@/components/runes/rune-config'
+import { POST_RUNES } from '@/lib/runes'
 
 export function LatestWriting() {
   const latest = [...publishedPosts]
@@ -15,7 +15,7 @@ export function LatestWriting() {
     <section className="mt-8">
       <div className="section-head">
         <span aria-hidden="true" className="section-head__rune">
-          {POST_RUNES.separator.char}
+          {POST_RUNES.separator}
         </span>
         <h2 className="section-head__title">Latest writing</h2>
         <Link href="/blog" className="section-head__more">All posts →</Link>

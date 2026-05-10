@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
-import { NAV_RUNES, ELDER_FUTHARK } from '@/components/runes/rune-config'
+import { NAV_RUNES, ABOUT_RUNES } from '@/lib/runes'
 
 export const metadata: Metadata = {
   title: 'About',
@@ -12,7 +12,7 @@ export default function AboutPage() {
   return (
     <section className="w-full mx-auto" style={{ maxWidth: 'var(--page-max)' }}>
       <h1 className="page-title">
-        <span aria-hidden="true" className="page-title__rune">{NAV_RUNES['/about'].char}</span>
+        <span aria-hidden="true" className="page-title__rune">{NAV_RUNES['/about']}</span>
         About
       </h1>
 
@@ -47,22 +47,22 @@ export default function AboutPage() {
 
           <ul className="about__list">
             <li>
-              <span aria-hidden="true" className="about__rune">{ELDER_FUTHARK.ansuz.char}</span>
+              <span aria-hidden="true" className="about__rune">{ABOUT_RUNES.writing}</span>
               Writes here, roughly weekly.
             </li>
             <li>
-              <span aria-hidden="true" className="about__rune">{ELDER_FUTHARK.kenaz.char}</span>
+              <span aria-hidden="true" className="about__rune">{ABOUT_RUNES.craft}</span>
               Builds tooling for agent-driven PDLCs.
             </li>
             <li>
-              <span aria-hidden="true" className="about__rune">{ELDER_FUTHARK.raidho.char}</span>
+              <span aria-hidden="true" className="about__rune">{ABOUT_RUNES.availability}</span>
               Available for advisory work, selectively.
             </li>
           </ul>
 
           <div className="about__contact">
             <Link href="/feed.xml" className="btn btn--ghost">
-              <span aria-hidden="true" className="btn__rune">{ELDER_FUTHARK.sowilo.char}</span>
+              <span aria-hidden="true" className="btn__rune">{ABOUT_RUNES.rssFeed}</span>
               RSS feed
             </Link>
           </div>

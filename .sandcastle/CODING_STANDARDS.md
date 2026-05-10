@@ -37,7 +37,7 @@
 - Non-critical UI fails silently. View counts, analytics, and similar fetches catch errors and fall back to cached or default values; do not surface fetch errors to the reader. (See `src/components/blog/view-counter.tsx`.)
 - Error boundaries (`error.tsx`, `global-error.tsx`) use plain `<a>` tags, not `next/link`, because client-side routing may be broken in error states. Keep the existing `eslint-disable-next-line @next/next/no-html-link-for-pages` comments with their `--` reason.
 - iOS scroll lock uses `position: fixed`, not `overflow: hidden`.
-- Filter UI updates the URL via `window.history.replaceState` (see `src/hooks/use-filtered-list.ts`), not `router.push`. This avoids a server re-render on every keystroke.
+- Filter UI updates the URL via `window.history.replaceState` (see `src/components/ui/filtered-list.tsx`), not `router.push`. This avoids a server re-render on every keystroke.
 - `localStorage` access goes through a `useSyncExternalStore` wrapper (see `src/hooks/use-view-store.ts`), not direct reads in render.
 - No global state managers. No Zustand, Redux, or React Context for shared state. Use URL params, localStorage (via the wrapper), or local component state.
 - MDX is rendered via `dangerouslySetInnerHTML` from Velite output to avoid Shiki transformer hydration mismatches. Do not replace with `@next/mdx` or `next-mdx-remote`.
