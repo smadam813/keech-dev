@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [preview, main]
+  push:
+    branches: [preview, main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # .velite/ is gitignored and imported as @/.velite, so it must exist before typecheck and tests.
+      - run: npm run velite
+
+      - run: npm run lint
+
+      - run: npx tsc --noEmit
+
+      - run: npm run test
+
+      # No Upstash secrets needed: Redis is only touched at request time, never during build.
+      - run: npm run build

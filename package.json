@@ -4,7 +4,7 @@
   "private": true,
   "description": "Personal portfolio and blog",
   "scripts": {
-    "dev": "velite --watch & next dev --turbopack",
+    "dev": "concurrently -k -n velite,next \"velite --watch\" \"next dev --turbopack\"",
     "build": "velite && next build",
     "start": "next start",
     "lint": "eslint .",
@@ -50,6 +50,7 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
+    "concurrently": "^10.0.5",
     "eslint": "^9.39.2",
     "eslint-config-next": "^16.2.2",
     "jsdom": "^29.0.1",
