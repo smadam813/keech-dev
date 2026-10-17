@@ -6,9 +6,13 @@ on:
   push:
     branches: [preview, main]
 
+permissions:
+  contents: read
+
+# Only cancel superseded PR runs; every commit on preview/main keeps a finished status.
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   check:
@@ -18,8 +22,11 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: npm
+
+      # Match the npm major that writes package-lock.json locally; npm 10 and 11 resolve peers differently.
+      - run: npm install -g npm@11
 
       - run: npm ci
 

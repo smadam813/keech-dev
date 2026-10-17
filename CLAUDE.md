@@ -2,12 +2,13 @@
 
 ## Commands
 
-- `npm run velite` regenerates `.velite/` from `content/`. It is gitignored and imported as `@/.velite`, so on a fresh clone run it before `tsc`, `vitest`, or `next build`. `npm run build` runs it automatically; nothing else does.
+- `npm run velite` regenerates `.velite/` from `content/`. It is gitignored and imported as `@/.velite`, so on a fresh clone run it before `tsc`, `vitest`, or `next build`. `npm run build` runs it once and `npm run dev` runs `velite --watch` alongside Next; nothing else does.
 - `npx tsc --noEmit` is the typecheck. There is no `typecheck` script.
 - `npm run lint` runs ESLint. Three React 19 hook rules (`set-state-in-effect`, `static-components`, `refs`) are intentionally warnings, not errors. Do not "fix" the patterns they flag.
 - `npm run test` runs Vitest (jsdom). Tests are colocated `*.test.ts(x)` under `src/` and `lib/`. Single file: `npx vitest run src/lib/runes.test.ts`.
 - `npm run test:e2e` runs Playwright against a full `build && start` (slow). `npm run test:e2e:dev` runs against the dev server; it sets `PW_DEV_SERVER=1` with POSIX syntax, so in PowerShell set `$env:PW_DEV_SERVER='1'` first and run `npx playwright test`.
 - `/verify` runs velite, tsc, lint, and unit tests in the right order.
+- Node 22 is required (`.nvmrc`); `concurrently` in `npm run dev` does not run on Node 20.
 
 ## Environment
 

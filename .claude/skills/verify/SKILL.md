@@ -3,7 +3,7 @@ name: verify
 description: Run the full pre-push check sequence for keech.dev in the correct order (velite, tsc, eslint, vitest) and report what failed. Use before pushing, after finishing a change, or when the user asks to verify/check the build.
 ---
 
-Run these from the repo root, in this order. Each step depends on the previous one; stop at the first failure and report it.
+Run these from the repo root, in this order. If velite fails, stop: every later step depends on it. Otherwise run steps 2-4 even if one fails, so independent failures all show up in one pass.
 
 1. `npm run velite` regenerates `.velite/`. Skipping this on a fresh clone makes every later step fail with unresolved `@/.velite` imports.
 2. `npx tsc --noEmit`
@@ -16,4 +16,4 @@ Report format:
 
 - One line per step: pass or fail.
 - For a failure, include the relevant error output in a fenced code block and the file:line it points at.
-- Fix failures caused by your own change, then rerun from the failed step. Do not "fix" pre-existing warnings that the lint config downgrades on purpose.
+- Fix failures caused by your own change, then rerun the failed steps. Do not "fix" pre-existing warnings that the lint config downgrades on purpose.
