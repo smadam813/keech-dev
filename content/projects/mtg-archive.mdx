@@ -1,0 +1,73 @@
+---
+title: "mtg-archive"
+slug: mtg-archive
+description: "A self-hosted Commander and Arena Brawl knowledge base. A .NET 10 service, Postgres with pgvector, and an XMage simulation sidecar sit behind five Claude Code skills that answer questions about your deck with citations."
+date: 2026-10-14
+featured: true
+stack:
+  - .NET 10
+  - C#
+  - PostgreSQL
+  - pgvector
+  - XMage
+  - Java
+  - Docker
+  - Claude Code
+github: https://github.com/smadam813/mtg-archive
+category: side-project
+---
+
+![MTG Archive banner: the five mana colors on a pentagon beside the words MTG Archive, a Commander and Arena Brawl knowledge base](/images/projects/mtg-archive-banner.webp)
+
+**I had not played Magic in a while, and I wondered whether an agent could recommend replacements for the cards in my EDH decks that are no longer legal.** Banlists move, commanders get banned, and a deck you loved a few years ago can quietly stop being legal. An agent can only answer that if it is looking at primary sources instead of guessing. So I built the thing that lets it look.
+
+MTG Archive answers Magic questions about *your* deck, and every fact in the answer cites the service call that produced it.
+
+## What It Does
+
+A .NET service holds the cards, the Comprehensive Rules, the banlists, and your collection in one Postgres database. Five Claude Code skills turn a plain question into calls against that service. You never name the skill. You ask in your own words and the right one fires.
+
+| Skill | Ask it | It answers with |
+|---|---|---|
+| **mtg-lookup** | "What stops activated abilities of a named card?" | Cards, rulings, rules, and legality, each with a footnote |
+| **deck-check** | "Which Arena Brawl queues can I take this deck to?" | A verdict per format, mana sources, bracket floor, simulated consistency |
+| **build-deck** | "Build me a deck from my collection." | A legal list from cards you own, tuned against a numeric target |
+| **commander-swap** | "Golos got banned. What can lead this deck instead?" | Ranked commanders by how much of the 99 each one keeps |
+| **archive-admin** | "Import my ManaBox collection." | Collection import, ingest runs, and corpus state |
+
+The commander-swap skill is the one that started it all. When a commander is banned, the service finds every legal commander that keeps the most of the existing 99 cards, and the skill ranks the shortlist by what the deck actually needs.
+
+## Architecture
+
+**There is no MCP layer.** The service speaks plain HTTP and JSON, and the skills call it with `curl`. Legality is filtered at the service boundary, so a card search only returns cards that are legal in the requested format. The skill never has to remember to filter.
+
+- **One store.** Postgres 18 with pgvector holds the corpus, the full-text index, the embeddings, and your collection. One database means one backup and one transaction boundary.
+- **A frozen embedding model.** Semantic search runs on `qwen3-embedding:0.6b` through Ollama. The model and its query prefixes only change through a retrieval eval, so a search that worked last week still works this week.
+- **A real rules engine.** XMage plays every simulated game, in a sidecar that only the compose network can reach.
+- **Answers stay skill-side.** The service returns facts and numbers. The skills choose, rank, and explain.
+
+The corpus comes from primary sources: Scryfall bulk data, the Comprehensive Rules, curated banlists and bracket data, and popularity data. An ingest runs ten phases in order, from `fetch_validate` through `re_embed`, and the service reports the version of each source it is serving.
+
+## Simulation
+
+Asking "is this deck any good" is vague, so the skills ask questions a simulation can answer, like whether a turn-4 Pithing Needle stays on track under a counterspell. A skill uses the cheapest tier that answers the question.
+
+| Tier | What it does | Runs on |
+|---|---|---|
+| 1 | Closed-form draw math: sources per color, pip demand | Service |
+| 2 | Monte Carlo goldfish games against an idle opponent | XMage |
+| 3 | Scheduled removal and counters, no response window | XMage |
+| 4 | A scripted opponent casts real cards, and your deck can answer | XMage |
+
+**Every probability is a floor with a 95% interval, a run count, and a seed.** The pilot plays a greedy line and misses lines a stronger player would find, so the label says floor and means it.
+
+That honesty shows up in the answers. I asked build-deck for a competition-ready deck that drops Pithing Needle on turn 1, and it returned a legal list built only from cards I own. It also said that the best floor was 0.189 against a 0.80 target, because a singleton turn-1 goal cannot reach 0.80. A tool that tells you the target is out of reach is more useful than one that hands you a deck and a number that sounds good.
+
+## Built with Claude Code
+
+The repo is its own Claude Code plugin marketplace, so the plugin and the service always ship at the same version. Two parts of the workflow mattered most:
+
+- **Evals gate the changes that can quietly break things.** A retrieval eval gates any change to the embedding model or documents. An engine parity gate compares XMage changes against the last engine over 10,000 games per comparison. A skill trigger eval checks that each skill fires on its questions and only on its questions.
+- **Decisions are written down.** Architecture decision records cover the single store, the embedding freeze, the simulation engine, and the Brawl formats. An agent that starts a session cold reads them and does not relitigate them.
+
+Same as this site, I directed the design and Claude Code did much of the implementation. The evals are what let me trust that split.
