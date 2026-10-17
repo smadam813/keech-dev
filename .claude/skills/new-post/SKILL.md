@@ -8,17 +8,17 @@ Create a new post from the title in `$ARGUMENTS`. If no title was given, ask for
 
 Steps:
 
-1. Derive the slug so it matches Velite's `s.slug` (`^[a-z0-9]+(?:-[a-z0-9]+)*$`, at least 3 chars): lowercase, transliterate to ASCII, replace every run of characters outside `a-z0-9` with a single `-`, and trim leading/trailing dashes. It must be unique across the `slug:` fields in `content/posts/**/*.mdx`, not just filenames; if it is taken, append `-2`, `-3`, and so on.
+1. Derive the slug so it matches Velite's `s.slug` (`^[a-z0-9]+(?:-[a-z0-9]+)*$`, at least 3 chars): lowercase, transliterate to ASCII, replace every run of characters outside `a-z0-9` with a single `-`, and trim leading/trailing dashes. If that leaves fewer than 3 characters (a title like `AI`, or one with nothing to transliterate), ask the user for a slug instead of guessing. It must be unique across the `slug:` fields in `content/posts/**/*.mdx`, not just filenames; if it is taken, append `-2`, `-3`, and so on.
 2. Read `velite.config.ts` and use the `posts` schema as the source of truth. As of writing it requires `title` (max 99 chars), `slug`, and `date` (ISO `YYYY-MM-DD`), with optional `updated`, `description` (max 300 chars), `tags` (array, default `[]`), and `draft` (default `false`).
-3. Look at the tags already used across `content/posts/*.mdx` and reuse existing ones where they fit rather than inventing near-duplicates.
+3. Look at the tags already used across `content/posts/**/*.mdx` and reuse existing ones where they fit rather than inventing near-duplicates.
 4. Write `content/posts/<slug>.mdx` with this shape:
 
 ```mdx
 ---
-title: '<title>'
+title: "<title>"
 slug: <slug>
 date: <today, YYYY-MM-DD>
-description: '<one or two sentences, under 300 chars>'
+description: "<one or two sentences, under 300 chars>"
 tags:
   - <tag>
 draft: true
@@ -27,11 +27,11 @@ draft: true
 <opening paragraph>
 ```
 
-   Quote `title` and `description` with single quotes and double any `'` inside them (`'It''s here'`), so double quotes and colons in the text cannot break the YAML.
+   Double-quote `title` and `description` like the existing posts, and escape `"` and `\` inside them as `\"` and `\\`, so quotes and colons in the text cannot break the YAML.
 
    Set `draft: true` so it does not publish on the next Vercel build. Write only a short opening paragraph unless the user asked for a full draft.
 
-5. Run `npm run velite` and confirm the new post appears in `.velite/posts.json` with no schema errors. If Velite reports a validation error, fix the frontmatter and rerun.
+5. If `npm run dev` is running, its `velite --watch` rebuilds on its own; do not run a second velite alongside it, since both write `.velite/`. Otherwise run `npm run velite`. Either way, confirm the new post appears in `.velite/posts.json` with no schema errors. If Velite reports a validation error, fix the frontmatter and rerun.
 6. Report the file path and the slug's eventual permalink (`/blog/<slug>`). Say that drafts are filtered out of every route, including in `npm run dev`, so that URL 404s until `draft: false` is set; to preview locally, flip it temporarily and do not commit that.
 
 Images go in `public/images/posts/` and are referenced as `/images/posts/<file>` inside the post.

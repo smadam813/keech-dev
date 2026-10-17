@@ -4,7 +4,7 @@
   "private": true,
   "description": "Personal portfolio and blog",
   "scripts": {
-    "dev": "concurrently -k -n velite,next \"velite --watch\" \"next dev --turbopack\"",
+    "dev": "velite && concurrently -k -n velite,next \"velite --watch\" \"next dev --turbopack\"",
     "build": "velite && next build",
     "start": "next start",
     "lint": "eslint .",

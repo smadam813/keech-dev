@@ -9,9 +9,10 @@ on:
 permissions:
   contents: read
 
-# Only cancel superseded PR runs; every commit on preview/main keeps a finished status.
+# PR runs share a group per ref so superseded ones cancel. Push runs get a group per commit,
+# because GitHub drops a pending run whenever a newer one joins its group.
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
@@ -26,7 +27,7 @@ jobs:
           cache: npm
 
       # Match the npm major that writes package-lock.json locally; npm 10 and 11 resolve peers differently.
-      - run: npm install -g npm@11
+      - run: npm install -g npm@11.21.0
 
       - run: npm ci
 

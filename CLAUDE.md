@@ -2,7 +2,7 @@
 
 ## Commands
 
-- `npm run velite` regenerates `.velite/` from `content/`. It is gitignored and imported as `@/.velite`, so on a fresh clone run it before `tsc`, `vitest`, or `next build`. `npm run build` runs it once and `npm run dev` runs `velite --watch` alongside Next; nothing else does.
+- `npm run velite` regenerates `.velite/` from `content/`. It is gitignored and imported as `@/.velite`, so on a fresh clone run it before `tsc`, `vitest`, or `next build`. `npm run build` runs it once and `npm run dev` runs it once, then `velite --watch` alongside Next; nothing else does.
 - `npx tsc --noEmit` is the typecheck. There is no `typecheck` script.
 - `npm run lint` runs ESLint. Three React 19 hook rules (`set-state-in-effect`, `static-components`, `refs`) are intentionally warnings, not errors. Do not "fix" the patterns they flag.
 - `npm run test` runs Vitest (jsdom). Tests are colocated `*.test.ts(x)` under `src/` and `lib/`. Single file: `npx vitest run src/lib/runes.test.ts`.
@@ -32,4 +32,4 @@
 - `README.md`'s design section describes the old palette and is stale. `globals.css` is the source of truth for colors and tokens.
 - `scripts/validate-colors.mjs` hardcodes the old palette. Update it before trusting its output.
 - Error states (`error.tsx`, `global-error.tsx`, `MDXFallback`, `ErrorPanel`) use plain `<a>` instead of `next/link` because client routing may be dead. Do not convert them to `Link`.
-- Content frontmatter schemas are in `velite.config.ts`. Posts live in `content/posts/*.mdx`, projects in `content/projects/*.mdx`. `/new-post` scaffolds a valid post.
+- Content frontmatter schemas are in `velite.config.ts`. Posts live in `content/posts/**/*.mdx`, projects in `content/projects/**/*.mdx`. `/new-post` scaffolds a valid post.

@@ -10,6 +10,8 @@ Run these from the repo root, in this order. If velite fails, stop: every later 
 3. `npm run lint`. Warnings from `react-hooks/set-state-in-effect`, `react-hooks/static-components`, and `react-hooks/refs` are expected and intentional. Only errors count as failures.
 4. `npm run test`
 
+If the change touched routing, layouts, metadata, `generateStaticParams`, the server/client boundary, `next.config`, or dependencies, also run `npm run build` as step 5. CI and Vercel both build, and these failures only show up there.
+
 Do not run Playwright here. It needs a full production build and is opt-in via `npm run test:e2e` or `npm run test:e2e:dev`. Mention it if the change touched routing, layout, navigation, or anything under `e2e/`.
 
 Report format:
